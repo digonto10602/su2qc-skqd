@@ -28,7 +28,7 @@ from skqd.krylov import (basis_vector, coarse_states, exact_krylov_states, refer
 from skqd.ml import RidgeRanker, design, features, spearman  # noqa: E402
 from skqd.noise import measure_and_decode  # noqa: E402
 from skqd.report import ROOT, GateResult, env_block, md_table, write_report  # noqa: E402
-from skqd.skqd import certify, ritz, support_metrics  # noqa: E402
+from skqd.skqd import certify, closure_diagnostic, interval_difference, ritz, support_metrics  # noqa: E402
 
 P_RO = 0.01
 
@@ -157,12 +157,22 @@ def main():
                               f"[{cert.weinstein[0]:.4f}, {cert.weinstein[1]:.4f}]",
                               f"[{cert.kato_temple[0]:.4f}, {cert.kato_temple[1]:.4f}]" if cert.kato_temple else "—",
                               f"{r.E0:.4f}", "yes" if cert.gap_assumption_holds else "no"])
+            prod[f"B={twoB // 2}|f={f}"]["closure"] = closure_diagnostic(H3, res, r.dt)
             if f == 0.1:
                 R.add(f"S1 criterion: 2x3 B={twoB // 2}, f=0.1, 2e5 shots: recall of 99.9% support", round(met["recall"], 3), ">= 0.9",
                       met["recall"] >= 0.9)
                 R.add(f"2x3 B={twoB // 2}, f=0.1: exact E0 inside the Weinstein interval", f"{r.E0:.4f} in [{cert.weinstein[0]:.4f}, {cert.weinstein[1]:.4f}]",
                       "contains E0", cert.weinstein[0] - 1e-12 <= r.E0 <= cert.weinstein[1] + 1e-12)
     data["production"] = prod
+    # baryon mass by interval arithmetic (manual Step 5.3): M_B in [E_R^1 - E_R^0 - delta_1, E_R^1 - E_R^0 + delta_0]
+    mb_rows = []
+    for f in (0.3, 0.2, 0.1):
+        w0, w1 = prod[f"B=0|f={f}"]["weinstein"], prod[f"B=1|f={f}"]["weinstein"]
+        lo, hi = interval_difference(w1, w0)
+        exact_mb = ref_by_sector[2].E0 - ref_by_sector[0].E0
+        mb_rows.append([f, f"[{lo:.4f}, {hi:.4f}]", f"{exact_mb:.4f}", "yes" if lo <= exact_mb <= hi else "no"])
+        data[f"MB_interval|f={f}"] = (lo, hi)
+    R.add("M_B interval (Weinstein, f=0.1) contains the exact baryon mass", mb_rows[-1][1], f"contains {mb_rows[-1][2]}", mb_rows[-1][3] == "yes")
 
     # ---- 4. Table 3 analogue: Ritz error at equal |B| ---------------------------------------
     # ML ranker trained leakage-safely (test coupling g^2 = 4 excluded everywhere)
@@ -217,7 +227,7 @@ def main():
                 if n > len(sec):
                     row.append("—")
                     continue
-                vals = []
+                vals, sizes_real = [], []
                 for rep in range(reps if name in ("BFS", "random (refs incl.)", "random (no refs)", "device proxy", "device-seeded CIPSI") else 1):
                     if name == "oracle":
                         B = oracle(p, sec, n)
@@ -237,14 +247,18 @@ def main():
                         seed = top_by_count(dev_counts[rep], refs, max(len(refs), n // 2))
                         B = cipsi(H3, seed, n)
                     vals.append(ritz(H3, B).ER - r.E0)
+                    sizes_real.append(len(B))
                 e = float(np.mean(vals))
-                t3[f"B={twoB // 2}|{name}|{n}"] = e
-                row.append(f"{e:.1e}")
+                nreal = float(np.mean(sizes_real))
+                t3[f"B={twoB // 2}|{name}|{n}"] = dict(err=e, size=nreal)
+                # a device support saturates when the counts contain fewer than n distinct configurations:
+                # the cell is then NOT at the stated size and is marked with the realised |B|
+                row.append(f"{e:.1e}" if abs(nreal - n) < 0.5 else f"{e:.1e} (|B|={nreal:.0f})")
             t3_rows.append(row)
     data["table3"] = t3
     for twoB in (0, 2):
         for n in (160, 320):
-            c, o = t3[f"B={twoB // 2}|CIPSI|{n}"], t3[f"B={twoB // 2}|oracle|{n}"]
+            c, o = t3[f"B={twoB // 2}|CIPSI|{n}"]["err"], t3[f"B={twoB // 2}|oracle|{n}"]["err"]
             R.add(f"controls: CIPSI within 3x of oracle at |B|={n}, B={twoB // 2}", f"{c:.1e} vs {o:.1e}", "CIPSI <= 3 x oracle", c <= 3 * o + 1e-12)
 
     # ---- 5. recall versus shots and fidelity (Fig. 1 right) -----------------------------------
@@ -359,6 +373,10 @@ Entries: Ritz error / $|B|$ / recall / false positives (yield in parentheses).
 
 {md_table(["f", "10³ shots per circuit", "10⁴ shots per circuit", "3·10⁴ shots per circuit"], t4_rows)}
 
+The proxy yields are printed in every cell: with the flip count conditioned on $\\ge 1$ (see `skqd.noise`) they are
+$\\approx 0.82 f$ at $f \\ge 0.1$ but exceed $0.82 f$ at $f = 0.03$ (readout-only survivors of the local-corruption
+branch), so the manual's "0.82 f in every row" is not exactly reproduced there.
+
 Manual, Table 4 (same protocol):
 
 {md_table(["f", "10³", "10⁴", "3·10⁴"], t4m_rows)}
@@ -376,7 +394,17 @@ recall {multi[2]['recall']:.2f} / fp {multi[2]['fp']:.0f} (manual: 4.6e-3 / 154 
 
 The Weinstein interval is rigorous for *some* eigenvalue; identifying it with $E_0$ needs $r_H < E_1 - E_R$, which
 is checked against the exact $E_1$ here (last column).  The Kato–Temple interval uses the second Ritz value as
-$\\alpha$ and is therefore gap-assumed (Step 5.3 of the manual).
+$\\alpha$ and is therefore gap-assumed (Step 5.3 of the manual); it is omitted when $\\alpha - E_R < 10^{{-6}}$.
+In the $B=1$ sector the near-degenerate cluster (splitting 0.024) makes the gap assumption fail by construction,
+exactly the manual's caveat: Weinstein then certifies the cluster energy to $\\pm r_H$.
+
+Baryon mass by interval arithmetic, $M_B \\in [E_R^{{B=1}} - E_R^{{B=0}} - \\delta_1,\\ E_R^{{B=1}} - E_R^{{B=0}} + \\delta_0]$
+with the Weinstein $\\delta$'s:
+
+{md_table(["f", "M_B interval", "exact M_B", "contains"], mb_rows)}
+
+Subspace-closure diagnostic $\\|(1-P_B)e^{{-iH\\Delta t}}\\psi_R\\|$ (a convergence monitor, not a certificate) at $f=0.1$:
+{prod['B=0|f=0.1']['closure']:.3e} ($B=0$), {prod['B=1|f=0.1']['closure']:.3e} ($B=1$).
 
 ## 4. Ritz error at equal support size (Table 3 analogue)
 
@@ -389,7 +417,9 @@ device proxy 1.6e-1 / 3.5e-2 / 1.7e-2 / 8.6e-3 / 6.3e-3.  ($B=1$: oracle 1.3e-1 
 CIPSI 5.1e-2 / 2.3e-2 / 1.4e-2 / 1.0e-3 / 6.7e-6; device 7.3e-2 / 2.8e-2 / 2.1e-2 / 1.7e-2 / 1.2e-2.)
 "random (refs incl.)" keeps the references (the Dirac sea alone carries {p0[refs0[0]]:.2f} of the $B=0$ weight), which is
 why it is far below the manual's random row; "random (no refs)" is the manual's protocol.
-Device proxy: single reference, five exact Krylov states, $f = 0.1$, $10^4$ shots per circuit, top-$|B|$ by count.
+Device proxy: single reference, five exact Krylov states, $f = 0.1$, $10^4$ shots per circuit, top-$|B|$ by count;
+when the device counts contain fewer distinct configurations than the column size the cell is **not** at equal
+$|B|$ and carries the realised size in parentheses (the manual's Table 3 does not state this saturation).
 Device-seeded CIPSI: CIPSI growth from the top-$|B|/2$ device configurations.
 
 ML ranker: ridge regression on 16 gauge-invariant features conditioned on $(g^2, m, B, L_x)$, trained on 2x2 at

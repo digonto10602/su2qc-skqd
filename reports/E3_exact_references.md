@@ -1,13 +1,13 @@
 # Gate E3 — exact references, static sectors, derived quantities, Krylov step
 
 **Status: PASS** — produced by `scripts/gate_E3.py`; all numbers computed in this run, stored in
-`validation/E3.json` and `data/references.json`.  Environment: Python 3.11.15, numpy 2.4.4, scipy 1.17.1, Linux-6.18.44-fc-v24-x86_64-with-glibc2.39, 2 CPUs, commit 5e3fe61, 2026-09-14 20:42:14 UTC.  Runtime 14 s.
+`validation/E3.json` and `data/references.json`.  Environment: Python 3.11.15, numpy 2.4.4, scipy 1.17.1, Linux-6.18.44-fc-v24-x86_64-with-glibc2.39, 2 CPUs, commit 3c32216, 2026-09-14 21:37:02 UTC.  Runtime 13 s.
 
 Parameters: $m = 3g^2/16$ (the manual's line), $j_{\max} = \tfrac12$.  Dense diagonalization for sectors up to
 4 000 states, Lanczos (`scipy.sparse.linalg.eigsh`) above.  $W = E_{\max} - E_{\min}$ is the spectral width of the
 sector block and $\Delta t = \pi/W$ the anti-aliasing Krylov step; the support $S_\epsilon$ is the smallest set of
 configurations carrying $1-\epsilon$ of the ground-state weight; $\mathrm{PR} = 1/\sum_b |\langle b|\Omega\rangle|^4$
-is the participation ratio.  Builder times: 2x2 0.1 s, 2x3 0.7 s, 2x4 5.3 s, 2x3+static(0, 2) 1.4 s, 2x3+static(0, 4) 0.9 s
+is the participation ratio.  Builder times: 2x2 0.1 s, 2x3 0.6 s, 2x4 4.6 s, 2x3+static(0, 2) 1.2 s, 2x3+static(0, 4) 0.8 s
 (the manual quotes 22 s for 2x3 and 17 min for 2x4 in plain numpy; this builder caches matrix elements by local
 signature).
 
@@ -37,7 +37,7 @@ signature).
 
 $\Delta_0 = E_1^{B=0} - E_0^{B=0}$ (meson-like gap), $M_B = E_0^{B=1} - E_0^{B=0}$ (baryon mass),
 $V(r) = E_0^{\text{static pair at distance } r, B=0} - E_0^{B=0}$ (static potential, charges on the bottom row).
-The static sectors have 2 729 ($r=1$, $B=0$: 1 089) and 2 418 ($r=2$, $B=0$: 978) states.
+The static sectors have 2729 ($r=1$, $B=0$: 1089) and 2418 ($r=2$, $B=0$: 978) states (computed here).
 
 ## $B = 1$ near-degenerate clusters (Step 1.5)
 
@@ -145,6 +145,7 @@ truncation entry of the error budget at 2x2; it is computed exactly here and is 
 | 2x4 g2=4.0: D0 | 2.7216 | manual 2.7216 (|diff| <= 0.0002) | PASS |
 | 2x4 g2=4.0: MB | 1.7851 | manual 1.7851 (|diff| <= 0.0002) | PASS |
 | 2x4 g2=2.0: MB | 1.156 | manual 1.156 (|diff| <= 0.0002) | PASS |
+| 2x3 static sectors: states (r=1, r=1 B=0, r=2, r=2 B=0) | {'r1': 2729, 'r1_B0': 1089, 'r2': 2418, 'r2_B0': 978} | = 2729, 1089, 2418, 978 | PASS |
 | 2x2 B=1 cluster splittings (g2=4) | 0.042 | manual [0.042] (within 0.006) | PASS |
 | 2x3 B=1 cluster splittings (g2=4) | 0.024, 0.133 | manual [0.024, 0.13] (within 0.006) | PASS |
 | 2x4 B=1 cluster splittings (g2=4) | 0.006, 0.120 | manual [0.006, 0.12] (within 0.006) | PASS |

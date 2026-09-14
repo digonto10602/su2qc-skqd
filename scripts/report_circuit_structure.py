@@ -15,11 +15,12 @@ import numpy as np
 import scipy.sparse.csgraph as cg
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-from skqd.circuits_ir import CircuitFactory, gate_counts  # noqa: E402
+from skqd.circuits_ir import CircuitFactory, gate_counts, run_ir  # noqa: E402
 from skqd.codec import Codec  # noqa: E402
 from skqd.exact import Model  # noqa: E402
 from skqd.krylov import references  # noqa: E402
-from skqd.reference_sim import plaquette_pair_amplitudes, term_support  # noqa: E402
+from skqd.reference_sim import (CodewordEmbedding, apply_local, local_unitary, plaquette_pair_amplitudes,  # noqa: E402
+                                term_support)
 from skqd.report import GateResult, env_block, md_table, write_report  # noqa: E402
 
 
@@ -62,6 +63,23 @@ def main():
     F = CircuitFactory(M2, 4.0)
     dt = M2.reference(4.0, 0).dt
     gc = gate_counts(F.coarse_step(references(M2.basis, 0)[0], 1, dt))
+    # structured plaquette gate versus the dense exponential on random physical states
+    E = CodewordEmbedding(M2)
+    sup = term_support(M2, "plaq", 0)
+    rng = np.random.default_rng(3)
+    worst = 0.0
+    for theta in (dt, 2 * dt, 4 * dt):
+        Ud = local_unitary(M2, -M2.terms.plaq[0] / (2 * 4.0), sup, theta)
+        pg = F.plaq_gates(0, theta, True)
+        for _ in range(5):
+            v = rng.normal(size=M2.basis.dim) + 1j * rng.normal(size=M2.basis.dim)
+            v /= np.linalg.norm(v)
+            worst = max(worst, abs(run_ir(pg, E.n, E.embed(v)) - apply_local(E.embed(v), Ud, sup, E.n)).max())
+    n_cx_plaq = sum(1 for g in F.plaq_gates(0, dt, True) if g[0] == "cx")
+    R.add("2x2 structured plaquette gate vs dense exponential (random physical states, 3 angles)", worst, "< 1e-12", worst < 1e-12)
+    R.add("2x2 structured plaquette gate: CNOT count", n_cx_plaq, "= 30 (8 parity + 6 ladder + 16 UCRz)", n_cx_plaq == 30)
+    R.data["plaquette_structured_vs_dense"] = worst
+    R.data["plaquette_cx"] = n_cx_plaq
     R.data["2x2_coarse_step_ir_counts"] = gc
     R.data["plaquette_pair_table"] = {str(k): v for k, v in table.items()}
     R.runtime_s = time.time() - t0
@@ -91,8 +109,8 @@ bits flipped); the pair amplitude $w$ is real and depends only on which corners 
 so $W + W^\\dagger = D\\,X^{{\\otimes 8}}$ and $e^{{-i\\theta H_{{\\rm plaq}}}} = \\exp(+i\\tfrac{{\\theta}}{{2g^2}} D X^{{\\otimes 8}})$ is
 implemented exactly by: CNOT($q_1\\to q_2$) per corner (so $q_2$ holds $p_c$), $H$ on the four $q_1$, a CNOT ladder,
 one uniformly controlled $R_z(-\\theta w(p)/g^2)$ with the four parity qubits as controls (Gray-code
-decomposition: 16 $R_z$ + 16 CNOT), and the inverse.  Verified against the dense exponential to $10^{{-15}}$
-(`skqd.reference_sim`, `tests/test_circuits_ir.py`).  Cost: 30 CNOT for the whole plaquette term.
+decomposition: 16 $R_z$ + 16 CNOT), and the inverse.  Verified in this run against the dense exponential on random
+physical states at three angles: max deviation {worst:.2e}; CNOT count of the plaquette gate: {n_cx_plaq}.
 
 ## IR gate counts of one exact coarse step at 2x2
 

@@ -1,7 +1,7 @@
 # Gate S1 — emulated support generation, certification and classical controls
 
 **Status: PASS** — produced by `scripts/gate_S1.py` (means over 3 repetitions); every number computed in this
-run, stored in `validation/S1.json` and `data/S1_emulation.json`.  Environment: Python 3.11.15, numpy 2.4.4, scipy 1.17.1, Linux-6.18.44-fc-v24-x86_64-with-glibc2.39, 2 CPUs, commit 1a578c9, 2026-09-14 20:47:01 UTC.  Runtime 86 s.
+run, stored in `validation/S1.json` and `data/S1_emulation.json`.  Environment: Python 3.11.15, numpy 2.4.4, scipy 1.17.1, Linux-6.18.44-fc-v24-x86_64-with-glibc2.39, 2 CPUs, commit 3c32216, 2026-09-14 21:38:22 UTC.  Runtime 75 s.
 
 Setting: 2x3 ladder (20 qubits, 1 727 states; sectors $B=0$: 677, $B=1$: 426), $g^2 = 4$, $m = 0.75$,
 $\Delta t = \pi/W_B$ per sector (0.156 for $B=0$, 0.187 for $B=1$).
@@ -44,6 +44,10 @@ Entries: Ritz error / $|B|$ / recall / false positives (yield in parentheses).
 | 0.1 | 8.0e-02 / 45 / 0.43 / 1 (y=0.091) | 9.6e-03 / 122 / 0.86 / 6 (y=0.090) | 4.0e-03 / 187 / 0.97 / 14 (y=0.090) |
 | 0.03 | 1.3e-01 / 32 / 0.29 / 1 (y=0.032) | 2.0e-02 / 105 / 0.71 / 6 (y=0.033) | 8.1e-03 / 168 / 0.89 / 15 (y=0.033) |
 
+The proxy yields are printed in every cell: with the flip count conditioned on $\ge 1$ (see `skqd.noise`) they are
+$\approx 0.82 f$ at $f \ge 0.1$ but exceed $0.82 f$ at $f = 0.03$ (readout-only survivors of the local-corruption
+branch), so the manual's "0.82 f in every row" is not exactly reproduced there.
+
 Manual, Table 4 (same protocol):
 
 | f | 10³ | 10⁴ | 3·10⁴ |
@@ -72,7 +76,21 @@ recall 0.93 / fp 3 (manual: 4.6e-3 / 154 / 0.94).
 
 The Weinstein interval is rigorous for *some* eigenvalue; identifying it with $E_0$ needs $r_H < E_1 - E_R$, which
 is checked against the exact $E_1$ here (last column).  The Kato–Temple interval uses the second Ritz value as
-$\alpha$ and is therefore gap-assumed (Step 5.3 of the manual).
+$\alpha$ and is therefore gap-assumed (Step 5.3 of the manual); it is omitted when $\alpha - E_R < 10^{-6}$.
+In the $B=1$ sector the near-degenerate cluster (splitting 0.024) makes the gap assumption fail by construction,
+exactly the manual's caveat: Weinstein then certifies the cluster energy to $\pm r_H$.
+
+Baryon mass by interval arithmetic, $M_B \in [E_R^{B=1} - E_R^{B=0} - \delta_1,\ E_R^{B=1} - E_R^{B=0} + \delta_0]$
+with the Weinstein $\delta$'s:
+
+| f | M_B interval | exact M_B | contains |
+|---|---|---|---|
+| 0.3 | [1.7267, 1.8120] | 1.7765 | yes |
+| 0.2 | [1.7114, 1.8211] | 1.7765 | yes |
+| 0.1 | [1.6935, 1.8314] | 1.7765 | yes |
+
+Subspace-closure diagnostic $\|(1-P_B)e^{-iH\Delta t}\psi_R\|$ (a convergence monitor, not a certificate) at $f=0.1$:
+7.540e-03 ($B=0$), 1.412e-02 ($B=1$).
 
 ## 4. Ritz error at equal support size (Table 3 analogue)
 
@@ -84,7 +102,7 @@ $\alpha$ and is therefore gap-assumed (Step 5.3 of the manual).
 | B=0 | BFS | 1.6e-01 | 8.4e-02 | 1.8e-02 | 6.8e-03 | 6.1e-04 |
 | B=0 | random (refs incl.) | 2.0e-01 | 2.0e-01 | 1.8e-01 | 1.8e-01 | 1.2e-01 |
 | B=0 | random (no refs) | 5.1e+00 | 4.9e+00 | 4.1e+00 | 2.8e+00 | 1.5e+00 |
-| B=0 | device proxy | 1.6e-01 | 2.9e-02 | 1.7e-02 | 1.0e-02 | 1.0e-02 |
+| B=0 | device proxy | 1.6e-01 | 2.9e-02 | 1.7e-02 | 1.0e-02 (|B|=121) | 1.0e-02 (|B|=121) |
 | B=0 | device-seeded CIPSI | 1.1e-01 | 2.6e-02 | 1.1e-02 | 1.4e-03 | 8.0e-05 |
 | B=1 | oracle | 1.3e-01 | 5.7e-02 | 1.0e-02 | 9.8e-04 | 6.5e-06 |
 | B=1 | CIPSI | 6.6e-02 | 2.4e-02 | 1.4e-02 | 1.0e-03 | 6.7e-06 |
@@ -92,7 +110,7 @@ $\alpha$ and is therefore gap-assumed (Step 5.3 of the manual).
 | B=1 | BFS | 2.1e-01 | 1.0e-01 | 4.6e-02 | 9.0e-03 | 5.9e-04 |
 | B=1 | random (refs incl.) | 7.7e-01 | 6.6e-01 | 4.7e-01 | 2.7e-01 | 1.0e-01 |
 | B=1 | random (no refs) | 1.7e+00 | 2.6e+00 | 1.5e+00 | 5.6e-01 | 3.7e-01 |
-| B=1 | device proxy | 7.3e-02 | 2.8e-02 | 2.0e-02 | 2.0e-02 | 2.0e-02 |
+| B=1 | device proxy | 7.3e-02 | 2.8e-02 | 2.0e-02 | 2.0e-02 (|B|=84) | 2.0e-02 (|B|=84) |
 | B=1 | device-seeded CIPSI | 6.2e-02 | 2.4e-02 | 1.4e-02 | 1.2e-03 | 7.5e-06 |
 
 Manual, Table 3 ($B=0$, $|B|$ = 20/40/80/160/320): oracle 1.1e-1 / 2.5e-2 / 1.0e-2 / 1.2e-3 / 6.7e-5;
@@ -102,7 +120,9 @@ device proxy 1.6e-1 / 3.5e-2 / 1.7e-2 / 8.6e-3 / 6.3e-3.  ($B=1$: oracle 1.3e-1 
 CIPSI 5.1e-2 / 2.3e-2 / 1.4e-2 / 1.0e-3 / 6.7e-6; device 7.3e-2 / 2.8e-2 / 2.1e-2 / 1.7e-2 / 1.2e-2.)
 "random (refs incl.)" keeps the references (the Dirac sea alone carries 0.72 of the $B=0$ weight), which is
 why it is far below the manual's random row; "random (no refs)" is the manual's protocol.
-Device proxy: single reference, five exact Krylov states, $f = 0.1$, $10^4$ shots per circuit, top-$|B|$ by count.
+Device proxy: single reference, five exact Krylov states, $f = 0.1$, $10^4$ shots per circuit, top-$|B|$ by count;
+when the device counts contain fewer distinct configurations than the column size the cell is **not** at equal
+$|B|$ and carries the realised size in parentheses (the manual's Table 3 does not state this saturation).
 Device-seeded CIPSI: CIPSI growth from the top-$|B|/2$ device configurations.
 
 ML ranker: ridge regression on 16 gauge-invariant features conditioned on $(g^2, m, B, L_x)$, trained on 2x2 at
@@ -138,7 +158,7 @@ Spearman rank correlation with $\log|\langle b|\Omega\rangle|$ on the test secto
 | ML alone (ridge, transfer), |B|=640 | 640 | 7.1e-03 | 0.98 | 94 |
 
 Manual (Step 6.2): device support with f = 0.1 and 2e5 shots: |B| = 544, error 7.5e-3, recall 0.94; CIPSI 2.7e-3 at |B| = 640 (oracle 2.75e-3); ML-alone 8.4e-3 and recall 0.95 at |B| = 640.
-ML transfer Spearman on 2x4 B=0: 0.765.
+ML transfer Spearman on 2x4 B=0: 0.764.
 
 ## Interpretation
 
@@ -158,6 +178,7 @@ ML transfer Spearman on 2x4 B=0: 0.765.
 | 2x3 B=0, f=0.1: exact E0 inside the Weinstein interval | -5.6026 in [-5.6565, -5.6023] | contains E0 | PASS |
 | S1 criterion: 2x3 B=1, f=0.1, 2e5 shots: recall of 99.9% support | 0.989 | >= 0.9 | PASS |
 | 2x3 B=1, f=0.1: exact E0 inside the Weinstein interval | -3.8261 in [-3.9088, -3.8251] | contains E0 | PASS |
+| M_B interval (Weinstein, f=0.1) contains the exact baryon mass | [1.6935, 1.8314] | contains 1.7765 | PASS |
 | ML ridge (leakage-safe) Spearman rank correlation, 2x3 g2=4 B=0 | 0.861 | > 0.7 (manual 0.85 / 0.89) | PASS |
 | ML ridge (leakage-safe) Spearman rank correlation, 2x3 g2=4 B=1 | 0.888 | > 0.7 (manual 0.85 / 0.89) | PASS |
 | controls: CIPSI within 3x of oracle at |B|=160, B=0 | 1.2e-03 vs 1.2e-03 | CIPSI <= 3 x oracle | PASS |

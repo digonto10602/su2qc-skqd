@@ -24,12 +24,12 @@ gauge invariant on the physical subspace.
 Plaquette at 2x2.  W + W^dag = D X^{(x)8}: every physical state is paired with
 the state with all four link spins flipped (all eight flux bits), and the pair
 amplitude w in {-2, +-1, 1/2} depends only on which corners carry one quark
-(the four corner parities p_c = q1 XOR q2).  The structured circuit
-    CNOT(q1_c -> q2_c) for each corner  (q2_c now holds p_c)
-    H on the four q1_c, CNOT ladder over them, uniformly controlled Rz(2 theta w(p)) on
-    the last q1 controlled by the four p_c, ladder back, H back, CNOTs back
-implements exp(-i theta (W + W^dag)) exactly and is verified against the dense
-exponential here.
+(the four corner parities p_c = q1 XOR q2); plaquette_pair_amplitudes checks
+this structure and returns the table.  The structured circuit that uses it
+(CNOT(q1_c -> q2_c) per corner, H on the q1's, CNOT ladder, Gray-code
+uniformly controlled Rz on the last q1 controlled by the parities, inverse)
+lives in circuits_ir.CircuitFactory.plaq_gates and is verified against the
+dense exponential by scripts/report_circuit_structure.py and tests/.
 
 Symbols: theta = angle (k dt for a coarse step), O_loc = local term operator,
 V = codeword isometry, w(p) = plaquette pair amplitude.
@@ -107,27 +107,34 @@ def term_support(model: Model, kind: str, index: int) -> list:
 def localize(model: Model, O, support: list):
     """Restrict a term matrix O (dressed basis) to its local support.  Returns
     (local_states as sorted int list, h as dense matrix over them, local index map).
-    Asserts locality: elements must agree over all extensions of the local bits."""
+
+    Locality is CHECKED, not assumed: the global states are grouped by their
+    environment (the bits outside the support); O must connect only states of the
+    same environment, and within every environment the block of O must equal h on
+    the local states present (including the zeros).  Any violation raises."""
     codec = Codec(model.basis)
     cw = codec.all_codewords()
+    env_qubits = [q for q in range(codec.n_qubits) if q not in set(support)]
     loc_int = np.array([bits_to_int(cw[k][support]) for k in range(model.basis.dim)])
+    env_int = np.array([bits_to_int(cw[k][env_qubits]) for k in range(model.basis.dim)])
     states = sorted(set(loc_int.tolist()))
     pos = {s: i for i, s in enumerate(states)}
     h = np.zeros((len(states), len(states)), dtype=complex)
-    seen = {}
-    O = O.tocoo()
-    for r, c, v in zip(O.row, O.col, O.data):
+    Oc = O.tocoo()
+    for r, c, v in zip(Oc.row, Oc.col, Oc.data):
+        assert env_int[r] == env_int[c], "term connects states with different environments: not local on the support"
         key = (pos[loc_int[r]], pos[loc_int[c]])
-        if key in seen:
-            assert abs(seen[key] - v) < 1e-10, f"term is not local on the chosen support: {key} {seen[key]} {v}"
-        else:
-            seen[key] = v
-            h[key] = v
-    # entries never touched must be zero for every extension: check the reverse
-    # (a pair of local states that is coupled in one extension must be coupled in all)
-    ext_count = {}
-    for k in range(model.basis.dim):
-        ext_count[loc_int[k]] = ext_count.get(loc_int[k], 0) + 1
+        if h[key] != 0 and abs(h[key] - v) > 1e-10:
+            raise AssertionError(f"term is not local on the chosen support: {key} {h[key]} {v}")
+        h[key] = v
+    # every environment block must reproduce h on its local states (zeros included)
+    Od = O.tocsr()
+    for e in np.unique(env_int):
+        idx = np.where(env_int == e)[0]
+        block = Od[idx][:, idx].toarray()
+        li = np.array([pos[loc_int[k]] for k in idx])
+        if np.abs(block - h[np.ix_(li, li)]).max() > 1e-10:
+            raise AssertionError("term is not local on the chosen support (environment block mismatch)")
     return states, h, pos
 
 
@@ -179,81 +186,3 @@ def plaquette_pair_amplitudes(model: Model, P: int) -> dict:
             assert abs(table[key] - v.real) < 1e-12, "w must depend on the corner parities only"
         table[key] = float(v.real)
     return table
-
-
-def structured_plaquette_gates(model: Model, P: int, theta: float, g2: float) -> list:
-    """Gate list (name, qubits, params) implementing exp(-i theta * (-(W+W^dag)/(2 g^2))) at 2x2,
-    i.e. the plaquette term of H with its -1/(2g^2) prefactor.  Gate names: 'cx', 'h', 'ucrz'
-    (uniformly controlled Rz: params = list of 2^m angles indexed by the control bits,
-    controls given most-significant-first as in Qiskit's UCRZGate(angle_list) convention
-    is NOT assumed; the angle index is sum_j c_j 2^j over the listed controls in order)."""
-    codec = Codec(model.basis)
-    pl = model.lat.plaquettes[P]
-    corners = [pl["c00"], pl["c10"], pl["c11"], pl["c01"]]
-    for s in corners:
-        assert codec.widths[s] == 3, "structured plaquette gate is for corner-only plaquettes (2x2)"
-    table = plaquette_pair_amplitudes(model, P)
-    q1 = [codec.offsets[s] for s in corners]
-    q2 = [codec.offsets[s] + 1 for s in corners]
-    gates = []
-    for a, b in zip(q1, q2):
-        gates.append(("cx", [a, b], None))          # q2 <- q1 xor q2 = parity p_c
-    for a in q1:
-        gates.append(("h", [a], None))
-    for a, b in zip(q1[:-1], q1[1:]):
-        gates.append(("cx", [a, b], None))          # ladder: last q1 holds the parity of the four
-    # angle: exp(-i theta * (-w/(2 g^2)) Z_last) = Rz(2 * theta * (-w/(2g^2))) = Rz(-theta w / g^2)
-    angles = []
-    for c in range(16):
-        p = tuple((c >> j) & 1 for j in range(4))   # control bit j = parity of corner j
-        w = table.get(p, 0.0)
-        angles.append(-theta * w / g2)
-    gates.append(("ucrz", q2 + [q1[-1]], angles))   # controls = the four parity qubits, target = last q1
-    for a, b in reversed(list(zip(q1[:-1], q1[1:]))):
-        gates.append(("cx", [a, b], None))
-    for a in q1:
-        gates.append(("h", [a], None))
-    for a, b in zip(q1, q2):
-        gates.append(("cx", [a, b], None))
-    return gates
-
-
-def apply_gate_list(full: np.ndarray, gates: list, n: int) -> np.ndarray:
-    H = np.array([[1, 1], [1, -1]], dtype=complex) / np.sqrt(2)
-    # control = local bit 0 (first listed qubit), target = local bit 1: flips bit 1 when bit 0 = 1,
-    # i.e. swaps the local indices 1 <-> 3
-    CX = np.array([[1, 0, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0], [0, 1, 0, 0]], dtype=complex)
-    for name, qs, params in gates:
-        if name == "h":
-            full = apply_local(full, H, qs, n)
-        elif name == "cx":
-            full = apply_local(full, CX, qs, n)
-        elif name == "ucrz":
-            controls, target = qs[:-1], qs[-1]
-            m = len(controls)
-            U = np.zeros((2 ** (m + 1), 2 ** (m + 1)), dtype=complex)
-            # local index: controls are qubits 0..m-1 (bits 0..m-1), target is bit m
-            for c in range(2 ** m):
-                ang = params[c]
-                rz = np.diag([np.exp(-1j * ang / 2), np.exp(1j * ang / 2)])
-                for t in range(2):
-                    for tp in range(2):
-                        U[c + (tp << m), c + (t << m)] = rz[tp, t]
-            full = apply_local(full, U, controls + [target], n)
-        else:
-            raise ValueError(name)
-    return full
-
-
-def diagonal_phases(model: Model, theta: float, g2: float, m: float) -> np.ndarray:
-    """exp(-i theta H_diag) as a vector of phases over the 2^n computational basis
-    (defined from the codewords: n_x and j_l are read from the bits; non-codeword
-    strings get the phase of their decoded n/j when that is well defined, else 1)."""
-    codec = Codec(model.basis)
-    n = codec.n_qubits
-    phases = np.ones(2 ** n, dtype=complex)
-    diag = (m * model.terms.mass.diagonal() + 0.5 * g2 * model.terms.electric.diagonal()).real
-    cw = codec.all_codewords()
-    ints = np.array([bits_to_int(row) for row in cw])
-    phases[ints] = np.exp(-1j * theta * diag)
-    return phases

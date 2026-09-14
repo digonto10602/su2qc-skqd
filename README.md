@@ -35,8 +35,8 @@ $r_H=\|(H-E_R)\psi_R\|$.
 | E1 | $[G_a(x),H]=0$ in the 160 000-dim redundant basis; 82-dim kernel; sector split 38/20/20/2/2; dressed-site builder = projector route element by element (3.6e-15) | PASS |
 | E2 | Table 2 counts (82 / 1 727 / 37 165; 113, 112; 2 729, 2 418), codewords, decoder round trip on every state, random acceptance 0.15 % | PASS |
 | E3 | Table 1 (all rows, 4 decimals), $V(1)=1.3872$, $V(2)=2.5898$, $M_B$, $\Delta_0$, $B=1$ clusters, $\Delta t=\pi/W$, $j_{\max}=1$ truncation shift | PASS |
-| S1 | device-proxy emulation (Table 4), production-budget recall 1.00 / 0.98 at $f=0.1$, Table 3 controls (CIPSI = oracle), ridge ranker Spearman 0.86 / 0.89, 2×4 transfer | PASS |
-| circuits | exact gauge-invariant coarse-step circuits at 2×2 verified against the emulation (2e-16); the plaquette term is a 30-CNOT pair rotation | verified (numpy) |
+| S1 | device-proxy emulation (Table 4), production-budget recall 1.00 / 0.99 at $f=0.1$ (`validation/S1.json`), Table 3 controls (CIPSI tracks the oracle), ridge ranker Spearman 0.86 / 0.89, 2×4 transfer | PASS |
+| circuits | exact gauge-invariant coarse-step circuits at 2×2 verified against the emulation (all 28 circuits agree to < 1e-10, `tests/test_circuits_ir.py`; the run that built the package saw ≤ 5e-15); the plaquette term is a 30-CNOT pair rotation (`validation/CS.json`) | verified (numpy) |
 | L2–L5 | Qiskit / CUDA-Q on the laptop | next (prompts 02–05) |
 | S2, S3, H0–H2, P1, M1 | structured gates within the CZ budget, device-model simulation, hardware | open |
 

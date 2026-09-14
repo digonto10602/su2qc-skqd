@@ -69,18 +69,21 @@ def main():
             for kk, c in rej.items():
                 rej_all[kk] = rej_all.get(kk, 0) + c
             total += shots
-        cz = cq.transpile_counts(circuits[0][2], n, optimization_level=1)["cz"]
-        f_model = (1 - args.p2) ** cz
+        czs = [cq.transpile_counts(g, n, optimization_level=1)["cz"] for _, _, g in circuits]
+        cz = float(np.mean(czs))
+        # f = (1-p2)^<CZ> for the two-qubit gates; the readout survival (1-p_ro)^n is the 0.82 factor
+        f_model = float(np.mean([(1 - args.p2) ** c for c in czs]))
+        ro_surv = (1 - args.pro) ** n
         y = sum(acc_all.values()) / total
         B = np.array(sorted(set(acc_all) | set(refs)))
         res = ritz(M.H(g2), B)
         met = support_metrics(B, prob, 1e-3)
         cert = certify(res, ref.E0, float(ref.energies[1]))
-        rows.append([f"B={twoB // 2}", len(circuits), shots, cz, f"{f_model:.3f}", f"{0.82 * f_model:.3f}", f"{y:.3f}", len(B),
+        rows.append([f"B={twoB // 2}", len(circuits), shots, f"{cz:.0f}", f"{f_model:.3f}", f"{ro_surv * f_model:.3f}", f"{y:.3f}", len(B),
                      f"{res.ER - ref.E0:.1e}", f"{met['recall']:.2f}", met["false_positives"],
                      f"[{cert.weinstein[0]:.4f}, {cert.weinstein[1]:.4f}]", str(rej_all)])
-        R.add(f"B={twoB // 2}: measured yield within a factor 3 of the proxy 0.82 f (f = (1-p2)^CZ)", f"{y:.3f} vs {0.82 * f_model:.3f}",
-              "ratio in [1/3, 3] (the proxy is a rough model)", (0.82 * f_model) / 3 <= y <= 3 * (0.82 * f_model) + 1e-9)
+        R.add(f"B={twoB // 2}: measured yield within a factor 3 of the proxy (1-p_ro)^n f, f = <(1-p2)^CZ>", f"{y:.3f} vs {ro_surv * f_model:.3f}",
+              "ratio in [1/3, 3] (the proxy is a rough model)", (ro_surv * f_model) / 3 <= y <= 3 * (ro_surv * f_model) + 1e-9)
         R.add(f"B={twoB // 2}: exact E0 inside the Weinstein interval", f"{ref.E0:.4f}", "inside",
               cert.weinstein[0] - 1e-9 <= ref.E0 <= cert.weinstein[1] + 1e-9)
         R.data[f"B={twoB // 2}"] = dict(shots=shots, circuits=len(circuits), cz=cz, yield_=y, size=len(B), err=res.ER - ref.E0,
@@ -92,7 +95,7 @@ def main():
 **Status: {'PASS' if R.passed else 'FAIL'}** — `scripts/laptop_L4_aer_noise.py`, p1 = {args.p1}, p2 = {args.p2}, readout {args.pro},
 device {device}, budget {args.budget_minutes} min.  {env_block()}  Runtime {R.runtime_s:.0f} s.
 
-{md_table(["sector", "circuits", "shots/circuit", "CZ (level 1)", "f=(1-p2)^CZ", "0.82 f", "measured yield", "|B|",
+{md_table(["sector", "circuits", "shots/circuit", "mean CZ (level 1)", "f=<(1-p2)^CZ>", "(1-p_ro)^n f", "measured yield", "|B|",
            "E_R − E_0", "recall 99.9%", "fp", "Weinstein", "rejections"], rows)}
 
 {R.criteria_table()}

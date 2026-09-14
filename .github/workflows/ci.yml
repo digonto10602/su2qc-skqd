@@ -12,6 +12,7 @@ jobs:
       - run: pip install -r requirements.txt pytest
       - run: python scripts/check_package.py
       - run: python -m pytest -q tests
+      - run: python scripts/gate_E1.py
       - run: python scripts/gate_E2.py
       - run: python scripts/gate_E3.py
       - run: python scripts/gate_S1.py --quick

@@ -22,7 +22,11 @@ Term gates for exp(-i theta H_gamma), gamma in {diag, hop_l, plaq_P}:
   * hop_l: dense local unitary on the support of reference_sim.term_support
   * plaq_P: structured gate at 2x2 (corner-only plaquettes) with a Gray-code
     uniformly controlled Rz; dense local unitary otherwise (only usable for
-    statevector simulation when the support has <= 12 qubits)
+    statevector simulation when the support has <= 12 qubits; larger supports
+    raise NotImplementedError until the S2-b decomposition exists).
+    Note: the structured gate equals the dense block unitary on the codeword
+    subspace but is NOT the identity on leaked (non-codeword) strings, whereas
+    the dense local unitary is; with noise the two differ on leaked states.
 
 Coarse single-step circuit (manual Step 4.3 b): X gates preparing the reference
 codeword, then the term gates with theta = k dt in the order diag, hop_0, hop_1,
@@ -141,6 +145,11 @@ class CircuitFactory:
             gates += [("cx", [a, b], None) for a, b in zip(q1, q2)]
             return gates
         sup = term_support(self.model, "plaq", P)
+        if len(sup) > 12:
+            raise NotImplementedError(
+                f"plaquette {P} acts on {len(sup)} qubits (interior corners): the dense local unitary would need "
+                f"{(2 ** len(sup)) ** 2 * 16 / 2 ** 30:.1f} GiB; the structured decomposition is the S2-b work item "
+                "(prompts/06). The dressed-basis emulation (krylov.coarse_states) remains exact for this lattice.")
         U = local_unitary(self.model, -self.model.terms.plaq[P] / (2 * self.g2), sup, theta)
         return [("unitary", sup, U)]
 

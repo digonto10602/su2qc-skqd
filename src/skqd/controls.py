@@ -35,7 +35,10 @@ def cipsi(H: sp.csr_matrix, B0, target: int, batch: int = 8) -> np.ndarray:
         if len(N) == 0:
             break
         Hpsi = H @ psi
-        score = np.abs(Hpsi[N]) ** 2 / np.maximum(diag[N] - res.ER, 1e-12)
+        # Epstein-Nesbet second-order importance |<c|H|psi>|^2 / (H_cc - E_R); the denominator is positive
+        # for the ground-state Ritz value in all cases met here, and its magnitude is used (with a floor)
+        # so that a candidate below E_R is scored by |H_cc - E_R| rather than silently promoted
+        score = np.abs(Hpsi[N]) ** 2 / np.maximum(np.abs(diag[N] - res.ER), 1e-12)
         k = min(batch, target - len(B), len(N))
         top = N[np.argsort(score)[::-1][:k]]
         B = np.union1d(B, top)

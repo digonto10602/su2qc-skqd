@@ -1,6 +1,6 @@
 # Structure of the Hamiltonian terms in codeword space (input to gate S2)
 
-Produced by `scripts/report_circuit_structure.py`; numbers stored in `validation/CS.json`.  Environment: Python 3.11.15, numpy 2.4.4, scipy 1.17.1, Linux-6.18.44-fc-v24-x86_64-with-glibc2.39, 2 CPUs, commit bb744b4, 2026-09-14 20:59:41 UTC.
+Produced by `scripts/report_circuit_structure.py`; numbers stored in `validation/CS.json`.  Environment: Python 3.11.15, numpy 2.4.4, scipy 1.17.1, Linux-6.18.44-fc-v24-x86_64-with-glibc2.39, 2 CPUs, commit 3c32216, 2026-09-14 21:37:07 UTC.
 
 Every term of $H$ is exactly gauge invariant on the codeword subspace and acts on a small set of qubits:
 the *support* (touched vertices plus, for hopping, the flux bits of the Jordan–Wigner sites in between, whose
@@ -46,8 +46,8 @@ bits flipped); the pair amplitude $w$ is real and depends only on which corners 
 so $W + W^\dagger = D\,X^{\otimes 8}$ and $e^{-i\theta H_{\rm plaq}} = \exp(+i\tfrac{\theta}{2g^2} D X^{\otimes 8})$ is
 implemented exactly by: CNOT($q_1\to q_2$) per corner (so $q_2$ holds $p_c$), $H$ on the four $q_1$, a CNOT ladder,
 one uniformly controlled $R_z(-\theta w(p)/g^2)$ with the four parity qubits as controls (Gray-code
-decomposition: 16 $R_z$ + 16 CNOT), and the inverse.  Verified against the dense exponential to $10^{-15}$
-(`skqd.reference_sim`, `tests/test_circuits_ir.py`).  Cost: 30 CNOT for the whole plaquette term.
+decomposition: 16 $R_z$ + 16 CNOT), and the inverse.  Verified in this run against the dense exponential on random
+physical states at three angles: max deviation 3.97e-16; CNOT count of the plaquette gate: 30.
 
 ## IR gate counts of one exact coarse step at 2x2
 
@@ -65,3 +65,5 @@ patterns — the pair trick generalizes to a uniformly controlled small unitary 
 |---|---|---|---|
 | 2x2 plaquette: one partner per state (pair structure) | 1 | = 1 | PASS |
 | 2x2 plaquette: distinct pair amplitudes | 4 | = 4 (-2, -1, +1, 1/2) | PASS |
+| 2x2 structured plaquette gate vs dense exponential (random physical states, 3 angles) | 3.974e-16 | < 1e-12 | PASS |
+| 2x2 structured plaquette gate: CNOT count | 30 | = 30 (8 parity + 6 ladder + 16 UCRz) | PASS |

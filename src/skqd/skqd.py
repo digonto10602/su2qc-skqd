@@ -89,12 +89,14 @@ class Certificate:
 def certify(res: RitzResult, exact_E0=None, exact_E1=None) -> Certificate:
     ER, rH, alpha = res.ER, res.rH, res.ER1
     wein = (ER - rH, ER)
-    kt = (ER - rH ** 2 / (alpha - ER), ER) if alpha > ER else None
+    # guard: a second Ritz value (numerically) equal to E_R makes the denominator vanish (near-degenerate
+    # cluster, manual Step 1.5); the interval is then not reported instead of exploding
+    kt = (ER - rH ** 2 / (alpha - ER), ER) if alpha - ER > 1e-6 else None
     cert = Certificate(ER=ER, rH=rH, weinstein=wein, kato_temple=kt, alpha=alpha,
                        exact_E0=exact_E0, exact_E1=exact_E1)
     if exact_E1 is not None:
         cert.gap_assumption_holds = bool(rH < exact_E1 - ER)
-        if exact_E1 > ER:
+        if exact_E1 - ER > 1e-6:
             cert.kt_rigorous = (ER - rH ** 2 / (exact_E1 - ER), ER)
     return cert
 

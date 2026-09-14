@@ -3,8 +3,9 @@
 Rule: every run on the laptop must finish within 30 minutes; if it does not, re-parametrize (fewer shots,
 `--quick`, one sector) and record here what the reduced run showed and what the full run needs.
 
-Measured in the cloud sandbox where this package was built (2 CPUs, 7 GB RAM, numpy 2.4.4 / scipy 1.17.1;
-all times from `validation/*.json`):
+Measured in the cloud sandbox where this package was built (2 CPUs, 7 GB RAM, numpy 2.4.4 / scipy 1.17.1).
+Gate times are the `runtime_s` fields of `validation/*.json`; the S1-quick and test times were read from the
+session log (they are not stored in a JSON):
 
 | step | script | cloud time | laptop estimate | comment |
 |---|---|---|---|---|

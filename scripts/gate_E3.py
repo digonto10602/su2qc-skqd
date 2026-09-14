@@ -107,6 +107,12 @@ def main():
         drows.append([name, g2] + [f"{d.get(q, float('nan')):.4f}" if q in d else "—" for q in ("D0", "MB", "binding", "V1", "V2")]
                      + [", ".join(f"{q}={man[q]}" for q in man)])
 
+    # static sector sizes quoted in the report (also checked in E2)
+    st1, st2 = models["2x3+static(0, 2)"], models["2x3+static(0, 4)"]
+    st_counts = dict(r1=st1.basis.dim, r1_B0=int(len(st1.basis.sector(0))), r2=st2.basis.dim, r2_B0=int(len(st2.basis.sector(0))))
+    R.add("2x3 static sectors: states (r=1, r=1 B=0, r=2, r=2 B=0)", str(st_counts), "= 2729, 1089, 2418, 978",
+          (st_counts["r1"], st_counts["r1_B0"], st_counts["r2"], st_counts["r2_B0"]) == (2729, 1089, 2418, 978))
+
     # B = 1 clusters (near-degeneracies, Step 1.5)
     crow = []
     for name, exp in (("2x2", [0.042]), ("2x3", [0.024, 0.13]), ("2x4", [0.006, 0.12])):
@@ -155,7 +161,7 @@ signature).
 
 $\\Delta_0 = E_1^{{B=0}} - E_0^{{B=0}}$ (meson-like gap), $M_B = E_0^{{B=1}} - E_0^{{B=0}}$ (baryon mass),
 $V(r) = E_0^{{\\text{{static pair at distance }} r, B=0}} - E_0^{{B=0}}$ (static potential, charges on the bottom row).
-The static sectors have 2 729 ($r=1$, $B=0$: 1 089) and 2 418 ($r=2$, $B=0$: 978) states.
+The static sectors have {st_counts['r1']} ($r=1$, $B=0$: {st_counts['r1_B0']}) and {st_counts['r2']} ($r=2$, $B=0$: {st_counts['r2_B0']}) states (computed here).
 
 ## $B = 1$ near-degenerate clusters (Step 1.5)
 
