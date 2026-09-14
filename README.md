@@ -44,6 +44,9 @@ Full table: `validation/gates.md`; plan: `prompts/08_month_plan_and_reporting.md
 
 ## Quick start
 
+**`RUNBOOK.md` is the step-by-step start guide** (unpack → check → reproduce the gates → create the GitHub
+repo → install Qiskit/CUDA-Q → run the laptop gates from Claude Code, with the exact prompts).  The short form:
+
 ```bash
 pip install -r requirements.txt            # numpy, scipy — the physics core
 python scripts/check_package.py            # everything present? gates PASS?

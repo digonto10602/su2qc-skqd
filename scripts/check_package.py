@@ -17,7 +17,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 
 EXPECTED = [
-    "README.md", "CLAUDE.md", "LICENSE", "pyproject.toml", "requirements.txt", "requirements-laptop.txt",
+    "README.md", "RUNBOOK.md", "CLAUDE.md", "LICENSE", "pyproject.toml", "requirements.txt", "requirements-laptop.txt",
     "proposal/SU2QC_Project2_rev2_SKQD_Implementation_Manual.md", "proposal/README.md",
     "prompts/README.md", "prompts/ROUTING.md", "prompts/ESCALATION_TEMPLATE.md", "prompts/00_bootstrap_and_push.md",
     "prompts/01_laptop_L1_reproduce_cloud_gates.md", "prompts/02_laptop_L2_qiskit_check.md",
