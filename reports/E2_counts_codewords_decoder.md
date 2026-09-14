@@ -1,7 +1,7 @@
 # Gate E2 — state counts, vertex tables, codewords and decoder
 
 **Status: PASS** — produced by `scripts/gate_E2.py`; numbers stored in `validation/E2.json`.
-Environment: Python 3.11.15, numpy 2.4.4, scipy 1.17.1, Linux-6.18.44-fc-v24-x86_64-with-glibc2.39, 2 CPUs, commit 5e3fe61, 2026-09-14 20:41:00 UTC.  Runtime 8 s.
+Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.3-arch1-3-x86_64-with-glibc2.44, 12 CPUs, commit 57b3bff, 2026-09-14 16:44:00 MDT.  Runtime 15 s.
 
 ## Vertex-type tables (Step 2.1 of the manual)
 

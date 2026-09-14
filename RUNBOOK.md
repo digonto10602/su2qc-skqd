@@ -1,234 +1,309 @@
-# RUNBOOK — what to type, in order, to start running tests and move the project forward
+# RUNBOOK — autonomous first-session prompt for Claude Code
 
-Machine: the Dell G7 laptop (i7-8750H, GTX 1060 Max-Q, Omarchy), conda env `coding`.
-Everything below is copy-pasteable.  Shell commands are in `bash` blocks; text to type into
-Claude Code is in `text` blocks.  The rule everywhere: **a gate passes only when its script writes
-`"status": "PASS"` into `validation/<GATE>.json`** — never because a model says so.
-
----
-
-## Step 0 — unpack and check (5 min, no Claude needed)
+**How to use this file.** Open a terminal, then:
 
 ```bash
-cd ~/projects                      # or wherever you keep repos
-unzip ~/Downloads/su2qc-skqd-v0.1.0.zip -d su2qc-skqd
-cd su2qc-skqd
-git log --oneline                  # 7 commits — the history is inside the zip
-
-conda activate coding
-pip install -r requirements.txt            # numpy, scipy: the physics core needs nothing else
-python scripts/check_package.py            # must end with: PACKAGE OK
-python scripts/run_tests_no_pytest.py      # 14 passed, 0 failed   (or: pytest -q tests)
-```
-
-If `check_package.py` does not print `PACKAGE OK`, stop and paste its output into Claude — something
-did not survive the transfer.
-
----
-
-## Step 1 — reproduce the four cloud gates on your laptop (gate L1, ~5 min)
-
-```bash
-mkdir -p validation/cloud && cp validation/*.json validation/cloud/   # keep the cloud numbers
-python scripts/run_gate.py E1        # ~2-3 min: [G_a(x),H]=0 in the 160 000-dim space
-python scripts/run_gate.py E2        # ~1 min: counts, codewords, decoder
-python scripts/run_gate.py E3        # ~1 min: Table 1, static sectors, dt = pi/W
-python scripts/run_gate.py S1        # ~2 min: emulation, certification, controls
-```
-
-Each prints a criteria table and `STATUS PASS`.  E1–E3 are deterministic: the values must match
-`validation/cloud/*.json` to machine precision.  A difference there is a real finding (numpy/scipy
-version behaviour) — do not adjust tolerances, escalate it (Step 6).
-
----
-
-## Step 2 — GitHub: create the public repo and push (10 min)
-
-```bash
-gh auth status                      # must show you logged in as digonto10602
-gh repo create digonto10602/su2qc-skqd --public --source=. --remote=origin --push
-```
-
-Without `gh`: create an empty public repo `su2qc-skqd` on github.com, then
-
-```bash
-git remote add origin https://github.com/digonto10602/su2qc-skqd.git
-git push -u origin main             # or master — check: git branch --show-current
-```
-
-From now on every passed gate is pushed with `python scripts/run_gate.py <GATE> --push`.
-Check that the GitHub Actions run (`.github/workflows/ci.yml`: tests + E1 + E2 + E3 + S1-quick) is green.
-
----
-
-## Step 3 — install the quantum stack (10 min)
-
-```bash
-pip install -r requirements-laptop.txt     # qiskit, qiskit-aer, pytest, matplotlib
-python -c "import qiskit, qiskit_aer; print(qiskit.__version__, qiskit_aer.__version__)"
-
-# optional GPU (GTX 1060 Max-Q is sm_61, supported by Aer's GPU statevector):
-pip install qiskit-aer-gpu
-python -c "from qiskit_aer import AerSimulator; print(AerSimulator().available_devices())"
-
-# optional CUDA-Q — either the wheel or the container you already have working:
-pip install cudaq
-# docker run --gpus all -it -v $PWD:/workspace nvcr.io/nvidia/quantum/cuda-quantum:cu13-0.15.1
-```
-
-Qiskit and CUDA-Q were **never executed** in the cloud (PyPI was blocked there), so gates L2 and L5
-are the first real test of `src/skqd/circuits_qiskit.py` and `circuits_cudaq.py`.  The numpy reference
-(`src/skqd/reference_sim.py`, `circuits_ir.py`) is the oracle they are checked against, and it is verified.
-
----
-
-## Step 4 — run the laptop gates with Claude Code
-
-Start Claude Code in the repo (it reads `CLAUDE.md`, `.claude/agents/*`, `.claude/skills/gate/`):
-
-```bash
-cd ~/projects/su2qc-skqd
+cd ~/Projects/su2qc-skqd-v0.1.0
 claude
 ```
 
-The repo ships a `/gate` skill that runs a gate, reads the JSON, pushes on PASS and routes a failure to
-the right agent.  Type these **one at a time**, waiting for each to finish:
+and send Claude exactly this:
 
 ```text
-/gate L2
+Read RUNBOOK.md in this repository and execute it end to end, phase by phase. Follow its hard rules
+literally. Stop and ask me only where the file says to stop.
 ```
 
-```text
-/gate L3 --level 3 --heavy-hex 3
+(Or paste the whole file below the line into Claude Code as one message — it is written as an
+instruction to you, Claude, not as documentation for a human.)
+
+---
+
+# Instructions to Claude
+
+You are running the first working session of the **su2qc-skqd** project: sample-based Krylov quantum
+diagonalization (SKQD) for SU(2) lattice gauge theory with staggered quarks on 2×Lx ladders. The
+repository root is `~/Projects/su2qc-skqd-v0.1.0` and it is already a git repository with 8 commits.
+Your job in this session is to (a) verify the package is intact on this machine, (b) reproduce the four
+already-passing physics gates locally, (c) publish the repository to GitHub, (d) install the quantum
+stack, and (e) run the four laptop gates that have never been executed anywhere, reporting honestly
+what passed and what did not.
+
+Create a task list at the start with one task per phase and keep it updated as you go.
+
+## Hard rules — these override any instinct to be helpful
+
+1. **A gate passes only when its own script writes `"status": "PASS"` into `validation/<GATE>.json`.**
+   Never report a gate as passing because the output "looks right". Read the JSON.
+2. **Never edit a number into a report by hand.** Every number in `reports/*.md` is generated by a
+   script from `validation/*.json` or `data/*.json`. If a report needs a new number, the script that
+   writes the report must compute it.
+3. **Never relax a tolerance, threshold, or criterion to make a gate pass.** If a criterion fails, that
+   is a finding. Record it and escalate per the rule in each phase.
+4. **Never change a physics convention** (`src/skqd/su2.py` link generators, `lattice.py` phases and
+   site ordering, `codec.py` qubit layout, `reference_sim.py` bit order) without stopping and telling me
+   first. If you do change one, gates E1, E2 and E3 must all be re-run in the same session.
+5. **30-minute rule.** No single command may run longer than 30 minutes on this laptop (i7-8750H,
+   GTX 1060 Max-Q, 6 GB VRAM). If one does, kill it, re-run with the reduced parameters named in the
+   phase (`--quick`, fewer shots, one sector), and record in the report both what the reduced run showed
+   and what hardware the full run needs (desktop RTX 3070, Slurm GPU cluster, or QPU).
+6. **Never `git push --force`, never rewrite history, never delete `validation/` or `reports/`.**
+7. If a Python package will not install, record that fact and continue with the phases that do not need
+   it. Do not work around a missing package by faking its output.
+8. Do not start the gate-S2 work (structured circuit decompositions, `prompts/06`) in this session. It
+   is the next session's job; this session ends with a readiness report.
+
+## Phase 0 — orientation and package integrity
+
+```bash
+cd ~/Projects/su2qc-skqd-v0.1.0
+ls
+git log --oneline | head -3
+git status --short
 ```
 
-```text
-/gate L4 --p2 3e-3 --budget-minutes 25
+Expect `CLAUDE.md`, `README.md`, `src/`, `scripts/`, `prompts/`, `reports/`, `validation/`, `proposal/`,
+`.claude/`, a clean working tree, and 8 commits with the most recent being the RUNBOOK commit. If instead
+the files sit one level down (a nested `su2qc-skqd/` directory), `cd` into it and use that as the root for
+everything below; say so in your final report.
+
+Read, in this order: `CLAUDE.md`, `reports/PROJECT_STATUS.md`, `prompts/README.md`, `prompts/ROUTING.md`.
+Skim `README.md`. These tell you what the gates are, which agent runs what, and the conventions you must
+not break.
+
+Then set up the environment and check the package:
+
+```bash
+conda activate coding
+python --version
+pip install -r requirements.txt
+python scripts/check_package.py
+python scripts/run_tests_no_pytest.py
 ```
 
-```text
-/gate L5 --target nvidia
+Pass criteria for this phase: `check_package.py` prints `PACKAGE OK` and lists gates E1, E2, E3, S1 as
+PASS; the test runner prints `14 passed, 0 failed`.
+
+**If `check_package.py` reports missing files or a gate that is not PASS, stop and tell me** — the
+package did not survive the transfer and nothing below is meaningful.
+
+## Phase 1 — gate L1: reproduce the four physics gates on this machine
+
+These four gates were computed in a cloud sandbox. Reproducing them here is the local proof of concept
+and the baseline for everything else. Keep the cloud numbers first:
+
+```bash
+mkdir -p validation/cloud && cp validation/*.json validation/cloud/
+python scripts/run_gate.py E1
+python scripts/run_gate.py E2
+python scripts/run_gate.py E3
+python scripts/run_gate.py S1
 ```
 
-If you prefer plain commands instead of the skill:
+Expected runtimes: E1 about 2–3 minutes (it diagonalizes the Gauss-law operator in the 160 000-dimensional
+redundant space of the 2×2 model), E2 and E3 about a minute each, S1 about two minutes. Each prints a
+criteria table ending in `STATUS PASS`.
+
+Then compare every criterion against the cloud copies:
+
+```bash
+python - <<'PY'
+import json, glob, os
+bad = 0
+for p in sorted(glob.glob("validation/*.json")):
+    q = os.path.join("validation/cloud", os.path.basename(p))
+    if not os.path.exists(q):
+        continue
+    a, b = json.load(open(p)), json.load(open(q))
+    ca = {c["name"]: c["value"] for c in a["criteria"]}
+    cb = {c["name"]: c["value"] for c in b["criteria"]}
+    for k in sorted(set(ca) | set(cb)):
+        va, vb = ca.get(k, "<missing>"), cb.get(k, "<missing>")
+        same = (abs(va - vb) <= 1e-9 * max(1.0, abs(vb))) if isinstance(va, (int, float)) and isinstance(vb, (int, float)) else (va == vb)
+        if not same:
+            bad += 1
+            print(f"DIFF {os.path.basename(p)} :: {k}\n   laptop {va!r}\n   cloud  {vb!r}")
+    print(f"{os.path.basename(p)}: {a['status']} (cloud {b['status']}), {len(ca)} criteria, runtime {a['runtime_s']:.0f}s vs cloud {b['runtime_s']:.0f}s")
+print("ALL CRITERIA MATCH" if bad == 0 else f"{bad} DIFFERENCES — investigate before continuing")
+PY
+```
+
+Pass criteria: all four gates PASS locally, and E1, E2, E3 show `ALL CRITERIA MATCH` (they are
+deterministic). S1 uses a fixed seed and should also match exactly on the same numpy version; small
+differences there are acceptable only if the S1 pass criteria still hold — say so explicitly if that
+happens.
+
+**If a deterministic gate differs from the cloud**, that is a real finding (a numpy/scipy eigensolver or
+degenerate-phase difference). Do not adjust anything. Record the exact values in `validation/BLOCKED.md`,
+tell me, and continue to Phase 2 only after I answer.
+
+Record the four local runtimes — you will need them for the report.
+
+## Phase 2 — publish to GitHub
+
+```bash
+gh auth status
+```
+
+**If `gh` is missing or not authenticated as `digonto10602`, stop and tell me** rather than guessing at
+credentials. Once authenticated:
+
+```bash
+git branch --show-current          # this repo is on 'master'
+gh repo create digonto10602/su2qc-skqd --public --source=. --remote=origin --push
+git remote -v
+```
+
+If you prefer the GitHub default branch name, rename before pushing (`git branch -m master main`) and say
+so in the report; otherwise leave it. After the push, check that the GitHub Actions workflow
+(`.github/workflows/ci.yml`: package check, tests, E1, E2, E3, S1-quick) started, and report its result if
+it finishes within this session (`gh run list --limit 3`, `gh run watch` if it is still running).
+
+From here on, every gate that passes is pushed with `python scripts/run_gate.py <GATE> --push`.
+
+## Phase 3 — install the quantum stack
+
+```bash
+pip install -r requirements-laptop.txt
+python -c "import qiskit, qiskit_aer; print('qiskit', qiskit.__version__, 'aer', qiskit_aer.__version__)"
+```
+
+Optional GPU and CUDA-Q (the GTX 1060 Max-Q is compute capability 6.1, supported by Aer's GPU
+statevector). Try them, and if either fails, record the error and carry on with CPU:
+
+```bash
+pip install qiskit-aer-gpu
+python -c "from qiskit_aer import AerSimulator; print(AerSimulator().available_devices())"
+pip install cudaq
+python -c "import cudaq; print(cudaq.__version__ if hasattr(cudaq,'__version__') else 'cudaq ok')"
+```
+
+If the `cudaq` wheel fails, note that the container `nvcr.io/nvidia/quantum/cuda-quantum:cu13-0.15.1` is
+known to work on this machine with the repository mounted at `/workspace`, and leave gate L5 for a
+container run rather than trying to force the wheel.
+
+Context you need for Phase 4: **Qiskit and CUDA-Q were never executed when this package was built** (the
+build sandbox had no PyPI access). `src/skqd/circuits_qiskit.py` and `src/skqd/circuits_cudaq.py` are
+therefore untested code. The oracle they are checked against — `src/skqd/reference_sim.py` and
+`src/skqd/circuits_ir.py` — is verified: all 28 exact 2×2 coarse-step circuits reproduce the dressed-basis
+emulation to better than 1e-14.
+
+## Phase 4 — the four laptop gates
+
+Run them in order, one at a time, reading the JSON after each. Before each gate, read its prompt file
+(listed below) so you know its pass criteria and escalation rule.
+
+### L2 — Qiskit circuits versus the numpy reference (`prompts/02_laptop_L2_qiskit_check.md`)
 
 ```bash
 python scripts/run_gate.py L2 --push
-python scripts/run_gate.py L3 --level 3 --heavy-hex 3      # expected FAIL of the CZ budget, see below
-python scripts/run_gate.py L4 --p2 3e-3 --budget-minutes 25
+```
+
+(add `--gpu` to the arguments if `qiskit-aer-gpu` imported). This is the most important gate of the
+session: it checks Qiskit statevectors of every 2×2 coarse-step and Trotter circuit against the numpy
+reference to 1e-9, and that every noiseless shot decodes.
+
+Escalation if it fails: an error of order 1 is a qubit-order convention problem — inspect `ir_to_qiskit`
+(`qc.unitary(U, qubits)` takes `qubits[0]` as the least significant bit) and `qiskit_key_to_bits` (counts
+keys have qubit 0 at the right). An error around 1e-6 is a `UnitaryGate` normalisation or transpose issue
+— isolate it by comparing a single two-qubit `unitary` IR gate against `Statevector`. Use the
+`executor-opus` agent at high effort for the fix, re-run, and if it fails twice, stop and escalate to
+`planner-fable` at max effort with `prompts/ESCALATION_TEMPLATE.md`.
+
+### L3 — transpiled CZ counts (`prompts/03_laptop_L3_cz_counts_S2.md`)
+
+```bash
+python scripts/run_gate.py L3 --level 3 --heavy-hex 3
+```
+
+**This gate is expected to FAIL its budget criterion and that is the correct outcome.** It measures the CZ
+count of generic synthesis of the exact 6–8-qubit hopping unitaries, which is far above the manual's
+budget of ≤ 250 CZ per coarse step at 2×2 and ≤ 500 at 2×3. The numbers are the deliverable: they are the
+baseline that the structured decomposition (gate S2, next session) has to beat. Commit and push the JSON
+and report even though the status is FAIL, with a commit message saying it is the expected baseline. Do
+not escalate this failure and do not try to fix it here. If transpilation itself errors out, retry once at
+`--level 1` and then report.
+
+If an 8-qubit `UnitaryGate` synthesis at level 3 pushes the run past 30 minutes, kill it and re-run with
+`--level 2`, then say which level produced the numbers.
+
+### L4 — Aer noise model (`prompts/04_laptop_L4_aer_noise_S3.md`)
+
+```bash
+cp validation/L4.json validation/L4_previous.json 2>/dev/null
+python scripts/run_gate.py L4 --p2 3e-3 --budget-minutes 25 --push
+cp validation/L4.json validation/L4_p2_3e-3.json
+python scripts/run_gate.py L4 --p2 1e-3 --budget-minutes 25
+cp validation/L4.json validation/L4_p2_1e-3.json
+```
+
+The script measures a 1000-shot pilot and scales the shots per circuit so both sectors finish inside the
+25-minute budget, so the 30-minute rule is satisfied by construction. Record, for the report: the shots per
+circuit it chose, the seconds per shot, the measured yields, and — computing it yourself from the measured
+rate — how long a 2×3 production run (20 qubits, 32–44 circuits per sector, 2×10⁵ shots per sector) would
+take on this laptop. If that estimate exceeds 30 minutes, note in `reports/laptop_vs_hpc_plan.md` that the
+2×3 noisy simulation belongs on the desktop RTX 3070 or the cluster (have the `scribe-haiku` agent make
+that edit; it must not change any number).
+
+Escalation: if the measured yield is far below the proxy at the transpiled CZ count, that is the S2 depth
+problem showing up, not an L4 failure — say so and move on. If the exact E₀ falls outside the Weinstein
+interval, that is a real problem with the decoder or sector filter: check the rejection counts in the JSON
+and escalate to `planner-fable`.
+
+### L5 — CUDA-Q on the GPU (`prompts/05_laptop_L5_cudaq_check.md`)
+
+```bash
 python scripts/run_gate.py L5 --target nvidia
 ```
 
-What each one is:
+The script first runs two convention tests (the order of CUDA-Q result strings, and whether
+`register_operation` treats the first qubit argument as the most or least significant bit) and only then
+compares a sampled 2×2 circuit against the numpy reference. If the endianness test flips the flag, make
+that the default in `src/skqd/circuits_cudaq.py` (`BIG_ENDIAN`), note it in the report, and re-run.
 
-| gate | what it proves | expected |
-|---|---|---|
-| L2 | Qiskit statevectors of all 28 2x2 circuits equal the numpy reference; noiseless Aer shots all decode | PASS |
-| L3 | transpiled CZ count per coarse step (all-to-all and heavy-hex) | **FAIL is the expected result** — it measures the generic-synthesis baseline that gate S2 must beat; push the numbers anyway |
-| L4 | Aer noise model → yield, support recall, certified interval; applies the 30-minute rule by scaling shots | PASS |
-| L5 | CUDA-Q on the GPU, after two convention tests (result-string order, `register_operation` endianness) | PASS |
+Fallbacks, in order: `--target qpp-cpu` if the GPU target is unavailable; the CUDA-Q container if the wheel
+is not installed. If `register_operation` refuses the 256×256 hopping matrices, record that precisely — it
+is an argument for the structured decomposition of gate S2 — and do not try to force it.
 
-Before starting each one you can have Claude read the matching prompt file, which states the pass
-criteria and the escalation rule:
+On PASS: `python scripts/run_gate.py L5 --push`.
 
-```text
-Read prompts/02_laptop_L2_qiskit_check.md and execute it exactly, then report the JSON status.
-```
-
----
-
-## Step 5 — the real open problem (gate S2): structured circuits within the CZ budget
-
-This is the one piece of genuine work left before hardware.  The exact hopping terms are currently
-generic 6–11-qubit block unitaries; the budget is $\le 250$ CZ per coarse step at 2×2 and $\le 500$ at 2×3.
-The structure that makes it possible is already computed (`reports/circuit_structure.md`,
-`validation/CS.json`): each hopping term flips at most four qubits, connects chains of at most three (2×2)
-or four (2×3) configurations, and has only 3–6 distinct matrix-element magnitudes — a handful of
-controlled Givens rotations, not a dense unitary.  The 2×2 plaquette is already solved this way
-(a 30-CNOT pair rotation $W+W^\dagger = D\,X^{\otimes 8}$).
-
-In Claude Code:
-
-```text
-Read prompts/06_S2b_plaquette_interior_and_hopping_decomposition.md, reports/circuit_structure.md
-and src/skqd/circuits_ir.py. Use the executor-opus agent at high effort to implement the structured
-hopping gates first (2x2 only), verify them against skqd.reference_sim.local_unitary on 20 random
-physical states for theta in {dt, 2dt, 4dt} to 1e-10, add the test to tests/test_circuits_ir.py,
-and re-measure the CZ count with scripts/laptop_L3_cz_counts.py before touching the 2x3 plaquettes.
-```
-
-Do 2×2 hopping first and only then the 2×3 interior-corner plaquettes — the prompt says the same, and
-it keeps each verification cheap.
-
----
-
-## Step 6 — when a gate fails
-
-`scripts/run_gate.py` writes `validation/BLOCKED.md` with the failing criteria.  Then, in Claude Code:
-
-```text
-A gate failed. Read validation/BLOCKED.md and validation/<GATE>.json, then use the planner-fable
-agent at max effort to diagnose it and write the fix prompt as prompts/NN_<gate>_fix_<date>.md
-following prompts/ESCALATION_TEMPLATE.md. Do not change any physics convention without saying so
-explicitly, and do not relax a tolerance to make a gate pass.
-```
-
-Then hand the fix prompt to the executor:
-
-```text
-Execute prompts/NN_<gate>_fix_<date>.md with the executor-opus agent at high effort. Re-run the gate
-and, if src/skqd physics changed, re-run E1, E2 and E3 as well.
-```
-
-Model routing (why it is set up this way: Fable is the expensive one, so it only plans and unblocks):
-
-| task | agent | model | effort |
-|---|---|---|---|
-| plan a step, diagnose a blocked gate, physics decision | `planner-fable` | Fable 5.1 | max |
-| implement code, decompositions, analysis | `executor-opus` | Opus | high |
-| review a passed gate before the push | `reviewer-opus` | Opus | medium |
-| run gates, tests, transpilations | `runner-sonnet` | Sonnet | low |
-| update status tables and logs | `scribe-haiku` | Haiku | low |
-
-Escalate effort inside a model once (`high` → `xhigh`) before escalating the model.
-
----
-
-## Step 7 — keeping the bookkeeping straight
+## Phase 5 — bookkeeping
 
 ```bash
-python scripts/update_status.py     # regenerates validation/gates.md and reports/PROJECT_STATUS.md
-make check                          # package check
-make test                           # tests
-make gates                          # E1 + E2 + E3 + S1
+python scripts/update_status.py
+python scripts/check_package.py
+git add -A && git commit -m "L1-L5 session on the laptop: <one line summary>" && git push
 ```
 
-After every gate, append one line to `prompts/LOG.md` (prompt file, gate, result, commit, notes).
-In Claude Code the scribe does it:
+Append one row per gate to `prompts/LOG.md` (date, prompt file, gate, agent/model used, result, commit
+hash, notes). You may delegate this to the `scribe-haiku` agent; it must copy numbers verbatim from the
+JSONs and change none of them.
 
-```text
-Use the scribe-haiku agent to update reports/PROJECT_STATUS.md, validation/gates.md and
-prompts/LOG.md from the validation JSONs. It must not change any number.
-```
+## Phase 6 — final report to me
 
----
+Write your closing message as a short prose report (no bullet lists) containing:
 
-## Suggested first session, end to end
+- whether the package check and the 14 tests passed, and the Python/numpy/scipy versions used;
+- the four physics gates: PASS/FAIL, local runtimes, and whether every criterion matched the cloud values;
+- the GitHub repository URL and whether CI is green;
+- which of qiskit, qiskit-aer, qiskit-aer-gpu and cudaq installed, with versions;
+- for each of L2, L3, L4, L5: status, the single most important number (L2: max statevector deviation;
+  L3: CZ per coarse step, all-to-all and routed; L4: measured yield versus the model and the certified
+  interval; L5: the two conventions found and the total-variation distance), and any fix you had to make;
+- the estimate of what a 2×3 production run would cost on this laptop versus the desktop or the cluster;
+- and a plain statement of what is now blocking hardware, which should be gate S2 (structured hopping and
+  interior-corner plaquette gates within the CZ budget) unless something else failed.
 
-```bash
-cd ~/projects/su2qc-skqd && conda activate coding
-pip install -r requirements.txt && python scripts/check_package.py && python scripts/run_tests_no_pytest.py
-python scripts/run_gate.py E1 && python scripts/run_gate.py E2 && python scripts/run_gate.py E3 && python scripts/run_gate.py S1
-gh repo create digonto10602/su2qc-skqd --public --source=. --remote=origin --push
-pip install -r requirements-laptop.txt
-claude
-```
+End with the one command I should run to start the next session, which — if L2 and L4 passed — is to open
+Claude Code and ask it to execute `prompts/06_S2b_plaquette_interior_and_hopping_decomposition.md` with the
+`executor-opus` agent at high effort, doing the 2×2 hopping terms before the 2×3 plaquettes.
 
-then, inside Claude Code:
+## Agents available in this repository
 
-```text
-/gate L2
-```
-
-That is the whole first day: the physics core reproduced on your machine, the repo public, and the
-first circuit-level gate run.  The four-week plan from there is `prompts/08_month_plan_and_reporting.md`.
+`.claude/agents/` defines five agents; use them rather than doing everything inline, so that the expensive
+model is only spent where it changes the outcome: `runner-sonnet` (low effort) runs gates, tests and
+transpilations and never edits source; `executor-opus` (high effort) implements fixes; `reviewer-opus`
+(medium effort) audits a passed gate before the push; `scribe-haiku` (low effort) updates status tables and
+logs and never touches a number; `planner-fable` (max effort) is for a blocked gate or a physics decision
+only — do not call it for anything routine. There is also a `/gate <GATE>` skill that wraps the
+run → read JSON → push → route-on-failure sequence.

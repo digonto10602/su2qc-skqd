@@ -1,13 +1,13 @@
 # Gate E3 — exact references, static sectors, derived quantities, Krylov step
 
 **Status: PASS** — produced by `scripts/gate_E3.py`; all numbers computed in this run, stored in
-`validation/E3.json` and `data/references.json`.  Environment: Python 3.11.15, numpy 2.4.4, scipy 1.17.1, Linux-6.18.44-fc-v24-x86_64-with-glibc2.39, 2 CPUs, commit 3c32216, 2026-09-14 21:37:02 UTC.  Runtime 13 s.
+`validation/E3.json` and `data/references.json`.  Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.3-arch1-3-x86_64-with-glibc2.44, 12 CPUs, commit 57b3bff, 2026-09-14 16:44:36 MDT.  Runtime 36 s.
 
 Parameters: $m = 3g^2/16$ (the manual's line), $j_{\max} = \tfrac12$.  Dense diagonalization for sectors up to
 4 000 states, Lanczos (`scipy.sparse.linalg.eigsh`) above.  $W = E_{\max} - E_{\min}$ is the spectral width of the
 sector block and $\Delta t = \pi/W$ the anti-aliasing Krylov step; the support $S_\epsilon$ is the smallest set of
 configurations carrying $1-\epsilon$ of the ground-state weight; $\mathrm{PR} = 1/\sum_b |\langle b|\Omega\rangle|^4$
-is the participation ratio.  Builder times: 2x2 0.1 s, 2x3 0.6 s, 2x4 4.6 s, 2x3+static(0, 2) 1.2 s, 2x3+static(0, 4) 0.8 s
+is the participation ratio.  Builder times: 2x2 0.2 s, 2x3 1.5 s, 2x4 10.0 s, 2x3+static(0, 2) 3.0 s, 2x3+static(0, 4) 1.9 s
 (the manual quotes 22 s for 2x3 and 17 min for 2x4 in plain numpy; this builder caches matrix elements by local
 signature).
 

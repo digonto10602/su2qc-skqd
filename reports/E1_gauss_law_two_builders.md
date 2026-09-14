@@ -1,7 +1,7 @@
 # Gate E1 — Gauss's law, kernel, sector split, two-builder agreement (2x2)
 
 **Status: PASS** — produced by `scripts/gate_E1.py`; every number below was computed in this run
-and is stored in `validation/E1.json`.  Environment: Python 3.11.15, numpy 2.4.4, scipy 1.17.1, Linux-6.18.44-fc-v24-x86_64-with-glibc2.39, 2 CPUs, commit 5e3fe61, 2026-09-14 20:40:08 UTC.  Runtime 104 s.
+and is stored in `validation/E1.json`.  Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.3-arch1-3-x86_64-with-glibc2.44, 12 CPUs, commit 57b3bff, 2026-09-14 16:43:44 MDT.  Runtime 427 s.
 
 ## What was checked
 
@@ -41,9 +41,9 @@ truncated space for every $j_{\max}$ (checked at $j_{\max} = \tfrac12, 1$).
 | max |[G_a(x), H]| over x, a | 0 | < 1e-12 | PASS |
 | kernel dimension of sum G_a(x)^2 (block diagonalization) | 82 | = 82 | PASS |
 | kernel sector split | {-4: 2, -2: 20, 0: 38, 2: 20, 4: 2} | = {-4:2,-2:20,0:38,2:20,4:2} | PASS |
-| kernel basis orthonormal | 1.110e-15 | < 1e-12 | PASS |
-| max |G_a(x) P| | 4.458e-16 | < 1e-12 | PASS |
-| max |eig(P^dag H P) - eig(H_dressed)| (all 82 levels) | 2.132e-14 | < 1e-12 | PASS |
+| kernel basis orthonormal | 1.776e-15 | < 1e-12 | PASS |
+| max |G_a(x) P| | 4.632e-16 | < 1e-12 | PASS |
+| max |eig(P^dag H P) - eig(H_dressed)| (all 82 levels) | 2.309e-14 | < 1e-12 | PASS |
 | embedded dressed states orthonormal | 4.441e-16 | < 1e-12 | PASS |
 | max |G_a(x) |b>| for embedded dressed states | 0 | < 1e-12 | PASS |
 | element-wise |<b'|H_full|b> - H_dressed[b',b]| | 3.553e-15 | < 1e-12 | PASS |
@@ -55,7 +55,7 @@ truncated space for every $j_{\max}$ (checked at $j_{\max} = \tfrac12, 1$).
 | 2x2 B1 pi/W vs manual 0.332 | 0.332 | |diff| <= 5e-4 | PASS |
 | 2x2 B1 E2 vs manual 0.2082 | 0.2082 | |diff| <= 5e-5 | PASS |
 
-## 2x2 spectrum (route A = route B to 2.1e-14) versus Table 1 of the manual
+## 2x2 spectrum (route A = route B to 2.3e-14) versus Table 1 of the manual
 
 | sector | dim | E0 | next levels | pi/W |
 |---|---|---|---|---|
@@ -73,7 +73,7 @@ $-1.8197, 0.2082$, $\pi/W = 0.332$.  All reproduced to the printed precision.
 * The block-diagonalization kernel has dimension 82 with sectors 2/20/38/20/2, and the embedded dressed-site
   states are annihilated by every $G_a(x)$ and reproduce the builder's matrix elements **element by element**
   (not only the spectrum), which validates the contraction formula, the JW signs and the hopping phases.
-* Route A builds the 2x2 Hamiltonian in well under a second; route B needs 95 s for the kernel and is
+* Route A builds the 2x2 Hamiltonian in well under a second; route B needs 417 s for the kernel and is
   used only as the independent check.
 
 ## Reproduce

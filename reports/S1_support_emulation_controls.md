@@ -1,7 +1,7 @@
 # Gate S1 — emulated support generation, certification and classical controls
 
 **Status: PASS** — produced by `scripts/gate_S1.py` (means over 3 repetitions); every number computed in this
-run, stored in `validation/S1.json` and `data/S1_emulation.json`.  Environment: Python 3.11.15, numpy 2.4.4, scipy 1.17.1, Linux-6.18.44-fc-v24-x86_64-with-glibc2.39, 2 CPUs, commit 3c32216, 2026-09-14 21:38:22 UTC.  Runtime 75 s.
+run, stored in `validation/S1.json` and `data/S1_emulation.json`.  Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.3-arch1-3-x86_64-with-glibc2.44, 12 CPUs, commit 57b3bff, 2026-09-14 16:48:20 MDT.  Runtime 223 s.
 
 Setting: 2x3 ladder (20 qubits, 1 727 states; sectors $B=0$: 677, $B=1$: 426), $g^2 = 4$, $m = 0.75$,
 $\Delta t = \pi/W_B$ per sector (0.156 for $B=0$, 0.187 for $B=1$).
@@ -106,7 +106,7 @@ Subspace-closure diagnostic $\|(1-P_B)e^{-iH\Delta t}\psi_R\|$ (a convergence mo
 | B=0 | device-seeded CIPSI | 1.1e-01 | 2.6e-02 | 1.1e-02 | 1.4e-03 | 8.0e-05 |
 | B=1 | oracle | 1.3e-01 | 5.7e-02 | 1.0e-02 | 9.8e-04 | 6.5e-06 |
 | B=1 | CIPSI | 6.6e-02 | 2.4e-02 | 1.4e-02 | 1.0e-03 | 6.7e-06 |
-| B=1 | ML alone (ridge) | 1.4e-01 | 7.1e-02 | 1.5e-02 | 3.9e-03 | 9.5e-05 |
+| B=1 | ML alone (ridge) | 1.4e-01 | 6.9e-02 | 1.5e-02 | 3.9e-03 | 9.5e-05 |
 | B=1 | BFS | 2.1e-01 | 1.0e-01 | 4.6e-02 | 9.0e-03 | 5.9e-04 |
 | B=1 | random (refs incl.) | 7.7e-01 | 6.6e-01 | 4.7e-01 | 2.7e-01 | 1.0e-01 |
 | B=1 | random (no refs) | 1.7e+00 | 2.6e+00 | 1.5e+00 | 5.6e-01 | 3.7e-01 |
@@ -131,7 +131,7 @@ Spearman rank correlation with $\log|\langle b|\Omega\rangle|$ on the test secto
 
 | sector | Spearman ρ |
 |---|---|
-| B=0 | 0.861 |
+| B=0 | 0.862 |
 | B=1 | 0.888 |
 
 (manual: 0.85 for $B=0$, 0.89 for $B=1$ with its own 16 features).
@@ -155,10 +155,10 @@ Spearman rank correlation with $\log|\langle b|\Omega\rangle|$ on the test secto
 | CIPSI, |B|=320 | 320 | 8.2e-03 | 1.00 | 0 |
 | CIPSI, |B|=640 | 640 | 2.7e-03 | 1.00 | 0 |
 | ML alone (ridge, transfer), |B|=320 | 320 | 1.5e-02 | 0.84 | 24 |
-| ML alone (ridge, transfer), |B|=640 | 640 | 7.1e-03 | 0.98 | 94 |
+| ML alone (ridge, transfer), |B|=640 | 640 | 7.1e-03 | 0.98 | 95 |
 
 Manual (Step 6.2): device support with f = 0.1 and 2e5 shots: |B| = 544, error 7.5e-3, recall 0.94; CIPSI 2.7e-3 at |B| = 640 (oracle 2.75e-3); ML-alone 8.4e-3 and recall 0.95 at |B| = 640.
-ML transfer Spearman on 2x4 B=0: 0.764.
+ML transfer Spearman on 2x4 B=0: 0.763.
 
 ## Interpretation
 
@@ -179,7 +179,7 @@ ML transfer Spearman on 2x4 B=0: 0.764.
 | S1 criterion: 2x3 B=1, f=0.1, 2e5 shots: recall of 99.9% support | 0.989 | >= 0.9 | PASS |
 | 2x3 B=1, f=0.1: exact E0 inside the Weinstein interval | -3.8261 in [-3.9088, -3.8251] | contains E0 | PASS |
 | M_B interval (Weinstein, f=0.1) contains the exact baryon mass | [1.6935, 1.8314] | contains 1.7765 | PASS |
-| ML ridge (leakage-safe) Spearman rank correlation, 2x3 g2=4 B=0 | 0.861 | > 0.7 (manual 0.85 / 0.89) | PASS |
+| ML ridge (leakage-safe) Spearman rank correlation, 2x3 g2=4 B=0 | 0.862 | > 0.7 (manual 0.85 / 0.89) | PASS |
 | ML ridge (leakage-safe) Spearman rank correlation, 2x3 g2=4 B=1 | 0.888 | > 0.7 (manual 0.85 / 0.89) | PASS |
 | controls: CIPSI within 3x of oracle at |B|=160, B=0 | 1.2e-03 vs 1.2e-03 | CIPSI <= 3 x oracle | PASS |
 | controls: CIPSI within 3x of oracle at |B|=320, B=0 | 6.5e-05 vs 6.7e-05 | CIPSI <= 3 x oracle | PASS |
