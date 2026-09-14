@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "skqd"
+version = "0.1.0"
+description = "Sample-based Krylov quantum diagonalization for SU(2) lattice gauge theory with staggered quarks on 2xLx ladders (SU2QC Project 2)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Digonto", email = "digonto10602@gmail.com"}]
+dependencies = ["numpy>=1.26", "scipy>=1.11"]
+
+[project.optional-dependencies]
+laptop = ["qiskit>=1.2", "qiskit-aer>=0.15", "pytest>=7", "matplotlib>=3.8"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

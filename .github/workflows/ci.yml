@@ -1,0 +1,23 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  tests-and-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt pytest
+      - run: python scripts/check_package.py
+      - run: python -m pytest -q tests
+      - run: python scripts/gate_E2.py
+      - run: python scripts/gate_E3.py
+      - run: python scripts/gate_S1.py --quick
+      - uses: actions/upload-artifact@v4
+        with:
+          name: validation-and-reports
+          path: |
+            validation/*.json
+            reports/*.md
