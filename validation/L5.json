@@ -1,0 +1,60 @@
+{
+ "gate": "L5",
+ "title": "CUDA-Q circuits versus the numpy reference at 2x2",
+ "status": "PASS",
+ "criteria": [
+  {
+   "name": "cudaq importable",
+   "value": "CUDA-Q Version 0.15.1 (https://github.com/NVIDIA/cuda-quantum aca5853a76d499ecc3d5f97c2e06163ae99d9c75)",
+   "threshold": "installed",
+   "passed": true
+  },
+  {
+   "name": "result-string order test (X on qubit 0 of 3)",
+   "value": "100",
+   "threshold": "'100' (qubit 0 first) or '001' (qubit 0 last)",
+   "passed": true
+  },
+  {
+   "name": "register_operation convention determined (custom CNOT = x.ctrl)",
+   "value": "BIG_ENDIAN=True, 11 vs 11",
+   "threshold": "custom CNOT acts like x.ctrl under the chosen flag",
+   "passed": true
+  },
+  {
+   "name": "noiseless sampling: accepted shots",
+   "value": "10000/10000",
+   "threshold": "= all shots",
+   "passed": true
+  },
+  {
+   "name": "total-variation distance to the exact distribution",
+   "value": 0.017,
+   "threshold": "< 0.272",
+   "passed": true
+  }
+ ],
+ "data": {
+  "target": "qpp-cpu",
+  "sampling_time_s": 1.274019479751587,
+  "shots": 10000,
+  "BIG_ENDIAN": true,
+  "qubit0_first": true,
+  "rejections": {
+   "flag": 0,
+   "link": 0,
+   "sector": 0,
+   "unknown": 0
+  }
+ },
+ "runtime_s": 3.622657537460327,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.2",
+  "scipy": "1.18.0",
+  "platform": "Linux-7.2.3-arch1-3-x86_64-with-glibc2.44",
+  "cpu_count": 12,
+  "git_commit": "41b83c1",
+  "timestamp": "2026-09-14 17:39:31 MDT"
+ }
+}

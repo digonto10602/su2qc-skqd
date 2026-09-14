@@ -42,7 +42,7 @@ def string_order_test():
         x(q[0])
         mz(q)
 
-    key = list(cudaq.sample(x0, shots_count=10).keys())[0]
+    key = cudaq.sample(x0, shots_count=10).most_probable()
     return key  # '100' -> qubit 0 first, '001' -> qubit 0 last
 
 
@@ -76,8 +76,8 @@ def t_native():
     spec = importlib.util.spec_from_file_location(f"skqd_cudaq_t_{tag}", path)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    k1 = list(cudaq.sample(mod.t_custom, shots_count=10).keys())[0]
-    k2 = list(cudaq.sample(mod.t_native, shots_count=10).keys())[0]
+    k1 = cudaq.sample(mod.t_custom, shots_count=10).most_probable()
+    k2 = cudaq.sample(mod.t_native, shots_count=10).most_probable()
     return k1 == k2, k1, k2
 
 
