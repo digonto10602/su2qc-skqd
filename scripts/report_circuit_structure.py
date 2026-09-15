@@ -60,7 +60,7 @@ def main():
     R.add("2x2 plaquette: one partner per state (pair structure)", R.data["2x2|plaq0"]["max_degree"], "= 1", R.data["2x2|plaq0"]["max_degree"] == 1)
     R.add("2x2 plaquette: distinct pair amplitudes", len(set(round(v, 8) for v in table.values())), "= 4 (-2, -1, +1, 1/2)",
           set(round(v, 8) for v in table.values()) == {-2.0, -1.0, 1.0, 0.5})
-    F = CircuitFactory(M2, 4.0)
+    F = CircuitFactory(M2, 4.0, structured_hopping=False)  # this report describes the dense baseline
     dt = M2.reference(4.0, 0).dt
     gc = gate_counts(F.coarse_step(references(M2.basis, 0)[0], 1, dt))
     # structured plaquette gate versus the dense exponential on random physical states

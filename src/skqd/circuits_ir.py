@@ -175,6 +175,9 @@ def _generic_two_level(U, tol=1e-13):
     """Any n x n unitary as two-level ops [(i, j, V)] in CIRCUIT order (first entry acts
     first); V acts in the basis (i, j).  Exact by construction (Givens elimination)."""
     n = U.shape[0]
+    if n == 1:
+        assert abs(U[0, 0] - 1) < 1e-10, "a 1x1 block must be gauge-fixed to 1"
+        return []
     M = np.array(U, dtype=complex)
     ops = []
     for j in range(n - 1):
@@ -199,26 +202,153 @@ def _generic_two_level(U, tol=1e-13):
     return circ
 
 
-def _block_two_level_ops(hblk, theta):
-    """exp(-i theta hblk) as two-level ops in circuit order.  A three-configuration chain
-    with zero diagonal is done exactly as G . R . G^dag: one fixed Givens rotation that turns
-    the two chain ends into the single state that h connects the centre to, one two-level
-    rotation, and the inverse Givens -- three ops on only two flip patterns."""
-    n = hblk.shape[0]
+def _bipartition(A):
+    """2-colouring of the block graph, or None if it is not bipartite."""
+    n = A.shape[0]
+    col = [-1] * n
+    col[0] = 0
+    stack = [0]
+    while stack:
+        i = stack.pop()
+        for j in range(n):
+            if A[i, j]:
+                if col[j] == -1:
+                    col[j] = 1 - col[i]
+                    stack.append(j)
+                elif col[j] == col[i]:
+                    return None
+    if -1 in col:
+        return None
+    return col
+
+
+def _real_gauge(states, h):
+    """Find a linear functional f (a bit mask over the support) such that the diagonal gauge
+    D = diag(i^{f.z}) makes D^dag h D purely imaginary, h = i A with A real antisymmetric.
+    Then exp(-i theta h) = D exp(theta A) D^dag with exp(theta A) REAL orthogonal, so every
+    two-level rotation of the decomposition is a real rotation and one uniformly controlled
+    Ry per schedule step is enough.  Returns (f, A) or None."""
+    idx = np.argwhere(np.abs(h) > 1e-12)
+    ds = sorted({int(states[i]) ^ int(states[j]) for i, j in idx if i != j})
+    if not ds:
+        return 0, np.real(np.imag(h))
+    if np.abs(np.real(h)).max() < 1e-11:              # already purely imaginary
+        return 0, np.real(np.imag(h))
+    # solve f . d = 1 (mod 2) for every difference pattern d (Gaussian elimination over F2)
+    piv = []
+    for d in ds:
+        v, r = d, 1
+        for (p, pv, pr) in piv:
+            if (v >> p) & 1:
+                v ^= pv
+                r ^= pr
+        if v == 0:
+            if r:
+                return 0, -1j * h            # no such gauge: keep the complex generator
+        else:
+            piv.append((v.bit_length() - 1, v, r))
+    f = 0
+    for (p, pv, pr) in sorted(piv):
+        if pr ^ (bin(pv & f & ~(1 << p)).count("1") % 2):
+            f |= 1 << p
+    for d in ds:
+        assert bin(f & d).count("1") % 2 == 1
+    phi = np.array([bin(f & int(z)).count("1") % 2 for z in states])
+    g = (1j) ** (phi[None, :] - phi[:, None])
+    h2 = h * g
+    if np.abs(np.real(h2)).max() > 1e-11:
+        return 0, -1j * h
+    return f, np.real(np.imag(h2))
+
+
+def _gauge_gates(f, k):
+    """Circuit for D = diag(i^{f.z}) on the support (local qubit indices)."""
+    bits = [q for q in range(k) if (f >> q) & 1]
+    if not bits:
+        return [], []
+    t = bits[0]
+    cn = [("cx", [q, t], None) for q in bits[1:]]
+    return cn + [("p", [t], np.pi / 2)] + cn[::-1], cn + [("p", [t], -np.pi / 2)] + cn[::-1]
+
+
+def _block_rounds(A, theta):
+    """exp(theta A) (A real antisymmetric = -i h) as a list of ROUNDS of two-level ops; ops
+    inside a round act on disjoint pairs and commute.  Every block of the SU(2) Hamiltonian
+    is bipartite with a zero diagonal -- a hopping term changes n_x by one, a plaquette flips
+    all four link spins -- so A = [[0, K], [-K^T, 0]] in the two-colour basis and, with the
+    real singular value decomposition K = U S V^T,
+
+        exp(theta A) = (U + V) . [pair rotations of angle theta s_i] . (U + V)^T,
+
+    i.e. one basis change inside each colour class (a single real two-level rotation when the
+    class has two states) and one round of independent two-level rotations between the paired
+    states.  For a three-configuration chain this is the Givens-chain construction (|B| = 1,
+    one rotation, three rounds); a four-configuration chain of 2x3 also needs three rounds
+    instead of the six two-level unitaries of a generic 4x4 unitary."""
+    n = A.shape[0]
     if n == 1:
-        assert abs(hblk[0, 0]) < 1e-12, "isolated configuration with a diagonal element"
+        assert abs(A[0, 0]) < 1e-12, "isolated configuration with a diagonal element"
         return []
-    A = np.abs(hblk) > 1e-12
-    np.fill_diagonal(A, False)
-    if n == 3 and np.abs(np.diag(hblk)).max() < 1e-12 and _chain_order(A) is not None:
-        e1, c, e2 = _chain_order(A)
-        w1, w2 = hblk[e1, c], hblk[e2, c]
-        lam = float(np.hypot(abs(w1), abs(w2)))
-        G = np.array([[np.conj(w2), w1], [-np.conj(w1), w2]], dtype=complex) / lam
-        t = theta * lam
-        R = np.array([[np.cos(t), -1j * np.sin(t)], [-1j * np.sin(t), np.cos(t)]], dtype=complex)
-        return [(e1, e2, G.conj().T), (c, e2, R), (e1, e2, G)]
-    return _generic_two_level(sla.expm(-1j * theta * hblk))
+    Adj = np.abs(A) > 1e-12
+    np.fill_diagonal(Adj, False)
+    col = _bipartition(Adj)
+    if col is None or np.abs(np.diag(A)).max() > 1e-12:
+        return [[op] for op in _generic_two_level(sla.expm(theta * A).astype(complex))]
+    ia = [i for i in range(n) if col[i] == 0]
+    ib = [i for i in range(n) if col[i] == 1]
+    K = A[np.ix_(ia, ib)]
+    U, S, Vt = np.linalg.svd(K)
+    V = Vt.conj().T.copy()
+    U = U.copy()
+    for X in (U, V):        # gauge: largest entry of each column real > 0, det = +1 (a proper
+        for i in range(X.shape[1]):                      # rotation, so that no reflection --
+            j = int(np.argmax(np.abs(X[:, i])))          # which is not a y-rotation -- appears)
+            X[:, i] = X[:, i] * (np.conj(X[j, i]) / abs(X[j, i]))
+        d = np.linalg.det(X)
+        if abs(d - 1) > 1e-9:
+            X[:, -1] = X[:, -1] * np.conj(d)
+    Bas = np.zeros((n, n), dtype=U.dtype)
+    Bas[np.ix_(ia, ia)] = U
+    Bas[np.ix_(ib, ib)] = V
+    W0 = Bas.conj().T @ sla.expm(theta * A) @ Bas       # decoupled on the singular pairs
+    opsU = _generic_two_level(U.conj().T.astype(complex))
+    opsV = _generic_two_level(V.conj().T.astype(complex))
+    rounds = []
+    for r in range(max(len(opsU), len(opsV))):
+        rd = []
+        if r < len(opsU):
+            i, j, W = opsU[r]
+            rd.append((ia[i], ia[j], W))
+        if r < len(opsV):
+            i, j, W = opsV[r]
+            rd.append((ib[i], ib[j], W))
+        rounds.append(rd)
+    rd = []
+    chk = np.array(W0, dtype=complex)
+    for i in range(min(len(ia), len(ib))):
+        pr = [ia[i], ib[i]]
+        Mi = W0[np.ix_(pr, pr)].astype(complex)
+        chk[np.ix_(pr, pr)] = np.eye(2)
+        if np.abs(Mi - np.eye(2)).max() > 1e-14:
+            rd.append((ia[i], ib[i], Mi))
+    for i in range(min(len(ia), len(ib)), max(len(ia), len(ib))):
+        j = ia[i] if len(ia) > len(ib) else ib[i]
+        chk[j, j] = 1.0
+    assert np.abs(chk - np.eye(n)).max() < 1e-10, "singular-value blocks are not decoupled"
+    if rd:
+        rounds.append(rd)
+    invU = [(i, j, W.conj().T) for (i, j, W) in reversed(opsU)]
+    invV = [(i, j, W.conj().T) for (i, j, W) in reversed(opsV)]
+    for r in range(max(len(invU), len(invV))):
+        rd = []
+        if r < len(invU):
+            i, j, W = invU[r]
+            rd.append((ia[i], ia[j], W))
+        if r < len(invV):
+            i, j, W = invV[r]
+            rd.append((ib[i], ib[j], W))
+        rounds.append(rd)
+    return rounds
 
 
 # ---------------------------------------------------------- uniformly controlled U(2)
@@ -363,7 +493,7 @@ def _echelon(basis, m):
     return out
 
 
-def _multiplexed_two_level(diff, items, valid, k, max_targets=3):
+def _multiplexed_two_level(diff, items, valid, k, max_targets=3, stats=None):
     """One schedule step: every two-level op in `items` has the same flip pattern `diff`."""
     bits = [q for q in range(k) if (diff >> q) & 1]
     best = None
@@ -413,34 +543,43 @@ def _multiplexed_two_level(diff, items, valid, k, max_targets=3):
         if best is None or cost < best[0]:
             best = (cost, t, rest, [ctrl[q] for q in keep], mats2, frame)
     _, t, rest, ctrl, mats, frame = best
+    if stats is not None:
+        stats.append({"flip_pattern": int(diff), "target": int(t), "n_controls": len(ctrl),
+                      "n_rotations": len(items), "frame_cnots": len(frame)})
     comp = [("cx", [t, q], None) for q in range(k) if (rest >> q) & 1]
     fr = [("cx", [a, b], None) for a, b in frame]
     return comp + fr + _uc_u2(list(mats), ctrl, t) + fr[::-1] + comp
 
 
-def structured_term_gates(model: Model, O, support: list, theta: float) -> list:
-    """Exact basic-gate IR for exp(-i theta O_loc) on `support` (global qubit indices)."""
+def structured_term_gates(model: Model, O, support: list, theta: float, stats: list | None = None) -> list:
+    """Exact basic-gate IR for exp(-i theta O_loc) on `support` (global qubit indices).
+    `stats`, if a list, receives one entry per multiplexed rotation (flip pattern, target,
+    number of controls after the minimisation, number of two-level rotations it merges)."""
     states, h, pos = localize(model, O, support)
     k = len(support)
     A = np.abs(h) > 1e-12
     np.fill_diagonal(A, False)
     ncomp, lab = csgraph.connected_components(sp.csr_matrix(A), directed=False)
     valid = np.array(sorted(int(s) for s in states), dtype=np.int64)
+    f, Aop = _real_gauge(states, h)
+    pre, post = _gauge_gates(f, k)
     blocks = []
     for c in range(ncomp):
         idx = np.where(lab == c)[0]
-        ops = _block_two_level_ops(h[np.ix_(idx, idx)], theta)
-        if ops:
-            blocks.append([(int(states[idx[i]]), int(states[idx[j]]), V) for (i, j, V) in ops])
+        rounds = _block_rounds(Aop[np.ix_(idx, idx)], theta)
+        if rounds:
+            blocks.append([[(int(states[idx[i]]), int(states[idx[j]]), V) for (i, j, V) in rd]
+                           for rd in rounds])
     out = []
     for step in range(max((len(b) for b in blocks), default=0)):
         by_diff = {}
         for b in blocks:
             if step < len(b):
-                a, bb, V = b[step]
-                by_diff.setdefault(a ^ bb, []).append((a, bb, V))
+                for (a, bb, V) in b[step]:
+                    by_diff.setdefault(a ^ bb, []).append((a, bb, V))
         for d in sorted(by_diff):
-            out += _multiplexed_two_level(d, by_diff[d], valid, k)
+            out += _multiplexed_two_level(d, by_diff[d], valid, k, stats=stats)
+    out = post + out + pre                       # exp(-i theta h) = D exp(theta A) D^dag
     return [(nm, [support[q] for q in qs], par) for nm, qs, par in out]
 
 # ---------------------------------------------------------------------- term gates
@@ -532,12 +671,20 @@ class CircuitFactory:
             gates += [("cx", [a, b], None) for a, b in zip(q1, q2)]
             return gates
         sup = term_support(self.model, "plaq", P)
+        O = -self.model.terms.plaq[P] / (2 * self.g2)
+        if structured:
+            # interior corners (2x3 and larger): the generic controlled-Givens-chain gates
+            # (the corner-only case above keeps its dedicated pair-rotation gate, which gate
+            # CS verifies; structured_term_gates would give 22 CX there instead of 30)
+            key = ("plaq", P, round(theta, 12))
+            if key not in self._struct_cache:
+                self._struct_cache[key] = structured_term_gates(self.model, O, sup, theta)
+            return self._struct_cache[key]
         if len(sup) > 12:
             raise NotImplementedError(
                 f"plaquette {P} acts on {len(sup)} qubits (interior corners): the dense local unitary would need "
-                f"{(2 ** len(sup)) ** 2 * 16 / 2 ** 30:.1f} GiB; the structured decomposition is the S2-b work item "
-                "(prompts/06). The dressed-basis emulation (krylov.coarse_states) remains exact for this lattice.")
-        U = local_unitary(self.model, -self.model.terms.plaq[P] / (2 * self.g2), sup, theta)
+                f"{(2 ** len(sup)) ** 2 * 16 / 2 ** 30:.1f} GiB; use the structured gates (structured=True).")
+        U = local_unitary(self.model, O, sup, theta)
         return [("unitary", sup, U)]
 
     # ----- circuits

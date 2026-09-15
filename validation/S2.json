@@ -1,0 +1,373 @@
+{
+ "gate": "S2",
+ "title": "Structured basic-gate circuits: hopping chains and interior-corner plaquettes",
+ "status": "FAIL",
+ "criteria": [
+  {
+   "name": "2x2: CZ per coarse step, routed on heavy-hex d=3",
+   "value": 618,
+   "threshold": "<= 250 (manual Step 4.3)",
+   "passed": false
+  },
+  {
+   "name": "2x3: CZ per coarse step, routed on heavy-hex d=5",
+   "value": 5477,
+   "threshold": "<= 500 (manual Step 4.3)",
+   "passed": false
+  },
+  {
+   "name": "max |structured circuit - reference| (all terms and circuits, theta = dt, 2dt, 4dt)",
+   "value": 1.8744776847271545e-14,
+   "threshold": "< 1e-10",
+   "passed": true
+  },
+  {
+   "name": "leakage of the noiseless compiled circuits",
+   "value": 4.5075054799781356e-14,
+   "threshold": "< 1e-9",
+   "passed": true
+  },
+  {
+   "name": "pytest -q tests",
+   "value": "20 passed in 84.80s (0:01:24)",
+   "threshold": "all pass",
+   "passed": true
+  }
+ ],
+ "data": {
+  "2x2": {
+   "n_qubits": 12,
+   "heavy_hex_distance": 3,
+   "per_term_cz": {
+    "diag": 8,
+    "hop0": 60,
+    "hop1": 48,
+    "hop2": 66,
+    "hop3": 44,
+    "plaq0": 30
+   },
+   "per_term_cz_routed": {
+    "diag": 8,
+    "hop0": 122,
+    "hop1": 92,
+    "hop2": 149,
+    "hop3": 72,
+    "plaq0": 73
+   },
+   "per_term_max_deviation": {
+    "hop0": 9.992970910418892e-16,
+    "hop1": 1.247457973265988e-15,
+    "hop2": 1.246531298897714e-15,
+    "hop3": 1.2911564428300666e-15,
+    "plaq0": 2.8305244335018383e-16
+   },
+   "per_term_structure": {
+    "hop0": {
+     "support": 8,
+     "n_multiplexed_rotations": 5,
+     "controls": [
+      3,
+      3,
+      3,
+      3,
+      4
+     ]
+    },
+    "hop1": {
+     "support": 6,
+     "n_multiplexed_rotations": 5,
+     "controls": [
+      2,
+      2,
+      2,
+      3,
+      3
+     ]
+    },
+    "hop2": {
+     "support": 8,
+     "n_multiplexed_rotations": 5,
+     "controls": [
+      3,
+      3,
+      3,
+      3,
+      4
+     ]
+    },
+    "hop3": {
+     "support": 6,
+     "n_multiplexed_rotations": 5,
+     "controls": [
+      2,
+      2,
+      2,
+      2,
+      3
+     ]
+    },
+    "plaq0": {
+     "support": 12,
+     "n_multiplexed_rotations": 1,
+     "controls": [
+      3
+     ]
+    }
+   },
+   "ir_gate_counts_coarse_step": {
+    "x": 2,
+    "cx": 294,
+    "p": 16,
+    "unitary1q": 40,
+    "ry": 148,
+    "h": 8,
+    "rz": 16
+   },
+   "coarse_step": {
+    "all_to_all": {
+     "ops": {
+      "sx": 443,
+      "rz": 379,
+      "cz": 256,
+      "x": 98
+     },
+     "depth": 736,
+     "cz": 256,
+     "n_qubits": 12
+    },
+    "routed": {
+     "ops": {
+      "sx": 1244,
+      "rz": 700,
+      "cz": 618,
+      "x": 79
+     },
+     "depth": 1294,
+     "cz": 618,
+     "n_qubits": 19
+    }
+   },
+   "n_circuits_vs_emulation": 20,
+   "compiled_leakage": [
+    2.220446049250313e-16,
+    1.1102230246251565e-15,
+    1.2212453270876722e-15,
+    1.1102230246251565e-16
+   ]
+  },
+  "2x3": {
+   "n_qubits": 20,
+   "heavy_hex_distance": 5,
+   "per_term_cz": {
+    "diag": 20,
+    "hop0": 194,
+    "hop1": 48,
+    "hop2": 182,
+    "hop3": 184,
+    "hop4": 358,
+    "hop5": 156,
+    "hop6": 44,
+    "plaq0": 214,
+    "plaq1": 764
+   },
+   "per_term_cz_routed": {
+    "diag": 20,
+    "hop0": 433,
+    "hop1": 82,
+    "hop2": 415,
+    "hop3": 396,
+    "hop4": 846,
+    "hop5": 275,
+    "hop6": 72,
+    "plaq0": 497,
+    "plaq1": 1698
+   },
+   "per_term_max_deviation": {
+    "hop0": 1.96673274755553e-15,
+    "hop1": 1.716587549445839e-15,
+    "hop2": 1.5543318371141009e-15,
+    "hop3": 1.2894399253123429e-15,
+    "hop4": 2.418401136105249e-15,
+    "hop5": 1.3054160114853949e-15,
+    "hop6": 1.669954059090464e-15,
+    "plaq0": 6.690547565963516e-16,
+    "plaq1": 1.486025327588465e-15
+   },
+   "per_term_structure": {
+    "hop0": {
+     "support": 9,
+     "n_multiplexed_rotations": 9,
+     "controls": [
+      3,
+      3,
+      4,
+      4,
+      5,
+      5,
+      5,
+      5,
+      6
+     ]
+    },
+    "hop1": {
+     "support": 6,
+     "n_multiplexed_rotations": 5,
+     "controls": [
+      2,
+      2,
+      2,
+      3,
+      3
+     ]
+    },
+    "hop2": {
+     "support": 10,
+     "n_multiplexed_rotations": 9,
+     "controls": [
+      3,
+      3,
+      4,
+      4,
+      5,
+      5,
+      5,
+      5,
+      5
+     ]
+    },
+    "hop3": {
+     "support": 10,
+     "n_multiplexed_rotations": 9,
+     "controls": [
+      3,
+      3,
+      4,
+      4,
+      5,
+      5,
+      5,
+      5,
+      5
+     ]
+    },
+    "hop4": {
+     "support": 8,
+     "n_multiplexed_rotations": 9,
+     "controls": [
+      3,
+      3,
+      5,
+      5,
+      5,
+      5,
+      6,
+      6,
+      6
+     ]
+    },
+    "hop5": {
+     "support": 9,
+     "n_multiplexed_rotations": 5,
+     "controls": [
+      4,
+      4,
+      6,
+      6,
+      6
+     ]
+    },
+    "hop6": {
+     "support": 6,
+     "n_multiplexed_rotations": 5,
+     "controls": [
+      2,
+      2,
+      2,
+      2,
+      3
+     ]
+    },
+    "plaq0": {
+     "support": 14,
+     "n_multiplexed_rotations": 4,
+     "controls": [
+      5,
+      5,
+      6,
+      6
+     ]
+    },
+    "plaq1": {
+     "support": 14,
+     "n_multiplexed_rotations": 17,
+     "controls": [
+      4,
+      4,
+      4,
+      4,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      6,
+      6,
+      6,
+      6,
+      7
+     ]
+    }
+   },
+   "ir_gate_counts_coarse_step": {
+    "x": 3,
+    "cx": 2588,
+    "p": 29,
+    "cp": 2,
+    "unitary1q": 144,
+    "ry": 2164
+   },
+   "coarse_step": {
+    "all_to_all": {
+     "ops": {
+      "sx": 3875,
+      "rz": 2467,
+      "cz": 2164,
+      "x": 412
+     },
+     "depth": 7325,
+     "cz": 2164,
+     "n_qubits": 20
+    },
+    "routed": {
+     "ops": {
+      "sx": 11350,
+      "rz": 5513,
+      "cz": 5477,
+      "x": 602
+     },
+     "depth": 11540,
+     "cz": 5477,
+     "n_qubits": 57
+    }
+   },
+   "n_circuits_vs_emulation": 2,
+   "compiled_leakage": [
+    3.375077994860476e-14
+   ]
+  },
+  "pytest": "20 passed in 84.80s (0:01:24)"
+ },
+ "runtime_s": 435.57935333251953,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.2",
+  "scipy": "1.18.0",
+  "platform": "Linux-7.2.3-arch1-3-x86_64-with-glibc2.44",
+  "cpu_count": 12,
+  "git_commit": "5d60461",
+  "timestamp": "2026-09-15 15:12:59 MDT"
+ }
+}

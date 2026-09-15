@@ -8,8 +8,9 @@ Budget (manual Step 4.3): <= 250 CZ per first-order step at 2x2, <= 500 at 2x3;
 gate S2 = "routed CZ per coarse step <= 500 on the target map; noiseless compiled
 circuits leak-free".  The exact hopping unitaries are synthesized generically by
 Qiskit (quantum Shannon decomposition), which is expected to be far above the
-budget: this script MEASURES the baseline and records it; reducing it (structured
-hopping gates, see reports/circuit_structure.md) is the planner's S2 task.
+budget: this script MEASURES the baseline and records it.  The structured hopping gates
+that reduce it are gate S2 (scripts/gate_S2.py); this script keeps `structured_hopping=False`
+so that the number it records stays the dense-block-unitary baseline it always was.
 
 Usage: python scripts/laptop_L3_cz_counts.py [--heavy-hex 3] [--level 3]
 Expected runtime: minutes (an 8-qubit UnitaryGate can take a while at level 3).
@@ -38,7 +39,7 @@ def main():
     R = GateResult("L3", "Transpiled CZ counts of the exact 2x2 circuits (S2 measurement)")
     from skqd import circuits_qiskit as cq
     M = Model(2)
-    F = CircuitFactory(M, 4.0)
+    F = CircuitFactory(M, 4.0, structured_hopping=False)   # the dense-block-unitary BASELINE
     n = Codec(M.basis).n_qubits
     ref = M.reference(4.0, 0)
     theta = ref.dt

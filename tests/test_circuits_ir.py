@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from skqd.circuits_ir import CircuitFactory, run_ir, ucrz_gray
 from skqd.exact import Model, mass_default
@@ -19,6 +20,12 @@ def test_ucrz_gray():
     v = rng.normal(size=2 ** n) + 1j * rng.normal(size=2 ** n)
     v /= np.linalg.norm(v)
     assert abs(run_ir(gates, n, v) - U @ v).max() < 1e-12
+    qiskit = pytest.importorskip("qiskit")
+    from skqd.circuits_qiskit import ir_to_qiskit
+
+    qc = ir_to_qiskit(gates, n, measure=False)
+    Uq = np.asarray(qiskit.quantum_info.Operator(qc).data)
+    assert abs(Uq - U).max() < 1e-12
 
 
 def test_coarse_step_circuits_match_emulation():
@@ -56,6 +63,12 @@ def test_mcu_gate_matches_dense():
     v = rng.normal(size=2 ** n) + 1j * rng.normal(size=2 ** n)
     v /= np.linalg.norm(v)
     assert abs(run_ir(gates, n, v) - U @ v).max() < 1e-12
+    qiskit = pytest.importorskip("qiskit")
+    from skqd.circuits_qiskit import ir_to_qiskit
+
+    qc = ir_to_qiskit(gates, n, measure=False)
+    Uq = np.asarray(qiskit.quantum_info.Operator(qc).data)
+    assert abs(Uq - U).max() < 1e-12
 
 
 def test_structured_hopping_equals_local_unitary():
@@ -126,3 +139,76 @@ def test_dense_and_structured_hopping_agree():
         a = run_ir(Fd.hop_gates(l, dt), E.n, psi)
         b = run_ir(Fs.hop_gates(l, dt), E.n, psi)
         assert abs(a - b).max() < 1e-10
+
+
+def _local_deviation(M, O, support, thetas, rng, nvec=5):
+    """max |structured gates - exp(-i theta O_loc)| on the local support (2^k amplitudes).
+    The exact exponential comes from the small block h of reference_sim.localize, so the
+    dense 14-qubit unitary of a 2x3 plaquette (4 GiB) is never built."""
+    import scipy.linalg as sla
+
+    from skqd.circuits_ir import structured_term_gates
+    from skqd.reference_sim import localize
+
+    k = len(support)
+    states, h, _ = localize(M, O, support)
+    idx = np.array(states)
+    pos = {q: i for i, q in enumerate(support)}
+    vecs = []
+    for _ in range(nvec):
+        c = rng.normal(size=len(states)) + 1j * rng.normal(size=len(states))
+        vecs.append(c / np.linalg.norm(c))
+    worst = 0.0
+    for theta in thetas:
+        gates = structured_term_gates(M, O, support, theta)
+        loc = [(nm, [pos[q] for q in qs], par) for nm, qs, par in gates]
+        U = sla.expm(-1j * theta * h)
+        for c in vecs:
+            psi = np.zeros(2 ** k, dtype=complex)
+            psi[idx] = c
+            out = run_ir(loc, k, psi)
+            exact = np.zeros(2 ** k, dtype=complex)
+            exact[idx] = U @ c
+            worst = max(worst, float(np.abs(out - exact).max()))
+    return worst
+
+
+def test_structured_terms_2x3():
+    """Gate S2, step 3: every 2x3 term -- the hopping links (blocks of up to four
+    configurations) and the two plaquettes with interior corners (14 qubits) -- as exact
+    basic-gate circuits, at theta = dt, 2dt, 4dt."""
+    from skqd.reference_sim import term_support
+
+    M = Model(3)
+    g2 = 4.0
+    dt = M.reference(g2, 0).dt
+    rng = np.random.default_rng(17)
+    thetas = (dt, 2 * dt, 4 * dt)
+    worst = 0.0
+    for l in range(M.lat.n_links):
+        worst = max(worst, _local_deviation(M, M.terms.hop[l], term_support(M, "hop", l), thetas, rng))
+    for P in range(len(M.lat.plaquettes)):
+        sup = term_support(M, "plaq", P)
+        assert len(sup) == 14
+        worst = max(worst, _local_deviation(M, -M.terms.plaq[P] / (2 * g2), sup, thetas, rng, nvec=3))
+    assert worst < 1e-10, worst
+
+
+def test_structured_plaquette_2x3_on_physical_states():
+    """The interior-corner plaquette gate on the full 2^20 statevector, against the
+    dressed-basis emulation of exp(-i theta H_plaq) (krylov's expm_multiply)."""
+    import scipy.sparse.linalg as spl
+
+    M = Model(3)
+    g2 = 4.0
+    E = CodewordEmbedding(M)
+    F = CircuitFactory(M, g2)
+    dt = M.reference(g2, 0).dt
+    rng = np.random.default_rng(23)
+    v = rng.normal(size=M.basis.dim) + 1j * rng.normal(size=M.basis.dim)
+    v /= np.linalg.norm(v)
+    O = (-M.terms.plaq[1] / (2 * g2)).tocsc()
+    psi = run_ir(F.plaq_gates(1, dt, True), E.n, E.embed(v))
+    exact = E.embed(spl.expm_multiply(-1j * dt * O, v))
+    assert abs(psi - exact).max() < 1e-10
+    assert abs(E.leakage(psi)) < 1e-9

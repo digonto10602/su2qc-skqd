@@ -1,7 +1,7 @@
 # Laptop gate L3 — transpiled CZ counts at 2x2 (gate S2 measurement)
 
 **Status: FAIL (expected for the generic baseline — this is the S2 work item)** —
-`scripts/laptop_L3_cz_counts.py`, optimization level 3.  Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.3-arch1-3-x86_64-with-glibc2.44, 12 CPUs, commit 6972fd5, 2026-09-14 16:58:20 MDT.  Runtime 15 s.
+`scripts/laptop_L3_cz_counts.py`, optimization level 3.  Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.3-arch1-3-x86_64-with-glibc2.44, 12 CPUs, commit 5d60461, 2026-09-15 15:04:26 MDT.  Runtime 14 s.
 
 | circuit | CZ | depth |
 |---|---|---|
