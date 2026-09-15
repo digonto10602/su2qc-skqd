@@ -33,6 +33,12 @@ def ir_to_qiskit(gates: list, n: int, measure: bool = True):
             qc.h(qs[0])
         elif name == "rz":
             qc.rz(par, qs[0])
+        elif name == "ry":
+            qc.ry(par, qs[0])
+        elif name == "rx":
+            qc.rx(par, qs[0])
+        elif name == "gphase":
+            qc.global_phase += par
         elif name == "p":
             qc.p(par, qs[0])
         elif name == "cp":
@@ -41,6 +47,12 @@ def ir_to_qiskit(gates: list, n: int, measure: bool = True):
             qc.cx(qs[0], qs[1])
         elif name == "unitary":
             qc.unitary(np.asarray(par), list(qs), label=f"U{len(qs)}")
+        elif name == "mcu":
+            from qiskit.circuit.library import UnitaryGate
+
+            U2, cstate = par
+            g = UnitaryGate(np.asarray(U2)).control(len(qs) - 1, ctrl_state=int(cstate))
+            qc.append(g, [*qs[:-1], qs[-1]])
         else:
             raise ValueError(name)
     if measure:
