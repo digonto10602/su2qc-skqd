@@ -28,6 +28,12 @@ Laptop estimates assume the i7-8750H is at least as fast per core as the sandbox
 | L4 | Aer noise-model sampling (depolarizing + readout), decode, yield | 12 qubits × 28 circuits (B=0: 5 refs × 4 steps; B=1: 2 × 4); shots scaled to 25 min | ≤ 30 min by construction | none |
 | L5 | CUDA-Q on the GPU (`nvidia` target) | 12 qubits | < 5 min | register_operation conventions (tested first) |
 
+### Measured on 2026-09-14 (gates L2–L5 executed; RUNBOOK session)
+
+- L2 and L5 ran in 26 s and 4 s on the CPU. Neither GPU path works on this laptop: the `qiskit-aer-gpu` wheel (latest 0.15.1) is incompatible with qiskit 2.5.2, and the CUDA-Q `nvidia` target requires compute capability ≥ 7.0 (the GTX 1060 Max-Q is 6.1); L5 used `qpp-cpu`.
+- L4 (`validation/L4_p2_3e-3.json`, `validation/L4_p2_1e-3.json`): with the generic-synthesis circuits of gate L3 (35 670 CZ per circuit at transpiler level 1) noisy Aer statevector sampling costs 1.99–3.31 s per shot on the CPU (`t_per_shot`), so the 25-minute budget allowed only 8–47 shots per circuit; the first attempt with the script defaults (1000-shot pilot, 500-shot floor) hit the 30-minute cap and was re-parametrized with `--pilot-shots 20 --min-shots 1` (prompt 09).
+- At that measured rate a 2×3 production run (2×10⁵ shots per sector) would take 2×10⁵ × 1.99 s = 4.0×10⁵ s ≈ 111 h per sector at best, and 2×3 circuits (20 qubits, more terms) are slower per shot: **the 2×3 noisy simulation belongs on the desktop RTX 3070 or the Slurm GPU cluster**, and is worth running only after gate S2 brings the CZ count within the budget (≤ 500 per coarse step at 2×3).
+
 ## What needs the desktop (RTX 3070 8 GB, 32 GB RAM) or the Slurm GPU cluster
 
 | task | why not the laptop | where |

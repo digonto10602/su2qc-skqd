@@ -49,7 +49,11 @@ staggered quarks on 2×Lx ladders.  Reference document: `proposal/SU2QC_Project2
 
 ## Current status (see reports/PROJECT_STATUS.md for the full table)
 
-Cloud-verified: E1, E2, E3, S1 (all PASS).  Laptop next: L1 (reproduce), L2 (Qiskit vs reference), L3 (CZ
-counts = S2 measurement, expected to fail for the generic baseline), L4 (Aer noise = S3 prep), L5 (CUDA-Q).
-Open physics/compilation work: S2-b (structured hopping and interior-corner plaquette gates), S3 with a real
-calibration, H0 hardware calibration at 2x2.
+Cloud-verified and reproduced on the laptop (2026-09-14): E1, E2, E3, S1 (all PASS; E1-E3 identical to the cloud
+values).  Laptop gates done: L2 PASS (Qiskit = reference to 3.7e-15), L5 PASS (CUDA-Q on `qpp-cpu`; the `nvidia`
+target needs compute capability >= 7.0), L3 FAIL as expected (35606 CZ per coarse step all-to-all, 55459 routed,
+budget 250), L4 FAIL as expected (yield at the random-acceptance level because f = (1-p2)^35670 is zero; Weinstein
+criteria PASS; noisy Aer costs 2-3.3 s per shot on this CPU, so 2x3 noisy runs need the desktop or cluster).
+No GPU path on the laptop: qiskit-aer-gpu 0.15.1 is incompatible with qiskit 2.5.2.  Blocking hardware: S2-b
+(structured hopping and interior-corner plaquette gates within the CZ budget, prompts/06), then S3 with a real
+calibration, then H0 hardware calibration at 2x2.

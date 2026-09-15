@@ -45,12 +45,14 @@ what to do if a step fails: retry rule (parameters), and when to stop and call t
 
 | # | prompt | gate | status |
 |---|---|---|---|
-| 00 | `00_bootstrap_and_push.md` | package check, GitHub repo, first push | to run on the laptop |
-| 01 | `01_laptop_L1_reproduce_cloud_gates.md` | L1: E1–E3, S1 re-run on the laptop | pending |
-| 02 | `02_laptop_L2_qiskit_check.md` | L2: Qiskit vs numpy reference | pending |
-| 03 | `03_laptop_L3_cz_counts_S2.md` | L3: CZ counts (S2 measurement) | pending, FAIL expected for the baseline |
-| 04 | `04_laptop_L4_aer_noise_S3.md` | L4: Aer noise (S3 preparation) | pending |
-| 05 | `05_laptop_L5_cudaq_check.md` | L5: CUDA-Q on the GTX 1060 | pending |
+| 00 | `00_bootstrap_and_push.md` | package check, GitHub repo, first push | done 2026-09-14 (54c131f) |
+| 01 | `01_laptop_L1_reproduce_cloud_gates.md` | L1: E1–E3, S1 re-run on the laptop | PASS 2026-09-14 (54c131f) |
+| 02 | `02_laptop_L2_qiskit_check.md` | L2: Qiskit vs numpy reference | PASS 2026-09-14 (6972fd5) |
+| 03 | `03_laptop_L3_cz_counts_S2.md` | L3: CZ counts (S2 measurement) | FAIL as expected, baseline recorded 2026-09-14 (41b83c1) |
+| 04 | `04_laptop_L4_aer_noise_S3.md` | L4: Aer noise (S3 preparation) | FAIL as expected (S2 depth), reduced run 2026-09-14 (prompt 09) |
+| 05 | `05_laptop_L5_cudaq_check.md` | L5: CUDA-Q on the GTX 1060 | PASS 2026-09-14 on qpp-cpu (30684f2) |
+| 09 | `09_L4_fix_20260914.md` | L4 re-parametrized for the 30-minute rule | executed 2026-09-14 |
+| 10 | `10_L5_fix_20260914.md` | L5 CUDA-Q SampleResult API fix | executed 2026-09-14 |
 | 06 | `06_S2b_plaquette_interior_and_hopping_decomposition.md` | S2: structured gates within budget | pending (planner + executor) |
 | 07 | `07_hardware_H0_2x2_calibration.md` | H0: first QPU session | pending (needs S2, S3) |
 | 08 | `08_month_plan_and_reporting.md` | weekly plan to H1/H2/P1/M1 | reference |

@@ -10,7 +10,8 @@ one circuit) and scales the shots per circuit so that the whole run fits the
 together with what a bigger machine would allow.
 
 Usage: python scripts/laptop_L4_aer_noise.py [--p2 3e-3] [--p1 3e-4] [--pro 0.01]
-                                             [--budget-minutes 25] [--gpu]
+                                             [--budget-minutes 25] [--pilot-shots 1000]
+                                             [--min-shots 500] [--gpu]
 """
 import argparse
 import os
@@ -34,6 +35,8 @@ def main():
     ap.add_argument("--p1", type=float, default=3e-4)
     ap.add_argument("--pro", type=float, default=0.01)
     ap.add_argument("--budget-minutes", type=float, default=25.0)
+    ap.add_argument("--pilot-shots", type=int, default=1000, help="shots of the pilot used to time one circuit")
+    ap.add_argument("--min-shots", type=int, default=500, help="floor for the shots per circuit")
     ap.add_argument("--gpu", action="store_true")
     args = ap.parse_args()
     t0 = time.time()
@@ -53,10 +56,12 @@ def main():
         circuits = [(r, k, F.coarse_step(r, k, ref.dt)) for r in refs for k in (1, 2, 3, 4)]
         # pilot timing -> shots per circuit within the budget
         tp = time.time()
-        cq.sample(circuits[0][2], n, 1000, noise_model=nm, device=device)
-        t_per_shot = (time.time() - tp) / 1000
+        cq.sample(circuits[0][2], n, args.pilot_shots, noise_model=nm, device=device)
+        t_per_shot = (time.time() - tp) / args.pilot_shots
+        print(f"B={twoB // 2}: pilot {args.pilot_shots} shots -> {t_per_shot:.3f} s/shot", flush=True)
         budget_s = args.budget_minutes * 60 / 2  # half the budget per sector
-        shots = int(min(20000, max(500, budget_s / (t_per_shot * len(circuits)))))
+        shots = int(min(20000, max(args.min_shots, budget_s / (t_per_shot * len(circuits)))))
+        print(f"B={twoB // 2}: {len(circuits)} circuits, {shots} shots/circuit (min-shots {args.min_shots})", flush=True)
         prob = np.zeros(M.basis.dim)
         prob[ref.indices] = np.abs(ref.ground) ** 2
         acc_all, rej_all, total = {}, {}, 0
@@ -87,13 +92,14 @@ def main():
         R.add(f"B={twoB // 2}: exact E0 inside the Weinstein interval", f"{ref.E0:.4f}", "inside",
               cert.weinstein[0] - 1e-9 <= ref.E0 <= cert.weinstein[1] + 1e-9)
         R.data[f"B={twoB // 2}"] = dict(shots=shots, circuits=len(circuits), cz=cz, yield_=y, size=len(B), err=res.ER - ref.E0,
-                                       recall=met["recall"], t_per_shot=t_per_shot)
+                                       recall=met["recall"], t_per_shot=t_per_shot,
+                                       pilot_shots=args.pilot_shots, min_shots=args.min_shots)
     R.runtime_s = time.time() - t0
     R.save()
     write_report("L4_aer_noise.md", f"""# Laptop gate L4 — Aer noise-model sampling at 2x2 (S3 preparation)
 
 **Status: {'PASS' if R.passed else 'FAIL'}** — `scripts/laptop_L4_aer_noise.py`, p1 = {args.p1}, p2 = {args.p2}, readout {args.pro},
-device {device}, budget {args.budget_minutes} min.  {env_block()}  Runtime {R.runtime_s:.0f} s.
+device {device}, budget {args.budget_minutes} min, pilot {args.pilot_shots} shots, min-shots {args.min_shots}.  {env_block()}  Runtime {R.runtime_s:.0f} s.
 
 {md_table(["sector", "circuits", "shots/circuit", "mean CZ (level 1)", "f=<(1-p2)^CZ>", "(1-p_ro)^n f", "measured yield", "|B|",
            "E_R − E_0", "recall 99.9%", "fp", "Weinstein", "rejections"], rows)}
