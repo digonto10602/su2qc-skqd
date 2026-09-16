@@ -2,7 +2,7 @@
 
 **Status: PASS** — `scripts/gate_H0P.py` on the frozen circuit set of
 `scripts/h0_build_circuits.py` (data/hardware/H0_prep, created 2026-09-16 09:57:38 MDT).
-Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.3-arch1-3-x86_64-with-glibc2.44, 12 CPUs, commit 3722018, 2026-09-16 12:51:12 MDT.  Runtime 1182 s.  Nothing in this gate touches a QPU.
+Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.3-arch1-3-x86_64-with-glibc2.44, 12 CPUs, commit 2392fb3, 2026-09-16 13:15:46 MDT.  Runtime 1179 s.  Nothing in this gate touches a QPU.
 
 ## 1. The frozen circuit set
 
@@ -26,9 +26,9 @@ was checked against its final layout, so classical bit i of every counts key is 
 ## 2. Predicted yield curve by repetition
 
 Sampling: `AerSimulator.from_backend(FakeFez(), seed_simulator=11)`, 267 shots per r = 1 circuit, 130 shots per r = 2 circuit, 92 shots per r = 3 circuit
-(pinned with --shots-by-rep allocation, 13692 shots in total, 940 s; the pilot measured
-0.030 s/shot at r=1, 0.063 s/shot at r=2, 0.090 s/shot at r=3,
-i.e. 5.1 s per shot over the whole set, and the budget was 14 min).
+(pinned with --shots-by-rep allocation, 13692 shots in total, 938 s; the pilot measured
+0.030 s/shot at r=1, 0.065 s/shot at r=2, 0.092 s/shot at r=3,
+i.e. 5.2 s per shot over the whole set, and the budget was 14 min).
 
 | sector | r | circuits | CZ | f (calibration) | a (garbage) | model 0.82 f (old) | model 0.82 f + (1−f) a | shots | simulated yield | simulated / 0.82 f | simulated / full model | distinct states | rejections |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -152,7 +152,7 @@ so the garbage term of the yield model must not enter the shot rule.
 | dry-run counts of scripts/h0_submit.py --dry-run | 126 counts files | > 0 | PASS |
 | validation/H0_dryrun.json exists (produced by this step; its own status is reported there) | present, status PASS | exists | PASS |
 | validation/S3_smoke.json exists (produced by this step; its own status is reported there) | present, status FAIL | exists | PASS |
-| pytest -q tests | 32 passed in 88.13s (0:01:28) | all pass | PASS |
+| pytest -q tests | 32 passed in 86.63s (0:01:26) | all pass | PASS |
 
 ## Scope
 
