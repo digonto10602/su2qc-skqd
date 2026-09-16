@@ -76,7 +76,8 @@ def main():
     except Exception as e:
         ok = False
         print("could not spot-check references:", e)
-    for mod in ("skqd.su2", "skqd.hamiltonian", "skqd.codec", "skqd.skqd", "skqd.circuits_ir"):
+    for mod in ("skqd.su2", "skqd.hamiltonian", "skqd.codec", "skqd.skqd", "skqd.circuits_ir",
+                "skqd.hardware"):
         try:
             importlib.import_module(mod)
         except Exception as e:
