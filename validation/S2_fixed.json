@@ -1,0 +1,1046 @@
+{
+ "gate": "S2_fixed",
+ "title": "Fixed-angle generator (same codeword pairs, one angle per flip pattern): cost floor, leakage and recall",
+ "status": "FAIL",
+ "criteria": [
+  {
+   "name": "2x2: CZ per coarse step, routed on heavy-hex d=3",
+   "value": 671,
+   "threshold": "<= 250 (manual Step 4.3)",
+   "passed": false
+  },
+  {
+   "name": "2x2: CZ per coarse step, routed on the square grid (3, 4)",
+   "value": 474,
+   "threshold": "<= 250 (manual Step 4.3)",
+   "passed": false
+  },
+  {
+   "name": "2x3: CZ per coarse step, routed on heavy-hex d=5",
+   "value": 3736,
+   "threshold": "<= 500 (manual Step 4.3)",
+   "passed": false
+  },
+  {
+   "name": "2x3: CZ per coarse step, routed on the square grid (4, 5)",
+   "value": 2803,
+   "threshold": "<= 500 (manual Step 4.3)",
+   "passed": false
+  },
+  {
+   "name": "leakage of the fixed-angle term circuits (codewords -> codewords, theta = dt, 2dt, 4dt)",
+   "value": 1.9984014443252818e-14,
+   "threshold": "< 1e-12",
+   "passed": true
+  },
+  {
+   "name": "leakage of the noiseless compiled circuits",
+   "value": 5.495603971894525e-14,
+   "threshold": "< 1e-9",
+   "passed": true
+  },
+  {
+   "name": "2x3 B=0: emulated recall of the 99.9 % support at f = 0.1",
+   "value": 1.0,
+   "threshold": ">= 0.9 (gate S1 criterion)",
+   "passed": true
+  },
+  {
+   "name": "2x3 B=1: emulated recall of the 99.9 % support at f = 0.1",
+   "value": 0.937,
+   "threshold": ">= 0.9 (gate S1 criterion)",
+   "passed": true
+  },
+  {
+   "name": "pytest -q tests",
+   "value": "24 passed in 81.96s (0:01:21)",
+   "threshold": "all pass",
+   "passed": true
+  }
+ ],
+ "data": {
+  "2x2": {
+   "n_qubits": 12,
+   "heavy_hex_distance": 3,
+   "per_term_cz": {
+    "diag": 8,
+    "hop0": 60,
+    "hop1": 44,
+    "hop2": 54,
+    "hop3": 44,
+    "plaq0": 30
+   },
+   "per_term_cz_routed": {
+    "diag": 8,
+    "hop0": 139,
+    "hop1": 97,
+    "hop2": 123,
+    "hop3": 73,
+    "plaq0": 73
+   },
+   "per_term_max_deviation": {
+    "hop0": 0.11085881723554297,
+    "hop1": 0.13161542140337218,
+    "hop2": 0.09936893535893224,
+    "hop3": 0.11092933205752456,
+    "plaq0": 0.02994542587817029
+   },
+   "per_term_structure": {
+    "hop0": {
+     "support": 8,
+     "n_multiplexed_rotations": 4,
+     "controls": [
+      3,
+      3,
+      3,
+      3
+     ],
+     "n_merged_elements": [
+      1,
+      2,
+      2,
+      1
+     ],
+     "merged_elements": [
+      [
+       0.5
+      ],
+      [
+       0.353553390593,
+       0.707106781187
+      ],
+      [
+       0.353553390593,
+       0.707106781187
+      ],
+      [
+       0.5
+      ]
+     ],
+     "theta_eff": [
+      0.12250597361237966,
+      0.12993720701578276,
+      0.12993720701578276,
+      0.12250597361237966
+     ],
+     "n_pairs": [
+      4,
+      4,
+      4,
+      4
+     ]
+    },
+    "hop1": {
+     "support": 6,
+     "n_multiplexed_rotations": 4,
+     "controls": [
+      2,
+      2,
+      2,
+      3
+     ],
+     "n_merged_elements": [
+      1,
+      2,
+      2,
+      1
+     ],
+     "merged_elements": [
+      [
+       0.5
+      ],
+      [
+       0.353553390593,
+       0.707106781187
+      ],
+      [
+       0.353553390593,
+       0.707106781187
+      ],
+      [
+       0.5
+      ]
+     ],
+     "theta_eff": [
+      0.12250597361237966,
+      0.12993720701578276,
+      0.12993720701578276,
+      0.12250597361237966
+     ],
+     "n_pairs": [
+      2,
+      2,
+      2,
+      2
+     ]
+    },
+    "hop2": {
+     "support": 8,
+     "n_multiplexed_rotations": 4,
+     "controls": [
+      3,
+      3,
+      3,
+      3
+     ],
+     "n_merged_elements": [
+      1,
+      2,
+      2,
+      1
+     ],
+     "merged_elements": [
+      [
+       0.5
+      ],
+      [
+       0.353553390593,
+       0.707106781187
+      ],
+      [
+       0.353553390593,
+       0.707106781187
+      ],
+      [
+       0.5
+      ]
+     ],
+     "theta_eff": [
+      0.12250597361237966,
+      0.12993720701578276,
+      0.12993720701578276,
+      0.12250597361237966
+     ],
+     "n_pairs": [
+      4,
+      4,
+      4,
+      4
+     ]
+    },
+    "hop3": {
+     "support": 6,
+     "n_multiplexed_rotations": 4,
+     "controls": [
+      2,
+      2,
+      3,
+      3
+     ],
+     "n_merged_elements": [
+      1,
+      2,
+      2,
+      1
+     ],
+     "merged_elements": [
+      [
+       0.5
+      ],
+      [
+       0.353553390593,
+       0.707106781187
+      ],
+      [
+       0.353553390593,
+       0.707106781187
+      ],
+      [
+       0.5
+      ]
+     ],
+     "theta_eff": [
+      0.12250597361237966,
+      0.12993720701578276,
+      0.12993720701578276,
+      0.12250597361237966
+     ],
+     "n_pairs": [
+      2,
+      2,
+      2,
+      2
+     ]
+    },
+    "plaq0": {
+     "support": 12,
+     "n_multiplexed_rotations": 1,
+     "controls": [
+      4
+     ],
+     "n_merged_elements": [
+      3
+     ],
+     "merged_elements": [
+      [
+       0.5,
+       1.0,
+       2.0
+      ]
+     ],
+     "theta_eff": [
+      0.07146181794055481
+     ],
+     "n_pairs": [
+      8
+     ]
+    }
+   },
+   "ir_gate_counts_coarse_step": {
+    "x": 2,
+    "cx": 278,
+    "p": 16,
+    "unitary1q": 32,
+    "ry": 108,
+    "h": 8,
+    "rz": 16
+   },
+   "coarse_step": {
+    "all_to_all": {
+     "ops": {
+      "sx": 310,
+      "rz": 299,
+      "cz": 240,
+      "x": 123
+     },
+     "depth": 548,
+     "cz": 240,
+     "n_qubits": 12
+    },
+    "routed": {
+     "ops": {
+      "sx": 1291,
+      "cz": 671,
+      "rz": 590,
+      "x": 70
+     },
+     "depth": 1194,
+     "cz": 671,
+     "n_qubits": 19
+    },
+    "grid": {
+     "ops": {
+      "sx": 861,
+      "rz": 505,
+      "cz": 474,
+      "x": 89
+     },
+     "depth": 924,
+     "cz": 474,
+     "n_qubits": 12
+    }
+   },
+   "grid": [
+    3,
+    4
+   ],
+   "per_term_cz_grid": {
+    "diag": 8,
+    "hop0": 90,
+    "hop1": 69,
+    "hop2": 84,
+    "hop3": 64,
+    "plaq0": 42
+   },
+   "per_term_leakage": {
+    "hop0": 3.3306690738754696e-15,
+    "hop1": 3.3306690738754696e-15,
+    "hop2": 3.219646771412954e-15,
+    "hop3": 3.552713678800501e-15,
+    "plaq0": 1.887379141862766e-15
+   },
+   "n_circuits_vs_emulation": 20,
+   "compiled_leakage": [
+    1.7763568394002505e-15,
+    2.220446049250313e-16,
+    4.440892098500626e-16,
+    2.4424906541753444e-15
+   ]
+  },
+  "2x3": {
+   "n_qubits": 20,
+   "heavy_hex_distance": 5,
+   "per_term_cz": {
+    "diag": 20,
+    "hop0": 152,
+    "hop1": 44,
+    "hop2": 154,
+    "hop3": 154,
+    "hop4": 244,
+    "hop5": 152,
+    "hop6": 44,
+    "plaq0": 260,
+    "plaq1": 402
+   },
+   "per_term_cz_routed": {
+    "diag": 20,
+    "hop0": 247,
+    "hop1": 101,
+    "hop2": 277,
+    "hop3": 290,
+    "hop4": 373,
+    "hop5": 275,
+    "hop6": 71,
+    "plaq0": 492,
+    "plaq1": 831
+   },
+   "per_term_max_deviation": {
+    "hop0": 0.05142316141081914,
+    "hop1": 0.0734888003859764,
+    "hop2": 0.03446431869432864,
+    "hop3": 0.03404804899271345,
+    "hop4": 0.045903965631712736,
+    "hop5": 0.044661376319951235,
+    "hop6": 0.07356501200485126,
+    "plaq0": 0.007966627549464271,
+    "plaq1": 0.008896286314558126
+   },
+   "per_term_structure": {
+    "hop0": {
+     "support": 9,
+     "n_multiplexed_rotations": 4,
+     "controls": [
+      6,
+      6,
+      6,
+      6
+     ],
+     "n_merged_elements": [
+      3,
+      3,
+      3,
+      3
+     ],
+     "merged_elements": [
+      [
+       0.25,
+       0.5,
+       0.612372435696
+      ],
+      [
+       0.353553390593,
+       0.433012701892,
+       0.707106781187
+      ],
+      [
+       0.353553390593,
+       0.433012701892,
+       0.707106781187
+      ],
+      [
+       0.25,
+       0.5,
+       0.612372435696
+      ]
+     ],
+     "theta_eff": [
+      0.07104468781420549,
+      0.07789171318073668,
+      0.07789171318073668,
+      0.07104468781420549
+     ],
+     "n_pairs": [
+      10,
+      10,
+      10,
+      10
+     ]
+    },
+    "hop1": {
+     "support": 6,
+     "n_multiplexed_rotations": 4,
+     "controls": [
+      2,
+      2,
+      2,
+      3
+     ],
+     "n_merged_elements": [
+      1,
+      2,
+      2,
+      1
+     ],
+     "merged_elements": [
+      [
+       0.5
+      ],
+      [
+       0.353553390593,
+       0.707106781187
+      ],
+      [
+       0.353553390593,
+       0.707106781187
+      ],
+      [
+       0.5
+      ]
+     ],
+     "theta_eff": [
+      0.07822165872496237,
+      0.08296659798013511,
+      0.08296659798013511,
+      0.07822165872496237
+     ],
+     "n_pairs": [
+      2,
+      2,
+      2,
+      2
+     ]
+    },
+    "hop2": {
+     "support": 10,
+     "n_multiplexed_rotations": 4,
+     "controls": [
+      6,
+      6,
+      6,
+      6
+     ],
+     "n_merged_elements": [
+      3,
+      3,
+      3,
+      3
+     ],
+     "merged_elements": [
+      [
+       0.25,
+       0.5,
+       0.612372435696
+      ],
+      [
+       0.353553390593,
+       0.433012701892,
+       0.707106781187
+      ],
+      [
+       0.353553390593,
+       0.433012701892,
+       0.707106781187
+      ],
+      [
+       0.25,
+       0.5,
+       0.612372435696
+      ]
+     ],
+     "theta_eff": [
+      0.07104468781420549,
+      0.07789171318073668,
+      0.07789171318073668,
+      0.07104468781420549
+     ],
+     "n_pairs": [
+      20,
+      20,
+      20,
+      20
+     ]
+    },
+    "hop3": {
+     "support": 10,
+     "n_multiplexed_rotations": 4,
+     "controls": [
+      6,
+      6,
+      6,
+      6
+     ],
+     "n_merged_elements": [
+      3,
+      3,
+      3,
+      3
+     ],
+     "merged_elements": [
+      [
+       0.25,
+       0.5,
+       0.612372435696
+      ],
+      [
+       0.353553390593,
+       0.433012701892,
+       0.707106781187
+      ],
+      [
+       0.353553390593,
+       0.433012701892,
+       0.707106781187
+      ],
+      [
+       0.25,
+       0.5,
+       0.612372435696
+      ]
+     ],
+     "theta_eff": [
+      0.07104468781420549,
+      0.07789171318073668,
+      0.07789171318073668,
+      0.07104468781420549
+     ],
+     "n_pairs": [
+      20,
+      20,
+      20,
+      20
+     ]
+    },
+    "hop4": {
+     "support": 8,
+     "n_multiplexed_rotations": 4,
+     "controls": [
+      6,
+      6,
+      6,
+      6
+     ],
+     "n_merged_elements": [
+      3,
+      3,
+      3,
+      3
+     ],
+     "merged_elements": [
+      [
+       0.25,
+       0.5,
+       0.612372435696
+      ],
+      [
+       0.353553390593,
+       0.433012701892,
+       0.707106781187
+      ],
+      [
+       0.353553390593,
+       0.433012701892,
+       0.707106781187
+      ],
+      [
+       0.25,
+       0.5,
+       0.612372435696
+      ]
+     ],
+     "theta_eff": [
+      0.07104468781420549,
+      0.07789171318073668,
+      0.07789171318073668,
+      0.07104468781420549
+     ],
+     "n_pairs": [
+      10,
+      10,
+      10,
+      10
+     ]
+    },
+    "hop5": {
+     "support": 9,
+     "n_multiplexed_rotations": 4,
+     "controls": [
+      6,
+      6,
+      6,
+      6
+     ],
+     "n_merged_elements": [
+      1,
+      2,
+      2,
+      1
+     ],
+     "merged_elements": [
+      [
+       0.5
+      ],
+      [
+       0.353553390593,
+       0.707106781187
+      ],
+      [
+       0.353553390593,
+       0.707106781187
+      ],
+      [
+       0.5
+      ]
+     ],
+     "theta_eff": [
+      0.07822165872496237,
+      0.08296659798013511,
+      0.08296659798013511,
+      0.07822165872496237
+     ],
+     "n_pairs": [
+      8,
+      8,
+      8,
+      8
+     ]
+    },
+    "hop6": {
+     "support": 6,
+     "n_multiplexed_rotations": 4,
+     "controls": [
+      2,
+      2,
+      3,
+      3
+     ],
+     "n_merged_elements": [
+      1,
+      2,
+      2,
+      1
+     ],
+     "merged_elements": [
+      [
+       0.5
+      ],
+      [
+       0.353553390593,
+       0.707106781187
+      ],
+      [
+       0.353553390593,
+       0.707106781187
+      ],
+      [
+       0.5
+      ]
+     ],
+     "theta_eff": [
+      0.07822165872496237,
+      0.08296659798013511,
+      0.08296659798013511,
+      0.07822165872496237
+     ],
+     "n_pairs": [
+      2,
+      2,
+      2,
+      2
+     ]
+    },
+    "plaq0": {
+     "support": 14,
+     "n_multiplexed_rotations": 2,
+     "controls": [
+      7,
+      7
+     ],
+     "n_merged_elements": [
+      3,
+      2
+     ],
+     "merged_elements": [
+      [
+       0.0625,
+       0.125,
+       0.25
+      ],
+      [
+       0.108253175473,
+       0.216506350946
+      ]
+     ],
+     "theta_eff": [
+      0.02281465046144736,
+      0.025403228843227415
+     ],
+     "n_pairs": [
+      162,
+      27
+     ]
+    },
+    "plaq1": {
+     "support": 14,
+     "n_multiplexed_rotations": 4,
+     "controls": [
+      5,
+      7,
+      7,
+      7
+     ],
+     "n_merged_elements": [
+      4,
+      3,
+      3,
+      2
+     ],
+     "merged_elements": [
+      [
+       0.03125,
+       0.0625,
+       0.125,
+       0.25
+      ],
+      [
+       0.054126587737,
+       0.108253175473,
+       0.216506350946
+      ],
+      [
+       0.054126587737,
+       0.108253175473,
+       0.216506350946
+      ],
+      [
+       0.09375,
+       0.1875
+      ]
+     ],
+     "theta_eff": [
+      0.018333201263663054,
+      0.019758066878091844,
+      0.019758066878091844,
+      0.021999841516395665
+     ],
+     "n_pairs": [
+      162,
+      27,
+      27,
+      5
+     ]
+    }
+   },
+   "ir_gate_counts_coarse_step": {
+    "x": 3,
+    "cx": 2266,
+    "p": 29,
+    "cp": 2,
+    "unitary1q": 68,
+    "ry": 1996
+   },
+   "coarse_step": {
+    "all_to_all": {
+     "ops": {
+      "sx": 2886,
+      "rz": 1789,
+      "cz": 1626,
+      "x": 253
+     },
+     "depth": 5840,
+     "cz": 1626,
+     "n_qubits": 20
+    },
+    "routed": {
+     "ops": {
+      "sx": 7674,
+      "cz": 3736,
+      "rz": 3666,
+      "x": 420
+     },
+     "depth": 8284,
+     "cz": 3736,
+     "n_qubits": 57
+    },
+    "grid": {
+     "ops": {
+      "sx": 5455,
+      "cz": 2803,
+      "rz": 2754,
+      "x": 428
+     },
+     "depth": 7014,
+     "cz": 2803,
+     "n_qubits": 20
+    }
+   },
+   "grid": [
+    4,
+    5
+   ],
+   "per_term_cz_grid": {
+    "diag": 20,
+    "hop0": 227,
+    "hop1": 69,
+    "hop2": 217,
+    "hop3": 211,
+    "hop4": 312,
+    "hop5": 208,
+    "hop6": 64,
+    "plaq0": 382,
+    "plaq1": 585
+   },
+   "per_term_leakage": {
+    "hop0": 8.43769498715119e-15,
+    "hop1": 4.773959005888173e-15,
+    "hop2": 7.882583474838611e-15,
+    "hop3": 7.993605777301127e-15,
+    "hop4": 9.2148511043888e-15,
+    "hop5": 8.881784197001252e-15,
+    "hop6": 4.551914400963142e-15,
+    "plaq0": 1.199040866595169e-14,
+    "plaq1": 1.9984014443252818e-14
+   },
+   "n_circuits_vs_emulation": 2,
+   "compiled_leakage": [
+    1.84297022087776e-14
+   ]
+  },
+  "recall_2x3": {
+   "exact|B=0": {
+    "mode": "exact",
+    "twoB": 0,
+    "circuits": 32,
+    "shots_per_circuit": 6250,
+    "references": 8,
+    "kmax": 4,
+    "reach": 86,
+    "support999": 86,
+    "max_leakage": 6.994405055138486e-14,
+    "max_deviation_vs_exact_emulation": 2.9952368694549685e-14,
+    "min_fidelity_vs_exact_emulation": 0.9999999999999656,
+    "seed": 20260914,
+    "mean_run_ir_s": 40.33035186678171,
+    "f=0.2": {
+     "recall": 1.0,
+     "size": 367,
+     "err": 0.0002552370618014166,
+     "yield_": 0.169555,
+     "false_positives": 36.0,
+     "E0_in_weinstein": true,
+     "ER": -5.602345220819975,
+     "E0": -5.602600457881777
+    },
+    "f=0.1": {
+     "recall": 1.0,
+     "size": 347,
+     "err": 0.00027304670007488596,
+     "yield_": 0.087195,
+     "false_positives": 34.0,
+     "E0_in_weinstein": true,
+     "ER": -5.602327411181702,
+     "E0": -5.602600457881777
+    },
+    "runtime_s": 1304.0713458061218
+   },
+   "exact|B=1": {
+    "mode": "exact",
+    "twoB": 2,
+    "circuits": 12,
+    "shots_per_circuit": 16667,
+    "references": 3,
+    "kmax": 4,
+    "reach": 89,
+    "support999": 95,
+    "max_leakage": 5.728750807065808e-14,
+    "max_deviation_vs_exact_emulation": 2.0294930222385964e-14,
+    "min_fidelity_vs_exact_emulation": 0.9999999999999685,
+    "seed": 20260914,
+    "mean_run_ir_s": 42.19840439160665,
+    "f=0.2": {
+     "recall": 1.0,
+     "size": 279,
+     "err": 0.000469483729030884,
+     "yield_": 0.17004659906801864,
+     "false_positives": 16.0,
+     "E0_in_weinstein": true,
+     "ER": -3.8256149593951148,
+     "E0": -3.8260844431241456
+    },
+    "f=0.1": {
+     "recall": 1.0,
+     "size": 246,
+     "err": 0.0007953827473916597,
+     "yield_": 0.08848323033539329,
+     "false_positives": 17.0,
+     "E0_in_weinstein": true,
+     "ER": -3.825289060376754,
+     "E0": -3.8260844431241456
+    },
+    "runtime_s": 518.8162772655487
+   },
+   "fixed|B=0": {
+    "mode": "fixed",
+    "twoB": 0,
+    "circuits": 32,
+    "shots_per_circuit": 6250,
+    "references": 8,
+    "kmax": 4,
+    "reach": 86,
+    "support999": 86,
+    "max_leakage": 6.94999613415348e-14,
+    "max_deviation_vs_exact_emulation": 0.20286864466794396,
+    "min_fidelity_vs_exact_emulation": 0.943627205919321,
+    "seed": 20260914,
+    "mean_run_ir_s": 36.775146290659904,
+    "f=0.2": {
+     "recall": 1.0,
+     "size": 324,
+     "err": 0.0004702254427204622,
+     "yield_": 0.169595,
+     "false_positives": 30.0,
+     "E0_in_weinstein": true,
+     "ER": -5.602130232439056,
+     "E0": -5.602600457881777
+    },
+    "f=0.1": {
+     "recall": 1.0,
+     "size": 304,
+     "err": 0.0006942278526791412,
+     "yield_": 0.087135,
+     "false_positives": 28.0,
+     "E0_in_weinstein": true,
+     "ER": -5.601906230029098,
+     "E0": -5.602600457881777
+    },
+    "runtime_s": 1190.0539729595184
+   },
+   "fixed|B=1": {
+    "mode": "fixed",
+    "twoB": 2,
+    "circuits": 12,
+    "shots_per_circuit": 16667,
+    "references": 3,
+    "kmax": 4,
+    "reach": 72,
+    "support999": 95,
+    "max_leakage": 4.0967229608668276e-14,
+    "max_deviation_vs_exact_emulation": 0.2090890254249062,
+    "min_fidelity_vs_exact_emulation": 0.9376982281884525,
+    "seed": 20260914,
+    "mean_run_ir_s": 37.88880185286204,
+    "f=0.2": {
+     "recall": 0.9894736842105263,
+     "size": 238,
+     "err": 0.001581060142829216,
+     "yield_": 0.17034659306813862,
+     "false_positives": 14.0,
+     "E0_in_weinstein": true,
+     "ER": -3.8245033829813164,
+     "E0": -3.8260844431241456
+    },
+    "f=0.1": {
+     "recall": 0.9368421052631579,
+     "size": 204,
+     "err": 0.0032103817141799773,
+     "yield_": 0.08911321773564529,
+     "false_positives": 12.0,
+     "E0_in_weinstein": true,
+     "ER": -3.8228740614099657,
+     "E0": -3.8260844431241456
+    },
+    "runtime_s": 466.6473021507263
+   }
+  },
+  "pytest": "24 passed in 81.96s (0:01:21)"
+ },
+ "runtime_s": 300.88564467430115,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.2",
+  "scipy": "1.18.0",
+  "platform": "Linux-7.2.3-arch1-3-x86_64-with-glibc2.44",
+  "cpu_count": 12,
+  "git_commit": "2fbcf29",
+  "timestamp": "2026-09-15 20:18:31 MDT"
+ }
+}
