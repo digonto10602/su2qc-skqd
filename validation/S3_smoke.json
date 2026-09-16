@@ -1,0 +1,223 @@
+{
+ "gate": "S3_smoke",
+ "title": "Device-model sampling of the 2x3 B=1 circuit set (gate S3)",
+ "status": "FAIL",
+ "criteria": [
+  {
+   "name": "2x3 B=1: recall of the 99.9 % support (95 states) with 24 shots",
+   "value": 0.0737,
+   "threshold": ">= 0.9",
+   "passed": false
+  },
+  {
+   "name": "2x3 B=1: exact E0 = -3.8261 inside the Weinstein interval",
+   "value": "[-4.6153, -3.1583]",
+   "threshold": "contains the exact E0",
+   "passed": true
+  }
+ ],
+ "data": {
+  "lattice": "2x3",
+  "sector": "B=1",
+  "twoB": 2,
+  "repetitions": 1,
+  "kmax": 4,
+  "g2": 4.0,
+  "n_qubits": 20,
+  "n_circuits": 12,
+  "shots_per_circuit": 2,
+  "shots_per_sector_requested": 24.0,
+  "total_shots": 24,
+  "run_kind": "smoke (pipeline test, NOT the production budget)",
+  "noise_model": "all-to-all RZZ depolarizing model of the declared inputs eps2 = 0.001, eps1 = 0.0001, eps_ro = 0.002",
+  "declared_inputs": {
+   "eps2": 0.001,
+   "eps1": 0.0001,
+   "eps_ro": 0.002,
+   "note": "vendor-class specifications, declared inputs (prompts/12)"
+  },
+  "aer": {
+   "device": "CPU",
+   "available_devices": [
+    "CPU"
+   ],
+   "batched_shots_gpu": false,
+   "method": "automatic"
+  },
+  "two_qubit_gates": {
+   "mean": 2158.0,
+   "min": 2158,
+   "max": 2158
+  },
+  "yield": 0.4166666666666667,
+  "accepted": 10,
+  "rejections": {
+   "flag": 7,
+   "link": 2,
+   "sector": 5,
+   "unknown": 0
+  },
+  "f_implied_by_yield": 0.508130081300813,
+  "support": {
+   "size_decoded": 7,
+   "size_with_references": 7,
+   "sector_dimension": 426,
+   "recall_99.9pct": 0.07368421052631578,
+   "exact_support_size": 95,
+   "false_positives": 0,
+   "captured_weight": 0.784843479372331
+  },
+  "ritz": {
+   "ER": -3.1583123951777,
+   "exact_E0": -3.8260844431241456,
+   "error": 0.6677720479464457,
+   "rH": 1.456970321048313,
+   "weinstein": [
+    -4.615282716226012,
+    -3.1583123951777
+   ],
+   "exact_E0_inside_weinstein": true
+  },
+  "cost": {
+   "seconds_per_shot_mean": 10.421248147885004,
+   "shots_per_simulator_call": 2,
+   "wall_seconds": 294.5373275279999,
+   "projected_hours_per_sector_at_2e5_shots": 578.9582304380558,
+   "projected_hours_four_sectors": 2315.8329217522232,
+   "reference_S2D": {
+    "seconds_per_shot": 3.198385763168335,
+    "shots_per_simulator_call": 10,
+    "source": "validation/S2D.json"
+   },
+   "projected_hours_per_sector_at_reference_rate": 177.6880979537964,
+   "note": "the measured seconds per shot include the fixed per-call overhead of one AerSimulator.run (circuit load, noise-model binding); it amortises at large shot counts, so a short run over-estimates the production cost"
+  },
+  "shot_rule": {
+   "p": 0.001,
+   "k": 3,
+   "confidence": 0.95,
+   "N_circuit_at_measured_yield": 15110,
+   "N_sector_at_measured_yield": 181320
+  },
+  "per_circuit": [
+   {
+    "reference": 57,
+    "k": 1,
+    "two_qubit_gates": 2158,
+    "shots": 2,
+    "accepted": 0,
+    "seconds": 20.611090421676636,
+    "seconds_per_shot": 10.305545210838318
+   },
+   {
+    "reference": 57,
+    "k": 2,
+    "two_qubit_gates": 2158,
+    "shots": 2,
+    "accepted": 2,
+    "seconds": 20.07268786430359,
+    "seconds_per_shot": 10.036343932151794
+   },
+   {
+    "reference": 57,
+    "k": 3,
+    "two_qubit_gates": 2158,
+    "shots": 2,
+    "accepted": 1,
+    "seconds": 20.526700973510742,
+    "seconds_per_shot": 10.263350486755371
+   },
+   {
+    "reference": 57,
+    "k": 4,
+    "two_qubit_gates": 2158,
+    "shots": 2,
+    "accepted": 1,
+    "seconds": 26.20925283432007,
+    "seconds_per_shot": 13.104626417160034
+   },
+   {
+    "reference": 29,
+    "k": 1,
+    "two_qubit_gates": 2158,
+    "shots": 2,
+    "accepted": 1,
+    "seconds": 20.044339656829834,
+    "seconds_per_shot": 10.022169828414917
+   },
+   {
+    "reference": 29,
+    "k": 2,
+    "two_qubit_gates": 2158,
+    "shots": 2,
+    "accepted": 1,
+    "seconds": 20.25213384628296,
+    "seconds_per_shot": 10.12606692314148
+   },
+   {
+    "reference": 29,
+    "k": 3,
+    "two_qubit_gates": 2158,
+    "shots": 2,
+    "accepted": 2,
+    "seconds": 20.00290012359619,
+    "seconds_per_shot": 10.001450061798096
+   },
+   {
+    "reference": 29,
+    "k": 4,
+    "two_qubit_gates": 2158,
+    "shots": 2,
+    "accepted": 0,
+    "seconds": 20.281113386154175,
+    "seconds_per_shot": 10.140556693077087
+   },
+   {
+    "reference": 27,
+    "k": 1,
+    "two_qubit_gates": 2158,
+    "shots": 2,
+    "accepted": 1,
+    "seconds": 20.4438898563385,
+    "seconds_per_shot": 10.22194492816925
+   },
+   {
+    "reference": 27,
+    "k": 2,
+    "two_qubit_gates": 2158,
+    "shots": 2,
+    "accepted": 0,
+    "seconds": 20.780832529067993,
+    "seconds_per_shot": 10.390416264533997
+   },
+   {
+    "reference": 27,
+    "k": 3,
+    "two_qubit_gates": 2158,
+    "shots": 2,
+    "accepted": 1,
+    "seconds": 20.28176975250244,
+    "seconds_per_shot": 10.14088487625122
+   },
+   {
+    "reference": 27,
+    "k": 4,
+    "two_qubit_gates": 2158,
+    "shots": 2,
+    "accepted": 0,
+    "seconds": 20.603244304656982,
+    "seconds_per_shot": 10.301622152328491
+   }
+  ]
+ },
+ "runtime_s": 295.1810178756714,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.2",
+  "scipy": "1.18.0",
+  "platform": "Linux-7.2.3-arch1-3-x86_64-with-glibc2.44",
+  "cpu_count": 12,
+  "git_commit": "1223e92",
+  "timestamp": "2026-09-16 11:46:01 MDT"
+ }
+}
