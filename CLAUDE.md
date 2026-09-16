@@ -54,8 +54,11 @@ values).  Laptop gates done: L2 PASS (Qiskit = reference to 3.7e-15), L5 PASS (C
 target needs compute capability >= 7.0), L3 FAIL as expected (35606 CZ per coarse step all-to-all, 55459 routed,
 budget 250), L4 FAIL as expected (yield at the random-acceptance level because f = (1-p2)^35670 is zero; Weinstein
 criteria PASS; noisy Aer costs 2-3.3 s per shot on this CPU, so 2x3 noisy runs need the desktop or cluster).
-No GPU path on the laptop: qiskit-aer-gpu 0.15.1 is incompatible with qiskit 2.5.2.  Gate S2 (2026-09-15): exact structured circuits built and verified (1.9e-14), 256/618 CZ all-to-all/heavy-hex at
-2x2 and 2164/5477 at 2x3 against budgets of 250/500 routed (FAIL on cost only); the fixed-angle gauge-invariant
-variant measures 240/671 and 1626/3736 with recall 1.000/0.937 (`validation/S2_fixed.json`). The controls are
-validity controls of the encoding, so no compilation lever remains: the owner decides between an all-to-all
-device with eps <= 1e-3 for 2x3 (prompt 11, option b) or hardware at 2x2 only (option c).
+No GPU path on the laptop: qiskit-aer-gpu 0.15.1 is incompatible with qiskit 2.5.2.  Gate S2 (2026-09-15): exact structured circuits verified (1.9e-14); 256/618 CZ at 2x2 and 2164/5477 at 2x3 against
+250/500 routed (FAIL on cost only; the controls are validity controls of the encoding, `prompts/11`).  Owner decision
+(2026-09-16): combined plan, 2x2 on Heron + 2x3 exact circuits on an all-to-all ion-trap device (`prompts/12`).  Gate S2D:
+2x2/Heron f = 0.125 with a FakeFez calibration (PASS; L4_fez pilot yield 0.14 vs model 0.10); 2x3 f = 0.053 at declared
+eps2 = 1e-3, eps1 = 1e-4 (0.082 with virtual rz) -> S2D FAIL on f >= 0.1 and on the per-circuit shot rule, but the
+operational S1 criterion holds at that f (recall >= 0.958 with 2e5 shots per sector, `data/S2D_recall_at_f.json`).
+Open: owner signs `proposal/amendment_01_devices_and_budgets.md` with the vendor's error specs; S3 full 2x3 noisy run
+is a desktop GPU job (3.2 s/shot on this CPU); H0 preparation on Heron (prompt 07) can proceed.
