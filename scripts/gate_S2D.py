@@ -41,16 +41,25 @@ import time
 
 import numpy as np
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from skqd.circuits_ir import CircuitFactory  # noqa: E402
+from skqd.codec import Codec  # noqa: E402
 from skqd.exact import Model  # noqa: E402
 from skqd.krylov import references  # noqa: E402
 from skqd.report import GateResult, env_block, md_table, write_report  # noqa: E402
-from skqd.skqd import poisson_lambda_star, shot_rule  # noqa: E402
+from skqd.skqd import poisson_lambda_star, shot_rule, yield_model  # noqa: E402
+
+from gate_H0P import random_acceptance  # noqa: E402  (the same exhaustive a as gates H0P/H0/L4)
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 MANUAL_SECTOR_BUDGET = 2e5          # manual Step 9.2
-YIELD_FACTOR = 0.82                 # manual Step 4.4: accepted-shot yield ~ 0.82 f
+YIELD_FACTOR = 0.82                 # manual Step 4.4: readout survival of the clean shots
+# manual Step 4.4: "the accepted-shot yield is ~ 0.82 f plus the garbage that decodes as valid".
+# The shot budget below deliberately uses the CLEAN yield 0.82 f only -- a shot accepted because
+# its garbage string happens to be a codeword carries no configuration and adds no support -- and
+# reports the full model as an informational column.
+YIELD_MODEL_NAME = "0.82 f + (1-f) a"
 F_MEAN_MIN, F_WORST_MIN = 0.1, 0.05
 HEAVY_HEX_D = {2: 3, 3: 5}
 G2 = 4.0
@@ -63,6 +72,29 @@ def s2_reference(lattice: str, key: str):
     with open(os.path.join(ROOT, "validation", "S2.json")) as fh:
         d = json.load(fh)["data"]
     return int(d[lattice]["coarse_step"][key]["cz"])
+
+
+def garbage_acceptance_exhaustive(M):
+    """a per sector, exhaustive over all 2^n bit strings through Codec.decode (n <= 12)."""
+    codec = Codec(M.basis)
+    return {f"B={twoB // 2}": float(random_acceptance(codec, twoB)["fraction"]) for twoB in (0, 2)}
+
+
+def garbage_acceptance_from_E2(lattice="2x3"):
+    """a at 2x3 from gate E2: the measured acceptance of uniformly random bit strings
+    (validation/E2.json, 2x10^5 random strings).  E2 decodes without a target sector, so this
+    is the acceptance into ANY sector, an upper bound on the per-sector a used at 2x2."""
+    with open(os.path.join(ROOT, "validation", "E2.json")) as fh:
+        crit = json.load(fh)["criteria"]
+    name = f"{lattice} static=[]: random-string acceptance"
+    for c in crit:
+        if c["name"] == name:
+            return float(str(c["value"]).rstrip("%")) / 100.0, {
+                "source": f"validation/E2.json criterion '{name}'",
+                "value": c["value"], "threshold": c["threshold"],
+                "note": "acceptance into any sector (E2 decodes without a target), an upper bound "
+                        "on the per-sector value"}
+    raise SystemExit(f"no criterion '{name}' in validation/E2.json")
 
 
 def circuit_set(Lx: int):
@@ -163,7 +195,7 @@ def main():
         "eps2_two_qubit_all_to_all": args.eps2, "eps1_one_qubit_all_to_all": args.eps1,
         "eps_ro_readout_all_to_all": args.eps_ro, "p_configuration_probability": args.p,
         "k_min_counts": args.k, "confidence": args.conf, "lambda_star": float(lam),
-        "yield_model": f"y = {YIELD_FACTOR} f (manual Step 4.4)",
+        "yield_model": f"y = {YIELD_FACTOR} f (clean shots only, manual Step 4.4 / eq. 5)",
         "note": ("eps2, eps1, eps_ro are vendor-class SPECIFICATIONS for the all-to-all trapped-ion "
                  "device, declared inputs of this gate, not measurements; p, k and the confidence are "
                  "the preregistered shot rule of manual Step 4.4.  The 2x2/Heron f is NOT in this "
@@ -264,6 +296,11 @@ def main():
           f"{time.time() - t0:.0f} s", flush=True)
 
     # ------------------------------------------------------------------ 3: shot budget
+    a_2x2 = garbage_acceptance_exhaustive(M2)                 # per sector, exhaustive (4096 strings)
+    a_2x3, a_2x3_src = garbage_acceptance_from_E2("2x3")       # measured in gate E2
+    data["garbage_acceptance"] = {"2x2 (per sector, exhaustive over 4096 strings)": a_2x2,
+                                  "2x3 (gate E2, any sector)": a_2x3, "2x3_source": a_2x3_src}
+    data["yield_model"] = YIELD_MODEL_NAME
     budget = {}
     for tag, per in (("2x3 / all-to-all", per3),
                      ("2x2 / Heron " + best_snap, heron[best_snap]["per_circuit"])):
@@ -271,16 +308,24 @@ def main():
         for sec in sorted({e["sector"] for e in per}):
             es = [e for e in per if e["sector"] == sec]
             fm = float(np.mean([e["f"] for e in es]))
-            y = YIELD_FACTOR * fm
+            y = YIELD_FACTOR * fm                      # CLEAN yield: this is what the budget uses
             nc = shot_rule(args.p, y, args.k, args.conf)
+            a = a_2x2[sec] if tag.startswith("2x2") else a_2x3
             rows[sec] = {"n_circuits": len(es), "mean_f": fm, "yield": float(y),
                          "N_circuit": int(nc), "N_sector": int(nc * len(es)),
                          "manual_sector_budget": MANUAL_SECTOR_BUDGET,
-                         "within_manual_budget": bool(nc * len(es) <= MANUAL_SECTOR_BUDGET)}
+                         "within_manual_budget": bool(nc * len(es) <= MANUAL_SECTOR_BUDGET),
+                         "garbage_acceptance": float(a), "yield_model": YIELD_MODEL_NAME,
+                         "yield_full_model_informational": float(yield_model(fm, a)),
+                         "yield_note": ("the budget uses the clean yield 0.82 f; the full model is "
+                                        "informational, garbage acceptances add no support")}
         budget[tag] = rows
     # what the manual's own example costs, for reference (f = 0.2, its design point)
     budget["manual design point f = 0.2 (manual eq. 5)"] = {
         "any sector": {"n_circuits": len(per3), "mean_f": 0.2, "yield": YIELD_FACTOR * 0.2,
+                       "garbage_acceptance": float(a_2x3), "yield_model": YIELD_MODEL_NAME,
+                       "yield_full_model_informational": float(yield_model(0.2, a_2x3)),
+                       "yield_note": "informational column only; the budget uses the clean yield",
                        "N_circuit": shot_rule(args.p, YIELD_FACTOR * 0.2, args.k, args.conf),
                        "N_sector": shot_rule(args.p, YIELD_FACTOR * 0.2, args.k, args.conf) * len(per3),
                        "manual_sector_budget": MANUAL_SECTOR_BUDGET,
@@ -381,7 +426,9 @@ def report_text(args, R, D):
         for sec, v in rows.items():
             brows.append([tag, sec, v["n_circuits"], f"{v['mean_f']:.4f}", f"{v['yield']:.4f}",
                           f"{v['N_circuit']:.0f}", f"{v['N_sector']:.3e}",
-                          f"{v['manual_sector_budget']:.0e}", "yes" if v["within_manual_budget"] else "NO"])
+                          f"{v['manual_sector_budget']:.0e}", "yes" if v["within_manual_budget"] else "NO",
+                          f"{v['garbage_acceptance']:.5f}",
+                          f"{v['yield_full_model_informational']:.4f}"])
     dt_tbl = D["device_time_illustrative"]["table"]
     drows = [[th] + [f"{dt_tbl[th][sec]:.0f}" for sec in sorted(dt_tbl[th])] for th in sorted(dt_tbl, key=int)]
     dhead = ["throughput (shots/min)"] + [f"{sec} (min)" for sec in sorted(dt_tbl[list(dt_tbl)[0]])]
@@ -417,7 +464,8 @@ Gate S2 keeps its recorded FAIL; `validation/S2.json` is untouched.
            ["k", ai["k_min_counts"], "minimum number of times it must be seen (manual Step 4.4)"],
            ["confidence", ai["confidence"], "probability with which that must happen (manual Step 4.4)"],
            ["lambda*", f"{ai['lambda_star']:.6f}", "smallest Poisson mean with P(X >= k) >= confidence (skqd.skqd.poisson_lambda_star)"],
-           ["yield model", ai["yield_model"], "accepted-shot yield of manual Step 4.4"]])}
+           ["yield model (shot rule)", ai["yield_model"], "CLEAN-shot yield: the shot rule of manual Step 4.4 / eq. (5)"],
+           ["yield model (full)", YIELD_MODEL_NAME, "accepted-shot yield of manual Step 4.4 including the garbage that decodes as valid -- informational here, the criterion of gates H0P/H0/L4"]])}
 
 The 2x2/Heron numbers below are **not** in this list: they are computed from the per-edge CZ errors and
 per-qubit readout errors of the calibration snapshots {ai['calibration_snapshots']}.
@@ -466,7 +514,17 @@ Two-qubit error that would be needed for mean f = {F_MEAN_MIN} at these counts (
 N_circuit = ceil(lambda* / (p y)) with y = {YIELD_FACTOR} f; N_sector = N_circuit x (number of circuits).
 
 {md_table(["circuit set / device", "sector", "circuits", "mean f", "yield y = 0.82 f",
-            "N_circuit", "N_sector", "manual Step 9.2", "within budget"], brows)}
+            "N_circuit", "N_sector", "manual Step 9.2", "within budget",
+            "a (garbage, informational)", "full model 0.82 f + (1−f) a (informational)"], brows)}
+
+The last two columns are **informational**: manual Step 4.4 defines the accepted-shot *yield* as
+"0.82 f plus the garbage that decodes as valid", y = {YIELD_MODEL_NAME} (`skqd.skqd.yield_model`), with a =
+the decoder's random-string acceptance ({', '.join(f"2x2 {sec} {v:.5f}" for sec, v in sorted(D['garbage_acceptance']['2x2 (per sector, exhaustive over 4096 strings)'].items()))}, exhaustive over all 4096
+strings; 2x3 {D['garbage_acceptance']['2x3 (gate E2, any sector)']:.5f} from {D['garbage_acceptance']['2x3_source']['source']}, {D['garbage_acceptance']['2x3_source']['note']}).
+The **shot budget itself keeps using the clean yield 0.82 f**: a shot that is accepted only because its
+garbage string happens to be a codeword carries no configuration and adds no support, so it must not reduce
+the number of shots.  The full model is the quantity the measured yield of gates H0P, H0 and L4 is compared
+against.
 
 The last block is the manual's own design point (f = 0.2): eq. (5) already asks for
 {D['shot_budget']['manual design point f = 0.2 (manual eq. 5)']['any sector']['N_circuit']:.0f} shots per circuit there, i.e.
