@@ -551,10 +551,56 @@ def _multiplexed_two_level(diff, items, valid, k, max_targets=3, stats=None):
     return comp + fr + _uc_u2(list(mats), ctrl, t) + fr[::-1] + comp
 
 
-def structured_term_gates(model: Model, O, support: list, theta: float, stats: list | None = None) -> list:
-    """Exact basic-gate IR for exp(-i theta O_loc) on `support` (global qubit indices).
+def _fixed_angle_rotations(states, Aop, theta, valid, k, stats=None):
+    """`angle_mode="fixed"`: one rotation per qubit-flip pattern instead of one per
+    (schedule round x flip pattern), with ONE angle for all the pairs it merges.
+
+    The pairs are exactly the pairs of codewords connected by the generator (the same
+    two-level rotations as the exact mode uses, minus the basis-change rotations inside a
+    colour class, which are an artefact of diagonalising the block); the controls that are
+    left only select which pairs move (validity), not the angle.  With all elements of one
+    flip pattern set to the same magnitude the generator splits, pattern by pattern, into
+    disjoint commuting pairs, so exp of each pattern is EXACTLY one round of two-level
+    rotations -- there is nothing left to Trotterise inside a pattern.
+
+    This is NOT exp(-i theta O_loc): it is the same gauge-invariant support generator with
+    theta_eff = theta x (mean of the distinct |elements| merged into the rotation) and the
+    original sign of every element.  SKQD only needs the circuits to generate the support
+    (the classical step diagonalises the exact H on it), so the recall criterion of gate S1
+    has to be re-established by emulation -- see prompts/11 and validation/S2_fixed.json."""
+    if np.abs(np.imag(np.asarray(Aop))).max() > 1e-11:
+        raise NotImplementedError("angle_mode='fixed' needs the real gauge of _real_gauge")
+    A = np.real(np.asarray(Aop))
+    groups = {}
+    for i, j in zip(*np.nonzero(np.triu(np.abs(A) > 1e-12, 1))):
+        groups.setdefault(int(states[i]) ^ int(states[j]), []).append((int(i), int(j), float(A[i, j])))
+    out = []
+    for d in sorted(groups):
+        items = groups[d]
+        mags = sorted({round(abs(a), 12) for (_, _, a) in items})
+        mbar = float(np.mean(mags))
+        ops = []
+        for (i, j, a) in items:
+            x = theta * mbar * (1.0 if a > 0 else -1.0)
+            V = np.array([[np.cos(x), np.sin(x)], [-np.sin(x), np.cos(x)]], dtype=complex)
+            ops.append((int(states[i]), int(states[j]), V))
+        out += _multiplexed_two_level(d, ops, valid, k, stats=stats)
+        if stats is not None:
+            stats[-1].update(merged_elements=[float(m) for m in mags], mean_element=mbar,
+                             theta_eff=float(theta * mbar), n_pairs=len(items))
+    return out
+
+
+def structured_term_gates(model: Model, O, support: list, theta: float, stats: list | None = None,
+                          angle_mode: str = "exact") -> list:
+    """Basic-gate IR for exp(-i theta O_loc) on `support` (global qubit indices).
+    `angle_mode="exact"` (default) reproduces the local exponential to machine precision;
+    `angle_mode="fixed"` keeps the same codeword pairs and the same validity controls but
+    uses one angle per flip pattern (see _fixed_angle_rotations) -- a cheaper generator, not
+    the exponential.  Both map codewords to codewords exactly.
     `stats`, if a list, receives one entry per multiplexed rotation (flip pattern, target,
     number of controls after the minimisation, number of two-level rotations it merges)."""
+    assert angle_mode in ("exact", "fixed"), angle_mode
     states, h, pos = localize(model, O, support)
     k = len(support)
     A = np.abs(h) > 1e-12
@@ -563,6 +609,10 @@ def structured_term_gates(model: Model, O, support: list, theta: float, stats: l
     valid = np.array(sorted(int(s) for s in states), dtype=np.int64)
     f, Aop = _real_gauge(states, h)
     pre, post = _gauge_gates(f, k)
+    if angle_mode == "fixed":
+        out = _fixed_angle_rotations(states, Aop, theta, valid, k, stats)
+        out = post + out + pre
+        return [(nm, [support[q] for q in qs], par) for nm, qs, par in out]
     blocks = []
     for c in range(ncomp):
         idx = np.where(lab == c)[0]
@@ -584,7 +634,9 @@ def structured_term_gates(model: Model, O, support: list, theta: float, stats: l
 
 # ---------------------------------------------------------------------- term gates
 class CircuitFactory:
-    def __init__(self, model: Model, g2: float, m: float | None = None, structured_hopping: bool = True):
+    def __init__(self, model: Model, g2: float, m: float | None = None, structured_hopping: bool = True,
+                 angle_mode: str = "exact"):
+        assert angle_mode in ("exact", "fixed"), angle_mode
         self.model = model
         self.g2 = g2
         self.m = mass_default(g2) if m is None else m
@@ -593,8 +645,19 @@ class CircuitFactory:
         self.lat = model.lat
         self.ends = self.lat.ends()
         self.structured_hopping = structured_hopping
+        self.angle_mode = angle_mode        # "exact" = exp(-i theta H_gamma); "fixed" = one angle
+        self.fixed_stats = {}               # per rotation of the fixed-angle circuits (term -> stats)
         self._hop_cache = {}
         self._struct_cache = {}
+
+    def _structured(self, name, O, sup, theta):
+        key = (name, round(theta, 12), self.angle_mode)
+        if key not in self._struct_cache:
+            st = []
+            self._struct_cache[key] = structured_term_gates(self.model, O, sup, theta, stats=st,
+                                                            angle_mode=self.angle_mode)
+            self.fixed_stats[(name, round(theta, 12))] = st
+        return self._struct_cache[key]
 
     # ----- state preparation
     def prepare(self, basis_index: int) -> list:
@@ -638,12 +701,10 @@ class CircuitFactory:
         return [("unitary", sup, self._hop_cache[key])]
 
     def hop_gates_structured(self, l: int, theta: float) -> list:
-        """Controlled-Givens-chain decomposition of exp(-i theta H_hop_l) (gate S2)."""
-        key = ("hop", l, round(theta, 12))
-        if key not in self._struct_cache:
-            sup = term_support(self.model, "hop", l)
-            self._struct_cache[key] = structured_term_gates(self.model, self.model.terms.hop[l], sup, theta)
-        return self._struct_cache[key]
+        """Controlled-Givens-chain decomposition of exp(-i theta H_hop_l) (gate S2); with
+        angle_mode="fixed" the same pairs with one angle per flip pattern (prompts/11)."""
+        return self._structured(f"hop{l}", self.model.terms.hop[l],
+                                term_support(self.model, "hop", l), theta)
 
     def hop_gates(self, l: int, theta: float) -> list:
         if self.structured_hopping:
@@ -661,10 +722,25 @@ class CircuitFactory:
             gates = [("cx", [a, b], None) for a, b in zip(q1, q2)]
             gates += [("h", [a], None) for a in q1]
             gates += [("cx", [a, b], None) for a, b in zip(q1[:-1], q1[1:])]
+            mags, mbar = [], 0.0
+            if self.angle_mode == "fixed":
+                # same pair rotation, one magnitude for every corner-parity class that moves
+                # (zero stays zero: those strings are not connected by the plaquette)
+                mags = sorted({round(abs(v), 12) for v in table.values() if abs(v) > 1e-12})
+                mbar = float(np.mean(mags)) if mags else 0.0
+                self.fixed_stats[(f"plaq{P}", round(theta, 12))] = [
+                    {"flip_pattern": None, "target": int(q1[-1]), "n_controls": len(q2),
+                     "n_rotations": int(sum(1 for v in table.values() if abs(v) > 1e-12)),
+                     "frame_cnots": 0, "merged_elements": [float(m) for m in mags],
+                     "mean_element": mbar, "theta_eff": float(theta * mbar / self.g2),
+                     "n_pairs": int(sum(1 for v in table.values() if abs(v) > 1e-12))}]
             angles = []
             for c in range(16):
                 p = tuple((c >> j) & 1 for j in range(4))
-                angles.append(-theta * table.get(p, 0.0) / self.g2)
+                w = table.get(p, 0.0)
+                if self.angle_mode == "fixed" and abs(w) > 1e-12:
+                    w = mbar if w > 0 else -mbar
+                angles.append(-theta * w / self.g2)
             gates += ucrz_gray(angles, q2, q1[-1])
             gates += [("cx", [a, b], None) for a, b in reversed(list(zip(q1[:-1], q1[1:])))]
             gates += [("h", [a], None) for a in q1]
@@ -676,10 +752,7 @@ class CircuitFactory:
             # interior corners (2x3 and larger): the generic controlled-Givens-chain gates
             # (the corner-only case above keeps its dedicated pair-rotation gate, which gate
             # CS verifies; structured_term_gates would give 22 CX there instead of 30)
-            key = ("plaq", P, round(theta, 12))
-            if key not in self._struct_cache:
-                self._struct_cache[key] = structured_term_gates(self.model, O, sup, theta)
-            return self._struct_cache[key]
+            return self._structured(f"plaq{P}", O, sup, theta)
         if len(sup) > 12:
             raise NotImplementedError(
                 f"plaquette {P} acts on {len(sup)} qubits (interior corners): the dense local unitary would need "
@@ -720,8 +793,18 @@ class CircuitFactory:
 
 
 # ------------------------------------------------------------------ numpy execution
+def _two_bit_view(state, a, b):
+    """state viewed as (rest, bit max(a,b), middle, bit min(a,b), low) -- an in-place view."""
+    hi, lo = max(a, b), min(a, b)
+    return state.reshape(-1, 2, 1 << (hi - lo - 1), 2, 1 << lo), (hi == a)
+
+
 def run_ir(gates: list, n: int, state: np.ndarray | None = None) -> np.ndarray:
-    """Statevector simulation of an IR gate list (qubit 0 = least significant bit)."""
+    """Statevector simulation of an IR gate list (qubit 0 = least significant bit).
+
+    Permutation gates (x, cx) and diagonal gates (rz, p, cp) are applied in place on
+    strided views -- the same operation as apply_local (tests/test_circuits_ir checks the
+    two against each other), three to five times faster on the 2^20 statevectors of 2x3."""
     if state is None:
         state = np.zeros(2 ** n, dtype=complex)
         state[0] = 1.0
@@ -732,11 +815,31 @@ def run_ir(gates: list, n: int, state: np.ndarray | None = None) -> np.ndarray:
     CX = np.array([[1, 0, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0], [0, 1, 0, 0]], dtype=complex)
     for name, qs, par in gates:
         if name == "x":
-            state = apply_local(state, X, qs, n)
+            v = state.reshape(-1, 2, 1 << qs[0])
+            tmp = v[:, 0, :].copy()
+            v[:, 0, :] = v[:, 1, :]
+            v[:, 1, :] = tmp
+        elif name == "cx":
+            c, t = qs
+            v, c_is_hi = _two_bit_view(state, c, t)
+            s0 = (slice(None), 1, slice(None), 0, slice(None)) if c_is_hi else \
+                 (slice(None), 0, slice(None), 1, slice(None))
+            s1 = (slice(None), 1, slice(None), 1, slice(None))
+            tmp = v[s0].copy()
+            v[s0] = v[s1]
+            v[s1] = tmp
+        elif name == "p":
+            v = state.reshape(-1, 2, 1 << qs[0])
+            v[:, 1, :] *= np.exp(1j * par)
+        elif name == "cp":
+            v, _ = _two_bit_view(state, qs[0], qs[1])
+            v[:, 1, :, 1, :] *= np.exp(1j * par)
+        elif name == "rz":
+            v = state.reshape(-1, 2, 1 << qs[0])
+            v[:, 0, :] *= np.exp(-1j * par / 2)
+            v[:, 1, :] *= np.exp(1j * par / 2)
         elif name == "h":
             state = apply_local(state, H, qs, n)
-        elif name == "rz":
-            state = apply_local(state, np.diag([np.exp(-1j * par / 2), np.exp(1j * par / 2)]), qs, n)
         elif name == "ry":
             c, s_ = np.cos(par / 2), np.sin(par / 2)
             state = apply_local(state, np.array([[c, -s_], [s_, c]], dtype=complex), qs, n)
@@ -745,12 +848,6 @@ def run_ir(gates: list, n: int, state: np.ndarray | None = None) -> np.ndarray:
             state = apply_local(state, np.array([[c, -1j * s_], [-1j * s_, c]], dtype=complex), qs, n)
         elif name == "gphase":
             state = state * np.exp(1j * par)
-        elif name == "p":
-            state = apply_local(state, np.diag([1.0, np.exp(1j * par)]), qs, n)
-        elif name == "cp":
-            state = apply_local(state, np.diag([1.0, 1.0, 1.0, np.exp(1j * par)]), qs, n)
-        elif name == "cx":
-            state = apply_local(state, CX, qs, n)
         elif name == "unitary":
             state = apply_local(state, par, qs, n)
         elif name == "mcu":

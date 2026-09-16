@@ -212,3 +212,138 @@ def test_structured_plaquette_2x3_on_physical_states():
     exact = E.embed(spl.expm_multiply(-1j * dt * O, v))
     assert abs(psi - exact).max() < 1e-10
     assert abs(E.leakage(psi)) < 1e-9
+
+
+# ------------------------------------------------- fixed-angle generator (prompts/11)
+def _local_action(M, F, name, O, support, theta):
+    """The matrix of the term circuit on the local codeword states (run_ir on 2^k)."""
+    from skqd.circuits_ir import run_ir
+    from skqd.reference_sim import localize
+
+    states, h, _ = localize(M, O, support)
+    k = len(support)
+    pos = {q: i for i, q in enumerate(support)}
+    gates = F.hop_gates(int(name[3:]), theta) if name.startswith("hop") else \
+        F.plaq_gates(int(name[4:]), theta, True)
+    loc = [(nm, [pos[q] for q in qs], par) for nm, qs, par in gates]
+    idx = np.array(states)
+    W = np.zeros((len(states), len(states)), dtype=complex)
+    leak = 0.0
+    for j in range(len(states)):
+        psi = np.zeros(2 ** k, dtype=complex)
+        psi[idx[j]] = 1.0
+        out = run_ir(loc, k, psi)
+        W[:, j] = out[idx]
+        leak = max(leak, abs(1.0 - float(np.sum(np.abs(out[idx]) ** 2))))
+    return states, h, W, leak
+
+
+def test_fixed_angle_leakage_and_pair_structure_2x2():
+    """angle_mode='fixed': the generator is unitary on the codeword space (leakage < 1e-12),
+    it connects only configurations that the exact term connects (same connected blocks),
+    and it is NOT the exact exponential (that is the point: it is cheaper)."""
+    import scipy.linalg as sla
+    import scipy.sparse as sp
+    import scipy.sparse.csgraph as csgraph
+
+    from skqd.reference_sim import term_support
+
+    M = Model(2)
+    g2 = 4.0
+    dt = M.reference(g2, 0).dt
+    F = CircuitFactory(M, g2, angle_mode="fixed")
+    terms = [(f"hop{l}", M.terms.hop[l], term_support(M, "hop", l)) for l in range(M.lat.n_links)]
+    terms += [(f"plaq{P}", -M.terms.plaq[P] / (2 * g2), term_support(M, "plaq", P))
+              for P in range(len(M.lat.plaquettes))]
+    differs = 0.0
+    for name, O, sup in terms:
+        for theta in (dt, 2 * dt):
+            states, h, W, leak = _local_action(M, F, name, O, sup, theta)
+            assert leak < 1e-12, (name, theta, leak)
+            assert abs(W.conj().T @ W - np.eye(len(states))).max() < 1e-10, name
+            A = np.abs(h) > 1e-12
+            np.fill_diagonal(A, False)
+            _, lab = csgraph.connected_components(sp.csr_matrix(A), directed=False)
+            assert abs(W[lab[:, None] != lab[None, :]]).max(initial=0.0) < 1e-10, \
+                f"{name}: the fixed-angle circuit connects different blocks of the term"
+            differs = max(differs, float(abs(W - sla.expm(-1j * theta * h)).max()))
+    assert differs > 1e-3, "the fixed-angle circuits should differ from the exact exponentials"
+
+
+def test_fixed_angle_theta_eff_is_the_mean_of_the_merged_elements():
+    """theta_eff of every multiplexed rotation = theta x mean of the DISTINCT |elements| of
+    the term with that qubit-flip pattern (the contract recorded in validation/S2_fixed.json)."""
+    from skqd.circuits_ir import _real_gauge
+    from skqd.reference_sim import localize, term_support
+
+    M = Model(2)
+    g2 = 4.0
+    dt = M.reference(g2, 0).dt
+    F = CircuitFactory(M, g2, angle_mode="fixed")
+    for l in range(M.lat.n_links):
+        sup = term_support(M, "hop", l)
+        F.hop_gates(l, dt)
+        stats = F.fixed_stats[(f"hop{l}", round(dt, 12))]
+        states, h, _ = localize(M, M.terms.hop[l], sup)
+        _, A = _real_gauge(states, h)
+        want = {}
+        for i in range(len(states)):
+            for j in range(i + 1, len(states)):
+                if abs(A[i, j]) > 1e-12:
+                    want.setdefault(states[i] ^ states[j], set()).add(round(abs(float(np.real(A[i, j]))), 12))
+        assert {s["flip_pattern"] for s in stats} == set(want), l
+        for s in stats:
+            mags = sorted(want[s["flip_pattern"]])
+            assert s["merged_elements"] == pytest.approx(mags)
+            assert s["theta_eff"] == pytest.approx(dt * float(np.mean(mags)))
+
+
+def test_fixed_angle_terms_2x3_are_leak_free():
+    """The hard requirement of prompts/11 at 2x3: every fixed-angle term maps codewords to
+    codewords (the interior-corner plaquette is the demanding case, 14 qubits)."""
+    from skqd.reference_sim import term_support
+
+    M = Model(3)
+    g2 = 4.0
+    dt = M.reference(g2, 0).dt
+    F = CircuitFactory(M, g2, angle_mode="fixed")
+    rng = np.random.default_rng(31)
+    worst = 0.0
+    for name, O, sup in [("hop0", M.terms.hop[0], term_support(M, "hop", 0)),
+                         ("hop4", M.terms.hop[4], term_support(M, "hop", 4)),
+                         ("plaq1", -M.terms.plaq[1] / (2 * g2), term_support(M, "plaq", 1))]:
+        from skqd.reference_sim import localize
+        states, h, _ = localize(M, O, sup)
+        k = len(sup)
+        pos = {q: i for i, q in enumerate(sup)}
+        gates = F.hop_gates(int(name[3:]), dt) if name.startswith("hop") else F.plaq_gates(1, dt, True)
+        loc = [(nm, [pos[q] for q in qs], par) for nm, qs, par in gates]
+        idx = np.array(states)
+        for _ in range(3):
+            c = rng.normal(size=len(states)) + 1j * rng.normal(size=len(states))
+            psi = np.zeros(2 ** k, dtype=complex)
+            psi[idx] = c / np.linalg.norm(c)
+            out = run_ir(loc, k, psi)
+            worst = max(worst, abs(1.0 - float(np.sum(np.abs(out[idx]) ** 2))))
+    assert worst < 1e-12, worst
+
+
+def test_run_ir_fast_paths_match_apply_local():
+    """The in-place permutation/diagonal paths of run_ir are the same operation as
+    reference_sim.apply_local (which stays the definition)."""
+    from skqd.reference_sim import apply_local
+
+    rng = np.random.default_rng(7)
+    X = np.array([[0, 1], [1, 0]], dtype=complex)
+    CX = np.array([[1, 0, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0], [0, 1, 0, 0]], dtype=complex)
+    n = 5
+    psi = rng.normal(size=2 ** n) + 1j * rng.normal(size=2 ** n)
+    for _ in range(200):
+        a, b = rng.choice(n, size=2, replace=False)
+        a, b = int(a), int(b)
+        th = float(rng.normal())
+        for name, qs, par, U in (("x", [a], None, X), ("cx", [a, b], None, CX),
+                                 ("p", [a], th, np.diag([1.0, np.exp(1j * th)])),
+                                 ("rz", [a], th, np.diag([np.exp(-1j * th / 2), np.exp(1j * th / 2)])),
+                                 ("cp", [a, b], th, np.diag([1.0, 1.0, 1.0, np.exp(1j * th)]))):
+            assert abs(run_ir([(name, qs, par)], n, psi) - apply_local(psi, U, qs, n)).max() < 1e-13
