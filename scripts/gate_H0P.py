@@ -48,10 +48,13 @@ from skqd.hardware import confusion_matrix  # noqa: E402
 from skqd.krylov import references  # noqa: E402
 from skqd.reference_sim import qiskit_key_to_bits  # noqa: E402
 from skqd.report import GateResult, env_block, md_table, write_report  # noqa: E402
-from skqd.skqd import certify, ritz, shot_rule, support_metrics  # noqa: E402
+from skqd.skqd import (READOUT_FACTOR, certify, clean_fraction_from_yield,  # noqa: E402
+                       ritz, shot_rule, support_metrics, yield_model)
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-YIELD_FACTOR = 0.82          # manual Step 4.4: accepted-shot yield ~ 0.82 f
+YIELD_FACTOR = READOUT_FACTOR   # 0.82, manual Step 4.4: readout survival of the clean shots
+# manual Step 4.4: "the accepted-shot yield is ~ 0.82 f plus the garbage that decodes as valid"
+YIELD_MODEL_NAME = "0.82 f + (1-f) a"
 RATIO_LO, RATIO_HI = 1 / 3, 3.0   # the L4 criterion: the model is a rough proxy
 LEAK_TOL = 1e-9
 E0_TOL = 1e-6
@@ -140,21 +143,25 @@ def analyse_records(records, cal_records, model, g2):
     for (sec, r), g in sorted(groups.items()):
         fmean = float(np.mean(g["f"])) if g["f"] else None
         y = g["accepted"] / g["shots"] if g["shots"] else 0.0
-        model_y = YIELD_FACTOR * fmean if fmean is not None else None
-        # DIAGNOSTIC (not a criterion): a shot that is not clean is accepted with the
-        # decoder's random-string acceptance a of that sector, so the yield cannot fall
-        # below (1 - f) a however large the circuit is
+        # manual Step 4.4, both terms: y = 0.82 f + (1 - f) a.  A shot that is not clean is
+        # accepted whenever its (essentially random) string is a codeword of the target
+        # sector, which happens with the decoder's random-string acceptance a of that sector,
+        # so 0.82 f alone describes the yield only while f >> a / 0.82.
         a = out["random_acceptance"][sec]["fraction"]
-        floor_y = (model_y + (1 - fmean) * a) if fmean is not None else None
+        clean_y = YIELD_FACTOR * fmean if fmean is not None else None    # the old, first-term-only model
+        full_y = yield_model(fmean, a) if fmean is not None else None
         out["by_sector_repetition"][f"{sec} r={r}"] = {
             "sector": sec, "repetitions": r, "circuits": g["circuits"], "shots": g["shots"],
             "accepted": g["accepted"], "yield": float(y),
             "cz_mean": float(np.mean(g["cz"])), "cz_min": int(min(g["cz"])), "cz_max": int(max(g["cz"])),
-            "f_calibration_mean": fmean, "model_yield_0.82f": model_y,
-            "ratio_simulated_over_model": float(y / model_y) if model_y else None,
-            "false_acceptance_floor": float(a),
-            "model_yield_with_floor": floor_y,
-            "ratio_simulated_over_floor_model": float(y / floor_y) if floor_y else None,
+            "f_calibration_mean": fmean,
+            "garbage_acceptance": float(a),
+            "yield_model": YIELD_MODEL_NAME,
+            "model_yield_0.82f": clean_y,
+            "ratio_simulated_over_model": float(y / clean_y) if clean_y else None,
+            "model_yield_full": full_y,
+            "ratio_simulated_over_full_model": float(y / full_y) if full_y else None,
+            "f_from_yield": (clean_fraction_from_yield(y, a) if fmean is not None else None),
             "support_size": len(g["support"]), "rejections": g["rejections"],
         }
 
@@ -349,8 +356,20 @@ def main():
                      "budget_minutes": args.budget_minutes, "sampling_seconds": t_sample,
                      "calibration_shots_per_circuit": args.cal_shots, "calibration_seconds": t_cal,
                      "pilot_shots": args.pilot_shots},
+        "yield_model": YIELD_MODEL_NAME,
+        "garbage_acceptance": {sec: A["random_acceptance"][sec]["fraction"]
+                               for sec in sorted(A["random_acceptance"])},
+        "yield_model_inputs": {
+            "formula": f"y = {YIELD_MODEL_NAME}  (manual Step 4.4, both terms)",
+            "readout_factor": YIELD_FACTOR,
+            "garbage_acceptance_source": (
+                f"exhaustive: all {2 ** n} bit strings through skqd.codec.Codec.decode for the "
+                f"target sector (section 3 of this report)"),
+            "note": ("the shot rule below keeps using the CLEAN yield 0.82 f: a shot accepted "
+                     "because its garbage string happens to be a codeword adds no support"),
+        },
         "shot_rule_inputs": {"p": args.p, "k": args.k, "confidence": args.conf,
-                             "yield_model": f"y = {YIELD_FACTOR} f (manual Step 4.4)"},
+                             "yield_model": f"y = {YIELD_FACTOR} f (clean shots only, manual eq. 5)"},
         "shot_plan": plan,
         "analysis": A,
     }
@@ -371,9 +390,11 @@ def main():
               ra["fraction"] < RANDOM_ACCEPT_MAX)
     for key in sorted(A["by_sector_repetition"]):
         v = A["by_sector_repetition"][key]
-        ratio = v["ratio_simulated_over_model"]
+        ratio = v["ratio_simulated_over_full_model"]
         R.add(f"{key} ({v['cz_mean']:.0f} CZ): simulated yield {v['yield']:.3f} vs the model "
-              f"{YIELD_FACTOR} f = {v['model_yield_0.82f']:.3f}", round(ratio, 3),
+              f"{YIELD_MODEL_NAME} = {v['model_yield_full']:.3f} (a = {v['garbage_acceptance']:.5f}; "
+              f"the first term alone, {YIELD_FACTOR} f = {v['model_yield_0.82f']:.3f}, gives "
+              f"{v['ratio_simulated_over_model']:.2f})", round(ratio, 3),
               f"ratio in [{RATIO_LO:.2f}, {RATIO_HI:.0f}]", RATIO_LO <= ratio <= RATIO_HI)
     cs = A["confusion_summary"]
     R.add(f"readout confusion matrix on {cs['n_patches']} patch(es): smallest diagonal element",
@@ -418,11 +439,17 @@ def yield_rows(A):
     for key in sorted(A["by_sector_repetition"]):
         v = A["by_sector_repetition"][key]
         rows.append([v["sector"], v["repetitions"], v["circuits"], f"{v['cz_mean']:.0f}",
-                     fmt(v["f_calibration_mean"]), fmt(v["model_yield_0.82f"]),
+                     fmt(v["f_calibration_mean"]), fmt(v["garbage_acceptance"], ".5f"),
+                     fmt(v["model_yield_0.82f"]), fmt(v["model_yield_full"]),
                      v["shots"], fmt(v["yield"]), fmt(v["ratio_simulated_over_model"], ".2f"),
-                     fmt(v["model_yield_with_floor"]), fmt(v["ratio_simulated_over_floor_model"], ".2f"),
+                     fmt(v["ratio_simulated_over_full_model"], ".2f"),
                      v["support_size"], str(v["rejections"])])
     return rows
+
+
+YIELD_HEAD = ["sector", "r", "circuits", "CZ", "f (calibration)", "a (garbage)",
+              "model 0.82 f (old)", "model 0.82 f + (1−f) a", "shots", "simulated yield",
+              "simulated / 0.82 f", "simulated / full model", "distinct states", "rejections"]
 
 
 def gate_report(args, R, D, index):
@@ -475,22 +502,22 @@ Sampling: `{D['simulator']}`, {', '.join(f"{v} shots per r = {k} circuit" for k,
 {', '.join(f"{v:.3f} s/shot at r={k}" for k, v in sorted(S['seconds_per_shot_by_repetition'].items()))},
 i.e. {S['seconds_per_shot_whole_set']:.1f} s per shot over the whole set, and the budget was {S['budget_minutes']:.0f} min).
 
-{md_table(["sector", "r", "circuits", "CZ", "f (calibration)", "model yield 0.82 f", "shots",
-            "simulated yield", "simulated / model", "0.82 f + (1−f)a", "simulated / (with floor)",
-            "distinct states", "rejections"], yield_rows(A))}
+{md_table(YIELD_HEAD, yield_rows(A))}
 
-The model column is the manual's Step 4.4 proxy with the f of gate S2D (per-edge CZ errors and per-qubit
-readout errors of the patch the transpiler chose on this snapshot); the simulated column is the full Aer
-device model of the same snapshot.  The ratio "simulated / model" is the criterion; the ratio the H0
-session will be judged against is the simulated yield itself (see `reports/H0_prereg_draft.md`).
-
-**Diagnostic, not a criterion — the false-acceptance floor.**  A shot that is not clean is still accepted
-whenever its bit string happens to be a codeword of the target sector; that happens with the decoder's
-random-string acceptance a = {', '.join(f"{sec} {v['fraction']:.4f}" for sec, v in sorted(A['random_acceptance'].items()))}
-(section 3).  The accepted yield therefore cannot fall below (1 − f) a however deep the circuit is, so the
-manual's y = {YIELD_FACTOR} f describes the yield only while {YIELD_FACTOR} f >> a, i.e. while f >> {max(v['fraction'] for v in A['random_acceptance'].values()) / YIELD_FACTOR:.3f}.
-The column "{YIELD_FACTOR} f + (1 − f) a" adds that floor; it is a diagnostic added by this gate, not the
-manual's model and not the criterion.
+**The yield model.**  Manual Step 4.4: "the accepted-shot yield is ≈ 0.82 f plus the 0.15 % of garbage that
+decodes as valid", i.e. y = {YIELD_MODEL_NAME} (`skqd.skqd.yield_model`).  The first term is the clean shots
+that survive readout, with the f of gate S2D (per-edge CZ errors and per-qubit readout errors of the patch
+the transpiler chose on this snapshot).  The second term is the non-clean fraction (1 − f) whose bit strings,
+after ~1000 CZ, are close to uniformly random and are accepted whenever they happen to be a codeword of the
+target sector: that happens with the decoder's random-string acceptance
+a = {', '.join(f"{sec} {v['fraction']:.5f}" for sec, v in sorted(A['random_acceptance'].items()))}, measured
+exhaustively over all {2 ** index['common']['n_logical_qubits']} bit strings in section 3.  The simulated column is the full Aer device model of the
+same snapshot.  The criterion is the ratio "simulated / full model"; the column "simulated / 0.82 f" is the
+first term alone, which is the model the gate used before prompts/14 — it describes the yield only while
+f >> a / {YIELD_FACTOR} = {max(v['fraction'] for v in A['random_acceptance'].values()) / YIELD_FACTOR:.3f}, i.e. at r = 1 here, and is kept in the table for comparison.
+The prediction the H0 session will be judged against is the simulated yield itself (see
+`reports/H0_prereg_draft.md`).  The shot plan of section 6 keeps using the CLEAN yield 0.82 f: a shot
+accepted because its garbage string is a codeword adds no support.
 
 ## 3. Decoder validity
 
@@ -516,8 +543,12 @@ inverse.  Smallest diagonal element over all patches: {A['confusion_summary']['m
 
 ## 6. Shot plan (manual eq. 5, `skqd.skqd.shot_rule`, p = {args.p:.0e}, k = {args.k}, confidence {args.conf})
 
-{md_table(["sector", "r", "circuits", "simulated yield", "model yield", "N/circuit (simulated)",
-            "N/sector (simulated)", "N/circuit (model)", "N/sector (model)"], prows)}
+{md_table(["sector", "r", "circuits", "simulated yield", "clean yield 0.82 f", "N/circuit (simulated)",
+            "N/sector (simulated)", "N/circuit (clean 0.82 f)", "N/sector (clean 0.82 f)"], prows)}
+
+The budget preregistered for the session is the one computed from the **clean** yield 0.82 f (last two
+columns): a shot that is accepted only because its garbage string happens to be a codeword adds no support,
+so the garbage term of the yield model must not enter the shot rule.
 
 ## Criteria
 
@@ -536,8 +567,10 @@ def prereg_report(args, R, D, index):
     S = D["sampling"]
     fs = D["frozen_set"]
     rows = yield_rows(A)
-    prows = [[v["sector"], v["repetitions"], v["circuits"], fmt(v["simulated_yield"]),
-              v["N_circuit_simulated"], fmt(v["N_sector_simulated"], ".3e")] for v in D["shot_plan"].values()]
+    prows = [[v["sector"], v["repetitions"], v["circuits"], fmt(v["model_yield_0.82f"]),
+              v["N_circuit_model"], fmt(v["N_sector_model"], ".3e"),
+              fmt(v["simulated_yield"]), v["N_circuit_simulated"],
+              fmt(v["N_sector_simulated"], ".3e")] for v in D["shot_plan"].values()]
     r1 = [v for v in A["by_sector_repetition"].values() if v["repetitions"] == 1]
     return f"""# H0 preregistration (draft) — 2x2 calibration session on a Heron-class device
 
@@ -561,34 +594,43 @@ CZ per repetition: {', '.join(f"r = {r}: {v['cz']['mean']:.0f}" for r, v in sort
 
 ## 2. Predicted yields
 
-{md_table(["sector", "r", "circuits", "CZ", "f (calibration)", "model yield 0.82 f", "shots",
-            "simulated yield", "simulated / model", "0.82 f + (1−f)a", "simulated / (with floor)",
-            "distinct states", "rejections"], rows)}
+{md_table(YIELD_HEAD, rows)}
+
+**The yield model (manual Step 4.4, both terms).**  y = {YIELD_MODEL_NAME} = `skqd.skqd.yield_model(f, a)`,
+with a = the decoder's random-string acceptance of the target sector
+({', '.join(f"{sec} {v['fraction']:.5f}" for sec, v in sorted(A['random_acceptance'].items()))}, exhaustive over all
+{2 ** index['common']['n_logical_qubits']} strings) — the "garbage that decodes as valid" of the manual's sentence.  The measured clean-shot
+fraction is the inverse, f = (y − a) / ({YIELD_FACTOR} − a) = `skqd.skqd.clean_fraction_from_yield(y, a)`.
+The first term alone, {YIELD_FACTOR} f, is kept as a column for comparison: it describes the yield only while
+f >> a / {YIELD_FACTOR} = {max(v['fraction'] for v in A['random_acceptance'].values()) / YIELD_FACTOR:.3f}, and on this snapshot it is off by up to
+{max(v['ratio_simulated_over_model'] for v in A['by_sector_repetition'].values()):.1f}x at r = 3 while the full model describes every point within
+{max(v['ratio_simulated_over_full_model'] for v in A['by_sector_repetition'].values()):.2f}x.  The shot plan in section 3 nevertheless uses the CLEAN yield only: a garbage
+string that happens to be a codeword adds no support.
 
 **Which prediction the 30 % criterion of prompts/07 step 4 is judged against: the simulated yield**
-with the calibration snapshot of the session day, not the 0.82 f model.  Reason (planner's decision,
-prompts/13): the model is conservative by a factor {np.mean([v['ratio_simulated_over_model'] for v in A['by_sector_repetition'].values() if v['repetitions'] == 1]):.2f} on the r = 1 circuits of this snapshot
-(gate L4_fez measured 1.39 on the same snapshot with the same circuits), so judging the device against
-0.82 f would reject a device that behaves exactly as simulated.  Both numbers are recorded; the model
-yield stays in the table as the manual's own proxy.
+with the calibration snapshot of the session day, not the model.  Reason (planner's decision,
+prompts/13): the model is conservative by a factor {np.mean([v['ratio_simulated_over_full_model'] for v in A['by_sector_repetition'].values() if v['repetitions'] == 1]):.2f} on the r = 1 circuits of this snapshot
+(gate L4_fez measured the same factor on the same snapshot with the same circuits), so judging the device
+against the model would reject a device that behaves exactly as simulated.  Both numbers are recorded.
 
 **The criterion applies to the r = 1 circuits only.**  At r = 2 and r = 3 the clean-shot fraction
 ({', '.join(f"r = {v['repetitions']}: f = {v['f_calibration_mean']:.4f}" for v in A['by_sector_repetition'].values() if v['sector'] == 'B=0')})
-falls to the level of the decoder's false-acceptance floor a (B=0 {A['random_acceptance']['B=0']['fraction']:.4f}, B=1 {A['random_acceptance']['B=1']['fraction']:.4f}), so the
-accepted yield stops measuring f there: the last two columns of the table above show that
-0.82 f + (1 - f) a describes every point within a factor
-{max(v['ratio_simulated_over_floor_model'] for v in A['by_sector_repetition'].values()):.2f} while 0.82 f alone is off by up to
-{max(v['ratio_simulated_over_model'] for v in A['by_sector_repetition'].values()):.1f}x.  On the session day, r = 2 and r = 3 measure the SHAPE of the yield-versus-CZ
-curve (manual Step 9.1), not f.
+falls to the level of a itself, so inverting the yield for f is ill-conditioned there however good the model
+is.  On the session day, r = 2 and r = 3 measure the SHAPE of the yield-versus-CZ curve (manual Step 9.1),
+not f.
 
 On the session day the predicted yields are recomputed from **that day's** calibration by re-running
 `scripts/h0_build_circuits.py --backend <device>` and `scripts/gate_H0P.py`, before submission.
 
 ## 3. Shot plan (manual Step 4.4, eq. 5; `skqd.skqd.shot_rule`)
 
-N_circuit = ceil(lambda*/(p y)) with p = {args.p:.0e}, k = {args.k}, confidence {args.conf}, y = the simulated yield:
+N_circuit = ceil(lambda*/(p y)) with p = {args.p:.0e}, k = {args.k}, confidence {args.conf}.  **The budget uses the
+CLEAN yield y = {YIELD_FACTOR} f**, not the accepted yield: a shot that is accepted only because its garbage
+string happens to be a codeword carries no configuration and adds no support.  The columns computed from the
+simulated accepted yield are shown next to it for reference only.
 
-{md_table(["sector", "r", "circuits", "yield used", "N per circuit", "N per sector"], prows)}
+{md_table(["sector", "r", "circuits", "clean yield 0.82 f", "N per circuit", "N per sector",
+            "(ref.) simulated yield", "(ref.) N per circuit", "(ref.) N per sector"], prows)}
 
 This is the budget for the *support* requirement.  The calibration session itself (this gate's purpose)
 does not need it: yields at the percent level are already resolved by a few hundred shots per circuit,
@@ -601,7 +643,9 @@ and the r = 1 circuits alone ({sum(v['circuits'] for v in r1)} circuits) carry t
    {', '.join(f"{sec} {100 * v['fraction']:.3f}%" for sec, v in sorted(A['random_acceptance'].items()))}
    (exhaustive over all {2 ** index['common']['n_logical_qubits']} strings) — criterion < 1 %.
 2. Measured f within 30 % of the prediction for the r = 1 circuits ({r1[0]['cz_mean']:.0f} CZ), with
-   f_measured = measured yield / {YIELD_FACTOR}.
+   f_measured = (measured yield − a) / ({YIELD_FACTOR} − a) = `skqd.skqd.clean_fraction_from_yield(y, a)`,
+   the inverse of the full model y = {YIELD_MODEL_NAME}; the predicted f is obtained from the predicted
+   (simulated) yield the same way, so the comparison is between two clean-shot fractions.
 3. Ritz energies of the saturated sectors reproduce
    {', '.join(f"E_0({sec}) = {v['exact_E0']:.4f}" for sec, v in sorted(A['by_sector'].items()))} to 1e-6.
 4. Every diagonal element of the per-qubit readout confusion matrix >= {DIAG_MIN}

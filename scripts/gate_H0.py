@@ -9,10 +9,13 @@ shot with `skqd.codec.Codec.decode_counts`, and evaluates the prompts/07 criteri
   1. decoder validity: every accepted string is a valid codeword of the target sector
      (checked by re-encoding the decoded label), and the acceptance of random-looking
      strings is < 1 % (exhaustive over all 2^n strings);
-  2. the measured f = accepted yield / 0.82 is within 30 % of the preregistered
-     prediction for the r = 1 circuits (the prediction is the simulated yield of
-     `validation/H0P.json` — the planner's decision recorded in
-     `reports/H0_prereg_draft.md` — or, with `--predict model`, the manual's 0.82 f);
+  2. the measured f is within 30 % of the preregistered prediction for the r = 1 circuits.
+     f is recovered from an accepted-shot yield by inverting the manual's full Step-4.4
+     model y = 0.82 f + (1 - f) a, i.e. f = (y - a) / (0.82 - a)
+     (`skqd.skqd.clean_fraction_from_yield`), with a = the decoder's random-string
+     acceptance of that sector, measured exhaustively here.  The predicted yield is the
+     simulated yield of `validation/H0P.json` — the planner's decision recorded in
+     `reports/H0_prereg_draft.md` — or, with `--predict model`, the model itself;
   3. the Ritz energies of the saturated 2x2 sectors reproduce the exact E0 to 1e-6;
   4. every diagonal element of the per-qubit readout confusion matrix is >= 0.9, and the
      measured per-qubit readout error agrees with the frozen calibration snapshot within
@@ -38,8 +41,10 @@ from skqd.codec import Codec, Reject  # noqa: E402
 from skqd.exact import Model  # noqa: E402
 from skqd.report import GateResult, env_block, md_table, write_report  # noqa: E402
 
+from skqd.skqd import clean_fraction_from_yield  # noqa: E402
+
 from gate_H0P import (DIAG_MIN, E0_TOL, RANDOM_ACCEPT_MAX, YIELD_FACTOR,  # noqa: E402
-                      analyse_records, shot_plan)
+                      YIELD_MODEL_NAME, analyse_records, shot_plan)
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 F_TOLERANCE = 0.30          # prompts/07 step 4: measured f within 30 % of the prediction
@@ -83,8 +88,9 @@ def codeword_roundtrip(records, codec):
 def prediction(args, analysis, records):
     """Preregistered predicted yield per 'sector r=..' key, and where it came from."""
     if args.predict == "model":
-        return ({k: v["model_yield_0.82f"] for k, v in analysis["by_sector_repetition"].items()},
-                f"the manual's model y = {YIELD_FACTOR} f with the f of the frozen calibration snapshot")
+        return ({k: v["model_yield_full"] for k, v in analysis["by_sector_repetition"].items()},
+                f"the manual's model y = {YIELD_MODEL_NAME} with the f of the frozen calibration snapshot "
+                f"and the exhaustive garbage acceptance a of each sector")
     p = os.path.join(ROOT, args.predict_from)
     if os.path.exists(p):
         with open(p) as fh:
@@ -93,8 +99,8 @@ def prediction(args, analysis, records):
         return ({k: v["yield"] for k, v in src.items()},
                 f"the simulated yield of {args.predict_from} (gate {d['gate']}, {d['environment']['timestamp']}), "
                 f"the preregistered prediction of reports/H0_prereg_draft.md")
-    return ({k: v["model_yield_0.82f"] for k, v in analysis["by_sector_repetition"].items()},
-            f"the manual's model y = {YIELD_FACTOR} f ({args.predict_from} not found)")
+    return ({k: v["model_yield_full"] for k, v in analysis["by_sector_repetition"].items()},
+            f"the manual's model y = {YIELD_MODEL_NAME} ({args.predict_from} not found)")
 
 
 def main():
@@ -129,16 +135,24 @@ def main():
     pred, pred_src = prediction(args, A, coarse)
     plan = shot_plan(A, args.p, args.k, args.conf)
 
-    # measured f versus the preregistered prediction, r = 1
+    # measured f versus the preregistered prediction, r = 1.  The criterion is on f, and f is
+    # recovered from a yield by inverting the FULL model y = 0.82 f + (1 - f) a (manual Step 4.4):
+    # f = (y - a) / (0.82 - a) = skqd.skqd.clean_fraction_from_yield(y, a).
     fcmp = {}
     for key, v in A["by_sector_repetition"].items():
         yp = pred.get(key)
         if not yp:
             continue
+        a = v["garbage_acceptance"]
+        fm, fp = clean_fraction_from_yield(v["yield"], a), clean_fraction_from_yield(yp, a)
         fcmp[key] = {"sector": v["sector"], "repetitions": v["repetitions"], "cz_mean": v["cz_mean"],
                      "measured_yield": v["yield"], "predicted_yield": yp,
-                     "measured_f": v["yield"] / YIELD_FACTOR, "predicted_f": yp / YIELD_FACTOR,
-                     "relative_deviation": float(abs(v["yield"] - yp) / yp),
+                     "garbage_acceptance": a, "yield_model": YIELD_MODEL_NAME,
+                     "measured_f": fm, "predicted_f": fp,
+                     "measured_f_0.82f_model": v["yield"] / YIELD_FACTOR,
+                     "predicted_f_0.82f_model": yp / YIELD_FACTOR,
+                     "relative_deviation": float(abs(fm - fp) / fp) if fp else None,
+                     "relative_deviation_of_the_yields": float(abs(v["yield"] - yp) / yp),
                      "shots": v["shots"], "accepted": v["accepted"]}
 
     # readout: measured error per qubit against the frozen snapshot value
@@ -165,6 +179,18 @@ def main():
         "backend": backend, "dry_run": dry,
         "sampler_options": common.get("sampler_options"),
         "prediction_source": pred_src, "predicted_yield": pred,
+        "yield_model": YIELD_MODEL_NAME,
+        "garbage_acceptance": {sec: A["random_acceptance"][sec]["fraction"]
+                               for sec in sorted(A["random_acceptance"])},
+        "yield_model_inputs": {
+            "formula": f"y = {YIELD_MODEL_NAME}  (manual Step 4.4, both terms)",
+            "readout_factor": YIELD_FACTOR,
+            "inverse": "f = (y - a) / (0.82 - a) = skqd.skqd.clean_fraction_from_yield(y, a)",
+            "garbage_acceptance_source": ("exhaustive: all 2^n bit strings through "
+                                          "skqd.codec.Codec.decode for the target sector"),
+            "note": ("the 30 % criterion is on f; the shot plan keeps using the clean yield 0.82 f, "
+                     "since garbage acceptances add no support"),
+        },
         "f_comparison": fcmp, "codeword_roundtrip": rt,
         "readout_vs_snapshot": ro, "shot_plan": plan, "analysis": A,
         "criteria_inputs": {"f_tolerance": F_TOLERANCE, "random_acceptance_max": RANDOM_ACCEPT_MAX,
@@ -183,7 +209,8 @@ def main():
     for key in sorted(k for k, v in fcmp.items() if v["repetitions"] == 1):
         v = fcmp[key]
         R.add(f"{key} ({v['cz_mean']:.0f} CZ): measured f = {v['measured_f']:.4f} vs the predicted "
-              f"f = {v['predicted_f']:.4f}", round(v["relative_deviation"], 4),
+              f"f = {v['predicted_f']:.4f} (both from y = {YIELD_MODEL_NAME} inverted at "
+              f"a = {v['garbage_acceptance']:.5f})", round(v["relative_deviation"], 4),
               f"relative deviation <= {F_TOLERANCE:.2f}", v["relative_deviation"] <= F_TOLERANCE)
     for sec in sorted(A["by_sector"]):
         s = A["by_sector"][sec]
@@ -212,10 +239,14 @@ def report_text(args, R, D):
         v = A["by_sector_repetition"][key]
         f = D["f_comparison"].get(key, {})
         yrows.append([v["sector"], v["repetitions"], v["circuits"], f"{v['cz_mean']:.0f}", v["shots"],
-                      v["accepted"], f"{v['yield']:.4f}", f"{v['model_yield_0.82f']:.4f}",
+                      v["accepted"], f"{v['yield']:.4f}", f"{v['garbage_acceptance']:.5f}",
+                      f"{v['model_yield_0.82f']:.4f}", f"{v['model_yield_full']:.4f}",
                       f"{f.get('predicted_yield', float('nan')):.4f}",
                       f"{f.get('measured_f', float('nan')):.4f}",
-                      f"{f.get('relative_deviation', float('nan')):.3f}", str(v["rejections"])])
+                      f"{f.get('predicted_f', float('nan')):.4f}",
+                      f"{f.get('measured_f_0.82f_model', float('nan')):.4f}",
+                      f"{f.get('relative_deviation', float('nan')) if f.get('relative_deviation') is not None else float('nan'):.3f}",
+                      str(v["rejections"])])
     srows = [[sec, v["sector_dimension"], v["support_size_decoded"], v["support_size_with_references"],
               f"{v['ER']:.10f}", f"{v['exact_E0']:.10f}", f"{v['abs_error']:.2e}",
               f"{v['recall_99.9pct_support']:.3f}"] for sec, v in sorted(A["by_sector"].items())]
@@ -250,8 +281,15 @@ counts keys is not the codec's.
 
 Prediction used for the 30 % criterion: {D['prediction_source']}.
 
-{md_table(["sector", "r", "circuits", "CZ", "shots", "accepted", "measured yield", "model 0.82 f",
-            "predicted yield", "measured f", "relative deviation", "rejections"], yrows)}
+Yield model (manual Step 4.4, both terms): y = {D['yield_model']}, with a = the decoder's random-string
+acceptance of the target sector ({', '.join(f"{sec} {v:.5f}" for sec, v in sorted(D['garbage_acceptance'].items()))}, exhaustive).  The measured and predicted
+clean-shot fractions are the inverse, {D['yield_model_inputs']['inverse']}; the column "measured f (0.82 f
+model)" is the first term alone, kept for comparison.  **The 30 % criterion is the relative deviation of the
+two f values** (r = 1 circuits only: at r = 2, 3 the inversion is ill-conditioned because f approaches a).
+
+{md_table(["sector", "r", "circuits", "CZ", "shots", "accepted", "measured yield", "a (garbage)",
+            "model 0.82 f (old)", "model 0.82 f + (1−f) a", "predicted yield", "measured f",
+            "predicted f", "measured f (0.82 f model)", "relative deviation of f", "rejections"], yrows)}
 
 ## 3. Ritz consistency
 
