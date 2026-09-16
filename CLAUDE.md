@@ -60,5 +60,9 @@ No GPU path on the laptop: qiskit-aer-gpu 0.15.1 is incompatible with qiskit 2.5
 2x2/Heron f = 0.125 with a FakeFez calibration (PASS; L4_fez pilot yield 0.14 vs model 0.10); 2x3 f = 0.053 at declared
 eps2 = 1e-3, eps1 = 1e-4 (0.082 with virtual rz) -> S2D FAIL on f >= 0.1 and on the per-circuit shot rule, but the
 operational S1 criterion holds at that f (recall >= 0.958 with 2e5 shots per sector, `data/S2D_recall_at_f.json`).
-Open: owner signs `proposal/amendment_01_devices_and_budgets.md` with the vendor's error specs; S3 full 2x3 noisy run
-is a desktop GPU job (3.2 s/shot on this CPU); H0 preparation on Heron (prompt 07) can proceed.
+H0 preparation (prompts 13-14): gate H0P PASS (84 frozen circuits on the FakeFez patch leak-free, decoder and E0
+consistency, yield model 0.82 f + (1-f) a per manual Step 4.4 within 1.3-1.75x of the simulation for r = 1, 2, 3,
+confusion diagonal >= 0.977, dry-run submission + gate_H0.py PASS 9/9); S3 job packaged (`scripts/s3_device_model.py`,
+`slurm/s3_2x3.sbatch`; 2x3 at 2e5 shots per sector is 180-580 CPU-hours -> RTX 3070 / cluster).  Open: owner signs
+`proposal/amendment_01_devices_and_budgets.md` with the vendor's error specs for the 2x3 device; IBM backend access
+for H0 (`scripts/h0_submit.py --backend <name>`); S3 production run on the desktop GPU.
