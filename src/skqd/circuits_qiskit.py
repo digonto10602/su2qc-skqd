@@ -97,9 +97,16 @@ def generic_noise_model(p1: float = 3e-4, p2: float = 3e-3, p_ro: float = 1e-2):
 
 def sample(gates: list, n: int, shots: int, noise_model=None, coupling_map=None,
            basis=("rz", "sx", "x", "cz"), seed: int = 11, method: str = "automatic",
-           device: str = "CPU") -> dict:
+           device: str = "CPU", backend=None, optimization_level: int = 3) -> dict:
     """Run the circuit on AerSimulator and return {bit tuple: count} in this package's order.
-    device='GPU' requires qiskit-aer-gpu (the laptop's GTX 1060 Max-Q is supported)."""
+    device='GPU' requires qiskit-aer-gpu (the laptop's GTX 1060 Max-Q is supported).
+
+    backend: a Qiskit BackendV2 (e.g. FakeFez()).  When given, the circuit is transpiled
+    ONTO that backend (its coupling map, basis and layout, optimization_level, seed) before
+    sampling, so that a NoiseModel.from_backend(backend) applies its per-qubit and per-edge
+    calibration to the physical qubits the circuit really uses; `basis` and `coupling_map`
+    are then ignored.  Aer truncates the idle device qubits, so only the active patch is
+    simulated.  Classical bit i still carries IR qubit i."""
     from qiskit import transpile
     from qiskit_aer import AerSimulator
 
@@ -108,8 +115,11 @@ def sample(gates: list, n: int, shots: int, noise_model=None, coupling_map=None,
     if noise_model is not None:
         kwargs["noise_model"] = noise_model
     sim = AerSimulator(**kwargs)
-    tq = transpile(qc, sim, basis_gates=list(basis), coupling_map=coupling_map, optimization_level=1,
-                   seed_transpiler=seed)
+    if backend is not None:
+        tq = transpile(qc, backend=backend, optimization_level=optimization_level, seed_transpiler=seed)
+    else:
+        tq = transpile(qc, sim, basis_gates=list(basis), coupling_map=coupling_map, optimization_level=1,
+                       seed_transpiler=seed)
     result = sim.run(tq, shots=shots).result()
     counts = result.get_counts()
     return {qiskit_key_to_bits(k): v for k, v in counts.items()}
