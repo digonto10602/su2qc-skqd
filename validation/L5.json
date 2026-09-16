@@ -22,6 +22,12 @@
    "passed": true
   },
   {
+   "name": "IR gate coverage (h, x, ry, rx, rz, p, cp, cx, gphase, unitary, mcu) vs numpy",
+   "value": 0.019,
+   "threshold": "total-variation distance < 0.120",
+   "passed": true
+  },
+  {
    "name": "noiseless sampling: accepted shots",
    "value": "10000/10000",
    "threshold": "= all shots",
@@ -29,14 +35,14 @@
   },
   {
    "name": "total-variation distance to the exact distribution",
-   "value": 0.017,
+   "value": 0.0091,
    "threshold": "< 0.272",
    "passed": true
   }
  ],
  "data": {
   "target": "qpp-cpu",
-  "sampling_time_s": 1.274019479751587,
+  "sampling_time_s": 1.6540989875793457,
   "shots": 10000,
   "BIG_ENDIAN": true,
   "qubit0_first": true,
@@ -45,16 +51,26 @@
    "link": 0,
    "sector": 0,
    "unknown": 0
+  },
+  "coverage_tvd": 0.01899617510326982,
+  "ir_gate_counts_2x2_coarse_step": {
+   "x": 2,
+   "cx": 294,
+   "p": 16,
+   "unitary1q": 40,
+   "ry": 148,
+   "h": 8,
+   "rz": 16
   }
  },
- "runtime_s": 3.622657537460327,
+ "runtime_s": 3.3311257362365723,
  "environment": {
   "python": "3.12.14",
   "numpy": "2.5.2",
   "scipy": "1.18.0",
   "platform": "Linux-7.2.3-arch1-3-x86_64-with-glibc2.44",
   "cpu_count": 12,
-  "git_commit": "41b83c1",
-  "timestamp": "2026-09-14 17:39:31 MDT"
+  "git_commit": "0420211",
+  "timestamp": "2026-09-15 20:19:58 MDT"
  }
 }

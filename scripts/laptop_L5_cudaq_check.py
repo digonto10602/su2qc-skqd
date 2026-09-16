@@ -24,7 +24,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from skqd import circuits_cudaq as cc  # noqa: E402
-from skqd.circuits_ir import CircuitFactory  # noqa: E402
+from skqd.circuits_ir import CircuitFactory, gate_counts  # noqa: E402
 from skqd.codec import Codec  # noqa: E402
 from skqd.exact import Model, mass_default  # noqa: E402
 from skqd.krylov import basis_vector, coarse_states, references, term_groups  # noqa: E402
@@ -109,6 +109,26 @@ def main():
     R.add("register_operation convention determined (custom CNOT = x.ctrl)", f"BIG_ENDIAN={cc.BIG_ENDIAN}, {k1} vs {k2}",
           "custom CNOT acts like x.ctrl under the chosen flag", ok)
 
+    # ---- IR gate coverage: the structured circuits use ry (and the decomposition can emit
+    # rx, gphase and mcu), so every IR gate the translator supports is sampled once against
+    # the numpy reference on a small circuit.
+    from skqd.circuits_ir import run_ir
+    rngc = np.random.default_rng(3)
+    U2, _ = np.linalg.qr(rngc.normal(size=(2, 2)) + 1j * rngc.normal(size=(2, 2)))
+    cover = [("h", [0], None), ("ry", [1], 0.7), ("rx", [2], -1.1), ("x", [3], None),
+             ("cx", [0, 2], None), ("rz", [1], 0.4), ("p", [2], 0.9), ("cp", [1, 3], 1.3),
+             ("gphase", [], 0.55), ("unitary", [3], U2),
+             ("mcu", [0, 1, 2], (U2, 2)), ("ry", [0], 1.9)]
+    exact_cov = np.abs(run_ir(cover, 4)) ** 2
+    counts = cc.sample(cover, 4, args.shots, target=args.target, qubit0_first=qubit0_first)
+    p_cov = np.zeros(16)
+    for bits, c in counts.items():
+        p_cov[sum(b << i for i, b in enumerate(bits))] = c / args.shots
+    tvd_cov = 0.5 * float(np.abs(p_cov - exact_cov).sum())
+    bound_cov = 3 * np.sqrt(16 / args.shots)
+    R.add("IR gate coverage (h, x, ry, rx, rz, p, cp, cx, gphase, unitary, mcu) vs numpy",
+          round(tvd_cov, 4), f"total-variation distance < {bound_cov:.3f}", tvd_cov < bound_cov)
+
     g2 = 4.0
     m = mass_default(g2)
     M = Model(2)
@@ -132,7 +152,8 @@ def main():
     bound = 3 * np.sqrt(M.basis.dim / args.shots)
     R.add("total-variation distance to the exact distribution", round(float(tvd), 4), f"< {bound:.3f}", tvd < bound)
     R.data = {"target": args.target, "sampling_time_s": t_s, "shots": args.shots, "BIG_ENDIAN": cc.BIG_ENDIAN,
-              "qubit0_first": qubit0_first, "rejections": rej}
+              "qubit0_first": qubit0_first, "rejections": rej, "coverage_tvd": tvd_cov,
+              "ir_gate_counts_2x2_coarse_step": gate_counts(g)}
     R.runtime_s = time.time() - t0
     R.save()
     write_report("L5_cudaq_check.md", f"""# Laptop gate L5 — CUDA-Q circuits versus the numpy reference (2x2)

@@ -22,6 +22,10 @@ in the CUDA-Q documentation example
         custom_h(q[0])
         x.ctrl(q[0], q[1])
 
+Supported IR gates: x, h, rz, ry, rx, p (r1), cp, cx, gphase, unitary (1- and
+multi-qubit, via cudaq.register_operation) and mcu (a registered one-qubit
+operation applied with .ctrl, with X conjugation for controls active on |0>).
+
 Endianness.  BIG_ENDIAN = True means the first qubit argument of a registered
 operation is the MOST significant bit of its matrix; the matrices of this
 package are little-endian (first qubit = least significant bit, see
@@ -70,17 +74,38 @@ def kernel_source(gates: list, n: int, name: str = "circ") -> tuple:
             lines.append(f"    h(q[{qs[0]}])")
         elif gname == "rz":
             lines.append(f"    rz({float(par)!r}, q[{qs[0]}])")
+        elif gname == "ry":
+            lines.append(f"    ry({float(par)!r}, q[{qs[0]}])")
+        elif gname == "rx":
+            lines.append(f"    rx({float(par)!r}, q[{qs[0]}])")
         elif gname == "p":
             lines.append(f"    r1({float(par)!r}, q[{qs[0]}])")
         elif gname == "cp":
             lines.append(f"    r1.ctrl({float(par)!r}, q[{qs[0]}], q[{qs[1]}])")
         elif gname == "cx":
             lines.append(f"    x.ctrl(q[{qs[0]}], q[{qs[1]}])")
+        elif gname == "gphase":
+            # CUDA-Q kernels have no global-phase instruction: diag(e^{i par}, e^{i par}) on any
+            # qubit is the same operator (r1 on |1>, then the same phase on |0> conjugated by X).
+            a = float(par)
+            lines += [f"    r1({a!r}, q[0])", "    x(q[0])", f"    r1({a!r}, q[0])", "    x(q[0])"]
         elif gname == "unitary":
             U = np.asarray(par)
             key = _opname(U)
             ops[key] = U
             lines.append(f"    {key}({', '.join(f'q[{i}]' for i in qs)})")
+        elif gname == "mcu":
+            # multi-controlled U(2): a registered one-qubit operation applied with .ctrl;
+            # controls that are active on |0> are conjugated by X (ctrl_state bit j = control j).
+            U2, cstate = par
+            U = np.asarray(U2)
+            key = _opname(U)
+            ops[key] = U
+            ctrls, tgt = list(qs[:-1]), qs[-1]
+            flips = [c for j, c in enumerate(ctrls) if not ((int(cstate) >> j) & 1)]
+            lines += [f"    x(q[{c}])" for c in flips]
+            lines.append(f"    {key}.ctrl({', '.join(f'q[{c}]' for c in ctrls)}, q[{tgt}])")
+            lines += [f"    x(q[{c}])" for c in flips]
         else:
             raise ValueError(gname)
     lines.append("    mz(q)")
