@@ -4,9 +4,9 @@
  "status": "PASS",
  "criteria": [
   {
-   "name": "B=0: measured yield within a factor 3 of the proxy 0.82 f, f from the FakeFez calibration (gate S2D)",
-   "value": "0.144 vs 0.103 (ratio 1.39)",
-   "threshold": "ratio in [1/3, 3] (the proxy is a rough model)",
+   "name": "B=0: measured yield within a factor 3 of the model 0.82 f + (1-f) a, f from the FakeFez calibration (gate S2D), a = 0.00928 exhaustive",
+   "value": "0.147 vs 0.112 (ratio 1.32; the first term alone, 0.8200 f = 0.103, gives 1.42)",
+   "threshold": "ratio in [1/3, 3] (the model is a rough proxy)",
    "passed": true
   },
   {
@@ -16,9 +16,9 @@
    "passed": true
   },
   {
-   "name": "B=1: measured yield within a factor 3 of the proxy 0.82 f, f from the FakeFez calibration (gate S2D)",
-   "value": "0.138 vs 0.100 (ratio 1.39)",
-   "threshold": "ratio in [1/3, 3] (the proxy is a rough model)",
+   "name": "B=1: measured yield within a factor 3 of the model 0.82 f + (1-f) a, f from the FakeFez calibration (gate S2D), a = 0.00488 exhaustive",
+   "value": "0.136 vs 0.104 (ratio 1.31; the first term alone, 0.8200 f = 0.100, gives 1.36)",
+   "threshold": "ratio in [1/3, 3] (the model is a rough proxy)",
    "passed": true
   },
   {
@@ -30,25 +30,40 @@
  ],
  "data": {
   "B=0": {
-   "shots": 331,
+   "shots": 258,
    "circuits": 20,
    "cz": 663.0,
-   "yield_": 0.14380664652567976,
+   "yield_": 0.14670542635658915,
    "size": 38,
    "err": 0.0,
    "recall": 1.0,
-   "t_per_shot": 0.11315802574157714,
+   "t_per_shot": 0.11604428291320801,
    "pilot_shots": 50,
    "min_shots": 1,
    "f_model": 0.12613147269164876,
-   "predicted_yield": 0.10342780760715198,
-   "ratio_measured_over_predicted": 1.390406021868877,
-   "proxy": "0.82 f, f from the FakeFez calibration (gate S2D)",
-   "total_shots": 6620,
+   "garbage_acceptance": 0.00927734375,
+   "yield_model": "0.82 f + (1-f) a",
+   "readout_factor": 0.82,
+   "predicted_yield": 0.11153498632729782,
+   "ratio_measured_over_predicted": 1.3153310112585137,
+   "predicted_yield_clean_term_only": 0.10342780760715198,
+   "ratio_measured_over_clean_term_only": 1.4184331056674602,
+   "random_acceptance": {
+    "accepted": 38,
+    "strings": 4096,
+    "fraction": 0.00927734375,
+    "reasons": {
+     "sector": 44,
+     "link": 1214,
+     "flag": 2800
+    }
+   },
+   "proxy": "0.82 f + (1-f) a, f from the FakeFez calibration (gate S2D), a = 0.00928 exhaustive",
+   "total_shots": 5160,
    "rejections": {
-    "flag": 3214,
-    "link": 2090,
-    "sector": 364,
+    "flag": 2505,
+    "link": 1609,
+    "sector": 289,
     "unknown": 0
    },
    "weinstein": [
@@ -58,25 +73,40 @@
    "exact_E0": -3.6407665507263425
   },
   "B=1": {
-   "shots": 895,
+   "shots": 722,
    "circuits": 8,
    "cz": 663.0,
-   "yield_": 0.13812849162011173,
+   "yield_": 0.13556094182825484,
    "size": 20,
    "err": 0.0,
    "recall": 1.0,
-   "t_per_shot": 0.10463298797607422,
+   "t_per_shot": 0.10378067016601562,
    "pilot_shots": 50,
    "min_shots": 1,
    "f_model": 0.12135032445313329,
-   "predicted_yield": 0.09950726605156929,
-   "ratio_measured_over_predicted": 1.3881246777348615,
-   "proxy": "0.82 f, f from the FakeFez calibration (gate S2D)",
-   "total_shots": 7160,
+   "garbage_acceptance": 0.0048828125,
+   "yield_model": "0.82 f + (1-f) a",
+   "readout_factor": 0.82,
+   "predicted_yield": 0.10379754767045048,
+   "ratio_measured_over_predicted": 1.3060129537804765,
+   "predicted_yield_clean_term_only": 0.09950726605156929,
+   "ratio_measured_over_clean_term_only": 1.3623220414678148,
+   "random_acceptance": {
+    "accepted": 20,
+    "strings": 4096,
+    "fraction": 0.0048828125,
+    "reasons": {
+     "sector": 62,
+     "link": 1214,
+     "flag": 2800
+    }
+   },
+   "proxy": "0.82 f + (1-f) a, f from the FakeFez calibration (gate S2D), a = 0.00488 exhaustive",
+   "total_shots": 5776,
    "rejections": {
-    "flag": 3864,
-    "link": 1664,
-    "sector": 643,
+    "flag": 3138,
+    "link": 1336,
+    "sector": 519,
     "unknown": 0
    },
    "weinstein": [
@@ -86,14 +116,14 @@
    "exact_E0": -1.8615880345350209
   }
  },
- "runtime_s": 530.0458493232727,
+ "runtime_s": 449.8135039806366,
  "environment": {
   "python": "3.12.14",
   "numpy": "2.5.2",
   "scipy": "1.18.0",
   "platform": "Linux-7.2.3-arch1-3-x86_64-with-glibc2.44",
   "cpu_count": 12,
-  "git_commit": "7c8150f",
-  "timestamp": "2026-09-16 07:15:55 MDT"
+  "git_commit": "3722018",
+  "timestamp": "2026-09-16 12:28:26 MDT"
  }
 }

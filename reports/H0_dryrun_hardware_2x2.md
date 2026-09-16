@@ -2,7 +2,7 @@
 
 **Status: PASS** — `scripts/gate_H0.py --counts data/hardware/H0_dryrun/counts --out H0_dryrun`,
 126 counts files (84 coarse-step + 42 readout-calibration circuits),
-dry run: **True**.  Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.3-arch1-3-x86_64-with-glibc2.44, 12 CPUs, commit 1223e92, 2026-09-16 12:03:30 MDT.  Runtime 1 s.
+dry run: **True**.  Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.3-arch1-3-x86_64-with-glibc2.44, 12 CPUs, commit 3722018, 2026-09-16 12:55:15 MDT.  Runtime 1 s.
 
 Sampler options of the session: `{"default_shots": 40, "dynamical_decoupling": {"enable": true, "sequence_type": "XY4"}, "twirling": {"enable_gates": true, "enable_measure": true, "strategy": "active-accum"}, "error_mitigation": "none: SamplerV2 returns raw bit strings; no resilience level, no readout mitigation of expectation values (prompts/07 step 2)"}`.
 
@@ -19,16 +19,22 @@ counts keys is not the codec's.
 
 ## 2. Yield versus CZ count
 
-Prediction used for the 30 % criterion: the simulated yield of validation/H0P.json (gate H0P, 2026-09-16 11:40:23 MDT), the preregistered prediction of reports/H0_prereg_draft.md.
+Prediction used for the 30 % criterion: the simulated yield of validation/H0P.json (gate H0P, 2026-09-16 12:51:12 MDT), the preregistered prediction of reports/H0_prereg_draft.md.
 
-| sector | r | circuits | CZ | shots | accepted | measured yield | model 0.82 f | predicted yield | measured f | relative deviation | rejections |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| B=0 | 1 | 20 | 663 | 5340 | 790 | 0.1479 | 0.1034 | 0.1493 | 0.1804 | 0.009 | {'flag': 2460, 'link': 1784, 'sector': 306, 'unknown': 0} |
-| B=0 | 2 | 20 | 1308 | 2600 | 100 | 0.0385 | 0.0127 | 0.0381 | 0.0469 | 0.010 | {'flag': 1537, 'link': 901, 'sector': 62, 'unknown': 0} |
-| B=0 | 3 | 20 | 1910 | 1840 | 28 | 0.0152 | 0.0021 | 0.0174 | 0.0186 | 0.125 | {'flag': 1164, 'link': 614, 'sector': 34, 'unknown': 0} |
-| B=1 | 1 | 8 | 663 | 2136 | 284 | 0.1330 | 0.0995 | 0.1353 | 0.1621 | 0.017 | {'flag': 1163, 'link': 506, 'sector': 183, 'unknown': 0} |
-| B=1 | 2 | 8 | 1296 | 1040 | 28 | 0.0269 | 0.0139 | 0.0288 | 0.0328 | 0.067 | {'flag': 674, 'link': 293, 'sector': 45, 'unknown': 0} |
-| B=1 | 3 | 8 | 1944 | 736 | 7 | 0.0095 | 0.0020 | 0.0109 | 0.0116 | 0.125 | {'flag': 494, 'link': 211, 'sector': 24, 'unknown': 0} |
+Yield model (manual Step 4.4, both terms): y = 0.82 f + (1-f) a, with a = the decoder's random-string
+acceptance of the target sector (B=0 0.00928, B=1 0.00488, exhaustive).  The measured and predicted
+clean-shot fractions are the inverse, f = (y - a) / (0.82 - a) = skqd.skqd.clean_fraction_from_yield(y, a); the column "measured f (0.82 f
+model)" is the first term alone, kept for comparison.  **The 30 % criterion is the relative deviation of the
+two f values** (r = 1 circuits only: at r = 2, 3 the inversion is ill-conditioned because f approaches a).
+
+| sector | r | circuits | CZ | shots | accepted | measured yield | a (garbage) | model 0.82 f (old) | model 0.82 f + (1−f) a | predicted yield | measured f | predicted f | measured f (0.82 f model) | relative deviation of f | rejections |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| B=0 | 1 | 20 | 663 | 5340 | 790 | 0.1479 | 0.00928 | 0.1034 | 0.1115 | 0.1493 | 0.1710 | 0.1727 | 0.1804 | 0.009 | {'flag': 2460, 'link': 1784, 'sector': 306, 'unknown': 0} |
+| B=0 | 2 | 20 | 1308 | 2600 | 100 | 0.0385 | 0.00928 | 0.0127 | 0.0218 | 0.0381 | 0.0360 | 0.0355 | 0.0469 | 0.013 | {'flag': 1537, 'link': 901, 'sector': 62, 'unknown': 0} |
+| B=0 | 3 | 20 | 1910 | 1840 | 28 | 0.0152 | 0.00928 | 0.0021 | 0.0114 | 0.0174 | 0.0073 | 0.0100 | 0.0186 | 0.268 | {'flag': 1164, 'link': 614, 'sector': 34, 'unknown': 0} |
+| B=1 | 1 | 8 | 663 | 2136 | 284 | 0.1330 | 0.00488 | 0.0995 | 0.1038 | 0.1353 | 0.1571 | 0.1600 | 0.1621 | 0.018 | {'flag': 1163, 'link': 506, 'sector': 183, 'unknown': 0} |
+| B=1 | 2 | 8 | 1296 | 1040 | 28 | 0.0269 | 0.00488 | 0.0139 | 0.0187 | 0.0288 | 0.0270 | 0.0294 | 0.0328 | 0.080 | {'flag': 674, 'link': 293, 'sector': 45, 'unknown': 0} |
+| B=1 | 3 | 8 | 1944 | 736 | 7 | 0.0095 | 0.00488 | 0.0020 | 0.0068 | 0.0109 | 0.0057 | 0.0073 | 0.0116 | 0.227 | {'flag': 494, 'link': 211, 'sector': 24, 'unknown': 0} |
 
 ## 3. Ritz consistency
 
@@ -85,8 +91,8 @@ Prediction used for the 30 % criterion: the simulated yield of validation/H0P.js
 | decoder validity: accepted strings that re-encode to themselves | 58 of 58 | all | PASS |
 | B=0: acceptance of random bit strings (exhaustive over 4096 strings) | 0.928% | < 1% | PASS |
 | B=1: acceptance of random bit strings (exhaustive over 4096 strings) | 0.488% | < 1% | PASS |
-| B=0 r=1 (663 CZ): measured f = 0.1804 vs the predicted f = 0.1820 | 0.0088 | relative deviation <= 0.30 | PASS |
-| B=1 r=1 (663 CZ): measured f = 0.1621 vs the predicted f = 0.1650 | 0.0173 | relative deviation <= 0.30 | PASS |
+| B=0 r=1 (663 CZ): measured f = 0.1710 vs the predicted f = 0.1727 (both from y = 0.82 f + (1-f) a inverted at a = 0.00928) | 0.0094 | relative deviation <= 0.30 | PASS |
+| B=1 r=1 (663 CZ): measured f = 0.1571 vs the predicted f = 0.1600 (both from y = 0.82 f + (1-f) a inverted at a = 0.00488) | 0.0179 | relative deviation <= 0.30 | PASS |
 | B=0: decoded support reproduces the exact E0 = -3.6408 | 0 | |E_R - E_0| < 1e-06 | PASS |
 | B=1: decoded support reproduces the exact E0 = -1.8616 | 0 | |E_R - E_0| < 1e-06 | PASS |
 | readout confusion on 3 patch(es): smallest diagonal element | 0.9764 | >= 0.9 | PASS |

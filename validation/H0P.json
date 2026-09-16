@@ -1,7 +1,7 @@
 {
  "gate": "H0P",
  "title": "H0 preparation on the FakeFez calibration snapshot: frozen circuit set, predicted yield curve by repetition, readout confusion, Ritz consistency",
- "status": "FAIL",
+ "status": "PASS",
  "criteria": [
   {
    "name": "every frozen circuit leak-free after transpilation onto FakeFez (84 circuits, noiseless statevector permuted back with the final layout)",
@@ -34,40 +34,40 @@
    "passed": true
   },
   {
-   "name": "B=0 r=1 (663 CZ): simulated yield 0.149 vs the model 0.82 f = 0.103",
-   "value": 1.443,
+   "name": "B=0 r=1 (663 CZ): simulated yield 0.149 vs the model 0.82 f + (1-f) a = 0.112 (a = 0.00928; the first term alone, 0.82 f = 0.103, gives 1.44)",
+   "value": 1.338,
    "threshold": "ratio in [0.33, 3]",
    "passed": true
   },
   {
-   "name": "B=0 r=2 (1308 CZ): simulated yield 0.038 vs the model 0.82 f = 0.013",
-   "value": 3.01,
-   "threshold": "ratio in [0.33, 3]",
-   "passed": false
-  },
-  {
-   "name": "B=0 r=3 (1910 CZ): simulated yield 0.017 vs the model 0.82 f = 0.002",
-   "value": 8.284,
-   "threshold": "ratio in [0.33, 3]",
-   "passed": false
-  },
-  {
-   "name": "B=1 r=1 (663 CZ): simulated yield 0.135 vs the model 0.82 f = 0.100",
-   "value": 1.36,
+   "name": "B=0 r=2 (1308 CZ): simulated yield 0.038 vs the model 0.82 f + (1-f) a = 0.022 (a = 0.00928; the first term alone, 0.82 f = 0.013, gives 3.01)",
+   "value": 1.748,
    "threshold": "ratio in [0.33, 3]",
    "passed": true
   },
   {
-   "name": "B=1 r=2 (1296 CZ): simulated yield 0.029 vs the model 0.82 f = 0.014",
-   "value": 2.074,
+   "name": "B=0 r=3 (1910 CZ): simulated yield 0.017 vs the model 0.82 f + (1-f) a = 0.011 (a = 0.00928; the first term alone, 0.82 f = 0.002, gives 8.28)",
+   "value": 1.532,
    "threshold": "ratio in [0.33, 3]",
    "passed": true
   },
   {
-   "name": "B=1 r=3 (1944 CZ): simulated yield 0.011 vs the model 0.82 f = 0.002",
-   "value": 5.573,
+   "name": "B=1 r=1 (663 CZ): simulated yield 0.135 vs the model 0.82 f + (1-f) a = 0.104 (a = 0.00488; the first term alone, 0.82 f = 0.100, gives 1.36)",
+   "value": 1.303,
    "threshold": "ratio in [0.33, 3]",
-   "passed": false
+   "passed": true
+  },
+  {
+   "name": "B=1 r=2 (1296 CZ): simulated yield 0.029 vs the model 0.82 f + (1-f) a = 0.019 (a = 0.00488; the first term alone, 0.82 f = 0.014, gives 2.07)",
+   "value": 1.542,
+   "threshold": "ratio in [0.33, 3]",
+   "passed": true
+  },
+  {
+   "name": "B=1 r=3 (1944 CZ): simulated yield 0.011 vs the model 0.82 f + (1-f) a = 0.007 (a = 0.00488; the first term alone, 0.82 f = 0.002, gives 5.57)",
+   "value": 1.593,
+   "threshold": "ratio in [0.33, 3]",
+   "passed": true
   },
   {
    "name": "readout confusion matrix on 3 patch(es): smallest diagonal element",
@@ -95,7 +95,7 @@
   },
   {
    "name": "pytest -q tests",
-   "value": "31 passed in 100.43s (0:01:40)",
+   "value": "32 passed in 88.13s (0:01:28)",
    "threshold": "all pass",
    "passed": true
   }
@@ -241,28 +241,39 @@
    "circuits": 84,
    "total_shots": 13692,
    "seconds_per_shot_by_repetition": {
-    "1": 0.03343252420425415,
-    "2": 0.0759891390800476,
-    "3": 0.1016567862033844
+    "1": 0.02996503233909607,
+    "2": 0.06334905505180359,
+    "3": 0.08965219378471374
    },
    "setup_seconds_per_call_by_repetition": {
-    "1": 5.8593981742858885,
-    "2": 5.354623794555664,
-    "3": 7.143359994888305
+    "1": 5.073581171035767,
+    "2": 5.738741683959961,
+    "3": 6.657131624221802
    },
-   "predicted_sampling_seconds": 916.9115722084046,
-   "seconds_per_shot_whole_set": 5.910196585655212,
+   "predicted_sampling_seconds": 807.8393746995926,
+   "seconds_per_shot_whole_set": 5.123055872917175,
    "budget_minutes": 14.0,
-   "sampling_seconds": 1031.1956298351288,
+   "sampling_seconds": 939.8712668418884,
    "calibration_shots_per_circuit": 4000,
-   "calibration_seconds": 59.21018743515015,
+   "calibration_seconds": 56.021475315093994,
    "pilot_shots": 60
+  },
+  "yield_model": "0.82 f + (1-f) a",
+  "garbage_acceptance": {
+   "B=0": 0.00927734375,
+   "B=1": 0.0048828125
+  },
+  "yield_model_inputs": {
+   "formula": "y = 0.82 f + (1-f) a  (manual Step 4.4, both terms)",
+   "readout_factor": 0.82,
+   "garbage_acceptance_source": "exhaustive: all 4096 bit strings through skqd.codec.Codec.decode for the target sector (section 3 of this report)",
+   "note": "the shot rule below keeps using the CLEAN yield 0.82 f: a shot accepted because its garbage string happens to be a codeword adds no support"
   },
   "shot_rule_inputs": {
    "p": 0.001,
    "k": 3,
    "confidence": 0.95,
-   "yield_model": "y = 0.82 f (manual Step 4.4)"
+   "yield_model": "y = 0.82 f (clean shots only, manual eq. 5)"
   },
   "shot_plan": {
    "B=0 r=1": {
@@ -1943,11 +1954,13 @@
      "cz_min": 663,
      "cz_max": 663,
      "f_calibration_mean": 0.12613147269164876,
+     "garbage_acceptance": 0.00927734375,
+     "yield_model": "0.82 f + (1-f) a",
      "model_yield_0.82f": 0.10342780760715198,
      "ratio_simulated_over_model": 1.4430445716928006,
-     "false_acceptance_floor": 0.00927734375,
-     "model_yield_with_floor": 0.11153498632729782,
-     "ratio_simulated_over_floor_model": 1.3381535358924355,
+     "model_yield_full": 0.11153498632729782,
+     "ratio_simulated_over_full_model": 1.3381535358924355,
+     "f_from_yield": 0.1726528690181625,
      "support_size": 38,
      "rejections": {
       "flag": 2453,
@@ -1967,11 +1980,13 @@
      "cz_min": 1308,
      "cz_max": 1308,
      "f_calibration_mean": 0.015427054757659228,
+     "garbage_acceptance": 0.00927734375,
+     "yield_model": "0.82 f + (1-f) a",
      "model_yield_0.82f": 0.012650184901280566,
      "ratio_simulated_over_model": 3.0099894486971954,
-     "false_acceptance_floor": 0.00927734375,
-     "model_yield_with_floor": 0.02178440656124369,
-     "ratio_simulated_over_floor_model": 1.7478981109664542,
+     "model_yield_full": 0.02178440656124369,
+     "ratio_simulated_over_full_model": 1.7478981109664542,
+     "f_from_yield": 0.03552334340838039,
      "support_size": 31,
      "rejections": {
       "flag": 1527,
@@ -1991,11 +2006,13 @@
      "cz_min": 1910,
      "cz_max": 1910,
      "f_calibration_mean": 0.0025602640173601533,
+     "garbage_acceptance": 0.00927734375,
+     "yield_model": "0.82 f + (1-f) a",
      "model_yield_0.82f": 0.0020994164942353256,
      "ratio_simulated_over_model": 8.283875255615039,
-     "false_acceptance_floor": 0.00927734375,
-     "model_yield_with_floor": 0.01135300779485552,
-     "ratio_simulated_over_floor_model": 1.5318675598643339,
+     "model_yield_full": 0.01135300779485552,
+     "ratio_simulated_over_full_model": 1.5318675598643339,
+     "f_from_yield": 0.0100083062133199,
      "support_size": 21,
      "rejections": {
       "flag": 1157,
@@ -2015,11 +2032,13 @@
      "cz_min": 663,
      "cz_max": 663,
      "f_calibration_mean": 0.12135032445313329,
+     "garbage_acceptance": 0.0048828125,
+     "yield_model": "0.82 f + (1-f) a",
      "model_yield_0.82f": 0.09950726605156929,
      "ratio_simulated_over_model": 1.3596959381644174,
-     "false_acceptance_floor": 0.0048828125,
-     "model_yield_with_floor": 0.10379754767045048,
-     "ratio_simulated_over_floor_model": 1.3034953956497226,
+     "model_yield_full": 0.10379754767045048,
+     "ratio_simulated_over_full_model": 1.3034953956497226,
+     "f_from_yield": 0.15999762361551823,
      "support_size": 20,
      "rejections": {
       "flag": 1150,
@@ -2039,11 +2058,13 @@
      "cz_min": 1285,
      "cz_max": 1308,
      "f_calibration_mean": 0.0169597226661738,
+     "garbage_acceptance": 0.0048828125,
+     "yield_model": "0.82 f + (1-f) a",
      "model_yield_0.82f": 0.013906972586262516,
      "ratio_simulated_over_model": 2.0742223850105552,
-     "false_acceptance_floor": 0.0048828125,
-     "model_yield_with_floor": 0.01870697394043159,
-     "ratio_simulated_over_floor_model": 1.5420000016041258,
+     "model_yield_full": 0.01870697394043159,
+     "ratio_simulated_over_full_model": 1.5420000016041258,
+     "f_from_yield": 0.029398645634808,
      "support_size": 13,
      "rejections": {
       "flag": 674,
@@ -2063,11 +2084,13 @@
      "cz_min": 1910,
      "cz_max": 1979,
      "f_calibration_mean": 0.00237867621284323,
+     "garbage_acceptance": 0.0048828125,
+     "yield_model": "0.82 f + (1-f) a",
      "model_yield_0.82f": 0.0019505144945314485,
      "ratio_simulated_over_model": 5.572665698135396,
-     "false_acceptance_floor": 0.0048828125,
-     "model_yield_with_floor": 0.0068217123645859246,
-     "ratio_simulated_over_floor_model": 1.5933778260454525,
+     "model_yield_full": 0.0068217123645859246,
+     "ratio_simulated_over_full_model": 1.5933778260454525,
+     "f_from_yield": 0.007344652780237571,
      "support_size": 6,
      "rejections": {
       "flag": 488,
@@ -2761,16 +2784,16 @@
    "validation/H0_dryrun.json": "PASS",
    "validation/S3_smoke.json": "FAIL"
   },
-  "pytest": "31 passed in 100.43s (0:01:40)"
+  "pytest": "32 passed in 88.13s (0:01:28)"
  },
- "runtime_s": 1299.4566538333893,
+ "runtime_s": 1182.3353447914124,
  "environment": {
   "python": "3.12.14",
   "numpy": "2.5.2",
   "scipy": "1.18.0",
   "platform": "Linux-7.2.3-arch1-3-x86_64-with-glibc2.44",
   "cpu_count": 12,
-  "git_commit": "1223e92",
-  "timestamp": "2026-09-16 11:40:23 MDT"
+  "git_commit": "3722018",
+  "timestamp": "2026-09-16 12:51:12 MDT"
  }
 }
