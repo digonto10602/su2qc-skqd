@@ -123,3 +123,45 @@ def interval_difference(upper_interval, lower_interval):
     """Interval arithmetic for a difference  a - b  with a in [a0,a1], b in [b0,b1]."""
     (a0, a1), (b0, b1) = upper_interval, lower_interval
     return (a0 - b1, a1 - b0)
+
+
+def poisson_lambda_star(k: int = 3, conf: float = 0.95) -> float:
+    """Smallest Poisson mean lambda such that P(X >= k) >= conf, X ~ Poisson(lambda).
+
+    Manual Step 4.4: "a configuration of ideal probability p is seen at least three
+    times with 95 % probability".  For k = 3, conf = 0.95 this is lambda* = 6.296.
+    """
+    from scipy.optimize import brentq
+    from scipy.stats import poisson
+
+    if not 0.0 < conf < 1.0:
+        raise ValueError("conf must be in (0, 1)")
+    if k < 1:
+        raise ValueError("k must be >= 1")
+
+    def g(lam):
+        return float(poisson.sf(k - 1, lam)) - conf       # sf(k-1) = P(X >= k)
+
+    lo, hi = 1e-12, float(k)
+    while g(hi) < 0.0:                                     # P(X >= k) increases with lambda
+        hi *= 2.0
+        if hi > 1e9:
+            raise RuntimeError("no lambda found")
+    return float(brentq(g, lo, hi, xtol=1e-12, rtol=1e-14))
+
+
+def shot_rule(p: float, y: float, k: int = 3, conf: float = 0.95) -> int:
+    """Shots per circuit so that a configuration of ideal probability `p`, observed
+    through an accepted-shot yield `y`, is seen at least `k` times with probability
+    >= `conf` (manual Step 4.4 / eq. 5).
+
+    N = ceil(lambda* / (p y)) with lambda* = poisson_lambda_star(k, conf); the counts of
+    one configuration over N shots are Poisson(N p y) in the rare-configuration limit.
+    With k = 3, conf = 0.95, y = 0.82 f this is eq. (5) of the manual,
+    S >= 6.3 / (0.82 f p).
+    """
+    if not 0.0 < p <= 1.0:
+        raise ValueError("p must be in (0, 1]")
+    if not 0.0 < y <= 1.0:
+        raise ValueError("y must be in (0, 1]")
+    return int(np.ceil(poisson_lambda_star(k, conf) / (p * y)))
