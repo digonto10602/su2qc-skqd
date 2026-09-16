@@ -2,7 +2,7 @@
 
 **Status: PASS** — `scripts/gate_H0.py --counts data/hardware/H0_dryrun/counts --out H0_dryrun`,
 126 counts files (84 coarse-step + 42 readout-calibration circuits),
-dry run: **True**.  Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.3-arch1-3-x86_64-with-glibc2.44, 12 CPUs, commit 3722018, 2026-09-16 12:55:15 MDT.  Runtime 1 s.
+dry run: **True**.  Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.3-arch1-3-x86_64-with-glibc2.44, 12 CPUs, commit 942390a, 2026-09-16 13:18:12 MDT.  Runtime 1 s.
 
 Sampler options of the session: `{"default_shots": 40, "dynamical_decoupling": {"enable": true, "sequence_type": "XY4"}, "twirling": {"enable_gates": true, "enable_measure": true, "strategy": "active-accum"}, "error_mitigation": "none: SamplerV2 returns raw bit strings; no resilience level, no readout mitigation of expectation values (prompts/07 step 2)"}`.
 
@@ -19,7 +19,7 @@ counts keys is not the codec's.
 
 ## 2. Yield versus CZ count
 
-Prediction used for the 30 % criterion: the simulated yield of validation/H0P.json (gate H0P, 2026-09-16 12:51:12 MDT), the preregistered prediction of reports/H0_prereg_draft.md.
+Prediction used for the 30 % criterion: the simulated yield of validation/H0P.json (gate H0P, 2026-09-16 13:15:46 MDT), the preregistered prediction of reports/H0_prereg_draft.md.
 
 Yield model (manual Step 4.4, both terms): y = 0.82 f + (1-f) a, with a = the decoder's random-string
 acceptance of the target sector (B=0 0.00928, B=1 0.00488, exhaustive).  The measured and predicted
