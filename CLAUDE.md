@@ -54,6 +54,8 @@ values).  Laptop gates done: L2 PASS (Qiskit = reference to 3.7e-15), L5 PASS (C
 target needs compute capability >= 7.0), L3 FAIL as expected (35606 CZ per coarse step all-to-all, 55459 routed,
 budget 250), L4 FAIL as expected (yield at the random-acceptance level because f = (1-p2)^35670 is zero; Weinstein
 criteria PASS; noisy Aer costs 2-3.3 s per shot on this CPU, so 2x3 noisy runs need the desktop or cluster).
-No GPU path on the laptop: qiskit-aer-gpu 0.15.1 is incompatible with qiskit 2.5.2.  Blocking hardware: S2-b
-(structured hopping and interior-corner plaquette gates within the CZ budget, prompts/06), then S3 with a real
-calibration, then H0 hardware calibration at 2x2.
+No GPU path on the laptop: qiskit-aer-gpu 0.15.1 is incompatible with qiskit 2.5.2.  Gate S2 (2026-09-15): exact structured circuits built and verified (1.9e-14), 256/618 CZ all-to-all/heavy-hex at
+2x2 and 2164/5477 at 2x3 against budgets of 250/500 routed (FAIL on cost only); the fixed-angle gauge-invariant
+variant measures 240/671 and 1626/3736 with recall 1.000/0.937 (`validation/S2_fixed.json`). The controls are
+validity controls of the encoding, so no compilation lever remains: the owner decides between an all-to-all
+device with eps <= 1e-3 for 2x3 (prompt 11, option b) or hardware at 2x2 only (option c).
