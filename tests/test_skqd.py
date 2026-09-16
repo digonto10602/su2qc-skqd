@@ -65,3 +65,52 @@ def test_shot_rule_matches_the_manual_and_a_monte_carlo_check():
     hits = rng.binomial(N, p * y, size=reps)
     frac = float(np.mean(hits >= 3))
     assert abs(frac - 0.95) < 0.01
+
+
+def test_yield_model_and_its_inverse():
+    """Manual Step 4.4: y = 0.82 f plus the garbage that decodes as valid,
+    y = 0.82 f + (1 - f) a  (a = the decoder's random-string acceptance)."""
+    from skqd.skqd import READOUT_FACTOR, clean_fraction_from_yield, yield_model
+
+    assert READOUT_FACTOR == 0.82
+
+    # a = 0: the clean yield 0.82 f, the form the shot rule uses
+    for f in (0.0, 0.002, 0.0154, 0.1261, 0.2, 1.0):
+        assert yield_model(f, 0.0) == pytest.approx(0.82 * f)
+        assert clean_fraction_from_yield(0.82 * f, 0.0) == pytest.approx(f)
+
+    # limits in f: pure garbage at f = 0, pure readout survival at f = 1
+    a0 = 38 / 4096                      # B = 0 at 2x2 (gate E2/H0P, exhaustive)
+    a1 = 20 / 4096                      # B = 1 at 2x2
+    for a in (a0, a1):
+        assert yield_model(0.0, a) == pytest.approx(a)
+        assert yield_model(1.0, a) == pytest.approx(0.82)
+
+    # the garbage term is what the 0.82 f model misses, and it matters only when f ~ a/0.82
+    assert yield_model(0.0154, a0) > 0.82 * 0.0154
+    assert yield_model(0.0154, a0) - 0.82 * 0.0154 == pytest.approx((1 - 0.0154) * a0)
+    assert yield_model(0.5, a0) / (0.82 * 0.5) < 1.02          # negligible while f >> a/0.82
+
+    # monotone increasing in f (0.82 > a) and in a
+    ys = [yield_model(f, a0) for f in np.linspace(0.0, 1.0, 21)]
+    assert all(b > x for x, b in zip(ys, ys[1:]))
+    assert yield_model(0.1, a0) > yield_model(0.1, a1) > yield_model(0.1, 0.0)
+
+    # round trip, both directions, for a grid of (f, a)
+    for a in (0.0, a1, a0, 0.05):
+        for f in (0.0, 1e-3, 0.0154, 0.1261, 0.5, 1.0):
+            assert clean_fraction_from_yield(yield_model(f, a), a) == pytest.approx(f, abs=1e-12)
+        for y in (a, 0.05, 0.1493, 0.82):
+            assert yield_model(clean_fraction_from_yield(y, a), a) == pytest.approx(y, abs=1e-12)
+
+    # a different readout factor (the generic-noise branch of gate L4 uses (1 - p_ro)^n)
+    rf = (1 - 0.01) ** 12
+    assert yield_model(0.3, 0.0, readout_factor=rf) == pytest.approx(rf * 0.3)
+    assert clean_fraction_from_yield(yield_model(0.3, a0, readout_factor=rf), a0,
+                                     readout_factor=rf) == pytest.approx(0.3)
+
+    # the inversion needs 0.82 > a
+    with pytest.raises(ValueError):
+        clean_fraction_from_yield(0.5, 0.82)
+    with pytest.raises(ValueError):
+        clean_fraction_from_yield(0.5, 0.9)

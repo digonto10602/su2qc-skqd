@@ -165,3 +165,38 @@ def shot_rule(p: float, y: float, k: int = 3, conf: float = 0.95) -> int:
     if not 0.0 < y <= 1.0:
         raise ValueError("y must be in (0, 1]")
     return int(np.ceil(poisson_lambda_star(k, conf) / (p * y)))
+
+
+# --------------------------------------------------------------------------- yield model
+READOUT_FACTOR = 0.82   # manual Step 4.4: readout removes ~18 % of the clean shots
+
+
+def yield_model(f: float, a: float = 0.0, readout_factor: float = READOUT_FACTOR) -> float:
+    """Accepted-shot yield of manual Step 4.4, both terms:
+
+        y = readout_factor * f + (1 - f) * a
+
+    "The accepted-shot yield is ~ 0.82 f plus the garbage that decodes as valid"
+    (manual Step 4.4, line 130).  The first term is the clean shots that survive readout;
+    the second is the non-clean fraction (1 - f), whose bit strings are close to uniformly
+    random after ~1000 two-qubit gates and are therefore accepted by the decoder with its
+    random-string acceptance `a` (measured exhaustively per sector in gates E2/H0P; a =
+    dim(sector)/2^n at 2x2).  With a = 0 this is the clean yield 0.82 f, which is what the
+    shot rule uses (garbage acceptances add no support).
+    """
+    return float(readout_factor) * float(f) + (1.0 - float(f)) * float(a)
+
+
+def clean_fraction_from_yield(y: float, a: float = 0.0,
+                              readout_factor: float = READOUT_FACTOR) -> float:
+    """Inverse of `yield_model` in f:  f = (y - a) / (readout_factor - a).
+
+    The clean-shot fraction implied by an observed accepted-shot yield `y`.  With a = 0
+    this is y / 0.82.  The inversion is ill-conditioned when y approaches a (the yield then
+    carries no information about f), which is why gate H0 applies its 30 % criterion to the
+    r = 1 circuits only.
+    """
+    den = float(readout_factor) - float(a)
+    if den <= 0.0:
+        raise ValueError("readout_factor must exceed the garbage acceptance a")
+    return (float(y) - float(a)) / den
