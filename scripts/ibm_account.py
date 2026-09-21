@@ -1,0 +1,192 @@
+#!/usr/bin/env python3
+"""
+IBM Quantum account setup and backend check for gate H0 (prompts/07 step 2).
+
+This repository assumes no IBM account: `scripts/h0_submit.py --dry-run` runs the whole
+submission path locally.  The production path `--backend <name>` needs a saved account,
+which is what `--save` writes here, and a device on which the FROZEN circuit set of
+`scripts/h0_build_circuits.py` is actually executable, which is what `--check` verifies.
+
+  --save    prompts for the API key (getpass: never echoed, never stored in this repo,
+            never passed on the command line) and saves it to the qiskit default account
+            file ~/.qiskit/qiskit-ibm.json.  Nothing secret is printed.
+  --check   lists the backends the account can reach and, for each one with enough qubits,
+            checks the frozen set against the LIVE device: the physical qubits the
+            transpiler chose must exist, every two-qubit edge the circuits use must be in
+            the live coupling map, and the basis gates must cover the frozen operations.
+
+As of qiskit-ibm-runtime 0.49 the only channel is `ibm_quantum_platform` (IBM Cloud);
+the legacy `ibm_quantum` channel no longer exists.  Get an API key at
+https://quantum.cloud.ibm.com -> your instance -> API key.
+
+Usage: python scripts/ibm_account.py --save
+       python scripts/ibm_account.py --check [--prep data/hardware/H0_prep]
+"""
+import argparse
+import glob
+import gzip
+import json
+import os
+import sys
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+
+def do_save(args):
+    from getpass import getpass
+    from qiskit_ibm_runtime import QiskitRuntimeService
+
+    print("IBM Quantum Platform API key (https://quantum.cloud.ibm.com, input is hidden):")
+    token = getpass("  API key: ").strip()
+    if not token:
+        raise SystemExit("no key entered; nothing saved")
+    print("Instance CRN (optional -- press Enter to let the service resolve your instances):")
+    instance = input("  CRN: ").strip() or None
+
+    QiskitRuntimeService.save_account(
+        token=token,
+        channel=args.channel,
+        instance=instance,
+        set_as_default=True,
+        overwrite=True,
+    )
+    path = os.path.expanduser("~/.qiskit/qiskit-ibm.json")
+    print(f"\nsaved to {path} (channel {args.channel}, "
+          f"instance {'given' if instance else 'resolved by the service'})")
+    print("verifying the account by opening the service ...")
+    service = QiskitRuntimeService()
+    names = [b.name for b in service.backends()]
+    print(f"  account OK: {len(names)} backend(s) reachable: {', '.join(names) or '(none)'}")
+    print("\nnext: python scripts/ibm_account.py --check")
+    return 0
+
+
+def frozen_requirements(prep):
+    """What the frozen circuit set needs of a device: qubits, edges, operations."""
+    from qiskit import qpy
+
+    mans = sorted(glob.glob(os.path.join(prep, "circuits", "*.json")))
+    if not mans:
+        raise SystemExit(f"no manifests in {prep}/circuits -- run scripts/h0_build_circuits.py first")
+    qubits, edges, ops = set(), set(), set()
+    snapshot, n_qubits_snapshot = None, None
+    for p in mans:
+        m = json.load(open(p))
+        snapshot = snapshot or m["backend"]
+        n_qubits_snapshot = n_qubits_snapshot or m["backend_qubits"]
+        qubits.update(m["physical_qubits"])
+        ops.update(m["ops"])
+        with gzip.open(os.path.join(prep, "circuits", m["qpy"]), "rb") as fh:
+            qc = qpy.load(fh)[0]
+        for inst in qc.data:
+            if len(inst.qubits) == 2:
+                a, b = (qc.find_bit(q).index for q in inst.qubits)
+                edges.add((a, b))
+            for q in inst.qubits:
+                qubits.add(qc.find_bit(q).index)
+    return {
+        "snapshot": snapshot, "snapshot_qubits": n_qubits_snapshot,
+        "n_circuits": len(mans), "qubits": sorted(qubits),
+        "edges": sorted(edges), "ops": sorted(ops),
+    }
+
+
+def check_backend(backend, req):
+    """Is the frozen set executable on this live backend, as frozen?"""
+    t = backend.target
+    live_ops = set(t.operation_names)
+    cmap = backend.coupling_map
+    live_edges = set(map(tuple, cmap)) if cmap is not None else None
+    problems = []
+    if backend.num_qubits < req["snapshot_qubits"]:
+        problems.append(f"{backend.num_qubits} qubits < the {req['snapshot_qubits']} of "
+                        f"the {req['snapshot']} snapshot")
+    missing_q = [q for q in req["qubits"] if q >= backend.num_qubits]
+    if missing_q:
+        problems.append(f"physical qubits absent on this device: {missing_q}")
+    if live_edges is not None:
+        missing_e = [e for e in req["edges"]
+                     if e not in live_edges and (e[1], e[0]) not in live_edges]
+        if missing_e:
+            problems.append(f"{len(missing_e)} two-qubit edge(s) not in the coupling map, "
+                            f"e.g. {missing_e[:5]}")
+    missing_op = [o for o in req["ops"] if o not in live_ops and o not in ("barrier",)]
+    if missing_op:
+        problems.append(f"operations not in the basis: {missing_op} (basis: {sorted(live_ops)})")
+    # non-operational qubits among the ones we use
+    try:
+        bad = [q for q in req["qubits"] if backend.qubit_properties(q) is None]
+        if bad:
+            problems.append(f"no calibration data for qubits {bad}")
+    except Exception:
+        pass
+    return problems
+
+
+def do_check(args):
+    from qiskit_ibm_runtime import QiskitRuntimeService
+
+    prep = os.path.join(ROOT, args.prep)
+    req = frozen_requirements(prep)
+    print(f"frozen set: {req['n_circuits']} circuits transpiled onto {req['snapshot']} "
+          f"({req['snapshot_qubits']} qubits)")
+    print(f"  uses {len(req['qubits'])} physical qubits {req['qubits']}")
+    print(f"  uses {len(req['edges'])} distinct two-qubit edges")
+    print(f"  operations {req['ops']}\n")
+
+    service = QiskitRuntimeService()
+    backends = service.backends()
+    if not backends:
+        raise SystemExit("the account reaches no backends; check the instance of your API key")
+    print(f"{len(backends)} backend(s) reachable:\n")
+    usable = []
+    for b in backends:
+        try:
+            status = b.status()
+            pending, operational = status.pending_jobs, status.operational
+        except Exception:
+            pending, operational = None, None
+        head = (f"  {b.name}: {b.num_qubits} qubits, "
+                f"processor {getattr(b, 'processor_type', {}) or {}}, "
+                f"{'operational' if operational else 'NOT operational'}"
+                f"{'' if pending is None else f', {pending} pending jobs'}")
+        print(head)
+        problems = check_backend(b, req)
+        if problems:
+            for p in problems:
+                print(f"      x {p}")
+        else:
+            print(f"      OK: the frozen set runs on {b.name} as frozen")
+            usable.append(b.name)
+    print()
+    if usable:
+        print(f"usable as frozen: {', '.join(usable)}")
+        print(f"  submit with: python scripts/h0_submit.py --backend {usable[0]} "
+              f"--shots-by-rep 1:267 2:130 3:92 --out data/hardware/H0_{usable[0]}")
+    else:
+        print("NO reachable backend runs the frozen set as frozen.")
+        print("  The circuits are pinned to a calibration snapshot; for a different device")
+        print("  re-freeze them first:  python scripts/h0_build_circuits.py --backend <name>")
+        print("  then re-run gate H0P (it re-predicts the yields from that day's calibration)")
+        print("  before submitting -- reports/H0_prereg_draft.md section 2 requires it.")
+    return 0
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--save", action="store_true", help="prompt for the API key and save it")
+    ap.add_argument("--check", action="store_true", help="list backends and validate the frozen set")
+    ap.add_argument("--channel", default="ibm_quantum_platform")
+    ap.add_argument("--prep", default=os.path.join("data", "hardware", "H0_prep"))
+    args = ap.parse_args()
+    if not (args.save or args.check):
+        ap.error("choose --save or --check")
+    if args.save:
+        do_save(args)
+    if args.check:
+        do_check(args)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
