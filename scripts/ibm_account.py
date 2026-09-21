@@ -34,6 +34,39 @@ import sys
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
+def open_service():
+    """QiskitRuntimeService() with a diagnosis instead of a traceback when the key is bad."""
+    import json
+    import re
+
+    from qiskit_ibm_runtime import QiskitRuntimeService
+
+    try:
+        return QiskitRuntimeService()
+    except Exception as exc:
+        path = os.path.expanduser("~/.qiskit/qiskit-ibm.json")
+        detail = []
+        if os.path.exists(path):
+            for name, acct in json.load(open(path)).items():
+                tok = acct.get("token", "")
+                detail.append(f"  saved account '{name}': channel {acct.get('channel')}, "
+                              f"instance {'set' if acct.get('instance') else 'not set'}, "
+                              f"key {len(tok)} characters "
+                              f"({'hex' if re.fullmatch(r'[0-9a-fA-F]+', tok or 'x') else 'base64-ish'})")
+                if re.fullmatch(r"[0-9a-fA-F]{100,}", tok or ""):
+                    detail.append("  -> that is a LEGACY quantum-computing.ibm.com token (128 hex "
+                                  "characters).  The ibm_quantum channel was retired; the "
+                                  "ibm_quantum_platform channel needs an IBM Cloud API key.")
+                elif len(tok) != 44:
+                    detail.append(f"  -> an IBM Cloud API key is 44 characters, this one is "
+                                  f"{len(tok)}: most likely the paste lost a character.")
+        raise SystemExit(
+            f"cannot open the IBM account: {exc}\n" + "\n".join(detail) + "\n"
+            "  Get a fresh key at https://quantum.cloud.ibm.com -> Manage -> API keys "
+            "(copy the whole value; it is shown once), then save it again:\n"
+            "    python scripts/ibm_account.py --save --token-file <file> --delete-token-file")
+
+
 def read_token(args):
     """The API key, from the least exposed source available.
 
@@ -99,7 +132,7 @@ def do_save(args):
         os.remove(token_path)
         print(f"  removed {token_path}", flush=True)
     print("verifying the account by opening the service ...", flush=True)
-    service = QiskitRuntimeService()
+    service = open_service()
     names = [b.name for b in service.backends()]
     print(f"  account OK: {len(names)} backend(s) reachable: {', '.join(names) or '(none)'}")
     print("\nnext: python scripts/ibm_account.py --check")
@@ -169,8 +202,6 @@ def check_backend(backend, req):
 
 
 def do_check(args):
-    from qiskit_ibm_runtime import QiskitRuntimeService
-
     prep = os.path.join(ROOT, args.prep)
     req = frozen_requirements(prep)
     print(f"frozen set: {req['n_circuits']} circuits transpiled onto {req['snapshot']} "
@@ -179,7 +210,7 @@ def do_check(args):
     print(f"  uses {len(req['edges'])} distinct two-qubit edges")
     print(f"  operations {req['ops']}\n")
 
-    service = QiskitRuntimeService()
+    service = open_service()
     backends = service.backends()
     if not backends:
         raise SystemExit("the account reaches no backends; check the instance of your API key")
