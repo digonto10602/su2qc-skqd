@@ -1,0 +1,26 @@
+# graphify: what not to index in this package.
+#
+# The rule is the same one the manual applies to reports: the graph describes the
+# code and the prose that explains it, never the measured numbers.  Gate results
+# live in validation/*.json and are read by the gate scripts, not by the graph;
+# indexing them would bury the 52 source files under thousands of value nodes.
+
+# Machine data: raw hardware counts, frozen transpiled circuits (QPY), manifests.
+data/hardware/
+*.qpy.gz
+
+# Gate results.  validation/gates.md IS indexed: it is the gate table in prose.
+validation/*.json
+validation/cloud/
+
+# Build and run artefacts.
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+slurm/logs/
+
+# Agent scratch.
+.claude/agent-memory/

@@ -23,6 +23,26 @@ staggered quarks on 2×Lx ladders.  Reference document: `proposal/SU2QC_Project2
   `reports/` gate reports; `data/` reference numbers; `prompts/` every prompt the planner writes;
   `proposal/` the project document; `.claude/agents/` model/effort-routed agents; `.claude/skills/gate/`.
 
+## graphify
+
+This package has a knowledge graph at `graphify-out/` (895 nodes, 1645 edges, 83 communities over the 116
+indexed files; AST extraction only, no LLM, no API cost).  `graphify` is on the PATH
+(`~/.local/share/graphify/venv`, version 0.9.53, isolated from the `coding` conda env so that the pinned
+qiskit 2.5.2 / aer 0.17.2 stack is never touched).  The graph is gitignored: it is regenerated, not archived.
+
+- For any question about where something lives or what depends on what, query the graph before grepping:
+  `graphify query "<question>"` returns a scoped subgraph, usually far smaller than raw grep output.
+  `graphify path "A" "B"` gives the relationship between two nodes, `graphify explain "X"` a focused
+  concept, `graphify affected "X"` what a change to X reaches, `graphify god-nodes` the architectural hubs
+  (currently `Model`, `Codec`, `CircuitFactory`, `Ladder`, `Basis`, `run_ir`).
+- `graphify-out/GRAPH_REPORT.md` is for broad architecture review only, when query/path/explain do not
+  surface enough; `graphify-out/graph.html` is the interactive view for a human.
+- After changing code, run `graphify update .` to keep the graph current.  It takes seconds and costs nothing.
+- `.graphifyignore` keeps the measured numbers out of the index: `data/hardware/`, the QPY circuit bundles
+  and `validation/*.json` are excluded, `validation/gates.md` is not.
+- **The graph is navigation, never evidence.**  It carries no gate status and no physics value.  Rule 1
+  below is unchanged: every number in prose comes from `validation/*.json` or `data/*.json`.
+
 ## Rules for every agent
 
 1. Physics first.  A gate passes only when its script writes `"status": "PASS"` — not when the prose says so.
