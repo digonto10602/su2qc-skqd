@@ -2,7 +2,7 @@
 
 **Status: PASS** — `scripts/gate_H0.py --counts data/hardware/H0_dryrun/counts --out H0_dryrun`,
 126 counts files (84 coarse-step + 42 readout-calibration circuits),
-dry run: **True**.  Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.3-arch1-3-x86_64-with-glibc2.44, 12 CPUs, commit 942390a, 2026-09-16 13:18:12 MDT.  Runtime 1 s.
+dry run: **True**.  Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44, 12 CPUs, commit f64441d, 2026-09-21 15:30:21 MDT.  Runtime 1 s.
 
 Sampler options of the session: `{"default_shots": 40, "dynamical_decoupling": {"enable": true, "sequence_type": "XY4"}, "twirling": {"enable_gates": true, "enable_measure": true, "strategy": "active-accum"}, "error_mitigation": "none: SamplerV2 returns raw bit strings; no resilience level, no readout mitigation of expectation values (prompts/07 step 2)"}`.
 
@@ -84,6 +84,7 @@ two f values** (r = 1 circuits only: at r = 2, 3 the inversion is ill-conditione
 | patch2 | 10 | 145 | 0.9862 | 0.9845 | 0.0146 | 0.0139 | 1.05 |
 | patch2 | 11 | 146 | 0.9942 | 0.9944 | 0.0057 | 0.0059 | 0.98 |
 
+
 ## Criteria
 
 | check | value | criterion | result |
@@ -93,8 +94,8 @@ two f values** (r = 1 circuits only: at r = 2, 3 the inversion is ill-conditione
 | B=1: acceptance of random bit strings (exhaustive over 4096 strings) | 0.488% | < 1% | PASS |
 | B=0 r=1 (663 CZ): measured f = 0.1710 vs the predicted f = 0.1727 (both from y = 0.82 f + (1-f) a inverted at a = 0.00928) | 0.0094 | relative deviation <= 0.30 | PASS |
 | B=1 r=1 (663 CZ): measured f = 0.1571 vs the predicted f = 0.1600 (both from y = 0.82 f + (1-f) a inverted at a = 0.00488) | 0.0179 | relative deviation <= 0.30 | PASS |
-| B=0: decoded support reproduces the exact E0 = -3.6408 | 0 | |E_R - E_0| < 1e-06 | PASS |
-| B=1: decoded support reproduces the exact E0 = -1.8616 | 0 | |E_R - E_0| < 1e-06 | PASS |
+| B=0: decoded support reproduces the exact E0 = -3.6408 (support 38 decoded + references = 38 of the 38-dimensional sector: saturated) | 0 | |E_R - E_0| < 1e-06 | PASS |
+| B=1: decoded support reproduces the exact E0 = -1.8616 (support 20 decoded + references = 20 of the 20-dimensional sector: saturated) | 0 | |E_R - E_0| < 1e-06 | PASS |
 | readout confusion on 3 patch(es): smallest diagonal element | 0.9764 | >= 0.9 | PASS |
 | readout error per qubit against the frozen calibration snapshot (worst ratio; on a real device this is the calibration-drift item) | 1.28 | within a factor 3 | PASS |
 

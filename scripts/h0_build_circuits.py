@@ -54,9 +54,11 @@ from skqd.krylov import references  # noqa: E402
 from skqd.reference_sim import CodewordEmbedding  # noqa: E402
 
 from gate_S2D import analyse_on_backend  # noqa: E402  (the f of gate S2D, same definition)
+from h0_backends import is_fake, last_update_date, resolve_backend  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 LEAK_TOL = 1e-9
+FROZEN_SET = os.path.join("data", "hardware", "H0_prep")
 
 
 def step_gates(F, k, dt, structured_plaquette=True):
@@ -93,24 +95,43 @@ def load_qpy_gz(path):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--backend", default="FakeFez", choices=("FakeFez", "FakeTorino"))
+    ap.add_argument("--backend", default="FakeFez",
+                    help="FakeFez / FakeTorino (calibration snapshots, offline) or the name of a "
+                         "live IBM backend (prompts/15 A1; --out is then mandatory)")
     ap.add_argument("--lattice", type=int, default=2, help="Lx of the 2 x Lx ladder")
     ap.add_argument("--g2", type=float, default=4.0)
     ap.add_argument("--reps", type=int, nargs="+", default=[1, 2, 3])
     ap.add_argument("--kmax", type=int, default=4)
     ap.add_argument("--level", type=int, default=3)
     ap.add_argument("--seed", type=int, default=7)
-    ap.add_argument("--out", default=os.path.join("data", "hardware", "H0_prep"))
+    ap.add_argument("--out", default=None,
+                    help=f"output directory (default {FROZEN_SET} for a calibration snapshot; "
+                         f"mandatory, and different from it, for a live backend)")
     ap.add_argument("--no-verify", action="store_true", help="skip the leakage verification (not for production)")
     args = ap.parse_args()
     t0 = time.time()
 
+    # prompts/15 D1: the frozen set data/hardware/H0_prep is submitted byte-for-byte; a live
+    # backend re-freeze is the contingency of step B3b and always writes somewhere else.
+    if is_fake(args.backend):
+        out_rel = args.out or FROZEN_SET
+    else:
+        if not args.out:
+            raise SystemExit(f"--out is mandatory for the live backend '{args.backend}': the frozen "
+                             f"set {FROZEN_SET} is never rebuilt on a live calibration (prompts/15 D1)")
+        if os.path.normpath(args.out) == os.path.normpath(FROZEN_SET):
+            raise SystemExit(f"refusing to rebuild {FROZEN_SET} on the live backend "
+                             f"'{args.backend}': it is the frozen set of gate H0P (prompts/15 D1). "
+                             f"Choose another --out, e.g. data/hardware/H0_prep_{args.backend}")
+        out_rel = args.out
+    args.out = out_rel
+
     from qiskit import QuantumCircuit, transpile
-    from qiskit_ibm_runtime.fake_provider import FakeFez, FakeTorino
 
     from skqd import circuits_qiskit as cq
 
-    backend = {"FakeFez": FakeFez, "FakeTorino": FakeTorino}[args.backend]()
+    backend = resolve_backend(args.backend)
+    cal_date = last_update_date(backend)
     M = Model(args.lattice)
     F = CircuitFactory(M, args.g2)
     codec = Codec(M.basis)
@@ -127,6 +148,7 @@ def main():
         "lattice": f"2x{args.lattice}", "n_logical_qubits": n, "g2": args.g2,
         "circuit_family": "exact structured circuits, CircuitFactory default (gate S2 / validation/S2.json)",
         "backend": args.backend, "backend_qubits": int(backend.num_qubits),
+        "backend_calibration_last_update": cal_date,
         "transpiler": {"optimization_level": args.level, "seed_transpiler": args.seed},
         "bit_order_convention": ("classical bit i of a counts key = logical qubit i = bit i of the codeword "
                                  "(skqd.reference_sim.qiskit_key_to_bits, skqd.codec.Codec)"),

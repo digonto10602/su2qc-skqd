@@ -51,6 +51,9 @@ from skqd.report import GateResult, env_block, md_table, write_report  # noqa: E
 from skqd.skqd import (READOUT_FACTOR, certify, clean_fraction_from_yield,  # noqa: E402
                        ritz, shot_rule, support_metrics, yield_model)
 
+from h0_backends import (calibration_record, frozen_qubits_and_edges,  # noqa: E402
+                         is_fake, last_update_date, resolve_backend)
+
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 YIELD_FACTOR = READOUT_FACTOR   # 0.82, manual Step 4.4: readout survival of the clean shots
 # manual Step 4.4: "the accepted-shot yield is ~ 0.82 f plus the garbage that decodes as valid"
@@ -123,6 +126,10 @@ def analyse_records(records, cal_records, model, g2):
             "f_calibration_snapshot": man.get("f_calibration_snapshot"),
             "rejections": {kk: int(v) for kk, v in rej.items()},
         })
+        if man.get("f_calibration_manifest") is not None:
+            # live path (prompts/15 A1): f above is recomputed on the day's calibration,
+            # this is the value frozen into the manifest by h0_build_circuits.py
+            out["per_circuit"][-1]["f_calibration_manifest"] = float(man["f_calibration_manifest"])
         key = (man["sector"], man["repetitions"])
         g = groups.setdefault(key, {"shots": 0, "accepted": 0, "circuits": 0, "cz": [], "f": [],
                                     "support": set(), "rejections": {}, "twoB": twoB})
@@ -132,6 +139,8 @@ def analyse_records(records, cal_records, model, g2):
         g["cz"].append(man["cz"])
         if man.get("f_calibration_snapshot") is not None:
             g["f"].append(man["f_calibration_snapshot"])
+        if man.get("f_calibration_manifest") is not None:
+            g.setdefault("f_man", []).append(float(man["f_calibration_manifest"]))
         g["support"] |= set(acc)
         for kk, v in rej.items():
             g["rejections"][kk] = g["rejections"].get(kk, 0) + int(v)
@@ -164,6 +173,9 @@ def analyse_records(records, cal_records, model, g2):
             "f_from_yield": (clean_fraction_from_yield(y, a) if fmean is not None else None),
             "support_size": len(g["support"]), "rejections": g["rejections"],
         }
+        if g.get("f_man"):
+            out["by_sector_repetition"][f"{sec} r={r}"]["f_calibration_manifest_mean"] = \
+                float(np.mean(g["f_man"]))
 
     for sec, s in sorted(sectors.items()):
         twoB = s["twoB"]
@@ -254,6 +266,14 @@ def main():
     ap.add_argument("--conf", type=float, default=0.95)
     ap.add_argument("--seed", type=int, default=11)
     ap.add_argument("--no-tests", action="store_true")
+    ap.add_argument("--no-prereg", action="store_true",
+                    help="do not write the preregistration report (reproducibility re-runs)")
+    ap.add_argument("--backend", default=None,
+                    help="FakeFez / FakeTorino (default: the snapshot named in index.json) or a LIVE "
+                         "IBM backend: the day's calibration is then the reference of the prediction "
+                         "(prompts/15 D1) and is recorded in --calibration-dir")
+    ap.add_argument("--calibration-dir", default=None,
+                    help="where calibration_<stamp>.json goes (default data/hardware/H0_<backend>)")
     ap.add_argument("--out", default="H0P")
     args = ap.parse_args()
     t0 = time.time()
@@ -264,21 +284,68 @@ def main():
         raise SystemExit(f"no frozen circuits in {prep}: run scripts/h0_build_circuits.py first")
 
     from qiskit_aer import AerSimulator
-    from qiskit_ibm_runtime.fake_provider import FakeFez, FakeTorino
 
-    bname = index["common"]["backend"]
-    backend = {"FakeFez": FakeFez, "FakeTorino": FakeTorino}[bname]()
+    snapshot_name = index["common"]["backend"]
+    bname = args.backend or snapshot_name
+    live = not is_fake(bname)
+    backend = resolve_backend(bname)
     sim = AerSimulator.from_backend(backend, seed_simulator=args.seed)
     g2 = index["common"]["g2"]
     M = Model(int(index["common"]["lattice"].split("x")[1]))
     n = index["common"]["n_logical_qubits"]
 
-    R = GateResult(args.out, f"H0 preparation on the {bname} calibration snapshot: frozen circuit set, "
+    R = GateResult(args.out, f"H0 preparation on the {bname} calibration "
+                             f"{'of the session day' if live else 'snapshot'}: frozen circuit set, "
                              f"predicted yield curve by repetition, readout confusion, Ritz consistency")
 
     # ------------------------------------------------------- pilot timing -> shots
     circuits = {m["id"]: load_circuit(prep, m) for m in mans}
     reps = sorted({m["repetitions"] for m in mans})
+
+    # ------------------------------------------------------- the day's calibration (live only)
+    # prompts/15 D1: the circuits stay frozen, the PREDICTION is recomputed on the calibration of
+    # the session day -- f per circuit from the live target, the Aer device model from the live
+    # backend, and the per-qubit readout errors that gate_H0.py --calibration will reference.
+    calibration, cal_path, f_live = None, None, {}
+    if live:
+        # imported here, not at module level: gate_S2D imports random_acceptance from this module
+        from gate_S2D import analyse_on_backend      # the f of gate S2D, same definition
+        qubits, edges = frozen_qubits_and_edges(prep)
+        calibration = calibration_record(backend, qubits, edges)
+        caldir = os.path.join(ROOT, args.calibration_dir or
+                              os.path.join("data", "hardware", f"H0_{bname}"))
+        os.makedirs(caldir, exist_ok=True)
+        cal_path = os.path.join(caldir, f"calibration_{calibration['stamp']}.json")
+        with open(cal_path, "w") as fh:
+            json.dump(calibration, fh, indent=1)
+        print(f"live calibration of {bname} ({calibration['last_update_date']}): "
+              f"{calibration['n_qubits_frozen_set']} qubits, {calibration['n_edges_frozen_set']} edges "
+              f"-> {os.path.relpath(cal_path, ROOT)}", flush=True)
+        if calibration["missing_errors"]:
+            raise SystemExit(
+                f"{len(calibration['missing_errors'])} target entries of the frozen set have no error "
+                f"on {bname}: {calibration['missing_errors'][:5]} (full list in "
+                f"{os.path.relpath(cal_path, ROOT)}).  prompts/15 A1/B3: a None error is a hard stop, "
+                f"not a value to default -- the clean-shot fraction f cannot be predicted today.")
+        new_mans = []
+        for m in mans:
+            a = analyse_on_backend(circuits[m["id"]], backend)
+            mm = dict(m)
+            mm["f_calibration_manifest"] = m.get("f_calibration_snapshot")
+            mm["f_calibration_snapshot"] = a["f"]
+            new_mans.append(mm)
+            f_live[m["id"]] = {"cz": a["cz"], "cz_manifest": m["cz"],
+                               "f_live": a["f"], "f_manifest": m.get("f_calibration_snapshot"),
+                               "mean_edge_error": a["mean_edge_error"],
+                               "mean_readout_error": a["mean_readout_error"]}
+        mans = new_mans
+        bad_cz = [i for i, v in f_live.items() if v["cz"] != v["cz_manifest"]]
+        if bad_cz:
+            raise SystemExit(f"the loaded QPY of {len(bad_cz)} circuits does not carry the CZ count of "
+                             f"its manifest (e.g. {bad_cz[:3]}): the frozen set is not intact")
+        print(f"recomputed f on the live target for {len(f_live)} circuits: mean live "
+              f"{np.mean([v['f_live'] for v in f_live.values()]):.4f} vs manifest "
+              f"{np.mean([v['f_manifest'] for v in f_live.values()]):.4f}", flush=True)
     # two-point pilot: one simulator call has a fixed setup cost (circuit load, noise binding)
     # plus a cost per circuit-shot; both are measured so that the budget is not spent on setup
     t_shot, setup = {}, {}
@@ -343,7 +410,9 @@ def main():
         "frozen_set": {kk: index[kk] for kk in ("created", "n_circuits", "n_calibration_circuits",
                                                 "repetitions", "kmax", "sectors", "references",
                                                 "per_repetition", "distinct_readout_patches", "leakage")},
-        "backend": bname, "simulator": f"AerSimulator.from_backend({bname}(), seed_simulator={args.seed})",
+        "backend": bname, "backend_is_live": live, "snapshot_of_the_frozen_set": snapshot_name,
+        "simulator": (f"AerSimulator.from_backend({bname}, seed_simulator={args.seed})" if live else
+                      f"AerSimulator.from_backend({bname}(), seed_simulator={args.seed})"),
         "sampling": {"shots_per_circuit_by_repetition": {str(r): shots_by_rep[r] for r in reps},
                      "shot_allocation": ("pinned with --shots-by-rep" if args.shots_by_rep
                                          else args.shot_allocation),
@@ -373,10 +442,30 @@ def main():
         "shot_plan": plan,
         "analysis": A,
     }
+    if live:
+        data["calibration"] = {
+            "path": os.path.relpath(cal_path, ROOT),
+            "backend": calibration["backend"],
+            "last_update_date": calibration["last_update_date"],
+            "stamp": calibration["stamp"],
+            "dt_s": calibration["dt_s"], "default_rep_delay_s": calibration["default_rep_delay_s"],
+            "max_circuits": calibration["max_circuits"], "status": calibration["status"],
+            "n_qubits_frozen_set": calibration["n_qubits_frozen_set"],
+            "n_edges_frozen_set": calibration["n_edges_frozen_set"],
+            "missing_errors": calibration["missing_errors"],
+        }
+        data["f_recomputed_on_the_day"] = {
+            "source": f"gate_S2D.analyse_on_backend(frozen circuit, {bname}.target)",
+            "per_circuit": f_live,
+            "mean_f_live": float(np.mean([v["f_live"] for v in f_live.values()])),
+            "mean_f_manifest": float(np.mean([v["f_manifest"] for v in f_live.values()])),
+            "note": ("the frozen circuits are unchanged (prompts/15 D1); only the calibration they are "
+                     "evaluated against is the session day's"),
+        }
 
     # ------------------------------------------------------- criteria
     lk = index["leakage"]
-    R.add(f"every frozen circuit leak-free after transpilation onto {bname} "
+    R.add(f"every frozen circuit leak-free after transpilation onto {snapshot_name} "
           f"({lk['n_checked']} circuits, noiseless statevector permuted back with the final layout)",
           lk["max"], f"< {LEAK_TOL:g}", lk["max"] < LEAK_TOL)
     for sec in sorted(A["by_sector"]):
@@ -424,7 +513,9 @@ def main():
     R.runtime_s = time.time() - t0
     R.save()
     write_report(f"{args.out}_heron_preparation.md", gate_report(args, R, data, index))
-    write_report("H0_prereg_draft.md", prereg_report(args, R, data, index))
+    if not args.no_prereg:
+        write_report(f"H0_prereg_{bname}.md" if live else "H0_prereg_draft.md",
+                     prereg_report(args, R, data, index))
     print(R.criteria_table())
     return 0 if R.passed else 1
 
@@ -434,12 +525,27 @@ def fmt(v, spec=".4f"):
     return "n/a" if v is None else format(v, spec)
 
 
+def has_manifest_f(A):
+    """True on the live path: f was recomputed on the day's calibration (prompts/15 A1)."""
+    return any("f_calibration_manifest_mean" in v for v in A["by_sector_repetition"].values())
+
+
+def yield_head(A):
+    head = list(YIELD_HEAD)
+    if has_manifest_f(A):
+        head.insert(head.index("f (calibration)") + 1, "f (frozen snapshot)")
+    return head
+
+
 def yield_rows(A):
     rows = []
+    extra = has_manifest_f(A)
     for key in sorted(A["by_sector_repetition"]):
         v = A["by_sector_repetition"][key]
         rows.append([v["sector"], v["repetitions"], v["circuits"], f"{v['cz_mean']:.0f}",
-                     fmt(v["f_calibration_mean"]), fmt(v["garbage_acceptance"], ".5f"),
+                     fmt(v["f_calibration_mean"])]
+                    + ([fmt(v.get("f_calibration_manifest_mean"))] if extra else [])
+                    + [fmt(v["garbage_acceptance"], ".5f"),
                      fmt(v["model_yield_0.82f"]), fmt(v["model_yield_full"]),
                      v["shots"], fmt(v["yield"]), fmt(v["ratio_simulated_over_model"], ".2f"),
                      fmt(v["ratio_simulated_over_full_model"], ".2f"),
@@ -456,6 +562,23 @@ def gate_report(args, R, D, index):
     A = D["analysis"]
     S = D["sampling"]
     lk = D["frozen_set"]["leakage"]
+    calblock = ""
+    if D.get("calibration"):
+        c, fr = D["calibration"], D["f_recomputed_on_the_day"]
+        st = c["status"]
+        calblock = (
+            f"\n**The calibration of the session day** (prompts/15 D1: the circuits stay frozen, the "
+            f"prediction is recomputed).  `{c['path']}` -- {c['backend']}, `last_update_date` "
+            f"{c['last_update_date']}, dt {c['dt_s']}, default rep delay "
+            f"{c['default_rep_delay_s']} s, max_circuits {c['max_circuits']}, "
+            f"{'operational' if st.get('operational') else 'NOT operational'}, "
+            f"{st.get('pending_jobs')} pending jobs.  It covers the {c['n_qubits_frozen_set']} qubits and "
+            f"{c['n_edges_frozen_set']} two-qubit edges the frozen set uses; "
+            f"{len(c['missing_errors'])} of those target entries carry no error value (a non-empty list "
+            f"is a hard stop, not a defaulted value).  The clean-shot fraction f was recomputed circuit "
+            f"by circuit on that target with `gate_S2D.analyse_on_backend`: mean {fr['mean_f_live']:.4f} "
+            f"against {fr['mean_f_manifest']:.4f} frozen into the manifests.\n")
+
     frows = [[r, v["n_circuits"], f"{v['cz']['mean']:.0f}", f"{v['depth']['mean']:.0f}",
               f"{v['f']['mean']:.4f}", f"{v['f']['min']:.4f}", f"{v['f']['max']:.4f}"]
              for r, v in sorted(D["frozen_set"]["per_repetition"].items())]
@@ -479,7 +602,7 @@ def gate_report(args, R, D, index):
 **Status: {'PASS' if R.passed else 'FAIL'}** — `scripts/gate_H0P.py` on the frozen circuit set of
 `scripts/h0_build_circuits.py` ({args.prep}, created {D['frozen_set']['created']}).
 {env_block()}  Runtime {R.runtime_s:.0f} s.  Nothing in this gate touches a QPU.
-
+{calblock}
 ## 1. The frozen circuit set
 
 {D['frozen_set']['n_circuits']} coarse-step circuits (both sectors, every reference, k = 1..{D['frozen_set']['kmax']},
@@ -502,7 +625,7 @@ Sampling: `{D['simulator']}`, {', '.join(f"{v} shots per r = {k} circuit" for k,
 {', '.join(f"{v:.3f} s/shot at r={k}" for k, v in sorted(S['seconds_per_shot_by_repetition'].items()))},
 i.e. {S['seconds_per_shot_whole_set']:.1f} s per shot over the whole set, and the budget was {S['budget_minutes']:.0f} min).
 
-{md_table(YIELD_HEAD, yield_rows(A))}
+{md_table(yield_head(A), yield_rows(A))}
 
 **The yield model.**  Manual Step 4.4: "the accepted-shot yield is ≈ 0.82 f plus the 0.15 % of garbage that
 decodes as valid", i.e. y = {YIELD_MODEL_NAME} (`skqd.skqd.yield_model`).  The first term is the clean shots
@@ -567,6 +690,23 @@ def prereg_report(args, R, D, index):
     S = D["sampling"]
     fs = D["frozen_set"]
     rows = yield_rows(A)
+    calblock = ""
+    if D.get("calibration"):
+        c, fr = D["calibration"], D["f_recomputed_on_the_day"]
+        st = c["status"]
+        calblock = (
+            f"\n**The calibration of the session day** (prompts/15 D1: the circuits stay frozen, the "
+            f"prediction is recomputed).  `{c['path']}` -- {c['backend']}, `last_update_date` "
+            f"{c['last_update_date']}, dt {c['dt_s']}, default rep delay "
+            f"{c['default_rep_delay_s']} s, max_circuits {c['max_circuits']}, "
+            f"{'operational' if st.get('operational') else 'NOT operational'}, "
+            f"{st.get('pending_jobs')} pending jobs.  It covers the {c['n_qubits_frozen_set']} qubits and "
+            f"{c['n_edges_frozen_set']} two-qubit edges the frozen set uses; "
+            f"{len(c['missing_errors'])} of those target entries carry no error value (a non-empty list "
+            f"is a hard stop, not a defaulted value).  The clean-shot fraction f was recomputed circuit "
+            f"by circuit on that target with `gate_S2D.analyse_on_backend`: mean {fr['mean_f_live']:.4f} "
+            f"against {fr['mean_f_manifest']:.4f} frozen into the manifests.\n")
+
     prows = [[v["sector"], v["repetitions"], v["circuits"], fmt(v["model_yield_0.82f"]),
               v["N_circuit_model"], fmt(v["N_sector_model"], ".3e"),
               fmt(v["simulated_yield"]), v["N_circuit_simulated"],
@@ -576,7 +716,7 @@ def prereg_report(args, R, D, index):
 
 **Generated by `scripts/gate_H0P.py` from `validation/{R.gate}.json`; no number below is typed by hand.**
 {env_block()}
-
+{calblock}
 This is the paragraph prompts/07 step 1 requires *before* any circuit is submitted.  It fixes the circuit
 set, the expected yields and the criteria; the session then only replaces the backend.
 
@@ -594,7 +734,7 @@ CZ per repetition: {', '.join(f"r = {r}: {v['cz']['mean']:.0f}" for r, v in sort
 
 ## 2. Predicted yields
 
-{md_table(YIELD_HEAD, rows)}
+{md_table(yield_head(A), rows)}
 
 **The yield model (manual Step 4.4, both terms).**  y = {YIELD_MODEL_NAME} = `skqd.skqd.yield_model(f, a)`,
 with a = the decoder's random-string acceptance of the target sector
@@ -619,8 +759,14 @@ falls to the level of a itself, so inverting the yield for f is ill-conditioned 
 is.  On the session day, r = 2 and r = 3 measure the SHAPE of the yield-versus-CZ curve (manual Step 9.1),
 not f.
 
-On the session day the predicted yields are recomputed from **that day's** calibration by re-running
-`scripts/h0_build_circuits.py --backend <device>` and `scripts/gate_H0P.py`, before submission.
+On the session day the predicted yields are recomputed from **that day's** calibration by
+`scripts/gate_H0P.py --backend <device>`, before submission.  The circuits themselves are **not**
+rebuilt: `{args.prep}` is submitted byte-for-byte as validated here and by `scripts/ibm_account.py
+--check` on the live coupling map (prompts/15 D1 — re-transpiling on the live target would let
+level-3 layout selection pick a patch from the day's error rates, producing a set that neither this
+gate nor the dry run ever saw).  What is recomputed is the per-circuit clean-shot fraction f from
+the live `backend.target`, the Aer device model built from the live backend, and the per-qubit
+readout errors that `scripts/gate_H0.py --calibration` uses as its drift reference.
 
 ## 3. Shot plan (manual Step 4.4, eq. 5; `skqd.skqd.shot_rule`)
 
