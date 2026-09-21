@@ -7,9 +7,11 @@ submission path locally.  The production path `--backend <name>` needs a saved a
 which is what `--save` writes here, and a device on which the FROZEN circuit set of
 `scripts/h0_build_circuits.py` is actually executable, which is what `--check` verifies.
 
-  --save    prompts for the API key (getpass: never echoed, never stored in this repo,
-            never passed on the command line) and saves it to the qiskit default account
-            file ~/.qiskit/qiskit-ibm.json.  Nothing secret is printed.
+  --save    takes the API key and saves it to the qiskit default account file
+            ~/.qiskit/qiskit-ibm.json.  Nothing secret is printed.  The key is read, in
+            order, from --token-file, $QISKIT_IBM_TOKEN, a hidden prompt (a terminal
+            only), or piped stdin -- never from a command-line argument, which would be
+            visible in `ps`, in the shell history and in any agent transcript.
   --check   lists the backends the account can reach and, for each one with enough qubits,
             checks the frozen set against the LIVE device: the physical qubits the
             transpiler chose must exist, every two-qubit edge the circuits use must be in
@@ -32,16 +34,56 @@ import sys
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
+def read_token(args):
+    """The API key, from the least exposed source available.
+
+    Never from the command line: an argument is visible in `ps`, in the shell history
+    and -- when the command is run from an agent session -- in the transcript.
+    """
+    if args.token_file:
+        path = os.path.expanduser(args.token_file)
+        with open(path) as fh:
+            token = next((ln.strip() for ln in fh if ln.strip()), "")
+        if not token:
+            raise SystemExit(f"{path} is empty")
+        print(f"  key read from {path}", flush=True)
+        return token, path
+    for var in ("QISKIT_IBM_TOKEN", "IBM_QUANTUM_TOKEN"):
+        if os.environ.get(var, "").strip():
+            print(f"  key read from ${var}", flush=True)
+            return os.environ[var].strip(), None
+    if sys.stdin.isatty():
+        from getpass import getpass
+        print("IBM Quantum Platform API key (https://quantum.cloud.ibm.com, input is hidden):",
+              flush=True)
+        return getpass("  API key: ").strip(), None
+    token = sys.stdin.readline().strip()          # piped, e.g. pass/gpg/secret-tool
+    if token:
+        print("  key read from stdin", flush=True)
+        return token, None
+    raise SystemExit(
+        "no API key and no terminal to ask on.\n"
+        "This command has no TTY, so the hidden prompt cannot run.  Choose one:\n"
+        "  (a) run it in your own terminal:      python scripts/ibm_account.py --save\n"
+        "  (b) put the key in a file with your editor, then:\n"
+        "        python scripts/ibm_account.py --save --token-file ~/.ibm_key --delete-token-file\n"
+        "  (c) pipe it from a secret store:\n"
+        "        pass show ibm/quantum | python scripts/ibm_account.py --save\n"
+        "Do NOT pass the key as a command-line argument: it would be visible in `ps`, "
+        "in the shell history and in any agent transcript.")
+
+
 def do_save(args):
-    from getpass import getpass
     from qiskit_ibm_runtime import QiskitRuntimeService
 
-    print("IBM Quantum Platform API key (https://quantum.cloud.ibm.com, input is hidden):")
-    token = getpass("  API key: ").strip()
+    token, token_path = read_token(args)
     if not token:
         raise SystemExit("no key entered; nothing saved")
-    print("Instance CRN (optional -- press Enter to let the service resolve your instances):")
-    instance = input("  CRN: ").strip() or None
+    instance = args.instance
+    if instance is None and sys.stdin.isatty():
+        print("Instance CRN (optional -- press Enter to let the service resolve your instances):",
+              flush=True)
+        instance = input("  CRN: ").strip() or None
 
     QiskitRuntimeService.save_account(
         token=token,
@@ -52,8 +94,11 @@ def do_save(args):
     )
     path = os.path.expanduser("~/.qiskit/qiskit-ibm.json")
     print(f"\nsaved to {path} (channel {args.channel}, "
-          f"instance {'given' if instance else 'resolved by the service'})")
-    print("verifying the account by opening the service ...")
+          f"instance {'given' if instance else 'resolved by the service'})", flush=True)
+    if token_path and args.delete_token_file:
+        os.remove(token_path)
+        print(f"  removed {token_path}", flush=True)
+    print("verifying the account by opening the service ...", flush=True)
     service = QiskitRuntimeService()
     names = [b.name for b in service.backends()]
     print(f"  account OK: {len(names)} backend(s) reachable: {', '.join(names) or '(none)'}")
@@ -177,6 +222,11 @@ def main():
     ap.add_argument("--save", action="store_true", help="prompt for the API key and save it")
     ap.add_argument("--check", action="store_true", help="list backends and validate the frozen set")
     ap.add_argument("--channel", default="ibm_quantum_platform")
+    ap.add_argument("--token-file", default=None,
+                    help="file whose first non-empty line is the API key (no TTY needed)")
+    ap.add_argument("--delete-token-file", action="store_true",
+                    help="remove --token-file after a successful save")
+    ap.add_argument("--instance", default=None, help="instance CRN (optional)")
     ap.add_argument("--prep", default=os.path.join("data", "hardware", "H0_prep"))
     args = ap.parse_args()
     if not (args.save or args.check):
