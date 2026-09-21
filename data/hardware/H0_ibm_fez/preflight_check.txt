@@ -1,0 +1,18 @@
+qiskit_runtime_service.__init__:WARNING:2026-09-21 15:59:09,172: Instance was not set at service instantiation. Free and trial plan instances will be prioritized. Based on the following filters: (tags: None, region: us-east, eu-de), and available plans: (open), the available account instances are: open-instance. If you need a specific instance set it explicitly either by using a saved account with a saved default instance or passing it in directly to QiskitRuntimeService(). Alternatively, pass instance='auto' or save it to your account for auto-selection without warning.
+qiskit_runtime_service.backends:WARNING:2026-09-21 15:59:09,172: Loading instance: open-instance, plan: open
+frozen set: 126 circuits transpiled onto FakeFez (156 qubits)
+  uses 30 physical qubits [77, 78, 84, 85, 86, 87, 88, 89, 90, 97, 107, 108, 117, 121, 122, 123, 124, 125, 126, 127, 136, 137, 140, 141, 142, 143, 144, 145, 146, 147]
+  uses 54 distinct two-qubit edges
+  operations ['barrier', 'cz', 'measure', 'rz', 'sx', 'x']
+
+3 backend(s) reachable:
+
+  ibm_fez: 156 qubits, processor {'family': 'Heron', 'revision': '2'}, operational, 1 pending jobs
+      OK: the frozen set runs on ibm_fez as frozen
+  ibm_marrakesh: 156 qubits, processor {'family': 'Heron', 'revision': '2'}, operational, 0 pending jobs
+      OK: the frozen set runs on ibm_marrakesh as frozen
+  ibm_kingston: 156 qubits, processor {'family': 'Heron', 'revision': '2'}, operational, 0 pending jobs
+      OK: the frozen set runs on ibm_kingston as frozen
+
+usable as frozen: ibm_fez, ibm_marrakesh, ibm_kingston
+  submit with: python scripts/h0_submit.py --backend ibm_fez --shots-by-rep 1:267 2:130 3:92 --out data/hardware/H0_ibm_fez
