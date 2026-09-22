@@ -55,6 +55,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+from skqd import idle  # noqa: E402
 from skqd.codec import Codec  # noqa: E402
 from skqd.exact import Model  # noqa: E402
 from skqd.skqd import READOUT_FACTOR, yield_model  # noqa: E402
@@ -64,8 +65,8 @@ from h0_backends import (calibration_fingerprint, fresh_calibration,  # noqa: E4
                          frozen_qubits_and_edges, resolve_backend)
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-DD_MIN_LENGTH_RATIO = 2.0     # qiskit_ibm_runtime PadDynamicalDecoupling default
-XY4_PULSES = 4                # X, Y, X, Y -- 4 x the single-qubit pulse duration
+DD_MIN_LENGTH_RATIO = idle.DD_MIN_LENGTH_RATIO   # PadDynamicalDecoupling default (skqd.idle)
+XY4_PULSES = idle.XY4_PULSES                    # X, Y, X, Y -- 4 x the single-qubit pulse
 RHOS = (0.0, 0.25, 0.5, 1.0)  # the DD refocusing bracket of the planner analysis, section 2
 DURATION_TOL = 1e-12          # h0_qpu_time.circuit_duration_s must agree to this
 
@@ -79,120 +80,25 @@ def git_commit():
 
 
 # --------------------------------------------------------------------------- durations
-def record_duration(rec, name, qubits, dt):
-    """Duration of `name` on `qubits` in seconds, read from a calibration RECORD."""
-    if name in ("barrier", "rz"):
-        return 0.0
-    Q, E = rec["qubits"], rec["edges"]
-    if name == "sx":
-        return float(Q[str(qubits[0])]["sx_duration_s"])
-    if name == "x":
-        return float(Q[str(qubits[0])]["x_duration_s"])
-    if name == "id":
-        return float(Q[str(qubits[0])]["sx_duration_s"])
-    if name == "measure":
-        return float(Q[str(qubits[0])]["measure_duration_s"])
-    if name == "cz":
-        a, b = qubits
-        e = E.get(f"{a}-{b}") or E.get(f"{b}-{a}")
-        if e is None:
-            raise SystemExit(f"the calibration record has no cz entry for the edge ({a}, {b})")
-        return float(e["cz_duration_s"])
-    raise SystemExit(f"no duration for instruction '{name}' in the calibration record")
+# The schedule and the idle budget now live in `skqd.idle` (the library form of this
+# script, prompts/20): the functions below are the script's names for them, so that
+# every number this file has ever written is produced by the same code as before.
+def record_duration(rec, name, qubits, dt=None):
+    """`skqd.idle.instruction_duration_s`, with this script's SystemExit on a gap."""
+    try:
+        return idle.instruction_duration_s(rec, name, qubits)
+    except KeyError as exc:
+        raise SystemExit(str(exc).strip('"'))
 
 
 def schedule(qc, rec):
-    """ASAP schedule of `qc` on the record's durations (prompts/19 A2).
-
-    Returns {qubit: {busy_s, windows}}, the critical path T before the measure layer and
-    the full duration including it.  A `delay` counts as BUSY time, not as an idle window:
-    it is an instruction the scheduler placed, and its relaxation is modelled explicitly by
-    the idle-test prediction.  A barrier synchronises its qubits, which opens an idle
-    window on every qubit that reaches it early (the planner's P1 snippet)."""
-    dt = float(rec["dt_s"])
-    active = sorted({qc.find_bit(q).index for inst in qc.data for q in inst.qubits
-                     if inst.operation.name != "barrier"})
-    t = {q: 0.0 for q in active}
-    busy = {q: 0.0 for q in active}
-    delayed = {q: 0.0 for q in active}
-    windows = {q: [] for q in active}
-    measured, meas_dur = [], {}
-    for inst in qc.data:
-        name = inst.operation.name
-        qs = [qc.find_bit(q).index for q in inst.qubits]
-        if name == "barrier":
-            qs = [q for q in qs if q in active]
-            if not qs:
-                continue
-            tm = max(t[q] for q in qs)
-            for q in qs:
-                if tm > t[q] + 1e-15:
-                    windows[q].append(tm - t[q])
-                    t[q] = tm
-            continue
-        if name == "measure":
-            measured.append(qs[0])
-            meas_dur[qs[0]] = record_duration(rec, "measure", qs, dt)
-            continue
-        if name == "delay":
-            d = float(inst.operation.duration) * dt
-            delayed[qs[0]] += d
-        else:
-            d = record_duration(rec, name, qs, dt)
-        start = max(t[q] for q in qs)
-        for q in qs:
-            if start > t[q] + 1e-15:
-                windows[q].append(start - t[q])
-            t[q] = start + d
-            busy[q] += d
-    T = max(t.values()) if t else 0.0
-    # the measure layer starts when every measured qubit is free; the runtime measures the
-    # register in one layer, so the full duration is that start plus the measure duration
-    T_total = T + (max(meas_dur.values()) if meas_dur else 0.0)
-    per_q = {q: {"busy_s": busy[q], "delay_s": delayed[q], "idle_s": T - busy[q],
-                 "windows_s": windows[q]} for q in active}
-    return {"active": active, "per_qubit": per_q, "T_s": T, "T_total_s": T_total,
-            "measured_qubits": sorted(measured),
-            "measure_duration_s": (max(meas_dur.values()) if meas_dur else 0.0)}
+    """ASAP schedule of `qc` on the record's durations (prompts/19 A2) -- `skqd.idle`."""
+    return idle.schedule_asap(qc, rec)
 
 
-# --------------------------------------------------------------------------- budgets
-def budgets(sch, rec):
-    """The idle relaxation budget of a scheduled circuit (prompts/19 A3)."""
-    Q = rec["qubits"]
-    per_q, tot = {}, {"S_T1": 0.0, "S_T2": 0.0, "S_T2_eligible": 0.0,
-                      "S_T2_ineligible": 0.0, "S_DD": 0.0, "dd_eligible": 0,
-                      "n_windows": 0, "idle_s": 0.0, "busy_s": 0.0}
-    for q in sch["active"]:
-        qq = Q[str(q)]
-        T1, T2 = float(qq["T1_s"]), float(qq["T2_s"])
-        sx_d, sx_e = float(qq["sx_duration_s"]), float(qq["sx_error"])
-        w = sch["per_qubit"][q]["windows_s"]
-        s1 = sum((1.0 - math.exp(-x / T1)) / 4.0 for x in w)
-        s2 = sum((1.0 - math.exp(-x / T2)) / 2.0 for x in w)
-        elig = [x for x in w if x / (XY4_PULSES * sx_d) > DD_MIN_LENGTH_RATIO]
-        s2e = sum((1.0 - math.exp(-x / T2)) / 2.0 for x in elig)
-        sdd = XY4_PULSES * sx_e * len(elig)
-        per_q[str(q)] = {
-            "T1_s": T1, "T2_s": T2, "sx_duration_s": sx_d, "sx_error": sx_e,
-            "busy_s": sch["per_qubit"][q]["busy_s"], "delay_s": sch["per_qubit"][q]["delay_s"],
-            "idle_s": sch["per_qubit"][q]["idle_s"], "n_windows": len(w),
-            "n_dd_eligible": len(elig),
-            "longest_window_s": max(w) if w else 0.0,
-            "S_T1": s1, "S_T2": s2, "S_T2_eligible": s2e, "S_T2_ineligible": s2 - s2e,
-            "S_DD": sdd,
-        }
-        tot["S_T1"] += s1
-        tot["S_T2"] += s2
-        tot["S_T2_eligible"] += s2e
-        tot["S_T2_ineligible"] += s2 - s2e
-        tot["S_DD"] += sdd
-        tot["dd_eligible"] += len(elig)
-        tot["n_windows"] += len(w)
-        tot["idle_s"] += sch["per_qubit"][q]["idle_s"]
-        tot["busy_s"] += sch["per_qubit"][q]["busy_s"]
-    tot["exp_minus_S_T1_S_T2"] = math.exp(-tot["S_T1"] - tot["S_T2"])
-    return per_q, tot
+def budgets(sch, rec, t2_s=None):
+    """The idle relaxation budget of a scheduled circuit (prompts/19 A3) -- `skqd.idle`."""
+    return idle.idle_budget(sch, rec, t2_s)
 
 
 def f_on_record(qc, rec):
@@ -214,13 +120,12 @@ def f_on_record(qc, rec):
 
 def predictions(f_gates, tot, a):
     """The bracket of prompts/19 A4: DD off, and DD on at each refocusing efficiency rho."""
-    f_off = f_gates * math.exp(-tot["S_T1"] - tot["S_T2"])
+    f_off = idle.f_idle_aware(f_gates, tot)
     out = {"f_gates": f_gates, "garbage_acceptance": a,
            "dd_off": {"f": f_off, "yield": yield_model(f_off, a) if a is not None else None},
            "dd_on": {}}
     for rho in RHOS:
-        f = f_gates * math.exp(-tot["S_T1"] - rho * tot["S_T2_eligible"]
-                               - tot["S_T2_ineligible"] - tot["S_DD"])
+        f = idle.f_idle_aware(f_gates, tot, rho)
         out["dd_on"][str(rho)] = {"rho": rho, "f": f,
                                   "yield": yield_model(f, a) if a is not None else None}
     return out

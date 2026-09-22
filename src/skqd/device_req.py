@@ -184,6 +184,32 @@ def uniform_scale_for_set(counts: list, eps2: float, eps1: float, eps_ro: float,
     return _solve_decreasing(lambda l: value(l) - f_target, 0.0, hi)
 
 
+def target_with_idle(f_target: float, s_idle: float) -> float:
+    """The gate-only target that is equivalent to `f_target` once idle time is charged.
+
+    With idle-time relaxation (`skqd.idle`) the clean-shot fraction of a compiled circuit is
+    f = f_gates x exp(-S_idle), so `f >= f_target` is exactly `f_gates >= f_target e^{S_idle}`:
+    the idle budget shifts the half-space of `log_error_budget` by a constant,
+
+        n_2q eps2~ + n_1q eps1~ + n_meas eps_ro~  <=  ln(1 / f_target) - S_idle .
+
+    Every inversion in this module therefore applies unchanged to the idle-aware criterion
+    when it is called with `target_with_idle(f_target, S_idle)` in place of `f_target`.  The
+    bars themselves (mean 0.1, worst 0.05) are unchanged; only the f they are read on is.
+    Raises when the idle term alone exhausts the budget (f_target e^{S_idle} >= 1): no device
+    error rate, not even zero, can then meet the criterion on that schedule.
+    """
+    if not 0.0 < f_target < 1.0:
+        raise ValueError("f_target must be in (0, 1)")
+    if float(s_idle) < 0.0:
+        raise ValueError("S_idle must be >= 0")
+    t = float(f_target) * math.exp(float(s_idle))
+    if t >= 1.0:
+        raise ValueError(f"the idle budget S_idle = {s_idle} alone puts f below {f_target}: "
+                         "the criterion is unreachable at any gate error on this schedule")
+    return t
+
+
 def log_error_budget(counts: CircuitCounts, f_target: float, virtual_rz: bool = False) -> dict:
     """The exact half-space form of f >= f_target for one circuit.
 
