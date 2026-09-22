@@ -240,3 +240,86 @@ def test_gpu_option_set_is_the_policy_one():
                            precision="single", seed=11) == {"method": "automatic",
                                                             "device": "CPU",
                                                             "seed_simulator": 11}
+
+
+# ---------------------------------------------------------------------------------------------
+# Memory-bounded batching.  Gate L4's first GPU run (Perlmutter job 58737320) died with
+# "std::bad_alloc: cudaErrorMemoryAllocation: out of memory" because sample_many submitted
+# 20 circuits x 20000 shots at 12 qubits in ONE run() call on an 80 GB A100.  There is no GPU
+# here, so the recovery path is tested by simulating the error Aer actually raised.
+# ---------------------------------------------------------------------------------------------
+def test_shot_chunk_for_scales_as_one_over_experiments_and_dimension():
+    from skqd.circuits_qiskit import shot_chunk_for
+
+    # 8 GB / (20 experiments x 2^12 amplitudes x 16 bytes) = 6103 shots
+    assert shot_chunk_for(12, 20, 8e9) == 6103
+    # halving the experiments doubles the shots that fit
+    assert shot_chunk_for(12, 10, 8e9) == 2 * shot_chunk_for(12, 20, 8e9) + 1
+    # each extra qubit halves it
+    assert shot_chunk_for(13, 20, 8e9) == shot_chunk_for(12, 20, 8e9) // 2
+    # never zero, however tight the budget
+    assert shot_chunk_for(30, 100, 1.0) == 1
+
+
+def test_is_oom_recognises_the_error_aer_actually_raised():
+    from skqd.circuits_qiskit import _is_oom
+
+    real = ("PARTIAL COMPLETED ,  ERROR: std::bad_alloc: cudaErrorMemoryAllocation: "
+            "out of memory")
+    assert _is_oom(Exception(real))
+    assert _is_oom(Exception("Insufficient memory to run circuit"))
+    assert not _is_oom(Exception("Invalid option cuStateVec_enable"))
+    assert not _is_oom(ValueError("unrelated"))
+
+
+def test_sample_many_chunked_by_shots_gives_the_full_shot_count():
+    """A bounded max_shots_per_run splits one circuit's shots over several run() calls and sums
+    them; every circuit must still end up with exactly `shots` shots."""
+    from skqd import circuits_qiskit as cq
+
+    gs, n, _ = _sector_circuits(k_list=(1, 2), n_refs=1)
+    nm = cq.generic_noise_model(3e-4, 3e-3, 1e-2)
+    counts, info = cq.sample_many(gs, n, 60, noise_model=nm, seed=11,
+                                  max_shots_per_run=16, return_info=True)
+    assert len(counts) == len(gs)
+    assert all(sum(c.values()) == 60 for c in counts), "shots lost or duplicated across chunks"
+    assert info["run_calls"] == 4, info            # 16 + 16 + 16 + 12
+    assert info["seeds"] == [11, 12, 13, 14], "each chunk needs its own seed, base + index"
+    assert info["oom_retries"] == []
+
+
+def test_sample_many_recovers_from_an_out_of_memory_error(monkeypatch):
+    """The GPU path: on OOM the call halves the experiments per run, then the shots, and retries.
+    Aer is replaced by a stub that raises the real error text while the batch is too big."""
+    from skqd import circuits_qiskit as cq
+
+    gs, n, _ = _sector_circuits(k_list=(1, 2), n_refs=2)     # 4 circuits
+    real_sim = cq._aer_simulator
+
+    class Stub:
+        """Fails whenever a run asks for more than 2 experiments, like a GPU out of memory."""
+
+        def __init__(self, inner):
+            self.inner = inner
+            self.calls = []
+
+        def __getattr__(self, name):        # transpile() reads target/num_qubits off the backend
+            return getattr(self.inner, name)
+
+        def run(self, circuits, shots=None, **kw):
+            self.calls.append((len(circuits), shots))
+            if len(circuits) > 2:
+                raise RuntimeError("PARTIAL COMPLETED ,  ERROR: std::bad_alloc: "
+                                   "cudaErrorMemoryAllocation: out of memory")
+            return self.inner.run(circuits, shots=shots, **kw)
+
+    stub = Stub(real_sim())
+    monkeypatch.setattr(cq, "_aer_simulator", lambda **kw: stub)
+    counts, info = cq.sample_many(gs, n, 24, seed=11, return_info=True)
+
+    assert len(counts) == len(gs)
+    assert all(sum(c.values()) == 24 for c in counts), "shots lost while recovering from OOM"
+    assert len(info["oom_retries"]) >= 1, "the retry was not recorded"
+    assert info["max_experiments"] == 2, info["max_experiments"]
+    assert max(c for c, _ in stub.calls) == 4, "it should have tried the full batch first"
+    assert all(c <= 2 for c, _ in stub.calls[1:]), "it must not retry at a size it knows fails"

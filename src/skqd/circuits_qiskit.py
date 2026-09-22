@@ -209,11 +209,38 @@ def sample(gates: list, n: int, shots: int, noise_model=None, coupling_map=None,
     return {qiskit_key_to_bits(k): v for k, v in counts.items()}
 
 
+def shot_chunk_for(n_qubits: int, n_experiments: int, max_bytes: float = 8e9,
+                   bytes_per_amplitude: int = 16) -> int:
+    """Shots per `run` call that keep one batched GPU allocation under `max_bytes`.
+
+    With `batched_shots_gpu` Aer replicates the 2^n-amplitude statevector across the shots of a
+    batch, so the allocation scales as experiments x shots x 2^n x bytes_per_amplitude (16 for
+    complex128).  Returning a bound up front means the first call usually fits; `sample_many`
+    still halves adaptively if the device has less free memory than assumed, so this is a hint,
+    not a guarantee.  The default 8 GB is deliberately far below an A100's 80 GB: the noise model,
+    the measurement sampling and any other job sharing the GPU also need room.
+    """
+    per_shot = float(max(1, n_experiments)) * (2.0 ** int(n_qubits)) * float(bytes_per_amplitude)
+    return max(1, int(max_bytes / per_shot))
+
+
+def _is_oom(exc) -> bool:
+    """Is this exception a device/host out-of-memory from Aer?
+
+    Aer reports it through the Result status rather than a typed exception, so the text is what
+    there is: qiskit raises `QiskitError("PARTIAL COMPLETED ,  ERROR: std::bad_alloc:
+    cudaErrorMemoryAllocation: out of memory")` (Perlmutter job 58737320, aer 0.15.1)."""
+    t = str(exc).lower()
+    return ("out of memory" in t or "bad_alloc" in t or "cudaerrormemoryallocation" in t
+            or "insufficient memory" in t)
+
+
 def sample_many(gates_list: list, n: int, shots: int, noise_model=None, coupling_map=None,
                 basis=("rz", "sx", "x", "cz"), seed: int = 11, method: str = "automatic",
                 device: str = "CPU", backend=None, optimization_level: int = 3,
                 batched_shots_gpu: bool = False, cu_statevec_enable: bool = True,
-                precision: str = "double") -> list:
+                precision: str = "double", max_experiments: int = None,
+                max_shots_per_run: int = None, return_info: bool = False) -> list:
     """Sample MANY IR circuits in ONE `AerSimulator.run([...])` call and return one
     {bit tuple: count} dict per circuit, in the order given, in this package's bit order.
 
@@ -231,6 +258,22 @@ def sample_many(gates_list: list, n: int, shots: int, noise_model=None, coupling
     tests/test_ci_gpu_mode.py, which pins `sample_many([g]) == sample(g)` and the identity of the
     batched results for circuits whose outcome is deterministic).
 
+    MEMORY.  One `run([...])` of everything is what the policy asks for, but it is not free: with
+    `batched_shots_gpu` Aer replicates the statevector across the shots of a batch, so the request
+    grows as (experiments x shots x 2^n), and a fast device makes the caller choose MORE shots.
+    Gate L4's first GPU run died exactly there -- 20 circuits x 20000 shots at 12 qubits on an
+    80 GB A100 gave `std::bad_alloc: cudaErrorMemoryAllocation: out of memory` (Perlmutter job
+    58737320) -- so the call is chunked and self-tunes: it starts with everything in one `run`,
+    and on an out-of-memory error halves the experiments per call, then the shots per call, until
+    it fits or a single experiment of one shot still fails (which is then raised).  On the CPU no
+    OOM occurs, so the CPU path remains one call, unchanged.
+
+    Splitting the shots of one circuit over several calls is statistically identical but not the
+    same random draw, so each chunk gets `seed + chunk index` (the policy's
+    `base_seed + unit index` rule) and the counts are summed.  `return_info=True` additionally
+    returns what the call actually did -- chunk sizes, number of `run` calls, the seeds used and
+    any OOM retries -- so the gate can record it.
+
     API note: only `transpile`, `AerSimulator`, `run([...])` and `Result.get_counts(i)` are used,
     all present in qiskit 1.4.3 / aer 0.15.1 (the CI) and 2.5.2 / 0.17.2 (the laptop)."""
     sim = _aer_simulator(noise_model=noise_model, seed=seed, method=method, device=device,
@@ -240,9 +283,47 @@ def sample_many(gates_list: list, n: int, shots: int, noise_model=None, coupling
                           coupling_map=coupling_map, optimization_level=optimization_level,
                           seed=seed)
            for g in gates_list]
-    result = sim.run(tqs, shots=shots).result()
-    out = []
-    for i in range(len(tqs)):
-        counts = result.get_counts(i)
-        out.append({qiskit_key_to_bits(k): v for k, v in counts.items()})
-    return out
+
+    n_exp = max(1, int(max_experiments or len(tqs)))
+    n_sh = max(1, int(max_shots_per_run or shots))
+    totals = [{} for _ in tqs]
+    info = {"experiments": len(tqs), "shots": shots, "run_calls": 0, "oom_retries": [],
+            "seeds": [], "max_experiments": n_exp, "max_shots_per_run": n_sh}
+    chunk_index = 0
+    i = 0
+    while i < len(tqs):
+        block = tqs[i:i + n_exp]
+        done = 0
+        while done < shots:
+            take = min(n_sh, shots - done)
+            s = seed + chunk_index
+            try:
+                res = sim.run(block, shots=take, seed_simulator=s).result()
+                got = [res.get_counts(j) for j in range(len(block))]
+            except Exception as exc:
+                if not _is_oom(exc):
+                    raise
+                if n_exp > 1:                      # first give the GPU fewer experiments
+                    n_exp = max(1, n_exp // 2)
+                elif n_sh > 1:                     # then fewer shots of the single experiment
+                    n_sh = max(1, n_sh // 2)
+                else:
+                    raise
+                info["oom_retries"].append({"max_experiments": n_exp, "max_shots_per_run": n_sh,
+                                            "error": str(exc)[:200]})
+                info["max_experiments"], info["max_shots_per_run"] = n_exp, n_sh
+                block = tqs[i:i + n_exp]
+                done = 0
+                totals[i:] = [{} for _ in range(len(totals) - i)]   # discard partial accumulation
+                continue
+            for j, counts in enumerate(got):
+                acc = totals[i + j]
+                for k, v in counts.items():
+                    b = qiskit_key_to_bits(k)
+                    acc[b] = acc.get(b, 0) + int(v)
+            info["run_calls"] += 1
+            info["seeds"].append(s)
+            chunk_index += 1
+            done += take
+        i += len(block)
+    return (totals, info) if return_info else totals

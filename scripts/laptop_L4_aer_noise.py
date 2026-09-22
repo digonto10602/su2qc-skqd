@@ -179,6 +179,9 @@ def main():
     ap.add_argument("--gpu", action="store_true")
     ap.add_argument("--batched-shots-gpu", action="store_true",
                     help="Aer batched_shots_gpu (GPU only): many shots of one circuit per batch")
+    ap.add_argument("--gpu-memory-bytes", type=float, default=8e9,
+                    help="GPU memory the batched sampling may assume (default 8e9, far below an "
+                         "A100's 80 GB: the noise model and any co-tenant job also need room)")
     ap.add_argument("--timing-ladder", type=int, nargs="*", default=[], metavar="SHOTS",
                     help="before sampling, time one circuit at each of these shot counts and record "
                          "s/shot, so the full run can be sized from a measurement")
@@ -230,6 +233,7 @@ def main():
     # different shot count -- on a GPU the per-shot cost falls as the batch grows, so the full
     # 1000 + 500 shot run cannot be sized from a 20-shot pilot.
     ladder = []
+    batching = {}       # what sample_many actually did, per sector
     phases = {}          # per-phase wall times, recorded per the HPC policy
     t_ladder = time.time()
     if args.timing_ladder:
@@ -280,12 +284,24 @@ def main():
         # Python loop of run calls; transpile once and reuse").  A loop of cq.sample calls paid
         # the simulator/transpiler set-up per circuit (1.4 s for the first call against 0.18 s
         # for the next on this laptop CPU) and on a GPU re-entered the CUDA context each time.
+        # One run() call per sector is the policy, but the allocation grows as
+        # experiments x shots x 2^n: gate L4's first GPU run chose 20000 shots (the device is
+        # fast) and 20 x 20000 at 12 qubits exhausted an 80 GB A100 (job 58737320).  On the GPU
+        # the shots per call are therefore bounded up front, and sample_many halves adaptively if
+        # even that does not fit.  On the CPU no bound is imposed and the call stays single.
+        chunk = cq.shot_chunk_for(n, len(circuits), args.gpu_memory_bytes) \
+            if device == "GPU" else None
         t_samp = time.time()
-        counts_list = cq.sample_many([g for _, _, g in circuits], n, shots, noise_model=nm,
-                                     device=device, backend=backend, batched_shots_gpu=bsg,
-                                     seed=SAMPLE_SEED)
+        counts_list, batch_info = cq.sample_many(
+            [g for _, _, g in circuits], n, shots, noise_model=nm, device=device,
+            backend=backend, batched_shots_gpu=bsg, seed=SAMPLE_SEED,
+            max_shots_per_run=chunk, return_info=True)
         phases[f"sampling_s|B={twoB // 2}"] = time.time() - t_samp
-        print(f"B={twoB // 2}: sampled {len(circuits)} circuits x {shots} shots in one run() call "
+        batching[f"B={twoB // 2}"] = batch_info
+        print(f"B={twoB // 2}: sampled {len(circuits)} circuits x {shots} shots in "
+              f"{batch_info['run_calls']} run() call(s) (<= {batch_info['max_experiments']} "
+              f"circuits x {batch_info['max_shots_per_run']} shots each, "
+              f"{len(batch_info['oom_retries'])} OOM retries) "
               f"({phases[f'sampling_s|B={twoB // 2}']:.1f} s)", flush=True)
         t_ana = time.time()
         for counts in counts_list:
@@ -397,6 +413,8 @@ def main():
         "shots_per_circuit": {r[0]: int(r[2]) for r in rows},
         "seconds_per_shot_pilot": pilot_sps,
         "timing_ladder": ladder,
+        "batching": batching,
+        "gpu_memory_bytes_assumed": args.gpu_memory_bytes,
         "full_size_estimate": full,
         "pilot_shots": args.pilot_shots,
         "min_shots": args.min_shots,
