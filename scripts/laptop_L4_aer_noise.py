@@ -18,9 +18,18 @@ then the manual's y = 0.82 f + (1 - f) a with the f of gate S2D (per-edge CZ x r
 used patch) and the decoder's exhaustive random-string acceptance a, and the comparison is
 with validation/S2D.json.
 
+Under the Perlmutter CI (CI_GATE or SLURM_JOB_ID in the environment) the gate switches itself to
+device GPU with Aer batched_shots_gpu and adds a timing ladder, because the CI passes only the gate
+token: it runs `python scripts/run_gate.py L4` with no arguments.  Every physics parameter keeps its
+default there, so the CI run is a parameter-for-parameter counterpart of a laptop run.  The CI runs
+qiskit 1.4.3 + qiskit-aer-gpu 0.15.1; this module therefore stays on the API that both it and the
+laptop's qiskit 2.5.2 accept (QuantumCircuit, transpile, AerSimulator, NoiseModel) and imports
+nothing from the qiskit family at module load.
+
 Usage: python scripts/laptop_L4_aer_noise.py [--p2 3e-3] [--p1 3e-4] [--pro 0.01]
                                              [--budget-minutes 25] [--pilot-shots 1000]
-                                             [--min-shots 500] [--gpu]
+                                             [--min-shots 500] [--gpu] [--batched-shots-gpu]
+                                             [--timing-ladder 20 100 500 1000]
                                              [--backend FakeFez|FakeTorino] [--out L4_fez]
 """
 import argparse
@@ -43,6 +52,28 @@ from gate_H0P import YIELD_MODEL_NAME, random_acceptance  # noqa: E402  (same a 
 from gate_S2D import YIELD_FACTOR, analyse_on_backend  # noqa: E402  (same f as gate S2D)
 
 
+def ci_context() -> dict:
+    """Non-empty when this run is the Perlmutter CI job rather than a laptop run.
+
+    The CI passes only the gate token: it runs `python scripts/run_gate.py L4` with no extra
+    arguments (ci/README.md), so the gate has to choose GPU mode itself.  CI_GATE is set by the
+    poller; SLURM_JOB_ID is the fallback for a hand-submitted Slurm job."""
+    ctx = {k: os.environ[k] for k in ("CI_GATE", "SLURM_JOB_ID", "SLURM_JOB_NODELIST")
+           if os.environ.get(k)}
+    return ctx if ("CI_GATE" in ctx or "SLURM_JOB_ID" in ctx) else {}
+
+
+def qiskit_versions() -> dict:
+    """Recorded in validation/L4.json: the CI runs qiskit 1.4.3, the laptop 2.5.2."""
+    out = {}
+    for mod in ("qiskit", "qiskit_aer"):
+        try:
+            out[mod] = __import__(mod).__version__
+        except Exception as exc:                                  # pragma: no cover
+            out[mod] = f"unavailable: {exc}"
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--p2", type=float, default=3e-3)
@@ -52,9 +83,30 @@ def main():
     ap.add_argument("--pilot-shots", type=int, default=1000, help="shots of the pilot used to time one circuit")
     ap.add_argument("--min-shots", type=int, default=500, help="floor for the shots per circuit")
     ap.add_argument("--gpu", action="store_true")
+    ap.add_argument("--batched-shots-gpu", action="store_true",
+                    help="Aer batched_shots_gpu (GPU only): many shots of one circuit per batch")
+    ap.add_argument("--timing-ladder", type=int, nargs="*", default=[], metavar="SHOTS",
+                    help="before sampling, time one circuit at each of these shot counts and record "
+                         "s/shot, so the full run can be sized from a measurement")
     ap.add_argument("--backend", default=None, choices=("FakeFez", "FakeTorino"),
                     help="calibration snapshot: NoiseModel.from_backend + transpilation onto that backend")
     ap.add_argument("--out", default="L4", help="name of validation/<out>.json and reports/<out>_aer_noise.md")
+    ci = ci_context()
+    if ci:
+        # The CI runs `python scripts/run_gate.py L4` with no arguments, so CI mode changes
+        # ONLY the device, the GPU batching and the timing ladder: every physics parameter keeps
+        # the script's own default, which makes the GPU run a parameter-for-parameter counterpart
+        # of a laptop run (pilot 1000, min-shots 500 -- the "full 1000 + 500 shot run").
+        #
+        # Deliberately NOT the shot budget of the 2026-09-14 run (validation/L4.json: p2 1e-3,
+        # pilot 20, min-shots 1, budget 12 min, 8 shots x 20 circuits and 22 x 8, 1012 s at
+        # 2.16 / 1.98 s per shot).  That run sampled the DENSE generic-synthesis circuits at
+        # 35670 CZ; since the structured circuits of gate S2 became the CircuitFactory default
+        # (2026-09-15, commit 5d60461) the same script samples 288 CZ at 0.046 s/shot on the same
+        # laptop CPU -- 124x fewer CZ, 47x faster -- so that budget is about a second of GPU work
+        # and would measure nothing.  The ladder is what sizes the larger runs.
+        ap.set_defaults(gpu=True, batched_shots_gpu=True,
+                        timing_ladder=[20, 100, 500, 1000, 2000])
     args = ap.parse_args()
     t0 = time.time()
     R = GateResult(args.out, "Aer noise-model sampling at 2x2 (S3 preparation)"
@@ -74,6 +126,35 @@ def main():
     n = codec.n_qubits
     nm = NoiseModel.from_backend(backend) if backend is not None else \
         cq.generic_noise_model(args.p1, args.p2, args.pro)
+    bsg = bool(args.batched_shots_gpu and device == "GPU")
+    if ci:
+        print(f"CI run ({', '.join(f'{k}={v}' for k, v in ci.items())}): device {device}, "
+              f"batched_shots_gpu {bsg}, qiskit {qiskit_versions()}", flush=True)
+
+    # Timing ladder: one circuit, several shot counts.  The pilot below measures s/shot at a
+    # single point, which is enough to fit a run into a budget but NOT enough to size a run at a
+    # different shot count -- on a GPU the per-shot cost falls as the batch grows, so the full
+    # 1000 + 500 shot run cannot be sized from a 20-shot pilot.
+    ladder = []
+    if args.timing_ladder:
+        ref0 = M.reference(g2, 0)
+        g0 = F.coarse_step(references(M.basis, 0)[0], 1, ref0.dt)
+        # one discarded sample first: the first call pays the transpiler and simulator warm-up
+        # (on the laptop CPU 1.4 s against 0.18 s for the next call; on a GPU it is the CUDA
+        # context), which would otherwise land entirely on the smallest ladder point and make the
+        # per-shot cost there look an order of magnitude worse than it is.
+        tw = time.time()
+        cq.sample(g0, n, max(1, min(args.timing_ladder)), noise_model=nm, device=device,
+                  backend=backend, batched_shots_gpu=bsg)
+        warmup_s = time.time() - tw
+        print(f"timing ladder: warm-up discarded ({warmup_s:.2f} s)", flush=True)
+        for s in args.timing_ladder:
+            tt = time.time()
+            cq.sample(g0, n, int(s), noise_model=nm, device=device, backend=backend,
+                      batched_shots_gpu=bsg)
+            el = time.time() - tt
+            ladder.append({"shots": int(s), "seconds": el, "seconds_per_shot": el / int(s)})
+            print(f"timing ladder: {s:>6} shots -> {el:7.2f} s ({el / int(s):.5f} s/shot)", flush=True)
     rows = []
     for twoB in (0, 2):
         ref = M.reference(g2, twoB)
@@ -81,7 +162,8 @@ def main():
         circuits = [(r, k, F.coarse_step(r, k, ref.dt)) for r in refs for k in (1, 2, 3, 4)]
         # pilot timing -> shots per circuit within the budget
         tp = time.time()
-        cq.sample(circuits[0][2], n, args.pilot_shots, noise_model=nm, device=device, backend=backend)
+        cq.sample(circuits[0][2], n, args.pilot_shots, noise_model=nm, device=device, backend=backend,
+                  batched_shots_gpu=bsg)
         t_per_shot = (time.time() - tp) / args.pilot_shots
         print(f"B={twoB // 2}: pilot {args.pilot_shots} shots -> {t_per_shot:.3f} s/shot", flush=True)
         budget_s = args.budget_minutes * 60 / 2  # half the budget per sector
@@ -96,7 +178,8 @@ def main():
         acc_all, rej_all, total = {}, {}, 0
         cz_counts = []
         for r, k, g in circuits:
-            counts = cq.sample(g, n, shots, noise_model=nm, device=device, backend=backend)
+            counts = cq.sample(g, n, shots, noise_model=nm, device=device, backend=backend,
+                               batched_shots_gpu=bsg)
             acc, rej = codec.decode_counts(counts, target_twoB=twoB)
             for kk, c in acc.items():
                 acc_all[kk] = acc_all.get(kk, 0) + c
@@ -153,6 +236,20 @@ def main():
                                        rejections={k: int(v) for k, v in rej_all.items()},
                                        weinstein=[float(cert.weinstein[0]), float(cert.weinstein[1])],
                                        exact_E0=float(ref.E0))
+    R.data["run"] = {
+        "device": device,
+        "batched_shots_gpu": bsg,
+        "ci": ci or None,
+        "versions": qiskit_versions(),
+        "shots_per_circuit": {r[0]: int(r[2]) for r in rows},
+        "seconds_per_shot_pilot": {f"B={tb // 2}": R.data[f"B={tb // 2}"]["t_per_shot"] for tb in (0, 2)},
+        "timing_ladder": ladder,
+        "pilot_shots": args.pilot_shots,
+        "min_shots": args.min_shots,
+        "budget_minutes": args.budget_minutes,
+        "noise": ({"backend": args.backend} if backend is not None
+                  else {"p1": args.p1, "p2": args.p2, "p_ro": args.pro}),
+    }
     R.runtime_s = time.time() - t0
     R.save()
     noise_desc = (f"NoiseModel.from_backend({args.backend}) (calibration snapshot: per-edge CZ, per-qubit "
@@ -170,7 +267,12 @@ device {device}, budget {args.budget_minutes} min, pilot {args.pilot_shots} shot
            "fp", "Weinstein", "rejections"], rows)}
 
 {R.criteria_table()}
-
+{("" if not ladder else "Timing ladder on one circuit, device " + device
+   + (" with batched_shots_gpu" if bsg else "") + " (the per-shot cost falls as the batch grows, so a "
+   "run at a different shot count cannot be sized from a single pilot point):\n\n"
+   + md_table(["shots", "seconds", "s/shot"],
+              [[str(e["shots"]), f"{e['seconds']:.2f}", f"{e['seconds_per_shot']:.5f}"] for e in ladder])
+   + "\n")}
 Note: at 2x2 the sectors saturate (38 and 20 states), so the Ritz error is a consistency check only (manual
 Step 9.1).  The prediction the criterion uses is the manual's Step-4.4 yield model with BOTH its terms,
 y = {YIELD_MODEL_NAME} ("the accepted-shot yield is ~ 0.82 f plus the garbage that decodes as valid",

@@ -97,9 +97,14 @@ def generic_noise_model(p1: float = 3e-4, p2: float = 3e-3, p_ro: float = 1e-2):
 
 def sample(gates: list, n: int, shots: int, noise_model=None, coupling_map=None,
            basis=("rz", "sx", "x", "cz"), seed: int = 11, method: str = "automatic",
-           device: str = "CPU", backend=None, optimization_level: int = 3) -> dict:
+           device: str = "CPU", backend=None, optimization_level: int = 3,
+           batched_shots_gpu: bool = False) -> dict:
     """Run the circuit on AerSimulator and return {bit tuple: count} in this package's order.
-    device='GPU' requires qiskit-aer-gpu (the laptop's GTX 1060 Max-Q is supported).
+    device='GPU' requires qiskit-aer-gpu (NOT available on this laptop: the 0.15.1 wheel is
+    incompatible with the pinned qiskit 2.5.2; the Perlmutter CI runs qiskit 1.4.3 + aer-gpu
+    0.15.1 on an A100).  batched_shots_gpu=True asks Aer to run many shots of one circuit in
+    one GPU batch, which is the whole point of the GPU for noisy sampling; it is passed only
+    when device='GPU', so the CPU path is bit-for-bit unchanged.
 
     backend: a Qiskit BackendV2 (e.g. FakeFez()).  When given, the circuit is transpiled
     ONTO that backend (its coupling map, basis and layout, optimization_level, seed) before
@@ -114,6 +119,8 @@ def sample(gates: list, n: int, shots: int, noise_model=None, coupling_map=None,
     kwargs = dict(method=method, device=device, seed_simulator=seed)
     if noise_model is not None:
         kwargs["noise_model"] = noise_model
+    if device == "GPU" and batched_shots_gpu:
+        kwargs["batched_shots_gpu"] = True
     sim = AerSimulator(**kwargs)
     if backend is not None:
         tq = transpile(qc, backend=backend, optimization_level=optimization_level, seed_transpiler=seed)
