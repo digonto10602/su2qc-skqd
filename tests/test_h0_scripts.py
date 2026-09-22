@@ -519,23 +519,33 @@ def test_cache_accepts_a_matching_record_and_a_partial_one():
     gate_H0P.cache_stamp(exp, dict(exp, shots_by_circuit={"c1": 267}), "/tmp/B=0_r1.json")
 
 
-def test_the_committed_caches_carry_the_fingerprint_of_their_calibration():
-    """The seven live cache files belong to the 0711Z content, the rehearsal ones to the
-    FakeFez snapshot (prompts/17 A''6)."""
+def test_the_committed_caches_all_belong_to_one_calibration_content():
+    """prompts/16 B'4 as corrected by prompts/17: every cache file of a session, the
+    prediction and the calibration record it names carry the SAME fingerprint -- the
+    invariant that makes the seven files one experiment (the stamps may differ)."""
     import glob
     import json
 
     import h0_backends as hb
 
     root = os.path.dirname(SCRIPTS)
-    live = json.load(open(os.path.join(root, "data", "hardware", "H0_ibm_fez",
-                                       "calibration_20260922T0711Z.json")))
-    fp_live = hb.calibration_fingerprint(live)
     files = sorted(glob.glob(os.path.join(root, "data", "hardware", "H0_ibm_fez",
                                           "sim_cache", "*.json")))
     assert len(files) == 7
+    fps = set()
     for p in files:
-        assert json.load(open(p))["calibration_fingerprint"] == fp_live, p
+        d = json.load(open(p))
+        fp = d["calibration_fingerprint"]
+        assert len(fp) == 64, p
+        fps.add(fp)
+        src = d.get("calibration_fingerprint_source") or ""
+        sp = src if os.path.isabs(src) else os.path.join(root, src)
+        if os.path.isfile(sp):                      # the record the class was sampled on
+            assert hb.calibration_fingerprint(json.load(open(sp))) == fp, p
+    assert len(fps) == 1, "the sampling cache mixes two calibration contents"
+    pred = json.load(open(os.path.join(root, "validation", "H0P_ibm_fez.json")))
+    assert pred["data"]["calibration"]["fingerprint"] in fps
+    assert pred["data"]["shot_plan_calibration_fingerprint"] in fps
     for p in sorted(glob.glob(os.path.join(root, "data", "hardware", "H0_rehearsal_cache",
                                            "*.json"))):
         assert len(json.load(open(p))["calibration_fingerprint"]) == 64, p

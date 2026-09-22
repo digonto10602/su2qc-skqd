@@ -23,7 +23,7 @@ GATES = [  # gate, description (manual Step 10), where it runs
     ("S3_smoke", "S3 pipeline smoke test at 2x3 B=1 (2 shots per circuit: NOT the production budget)", "laptop"),
     ("H0P", "H0 preparation on a calibration snapshot: frozen circuit set leak-free, predicted yield per repetition, readout confusion, Ritz consistency", "laptop"),
     ("H0_dryrun", "gate H0 run on the SamplerV2 dry-run counts (data/hardware/H0_dryrun)", "laptop"),
-    ("H0P_ibm_fez", "H0P re-predicted on the live ibm_fez calibration of the session day (prompts/15 D1: the circuits stay frozen, only the prediction is recomputed)", "laptop"),
+    ("H0P_ibm_fez", "H0P re-predicted on the live ibm_fez calibration of the session day (prompts/15 D1: the circuits stay frozen, only the prediction is recomputed; prompts/17: submission is keyed on the calibration content)", "laptop"),
     ("H0P_rehearsal", "H0P on FakeFez with the D3' shot plan through the sampling cache (prompts/16)", "laptop"),
     ("H0", "2x2 hardware: decoder validity, bit order, parity checks; measured f within 30% of the model", "QPU"),
     ("H1", "2x3 B=0: certified interval of width <= 0.1 containing the exact E0; recall >= 0.8", "QPU"),
