@@ -49,7 +49,7 @@ from skqd.report import GateResult, env_block, md_table, write_report  # noqa: E
 from skqd.skqd import clean_fraction_from_yield  # noqa: E402
 
 from gate_H0P import (DIAG_MIN, E0_TOL, RANDOM_ACCEPT_MAX, YIELD_FACTOR,  # noqa: E402
-                      YIELD_MODEL_NAME, analyse_records, shot_plan)
+                      YIELD_MODEL_NAME, analyse_records, shot_plan, support_block)
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 F_TOLERANCE = 0.30          # prompts/07 step 4: measured f within 30 % of the prediction
@@ -116,6 +116,26 @@ def codeword_roundtrip(records, codec):
     return {"distinct_accepted_strings": checked, "mismatches": len(bad), "examples": bad[:5]}
 
 
+def support_plan_of(args):
+    """The shot plan the prediction was made with (prompts/16 F5), or None.
+
+    `--predict-from` is the H0P JSON of the session day; when it was produced with
+    `--shots-plan` it carries the plan under `data.support_shot_plan`, whose per-state
+    table gives the PREDICTED clean count of every sector state.  The comparison with the
+    observed counts is informational: no criterion of this gate reads it."""
+    p = os.path.join(ROOT, args.predict_from)
+    if not os.path.exists(p):
+        return None
+    with open(p) as fh:
+        d = json.load(fh)
+    sp = (d.get("data") or {}).get("support_shot_plan")
+    if sp and sp.get("sectors"):
+        sp = dict(sp)
+        sp["source"] = args.predict_from
+        return sp
+    return None
+
+
 def prediction(args, analysis, records):
     """Preregistered predicted yield per 'sector r=..' key, and where it came from."""
     if args.predict == "model":
@@ -164,7 +184,8 @@ def main():
 
     R = GateResult(args.out, f"2x2 calibration session on {backend}: decoder validity, bit order, "
                              f"yield versus CZ count, readout confusion, Ritz consistency")
-    A = analyse_records(coarse, cals, M, g2)
+    support_plan = support_plan_of(args)
+    A = analyse_records(coarse, cals, M, g2, plan=support_plan)
     rt = codeword_roundtrip(coarse, codec)
     pred, pred_src = prediction(args, A, coarse)
     plan = shot_plan(A, args.p, args.k, args.conf)
@@ -247,6 +268,7 @@ def main():
                      "since garbage acceptances add no support"),
         },
         "f_comparison": fcmp, "codeword_roundtrip": rt,
+        "support_shot_plan": support_plan,
         "readout_vs_snapshot": ro, "shot_plan": plan, "analysis": A,
         "criteria_inputs": {"f_tolerance": F_TOLERANCE, "random_acceptance_max": RANDOM_ACCEPT_MAX,
                             "E0_tolerance": E0_TOL, "confusion_diagonal_min": DIAG_MIN,
@@ -394,6 +416,8 @@ two f values** (r = 1 circuits only: at r = 2, 3 the inversion is ill-conditione
 
 {md_table(["sector", "sector dimension", "decoded states", "with references", "E_R", "exact E_0",
             "\\|E_R − E_0\\|", "recall of the 99.9 % support"], srows)}
+
+{support_block(D)}
 
 ## 4. Readout confusion
 

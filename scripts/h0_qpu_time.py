@@ -91,9 +91,25 @@ def basis_durations(target, durations):
     return out
 
 
+def load_shot_plan(path):
+    """A plan written by scripts/h0_support_plan.py: (shots_by_circuit, calibration shots, plan)."""
+    p = path if os.path.isabs(path) else os.path.join(ROOT, path)
+    with open(p) as fh:
+        plan = json.load(fh)
+    if "shots_by_circuit" not in plan:
+        raise SystemExit(f"{path} has no 'shots_by_circuit': it is not a shot plan "
+                         f"(scripts/h0_support_plan.py)")
+    return ({k: int(v) for k, v in plan["shots_by_circuit"].items()},
+            int(plan.get("calibration_shots", 4000)), plan)
+
+
 def estimate(prep, backend, shots_by_rep, cal_shots, only=None, shots_default=None,
-             rep_delay=None, no_calibration=False):
-    """The per-group execution-time table of the frozen set on this backend."""
+             rep_delay=None, no_calibration=False, shots_by_circuit=None):
+    """The per-group execution-time table of the frozen set on this backend.
+
+    `shots_by_circuit` (rule D3', prompts/16) pins the shots circuit by circuit; the
+    groups are then keyed by (kind, shots), so a repetition class that carries two
+    different shot counts becomes two groups instead of raising "mixed shot counts"."""
     index = load_index(prep)
     mans, cals = load_manifests(prep)
     if only:
@@ -115,15 +131,21 @@ def estimate(prep, backend, shots_by_rep, cal_shots, only=None, shots_default=No
         dur = circuit_duration_s(qc, durations, target)
         if m["kind"] == "coarse_step":
             r = m["repetitions"]
-            sh = shots_by_rep.get(r, shots_default)
-            key = f"r={r}"
+            if shots_by_circuit is not None:
+                sh = shots_by_circuit.get(m["id"])
+                key = f"r={r} x {int(sh)} shots" if sh is not None else f"r={r}"
+            else:
+                sh = shots_by_rep.get(r, shots_default)
+                key = f"r={r}"
         else:
             sh = cal_shots
             key = "readout calibration"
         if sh is None:
             raise SystemExit(f"no shot count for {m['id']}: give --shots-by-rep or --shots")
+        sort = (1, 0, 0) if m["kind"] != "coarse_step" else (0, int(m["repetitions"]), int(sh))
         g = groups.setdefault(key, {"group": key, "circuits": 0, "shots_per_circuit": int(sh),
-                                    "durations_s": [], "total_shots": 0, "execution_s": 0.0})
+                                    "durations_s": [], "total_shots": 0, "execution_s": 0.0,
+                                    "_sort": sort})
         if g["shots_per_circuit"] != int(sh):
             raise SystemExit(f"group {key} has mixed shot counts")
         g["circuits"] += 1
@@ -134,8 +156,9 @@ def estimate(prep, backend, shots_by_rep, cal_shots, only=None, shots_default=No
                             "duration_s": dur, "shots": int(sh),
                             "execution_s": int(sh) * (dur + rd)})
     table = []
-    for key in sorted(groups, key=lambda k: (k == "readout calibration", k)):
+    for key in sorted(groups, key=lambda k: groups[k]["_sort"]):
         g = groups[key]
+        g.pop("_sort")
         d = g.pop("durations_s")
         g["duration_mean_s"] = sum(d) / len(d)
         g["duration_min_s"] = min(d)
@@ -155,6 +178,10 @@ def estimate(prep, backend, shots_by_rep, cal_shots, only=None, shots_default=No
         "rep_delay_source": ("--rep-delay" if rep_delay is not None else
                              "backend.default_rep_delay"),
         "shots_by_repetition": {str(k): int(v) for k, v in sorted(shots_by_rep.items())},
+        "shots_by_circuit_source": (None if shots_by_circuit is None else
+                                    "per-circuit shot plan (rule D3', scripts/h0_support_plan.py)"),
+        "shots_by_circuit": (None if shots_by_circuit is None else
+                             {k: int(v) for k, v in sorted(shots_by_circuit.items())}),
         "calibration_shots": int(cal_shots),
         "basis_durations": basis_durations(target, durations),
         "groups": table,
@@ -184,6 +211,9 @@ def main():
     ap.add_argument("--backend", default="FakeFez")
     ap.add_argument("--shots", type=int, default=None, help="shots for repetitions not in --shots-by-rep")
     ap.add_argument("--shots-by-rep", nargs="*", default=None, metavar="R:SHOTS")
+    ap.add_argument("--shots-plan", default=None,
+                    help="a per-circuit shot plan written by scripts/h0_support_plan.py "
+                         "(rule D3'); mutually exclusive with --shots-by-rep/--shots")
     ap.add_argument("--cal-shots", type=int, default=4000)
     ap.add_argument("--rep-delay", type=float, default=None, help="seconds (default: the backend's)")
     ap.add_argument("--only", nargs="*", default=None, help="restrict to these circuit ids")
@@ -193,13 +223,21 @@ def main():
     t0 = time.time()
 
     prep = os.path.join(ROOT, args.prep)
-    by_rep = {}
+    by_rep, by_circuit = {}, None
+    if args.shots_plan:
+        if args.shots_by_rep or args.shots is not None:
+            raise SystemExit("--shots-plan is mutually exclusive with --shots-by-rep / --shots")
+        by_circuit, plan_cal, _plan = load_shot_plan(args.shots_plan)
+        if args.cal_shots != plan_cal:
+            print(f"note: --cal-shots {args.cal_shots} differs from the plan's {plan_cal}")
     if args.shots_by_rep:
         by_rep = {int(x.split(":")[0]): int(x.split(":")[1]) for x in args.shots_by_rep}
     backend = resolve_backend(args.backend)
     est = estimate(prep, backend, by_rep, args.cal_shots, only=args.only,
                    shots_default=args.shots, rep_delay=args.rep_delay,
-                   no_calibration=args.no_calibration)
+                   no_calibration=args.no_calibration, shots_by_circuit=by_circuit)
+    if args.shots_plan:
+        est["shots_plan_file"] = args.shots_plan
     est["runtime_s"] = time.time() - t0
     print(f"{est['backend']} (calibration {est['last_update_date']}), rep_delay "
           f"{est['rep_delay_s'] * 1e6:.0f} us, dt {est['dt_s']}")

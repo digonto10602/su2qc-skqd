@@ -2,7 +2,7 @@
 
 **Status: PASS** — `scripts/gate_H0.py --counts data/hardware/H0_dryrun/counts --out H0_dryrun`,
 126 counts files (84 coarse-step + 42 readout-calibration circuits),
-dry run: **True**.  Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44, 12 CPUs, commit f64441d, 2026-09-21 15:30:21 MDT.  Runtime 1 s.
+dry run: **True**.  Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44, 12 CPUs, commit 1e5c03b, 2026-09-21 18:01:29 MDT.  Runtime 1 s.
 
 Sampler options of the session: `{"default_shots": 40, "dynamical_decoupling": {"enable": true, "sequence_type": "XY4"}, "twirling": {"enable_gates": true, "enable_measure": true, "strategy": "active-accum"}, "error_mitigation": "none: SamplerV2 returns raw bit strings; no resilience level, no readout mitigation of expectation values (prompts/07 step 2)"}`.
 
@@ -42,6 +42,37 @@ two f values** (r = 1 circuits only: at r = 2, 3 the inversion is ill-conditione
 |---|---|---|---|---|---|---|---|
 | B=0 | 38 | 38 | 38 | -3.6407665507 | -3.6407665507 | 0.00e+00 | 1.000 |
 | B=1 | 20 | 20 | 20 | -1.8615880345 | -1.8615880345 | 0.00e+00 | 1.000 |
+
+**B=0**: 38 of 38 sector states decoded,
+0 missing.
+The eight least observed states:
+
+| basis index | label (j2; n) | observed accepted count |
+|---|---|---|
+| 59 | (1,1,0,1); (0,1,2,1) | 2 |
+| 71 | (1,1,1,1); (0,2,0,2) | 2 |
+| 51 | (1,0,1,1); (1,1,0,2) | 3 |
+| 55 | (1,1,0,0); (0,1,1,2) | 3 |
+| 75 | (1,1,1,1); (2,0,0,2) | 3 |
+| 46 | (1,0,0,1); (1,0,2,1) | 4 |
+| 78 | (1,1,1,1); (2,2,0,0) | 4 |
+| 63 | (1,1,1,0); (0,2,1,1) | 5 |
+
+**B=1**: 20 of 20 sector states decoded,
+0 missing.
+The eight least observed states:
+
+| basis index | label (j2; n) | observed accepted count |
+|---|---|---|
+| 77 | (1,1,1,1); (2,0,2,2) | 1 |
+| 53 | (1,0,1,1); (1,1,2,2) | 2 |
+| 36 | (0,1,1,0); (1,2,2,1) | 3 |
+| 61 | (1,1,0,1); (2,1,2,1) | 3 |
+| 73 | (1,1,1,1); (0,2,2,2) | 3 |
+| 40 | (0,1,1,1); (1,2,1,2) | 4 |
+| 57 | (1,1,0,0); (2,1,1,2) | 5 |
+| 65 | (1,1,1,0); (2,2,1,1) | 5 |
+
 
 ## 4. Readout confusion
 

@@ -83,9 +83,21 @@ operational S1 criterion holds at that f (recall >= 0.958 with 2e5 shots per sec
 H0 preparation (prompts 13-14): gate H0P PASS (84 frozen circuits on the FakeFez patch leak-free, decoder and E0
 consistency, yield model 0.82 f + (1-f) a per manual Step 4.4 within 1.3-1.75x of the simulation for r = 1, 2, 3,
 confusion diagonal >= 0.977, dry-run submission + gate_H0.py PASS 9/9); S3 job packaged (`scripts/s3_device_model.py`,
-`slurm/s3_2x3.sbatch`; 2x3 at 2e5 shots per sector is 180-580 CPU-hours -> RTX 3070 / cluster).  Open: owner signs
-`proposal/amendment_01_devices_and_budgets.md` with the vendor's error specs for the 2x3 device; IBM backend access
-for H0 (`scripts/h0_submit.py --backend <name>`); S3 production run on the desktop GPU.
+`slurm/s3_2x3.sbatch`; 2x3 at 2e5 shots per sector is 180-580 CPU-hours -> RTX 3070 / cluster).  H0 session day
+(prompts/15 part B, 2026-09-21): `validation/H0P_ibm_fez.json` **FAIL** 15/16 on the live calibration
+20260921T2053Z -- the B=1 support came out 19 of 20, held at STOP A.  Cause and decision:
+`reports/H0P_ibm_fez_escalation_20260921.md` -- the frozen plan (267/130/92) saturates B=0 from clean shots with
+probability 0.0043 and B=1 with 0.0762, so criterion 3's premise was a coin flip, not a measurement.  prompts/16
+part A' (2026-09-21) replaces the r = 1 shot counts by **rule D3'** (new `scripts/h0_support_plan.py`: the k = 4
+circuits of each sector get N4 = the smallest multiple of 100 that gives every sector state an expected clean
+count >= lambda* = 6.2958 in the r = 1 circuits alone at 0.7 x f_cal): N4 8200/19700 on the live calibration,
+11700/28100 on FakeFez; gate H0P gains two shot-plan criteria (18 in all); `analyse_records` writes
+`support_states_decoded` / `missing_states` / the per-state predicted-vs-observed table; the session becomes 6 jobs
+(21/5/2/28/28/42 pubs) at 69.9 s of QPU execution (cap 120).  **`validation/H0P_rehearsal.json` PASS 18/18** on
+FakeFez through the new sampling cache, supports 38/38 and 20/20, `missing_states == []`.  No criterion constant,
+tolerance, convention or frozen circuit changed.  Open: owner sign-off at STOP 0 before part B' (the session day);
+owner signs `proposal/amendment_01_devices_and_budgets.md` with the vendor's error specs for the 2x3 device; S3
+production run on the desktop GPU.
 
 
 # skqd-ci: how to run tests on Perlmutter (rules for Claude / any agent)

@@ -163,6 +163,17 @@ def job_status(job):
     return getattr(st, "name", None) or str(st)
 
 
+def shot_plan_shots(path):
+    """(per-circuit shots, the plan's calibration block, the plan) of a shot-plan JSON."""
+    p = path if os.path.isabs(path) else os.path.join(ROOT, path)
+    with open(p) as fh:
+        plan = json.load(fh)
+    if "shots_by_circuit" not in plan:
+        raise SystemExit(f"{path} is not a shot plan of scripts/h0_support_plan.py")
+    return ({k: int(v) for k, v in plan["shots_by_circuit"].items()},
+            plan.get("calibration") or {}, plan)
+
+
 # --------------------------------------------------------------------------- job planning
 def plan_groups(jobs, max_pubs):
     """[(shots, chunk index, [manifests])]: one group per distinct shot count
@@ -264,12 +275,36 @@ def preflight(args, backend, prep, plan, index):
         elif pd != live_date:
             problems.append(f"the live calibration ({live_date}) is not the one the prediction was "
                             f"made from ({pd}): re-run gate_H0P.py --backend {args.backend}")
+        if args.shots_plan:
+            # prompts/16 F3: the plan that sizes the shots and the plan the PREDICTION was made
+            # with must be the same file's content -- like for like, or the device is not being
+            # compared against the numbers that were preregistered for it.
+            pshots, pcal, _pl = shot_plan_shots(args.shots_plan)
+            record["shots_plan"] = args.shots_plan
+            record["shots_plan_calibration_last_update_date"] = pcal.get("last_update_date")
+            record["shots_plan_stamp"] = pcal.get("stamp")
+            if pcal.get("last_update_date") != live_date:
+                problems.append(f"the shot plan {args.shots_plan} was built on the calibration "
+                                f"{pcal.get('last_update_date')}, the live target reports "
+                                f"{live_date}: re-run h0_support_plan.py --backend {args.backend}")
+            predshots = (pred.get("data", {}).get("sampling") or {}).get("shots_by_circuit")
+            if predshots is None:
+                problems.append(f"{args.predict_from} carries no data.sampling.shots_by_circuit: the "
+                                f"prediction was not made with a shot plan (gate_H0P.py --shots-plan)")
+            elif {k: int(v) for k, v in predshots.items()} != pshots:
+                diff = [k for k in pshots if int(predshots.get(k, -1)) != pshots[k]]
+                problems.append(f"the shot plan and the prediction disagree on the shots of "
+                                f"{len(diff)} circuit(s) (e.g. {diff[:3]}): the prediction must be "
+                                f"the one made with this plan")
 
-    by_rep = {}
+    by_rep, by_circuit = {}, None
     if args.shots_by_rep:
         by_rep = {int(x.split(":")[0]): int(x.split(":")[1]) for x in args.shots_by_rep}
+    if args.shots_plan:
+        by_circuit = shot_plan_shots(args.shots_plan)[0]
     est = estimate(prep, backend, by_rep, args.cal_shots, only=args.only,
-                   shots_default=args.shots, no_calibration=args.no_calibration)
+                   shots_default=args.shots, no_calibration=args.no_calibration,
+                   shots_by_circuit=by_circuit)
     record["qpu_time_estimate"] = {"total_execution_s": est["total_execution_s"],
                                    "total_shots": est["total_shots"],
                                    "groups": est["groups"], "rep_delay_s": est["rep_delay_s"]}
@@ -287,6 +322,10 @@ def main():
     ap.add_argument("--shots", type=int, default=40)
     ap.add_argument("--shots-by-rep", nargs="*", default=None, metavar="R:SHOTS",
                     help="shots per coarse-step circuit by repetition, e.g. --shots-by-rep 1:267 2:130 3:92")
+    ap.add_argument("--shots-plan", default=None, metavar="JSON",
+                    help="a per-circuit shot plan written by scripts/h0_support_plan.py (rule D3' of "
+                         "prompts/16); mutually exclusive with --shots-by-rep / --shots for the "
+                         "coarse-step circuits")
     ap.add_argument("--cal-shots", type=int, default=4000)
     ap.add_argument("--dd-sequence", default="XY4")
     ap.add_argument("--dry-run", action="store_true")
@@ -337,10 +376,19 @@ def submit_phase(args):
         missing = keep - {m["id"] for m in mans + cals}
         if missing:
             raise SystemExit(f"--only: no such circuit(s) in {args.prep}: {sorted(missing)}")
-    by_rep = {}
+    by_rep, plan_shots, plan_cal = {}, None, {}
+    if args.shots_plan:
+        if args.shots_by_rep:
+            raise SystemExit("--shots-plan and --shots-by-rep are mutually exclusive")
+        plan_shots, plan_cal, _plan = shot_plan_shots(args.shots_plan)
+        missing = [m["id"] for m in mans if m["id"] not in plan_shots]
+        if missing:
+            raise SystemExit(f"the shot plan {args.shots_plan} carries no shots for {len(missing)} "
+                             f"selected circuit(s) (e.g. {missing[:3]})")
     if args.shots_by_rep:
         by_rep = {int(x.split(":")[0]): int(x.split(":")[1]) for x in args.shots_by_rep}
-    jobs = [(m, by_rep.get(m["repetitions"], args.shots)) for m in mans] + \
+    jobs = [(m, plan_shots[m["id"]] if plan_shots else by_rep.get(m["repetitions"], args.shots))
+            for m in mans] + \
            ([] if args.no_calibration else [(m, args.cal_shots) for m in cals])
     if not jobs:
         raise SystemExit("no circuits selected")
@@ -409,6 +457,11 @@ def submit_phase(args):
                                      if args.dry_run else
                                      "applied by the runtime on the device"),
             "shots_by_repetition": by_rep or {"all": args.shots},
+            "shots_plan": args.shots_plan,
+            "shots_plan_calibration_last_update_date": plan_cal.get("last_update_date"),
+            "shots_plan_stamp": plan_cal.get("stamp"),
+            "shots_by_circuit": (None if plan_shots is None else
+                                 {m["id"]: int(sh) for m, sh in jobs}),
             "calibration_shots": args.cal_shots,
             "n_circuits": len(jobs),
             "circuits": [{"id": m["id"], "kind": m["kind"], "shots": sh} for m, sh in jobs],

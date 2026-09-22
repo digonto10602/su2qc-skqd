@@ -103,10 +103,22 @@ def random_acceptance(codec, twoB):
     return {"accepted": acc, "strings": n, "fraction": acc / n, "reasons": reasons}
 
 
-def analyse_records(records, cal_records, model, g2):
+def label_of(model, basis_index):
+    """'(j2 tuple); (n tuple)' of a basis state -- the label the memo's tables use."""
+    j2, n, _iota = model.basis.labels[int(basis_index)]
+    return (f"({','.join(str(int(x)) for x in j2)}); "
+            f"({','.join(str(int(x)) for x in n)})")
+
+
+def analyse_records(records, cal_records, model, g2, plan=None):
     """records: [(manifest, {bit tuple: count})] for the coarse-step circuits;
     cal_records: the same for the readout-calibration circuits.  Returns the full
-    analysis dictionary shared by gate_H0P (simulated) and gate_H0 (device counts)."""
+    analysis dictionary shared by gate_H0P (simulated) and gate_H0 (device counts).
+
+    `plan` is a shot plan of `scripts/h0_support_plan.py` (or the `shot_plan` block of
+    an H0P JSON): when it is given, the per-sector support table gains the predicted
+    clean count of every sector state next to the observed one.  It is an OUTPUT only —
+    no criterion of this function depends on it (prompts/16 change 3)."""
     codec = Codec(model.basis)
     out = {"per_circuit": [], "by_sector_repetition": {}, "by_sector": {},
            "random_acceptance": {}, "confusion": {}}
@@ -144,10 +156,13 @@ def analyse_records(records, cal_records, model, g2):
         g["support"] |= set(acc)
         for kk, v in rej.items():
             g["rejections"][kk] = g["rejections"].get(kk, 0) + int(v)
-        s = sectors.setdefault(man["sector"], {"twoB": twoB, "support": set(), "shots": 0, "accepted": 0})
+        s = sectors.setdefault(man["sector"], {"twoB": twoB, "support": set(), "shots": 0,
+                                               "accepted": 0, "state_counts": {}})
         s["support"] |= set(acc)
         s["shots"] += shots
         s["accepted"] += n_acc
+        for st, v in acc.items():
+            s["state_counts"][int(st)] = s["state_counts"].get(int(st), 0) + int(v)
 
     for (sec, r), g in sorted(groups.items()):
         fmean = float(np.mean(g["f"])) if g["f"] else None
@@ -198,6 +213,35 @@ def analyse_records(records, cal_records, model, g2):
             "recall_99.9pct_support": float(met["recall"]), "false_positives": met["false_positives"],
             "captured_weight": met["captured_weight"],
         }
+        # prompts/16 change 3 (OUTPUT only, no criterion): which states the support holds,
+        # which it misses, and -- when a shot plan is at hand -- what was predicted for each.
+        sector_idx = [int(x) for x in ref.indices]
+        pos = {ix: i for i, ix in enumerate(sector_idx)}
+        pstates = ((plan or {}).get("sectors", {}).get(sec, {}) or {}).get("per_state")
+        per_state = []
+        for ix in sector_idx:
+            row = {"basis_index": ix, "sector_position": pos[ix],
+                   "label": label_of(model, ix),
+                   "observed_accepted_count": int(s["state_counts"].get(ix, 0)),
+                   "in_support": ix in s["support"]}
+            if pstates:
+                pr = pstates[pos[ix]]
+                row["predicted_clean_count_all_circuits_at_f"] = pr.get("lambda_all_at_f")
+                row["predicted_clean_count_r1_at_margin"] = pr.get("lambda_r1_at_margin")
+                row["ground_state_weight"] = pr.get("ground_state_weight")
+            per_state.append(row)
+        out["by_sector"][sec]["support_states_decoded"] = sorted(int(x) for x in s["support"])
+        out["by_sector"][sec]["missing_states"] = [
+            {"basis_index": r["basis_index"], "sector_position": r["sector_position"],
+             "label": r["label"],
+             **({"predicted_clean_count_all_circuits_at_f":
+                 r["predicted_clean_count_all_circuits_at_f"],
+                 "predicted_clean_count_r1_at_margin": r["predicted_clean_count_r1_at_margin"]}
+                if pstates else {})}
+            for r in per_state if not r["in_support"]]
+        out["by_sector"][sec]["per_state"] = per_state
+        out["by_sector"][sec]["per_state_prediction_source"] = (
+            "the shot plan of scripts/h0_support_plan.py" if pstates else None)
 
     # ---------------------------------------------------- readout confusion, per patch
     by_patch = {}
@@ -223,6 +267,63 @@ def analyse_records(records, cal_records, model, g2):
         out["confusion_summary"] = {"min_diagonal": float(min(allmin)),
                                     "mean_diagonal": float(np.mean(allmean)),
                                     "n_patches": len(out["confusion"])}
+    return out
+
+
+# ------------------------------------------------------------------ sampling cache (prompts/16 F2)
+def cache_path(cdir, sector, r):
+    return os.path.join(cdir, f"{sector}_r{r}.json")
+
+
+def cache_stamp(rec_expect, rec_found, path):
+    """Every field that would make a cached class a different experiment is compared;
+    a mismatch is a SystemExit naming it -- a stale cache is never silently reused."""
+    for key in ("backend", "seed", "calibration_last_update_date", "shot_plan_stamp",
+                "sector", "repetition"):
+        if str(rec_found.get(key)) != str(rec_expect.get(key)):
+            raise SystemExit(
+                f"{os.path.basename(path)}: cached {key} is {rec_found.get(key)!r}, this run needs "
+                f"{rec_expect.get(key)!r}.  The cache is not reused silently: delete the file or "
+                f"re-sample the class with --refresh-cache.")
+    for cid, sh in rec_expect["shots_by_circuit"].items():
+        got = rec_found.get("shots_by_circuit", {}).get(cid)
+        if got is not None and int(got) != int(sh):
+            raise SystemExit(
+                f"{os.path.basename(path)}: circuit {cid} was sampled with {got} shots, this run "
+                f"needs {sh}.  Re-sample the class with --refresh-cache.")
+
+
+def load_cache(path, expect):
+    if not os.path.exists(path):
+        return None
+    with open(path) as fh:
+        rec = json.load(fh)
+    cache_stamp(expect, rec, path)
+    return rec
+
+
+def save_cache(path, rec):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = path + ".tmp"
+    with open(tmp, "w") as fh:
+        json.dump(rec, fh, indent=1)
+    os.replace(tmp, path)
+
+
+def run_by_shots(sim, circuits, mans, shots_of):
+    """One sim.run per distinct shot count; returns {circuit id: qiskit counts dict}."""
+    by_shots = {}
+    for m in mans:
+        by_shots.setdefault(int(shots_of[m["id"]]), []).append(m)
+    out = {}
+    for sh in sorted(by_shots):
+        batch = by_shots[sh]
+        cts = sim.run([circuits[m["id"]] for m in batch], shots=sh).result().get_counts()
+        if isinstance(cts, dict):
+            cts = [cts]
+        for m, cc in zip(batch, cts):
+            out[m["id"]] = {str(k): int(v) for k, v in cc.items()}
+        print(f"    {len(batch)} circuit(s) x {sh} shots", flush=True)
     return out
 
 
@@ -256,6 +357,23 @@ def main():
     ap.add_argument("--shots-by-rep", nargs="*", default=None, metavar="R:SHOTS",
                     help="pin the shots per repetition (e.g. 1:267 2:130 3:92) instead of deriving them "
                          "from the pilot; the pilot still runs and its timings are recorded")
+    ap.add_argument("--shots-plan", default=None, metavar="JSON",
+                    help="a per-circuit shot plan written by scripts/h0_support_plan.py (rule D3' "
+                         "of prompts/16); mutually exclusive with --shots-by-rep")
+    ap.add_argument("--sample-cache", default=None, metavar="DIR",
+                    help="directory of per-class sampling caches (<sector>_r<r>.json and "
+                         "calibration_circuits.json): a class that is already on disk with the same "
+                         "backend, seed, calibration date and shots is loaded instead of re-sampled")
+    ap.add_argument("--sectors", nargs="*", default=None, help="restrict the sampling to these sectors")
+    ap.add_argument("--reps", nargs="*", type=int, default=None,
+                    help="restrict the sampling to these repetitions")
+    ap.add_argument("--only-ids", nargs="*", default=None,
+                    help="restrict the sampling to these circuit ids (splits a class over several "
+                         "invocations; the 30-minute rule)")
+    ap.add_argument("--sample-only", action="store_true",
+                    help="exit 0 once the selected classes are in the cache (no analysis)")
+    ap.add_argument("--refresh-cache", action="store_true",
+                    help="re-sample the selected classes even if they are cached")
     ap.add_argument("--shot-allocation", default="equal-time", choices=("equal-time", "equal-shots"),
                     help="equal-time: each repetition class gets the same wall clock, so the cheap "
                          "r = 1 circuits get more shots; equal-shots: the same shots everywhere")
@@ -346,10 +464,104 @@ def main():
         print(f"recomputed f on the live target for {len(f_live)} circuits: mean live "
               f"{np.mean([v['f_live'] for v in f_live.values()]):.4f} vs manifest "
               f"{np.mean([v['f_manifest'] for v in f_live.values()]):.4f}", flush=True)
-    # two-point pilot: one simulator call has a fixed setup cost (circuit load, noise binding)
-    # plus a cost per circuit-shot; both are measured so that the budget is not spent on setup
+    # ------------------------------------------------------- pinned shots (prompts/16 F2)
+    # Either the per-circuit shot plan of rule D3' (scripts/h0_support_plan.py) or the
+    # --shots-by-rep of prompts/15.  Both pin the shots BEFORE the pilot, which is what makes
+    # a sampling cache meaningful: the cached counts belong to a known shot count.
+    support_plan, plan_stamp, shots_of, shots_by_rep_pinned = None, None, None, None
+    if args.shots_plan and args.shots_by_rep:
+        raise SystemExit("--shots-plan and --shots-by-rep are mutually exclusive")
+    if args.shots_by_rep:
+        shots_by_rep_pinned = {int(x.split(":")[0]): int(x.split(":")[1]) for x in args.shots_by_rep}
+        shots_of = {m["id"]: int(shots_by_rep_pinned[m["repetitions"]]) for m in mans}
+    if args.shots_plan:
+        pp = (args.shots_plan if os.path.isabs(args.shots_plan)
+              else os.path.join(ROOT, args.shots_plan))
+        with open(pp) as fh:
+            support_plan = json.load(fh)
+        if "shots_by_circuit" not in support_plan:
+            raise SystemExit(f"{args.shots_plan} is not a shot plan of scripts/h0_support_plan.py")
+        shots_of = {k: int(v) for k, v in support_plan["shots_by_circuit"].items()}
+        missing = [m["id"] for m in mans if m["id"] not in shots_of]
+        if missing:
+            raise SystemExit(f"the shot plan {args.shots_plan} carries no shots for {len(missing)} "
+                             f"frozen circuit(s) (e.g. {missing[:3]})")
+        plan_stamp = (support_plan.get("calibration") or {}).get("stamp")
+        if live:
+            pd = (support_plan.get("calibration") or {}).get("last_update_date")
+            if pd != calibration["last_update_date"]:
+                raise SystemExit(
+                    f"the shot plan was built on the calibration {pd} and the live {bname} target "
+                    f"reports {calibration['last_update_date']}: re-run h0_support_plan.py "
+                    f"--backend {bname} (prompts/16 F2).")
+        print(f"shot plan {args.shots_plan} (calibration stamp {plan_stamp}): "
+              + ", ".join(f"{sec} N4 {v['N4']}" for sec, v in support_plan["sectors"].items()),
+              flush=True)
+    cal_date = calibration["last_update_date"] if live else "snapshot"
+
+    # ------------------------------------------------------- which classes this invocation samples
+    classes = sorted({(m["sector"], m["repetitions"]) for m in mans})
+    use_cache = args.sample_cache is not None
+    restricted = bool(args.sectors or args.reps or args.only_ids)
+    if (restricted or args.sample_only or args.refresh_cache) and not use_cache:
+        raise SystemExit("--sectors / --reps / --only-ids / --sample-only / --refresh-cache need "
+                         "--sample-cache <dir>")
+    if use_cache and shots_of is None:
+        raise SystemExit("--sample-cache needs pinned shots: give --shots-plan or --shots-by-rep")
+    known_sectors = {sec for sec, _ in classes}
+    if args.sectors and set(args.sectors) - known_sectors:
+        raise SystemExit(f"--sectors: no such sector(s) {sorted(set(args.sectors) - known_sectors)} "
+                         f"(known: {sorted(known_sectors)})")
+    sel_sectors = set(args.sectors) if args.sectors else known_sectors
+    sel_reps = set(args.reps) if args.reps else {r for _, r in classes}
+    selected = [c for c in classes if c[0] in sel_sectors and c[1] in sel_reps]
+    cal_selected = not restricted
+    only_ids = set(args.only_ids) if args.only_ids else None
+    if only_ids and only_ids - {m["id"] for m in mans}:
+        raise SystemExit(f"--only-ids: no such circuit(s) {sorted(only_ids - {m['id'] for m in mans})}")
+    cdir = None
+    if use_cache:
+        cdir = args.sample_cache if os.path.isabs(args.sample_cache) else \
+            os.path.join(ROOT, args.sample_cache)
+        os.makedirs(cdir, exist_ok=True)
+
+    def expect(sector, repetition, ids):
+        return {"backend": bname, "seed": int(args.seed), "sector": sector,
+                "repetition": int(repetition), "calibration_last_update_date": cal_date,
+                "shot_plan_stamp": plan_stamp, "shots_plan_file": args.shots_plan,
+                "shots_by_circuit": {i: int(shots_of[i]) for i in ids}}
+
+    by_class = {c: [m for m in mans if (m["sector"], m["repetitions"]) == c] for c in classes}
+    cached, cal_cached = {}, None
+    if use_cache:
+        for c in classes:
+            path = cache_path(cdir, c[0], c[1])
+            if args.refresh_cache and c in selected:
+                cached[c] = None
+                continue
+            cached[c] = load_cache(path, expect(c[0], c[1], [m["id"] for m in by_class[c]]))
+        calpath = os.path.join(cdir, "calibration_circuits.json")
+        cal_exp = {"backend": bname, "seed": int(args.seed), "sector": "calibration",
+                   "repetition": 0, "calibration_last_update_date": cal_date,
+                   "shot_plan_stamp": plan_stamp, "shots_plan_file": args.shots_plan,
+                   "shots_by_circuit": {m["id"]: int(args.cal_shots) for m in cals}}
+        cal_cached = None if (args.refresh_cache and cal_selected) else load_cache(calpath, cal_exp)
+
+    def class_complete(c):
+        rec = cached.get(c)
+        return rec is not None and all(m["id"] in rec["counts"] for m in by_class[c])
+
+    to_sample = [c for c in selected if not class_complete(c)] if use_cache else classes
+    cal_to_sample = (cal_selected and
+                     (cal_cached is None or
+                      not all(m["id"] in cal_cached["counts"] for m in cals))) if use_cache else True
+
+    # ------------------------------------------------------- two-point pilot
+    # one simulator call has a fixed setup cost (circuit load, noise binding) plus a cost per
+    # circuit-shot; both are measured so that the budget is not spent on setup
     t_shot, setup = {}, {}
-    for r in reps:
+    pilot_reps = reps if shots_of is None else sorted({r for _, r in to_sample})
+    for r in pilot_reps:
         ms = [m for m in mans if m["repetitions"] == r][:args.pilot_circuits]
         qs = [circuits[m["id"]] for m in ms]
         tt = []
@@ -364,10 +576,15 @@ def main():
               f"{t_shot[r]:.4f} s per circuit-shot, {setup[r]:.1f} s setup per call", flush=True)
     n_by_rep = {r: len([m for m in mans if m["repetitions"] == r]) for r in reps}
     budget_s = args.budget_minutes * 60
-    setup_total = sum(setup[r] * n_by_rep[r] / max(args.pilot_circuits, 1) for r in reps)
+    setup_total = sum(setup.get(r, 0.0) * n_by_rep[r] / max(args.pilot_circuits, 1) for r in reps)
     available = max(budget_s - setup_total, 60.0)
-    if args.shots_by_rep:
-        shots_by_rep = {int(x.split(":")[0]): int(x.split(":")[1]) for x in args.shots_by_rep}
+    if shots_by_rep_pinned:
+        shots_by_rep = shots_by_rep_pinned
+    elif shots_of is not None:                  # the plan pins the shots circuit by circuit
+        shots_by_rep = {}
+        for r in reps:
+            vals = sorted({shots_of[m["id"]] for m in mans if m["repetitions"] == r})
+            shots_by_rep[r] = vals[0] if len(vals) == 1 else vals
     elif args.shot_allocation == "equal-shots":
         tot = sum(n_by_rep[r] * t_shot[r] for r in reps)
         shots_by_rep = {r: int(min(args.max_shots, max(args.min_shots, available / tot))) for r in reps}
@@ -375,36 +592,120 @@ def main():
         per_class = available / len(reps)
         shots_by_rep = {r: int(min(args.max_shots, max(args.min_shots, per_class / (n_by_rep[r] * t_shot[r]))))
                         for r in reps}
-    predicted_s = sum(shots_by_rep[r] * n_by_rep[r] * t_shot[r] for r in reps) + setup_total
-    per_shot_total = sum(t_shot[m["repetitions"]] for m in mans)
+    if shots_of is None:
+        shots_of = {m["id"]: int(shots_by_rep[m["repetitions"]]) for m in mans}
+    predicted_s = sum(shots_of[m["id"]] * t_shot.get(m["repetitions"], 0.0) for m in mans) + setup_total
+    per_shot_total = sum(t_shot.get(m["repetitions"], 0.0) for m in mans)
     print(f"{len(mans)} circuits, {per_shot_total:.2f} s per shot over the whole set -> shots per circuit "
           f"{shots_by_rep} ({args.shot_allocation}, predicted {predicted_s / 60:.1f} min of a "
           f"{args.budget_minutes} min budget)", flush=True)
 
     # ------------------------------------------------------- sampling
     ts = time.time()
-    records = []
-    for r in reps:                      # one simulator call per repetition class (amortised overhead)
-        ms = [m for m in mans if m["repetitions"] == r]
-        cts = sim.run([circuits[m["id"]] for m in ms], shots=shots_by_rep[r]).result().get_counts()
-        if isinstance(cts, dict):
-            cts = [cts]
-        for m, cc in zip(ms, cts):
-            records.append((m, {qiskit_key_to_bits(kk): v for kk, v in cc.items()}))
-        print(f"  r={r}: {len(ms)} circuits x {shots_by_rep[r]} shots ({time.time() - t0:.0f} s)", flush=True)
-    t_sample = time.time() - ts
-    tc = time.time()
-    cal_records = []
-    cal_counts = sim.run([load_circuit(prep, m) for m in cals], shots=args.cal_shots).result().get_counts()
-    if isinstance(cal_counts, dict):
-        cal_counts = [cal_counts]
-    for m, cc in zip(cals, cal_counts):
-        cal_records.append((m, {qiskit_key_to_bits(kk): v for kk, v in cc.items()}))
-    t_cal = time.time() - tc
+    records, class_log = [], {}
+    if not use_cache:
+        for r in reps:                  # one simulator call per repetition class (amortised overhead)
+            ms = [m for m in mans if m["repetitions"] == r]
+            cts = sim.run([circuits[m["id"]] for m in ms], shots=shots_by_rep[r]).result().get_counts()
+            if isinstance(cts, dict):
+                cts = [cts]
+            for m, cc in zip(ms, cts):
+                records.append((m, {qiskit_key_to_bits(kk): v for kk, v in cc.items()}))
+            print(f"  r={r}: {len(ms)} circuits x {shots_by_rep[r]} shots "
+                  f"({time.time() - t0:.0f} s)", flush=True)
+        t_sample = time.time() - ts
+        tc = time.time()
+        cal_records = []
+        cal_counts = sim.run([load_circuit(prep, m) for m in cals],
+                             shots=args.cal_shots).result().get_counts()
+        if isinstance(cal_counts, dict):
+            cal_counts = [cal_counts]
+        for m, cc in zip(cals, cal_counts):
+            cal_records.append((m, {qiskit_key_to_bits(kk): v for kk, v in cc.items()}))
+        t_cal = time.time() - tc
+    else:
+        for c in classes:
+            sec, r = c
+            path = cache_path(cdir, sec, r)
+            rec = cached.get(c)
+            if c in to_sample:
+                ms = [m for m in by_class[c] if (only_ids is None or m["id"] in only_ids)]
+                if rec is not None:
+                    ms = [m for m in ms if m["id"] not in rec["counts"]]
+                if ms:
+                    tstart = time.time()
+                    print(f"  sampling {sec} r={r}: {len(ms)} circuit(s) "
+                          f"({time.time() - t0:.0f} s elapsed)", flush=True)
+                    got = run_by_shots(sim, circuits, ms, shots_of)
+                    if rec is None:
+                        rec = expect(sec, r, [m["id"] for m in by_class[c]])
+                        rec.update({"counts": {}, "sampled": [], "seconds": 0.0,
+                                    "simulator": f"AerSimulator.from_backend({bname}, "
+                                                 f"seed_simulator={args.seed})"})
+                        rec["shots_by_circuit"] = {}
+                    rec["counts"].update(got)
+                    rec["shots_by_circuit"].update({m["id"]: int(shots_of[m["id"]]) for m in ms})
+                    rec["seconds"] = float(rec.get("seconds", 0.0) + time.time() - tstart)
+                    rec["sampled"] = list(rec.get("sampled", [])) + [
+                        {"when": time.strftime("%Y-%m-%d %H:%M:%S %Z"), "circuits": [m["id"] for m in ms],
+                         "seconds": time.time() - tstart,
+                         "seconds_per_circuit_shot": t_shot.get(r)}]
+                    save_cache(path, rec)
+                    cached[c] = rec
+            if rec is None or not all(m["id"] in rec["counts"] for m in by_class[c]):
+                have = 0 if rec is None else len([m for m in by_class[c] if m["id"] in rec["counts"]])
+                class_log[f"{sec} r={r}"] = {"complete": False, "circuits_cached": have,
+                                             "circuits": len(by_class[c])}
+                continue
+            class_log[f"{sec} r={r}"] = {"complete": True, "circuits": len(by_class[c]),
+                                         "seconds": rec.get("seconds"), "file": os.path.basename(path),
+                                         "sampled_now": c in to_sample}
+            for m in by_class[c]:
+                cc = rec["counts"][m["id"]]
+                records.append((m, {qiskit_key_to_bits(kk): int(v) for kk, v in cc.items()}))
+        t_sample = time.time() - ts
+        tc = time.time()
+        cal_records = []
+        if cal_to_sample:
+            print(f"  sampling the {len(cals)} readout-calibration circuits x {args.cal_shots} shots "
+                  f"({time.time() - t0:.0f} s elapsed)", flush=True)
+            cal_circuits = {m["id"]: load_circuit(prep, m) for m in cals}
+            got = run_by_shots(sim, cal_circuits, cals, {m["id"]: args.cal_shots for m in cals})
+            cal_cached = {"backend": bname, "seed": int(args.seed), "sector": "calibration",
+                          "repetition": 0, "calibration_last_update_date": cal_date,
+                          "shot_plan_stamp": plan_stamp, "shots_plan_file": args.shots_plan,
+                          "shots_by_circuit": {m["id"]: int(args.cal_shots) for m in cals},
+                          "counts": got, "seconds": time.time() - tc,
+                          "sampled": [{"when": time.strftime("%Y-%m-%d %H:%M:%S %Z")}]}
+            save_cache(calpath, cal_cached)
+        if cal_cached is not None and all(m["id"] in cal_cached["counts"] for m in cals):
+            for m in cals:
+                cc = cal_cached["counts"][m["id"]]
+                cal_records.append((m, {qiskit_key_to_bits(kk): int(v) for kk, v in cc.items()}))
+            class_log["calibration"] = {"complete": True, "circuits": len(cals),
+                                        "seconds": cal_cached.get("seconds"),
+                                        "sampled_now": bool(cal_to_sample)}
+        else:
+            class_log["calibration"] = {"complete": False,
+                                        "circuits_cached": 0 if cal_cached is None else
+                                        len(cal_cached["counts"]), "circuits": len(cals)}
+        t_cal = time.time() - tc
+        if args.sample_only:
+            print(f"--sample-only: the selected classes are in {os.path.relpath(cdir, ROOT)} "
+                  f"({time.time() - t0:.0f} s)")
+            for k, v in sorted(class_log.items()):
+                print(f"  {k}: {v}")
+            return 0
+        incomplete = [k for k, v in class_log.items() if not v["complete"]]
+        if incomplete:
+            raise SystemExit(
+                f"the analysis needs all {len(classes)} sampling classes and the calibration set; "
+                f"{incomplete} are incomplete in {os.path.relpath(cdir, ROOT)}.  Run the missing "
+                f"classes with --sample-only first (prompts/16 A'3).")
     print(f"sampling {t_sample:.0f} s, calibration {t_cal:.0f} s", flush=True)
 
     # ------------------------------------------------------- analysis
-    A = analyse_records(records, cal_records, M, g2)
+    A = analyse_records(records, cal_records, M, g2, plan=support_plan)
     plan = shot_plan(A, args.p, args.k, args.conf)
     data = {
         "frozen_set": {kk: index[kk] for kk in ("created", "n_circuits", "n_calibration_circuits",
@@ -414,17 +715,21 @@ def main():
         "simulator": (f"AerSimulator.from_backend({bname}, seed_simulator={args.seed})" if live else
                       f"AerSimulator.from_backend({bname}(), seed_simulator={args.seed})"),
         "sampling": {"shots_per_circuit_by_repetition": {str(r): shots_by_rep[r] for r in reps},
-                     "shot_allocation": ("pinned with --shots-by-rep" if args.shots_by_rep
+                     "shot_allocation": ("pinned with --shots-plan" if args.shots_plan else
+                                         "pinned with --shots-by-rep" if args.shots_by_rep
                                          else args.shot_allocation),
                      "circuits": len(mans),
-                     "total_shots": sum(shots_by_rep[m["repetitions"]] for m in mans),
-                     "seconds_per_shot_by_repetition": {str(r): t_shot[r] for r in reps},
-                     "setup_seconds_per_call_by_repetition": {str(r): setup[r] for r in reps},
+                     "total_shots": sum(shots_of[m["id"]] for m in mans),
+                     "seconds_per_shot_by_repetition": {str(r): t_shot[r] for r in sorted(t_shot)},
+                     "setup_seconds_per_call_by_repetition": {str(r): setup[r] for r in sorted(setup)},
                      "predicted_sampling_seconds": predicted_s,
                      "seconds_per_shot_whole_set": per_shot_total,
                      "budget_minutes": args.budget_minutes, "sampling_seconds": t_sample,
                      "calibration_shots_per_circuit": args.cal_shots, "calibration_seconds": t_cal,
-                     "pilot_shots": args.pilot_shots},
+                     "pilot_shots": args.pilot_shots,
+                     "shots_by_circuit": {c: int(v) for c, v in sorted(shots_of.items())},
+                     "sample_cache": (None if not use_cache else os.path.relpath(cdir, ROOT)),
+                     "sampling_classes": class_log or None},
         "yield_model": YIELD_MODEL_NAME,
         "garbage_acceptance": {sec: A["random_acceptance"][sec]["fraction"]
                                for sec in sorted(A["random_acceptance"])},
@@ -440,6 +745,13 @@ def main():
         "shot_rule_inputs": {"p": args.p, "k": args.k, "confidence": args.conf,
                              "yield_model": f"y = {YIELD_FACTOR} f (clean shots only, manual eq. 5)"},
         "shot_plan": plan,
+        "shot_plan_file": args.shots_plan,
+        "shot_plan_stamp": plan_stamp,
+        "support_shot_plan": (None if support_plan is None else {
+            kk: support_plan[kk] for kk in
+            ("rule", "lambda_star", "margin", "readout_factor", "floor", "round_to", "backend",
+             "calibration", "f_source", "amplitude_crosscheck_max_dp", "sectors",
+             "shots_by_circuit", "calibration_shots", "totals") if kk in support_plan}),
         "analysis": A,
     }
     if live:
@@ -472,6 +784,20 @@ def main():
         s = A["by_sector"][sec]
         R.add(f"{sec}: decoded support reproduces the exact E0 = {s['exact_E0']:.4f}",
               s["abs_error"], f"|E_R - E_0| < {E0_TOL:g}", s["abs_error"] < E0_TOL)
+    if support_plan is not None:
+        # prompts/16 change 2: the premise of criterion 3 of the preregistration ("the Ritz
+        # energies of the SATURATED sectors reproduce E_0") becomes a checked prediction.  No
+        # criterion of the preregistration and no constant is touched; these are two criteria of
+        # the PREPARATION gate about the shot plan itself.
+        for sec in sorted(support_plan["sectors"]):
+            v = support_plan["sectors"][sec]
+            R.add(f"{sec} shot plan: every one of the {v['dimension']} sector states has expected "
+                  f"clean count >= lambda* in the r = 1 circuits at "
+                  f"{support_plan['margin']} x f_cal (N4 = {v['N4']}, "
+                  f"{v['r1_shots_total']} r = 1 shots; min lambda_s)",
+                  round(v["min_lambda_r1_at_margin"], 4),
+                  f">= lambda* = {support_plan['lambda_star']:.4f}",
+                  v["min_lambda_r1_at_margin"] >= support_plan["lambda_star"])
     for sec in sorted(A["random_acceptance"]):
         ra = A["random_acceptance"][sec]
         R.add(f"{sec}: acceptance of random bit strings (exhaustive over all {ra['strings']} strings)",
@@ -556,6 +882,42 @@ def yield_rows(A):
 YIELD_HEAD = ["sector", "r", "circuits", "CZ", "f (calibration)", "a (garbage)",
               "model 0.82 f (old)", "model 0.82 f + (1−f) a", "shots", "simulated yield",
               "simulated / 0.82 f", "simulated / full model", "distinct states", "rejections"]
+
+
+def support_block(D):
+    """Section 4 of the report: which sector states the support holds and which it misses
+    (prompts/16 change 3 -- an OUTPUT, no criterion depends on it)."""
+    A = D["analysis"]
+    sp = D.get("support_shot_plan")
+    out = []
+    for sec in sorted(A["by_sector"]):
+        v = A["by_sector"][sec]
+        miss = v.get("missing_states") or []
+        head = ["basis index", "label (j2; n)", "observed accepted count"]
+        if sp:
+            head += ["predicted clean count (all circuits, at f)",
+                     "predicted clean count (r = 1, at margin)"]
+        rows = []
+        for r in sorted(v.get("per_state", []), key=lambda x: x["observed_accepted_count"])[:8]:
+            row = [r["basis_index"], r["label"], r["observed_accepted_count"]]
+            if sp:
+                row += [fmt(r.get("predicted_clean_count_all_circuits_at_f"), ".2f"),
+                        fmt(r.get("predicted_clean_count_r1_at_margin"), ".2f")]
+            rows.append(row)
+        planline = ""
+        if sp:
+            sv = sp["sectors"][sec]
+            planline = (f"  Shot plan: N4 = {sv['N4']}, {sv['r1_shots_total']} r = 1 shots, "
+                        f"min lambda_s at {sp['margin']} f = {sv['min_lambda_r1_at_margin']:.4f} "
+                        f"(lambda* = {sp['lambda_star']:.4f}), P(all {sv['dimension']} states seen "
+                        f"from clean shots) = {sv['P_saturation_clean_at_margin']:.5f}.")
+        out.append(f"""**{sec}**: {len(v['support_states_decoded'])} of {v['sector_dimension']} sector states decoded,
+{len(miss)} missing{' (' + ', '.join(str(m['basis_index']) + ' ' + m['label'] for m in miss) + ')' if miss else ''}.{planline}
+The eight least observed states:
+
+{md_table(head, rows)}
+""")
+    return "\n".join(out)
 
 
 def gate_report(args, R, D, index):
@@ -654,7 +1016,10 @@ Exhaustive acceptance of random bit strings into each sector ({2 ** index['commo
             "\\|E_R − E_0\\|", "r_H", "recall of the 99.9 % support", "false positives"], srows)}
 
 At 2x2 both sectors saturate, so this is a consistency check of the bit order and the conventions
-(manual Step 9.1), not an accuracy test: a permuted codeword would give a different energy.
+(manual Step 9.1), not an accuracy test: a permuted codeword would give a different energy.  Whether
+they saturate is a property of the SHOT PLAN, not an assumption: see the support table below.
+
+{support_block(D)}
 
 ## 5. Readout confusion (simulated calibration circuits, {S['calibration_shots_per_circuit']} shots each)
 
