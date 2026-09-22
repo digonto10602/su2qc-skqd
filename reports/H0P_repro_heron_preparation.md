@@ -2,7 +2,7 @@
 
 **Status: PASS** — `scripts/gate_H0P.py` on the frozen circuit set of
 `scripts/h0_build_circuits.py` (data/hardware/H0_prep, created 2026-09-16 09:57:38 MDT).
-Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44, 12 CPUs, commit 1e6d7d3, 2026-09-22 11:06:54 MDT.  Runtime 1415 s.  Nothing in this gate touches a QPU.
+Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44, 12 CPUs, commit 9cfe3ec, 2026-09-22 14:22:22 MDT.  Runtime 1138 s.  Nothing in this gate touches a QPU.
 
 ## 1. The frozen circuit set
 
@@ -26,9 +26,9 @@ was checked against its final layout, so classical bit i of every counts key is 
 ## 2. Predicted yield curve by repetition
 
 Sampling: `AerSimulator.from_backend(FakeFez(), seed_simulator=11)`, 267 shots per r = 1 circuit, 130 shots per r = 2 circuit, 92 shots per r = 3 circuit
-(pinned with --shots-by-rep allocation, 13692 shots in total, 1231 s; the pilot measured
-0.041 s/shot at r=1, 0.083 s/shot at r=2, 0.109 s/shot at r=3,
-i.e. 6.5 s per shot over the whole set, and the budget was 14 min).
+(pinned with --shots-by-rep allocation, 13692 shots in total, 976 s; the pilot measured
+0.032 s/shot at r=1, 0.071 s/shot at r=2, 0.107 s/shot at r=3,
+i.e. 5.9 s per shot over the whole set, and the budget was 14 min).
 
 | sector | r | circuits | CZ | f (calibration) | a (garbage) | model 0.82 f (old) | model 0.82 f + (1−f) a | shots | simulated yield | simulated / 0.82 f | simulated / full model | distinct states | rejections |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|

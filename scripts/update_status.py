@@ -25,6 +25,8 @@ GATES = [  # gate, description (manual Step 10), where it runs
     ("H0_dryrun", "gate H0 run on the SamplerV2 dry-run counts (data/hardware/H0_dryrun)", "laptop"),
     ("H0P_ibm_fez", "H0P re-predicted on the live ibm_fez calibration of the session day (prompts/15 D1: the circuits stay frozen, only the prediction is recomputed; prompts/17: submission is keyed on the calibration content)", "laptop"),
     ("H0P_rehearsal", "H0P on FakeFez with the D3' shot plan through the sampling cache (prompts/16)", "laptop"),
+    ("H0_canary", "the 3-pub canary of prompts/15 D5 on ibm_fez (one frozen r=1 circuit + the two patch-1 readout circuits): the go rule before the main submission", "QPU"),
+    ("H0_diag", "the prompts/19 diagnostic session on ibm_fez: the DD x twirling factorial of the frozen canary circuit and the windowed T1/Ramsey tests that decide between the idle-relaxation and the sampler-options hypotheses", "QPU"),
     ("H0", "2x2 hardware: decoder validity, bit order, parity checks; measured f within 30% of the model", "QPU"),
     ("H1", "2x3 B=0: certified interval of width <= 0.1 containing the exact E0; recall >= 0.8", "QPU"),
     ("H2", "2x3 B=1: cluster energy certified to +-rH <= 0.15; V(1), V(2) intervals containing exact values", "QPU"),

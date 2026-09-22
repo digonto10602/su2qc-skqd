@@ -1,0 +1,131 @@
+{
+ "created": "2026-09-22 19:51:16 UTC",
+ "script": "scripts/h0_submit.py",
+ "arguments": {
+  "prep": "data/hardware/H0_diag_prep",
+  "out": "data/hardware/H0_diag_dryrun",
+  "shots": 2000,
+  "shots_by_rep": null,
+  "shots_plan": null,
+  "cal_shots": 2000,
+  "dd": "XY4",
+  "twirling": "on",
+  "job_tags": null,
+  "prereg": null,
+  "dry_run": true,
+  "backend": null,
+  "submit": false,
+  "retrieve": false,
+  "status": false,
+  "record_calibration": false,
+  "resume": false,
+  "wait": 0.0,
+  "reps": null,
+  "only": null,
+  "no_calibration": false,
+  "max_pubs_per_job": 50,
+  "max_qpu_seconds": 120.0,
+  "predict_from": null,
+  "seed": 11
+ },
+ "commit": "9cfe3ec",
+ "dry_run": true,
+ "backend": "AerSimulator.from_backend(FakeFez) [local testing mode]",
+ "calibration_last_update_date": null,
+ "prediction": null,
+ "prep": "data/hardware/H0_diag_prep",
+ "prep_created": "2026-09-22 13:28:13 MDT",
+ "sampler": "qiskit_ibm_runtime.SamplerV2",
+ "sampler_options": {
+  "default_shots": 2000,
+  "dynamical_decoupling": {
+   "enable": true,
+   "sequence_type": "XY4"
+  },
+  "twirling": {
+   "enable_gates": true,
+   "enable_measure": true,
+   "strategy": "active-accum"
+  },
+  "error_mitigation": "none: SamplerV2 returns raw bit strings; no resilience level, no readout mitigation of expectation values (prompts/07 step 2)"
+ },
+ "job_tags": null,
+ "prereg": null,
+ "prereg_calibration_fingerprint": null,
+ "prereg_fingerprint_match": null,
+ "sampler_options_effective": false,
+ "sampler_options_note": "qiskit-ibm-runtime local testing mode ignores dynamical decoupling and twirling ('Options ... have no effect in local testing mode'): the dry run exercises the submission path and the data format, not the pulse-level options, which apply only on the real backend",
+ "shots_by_repetition": {
+  "all": 2000
+ },
+ "shots_plan": null,
+ "shots_plan_calibration_last_update_date": null,
+ "shots_plan_stamp": null,
+ "calibration_fingerprint": null,
+ "prediction_calibration_fingerprint": null,
+ "shots_plan_calibration_fingerprint": null,
+ "fingerprint_match": null,
+ "stamp_match": null,
+ "f_live_vs_plan_max_abs_diff": null,
+ "f_live_vs_prediction_max_abs_diff": null,
+ "calibration_at_submission_file": null,
+ "shots_by_circuit": null,
+ "calibration_shots": 2000,
+ "n_circuits": 5,
+ "circuits": [
+  {
+   "id": "B0_ref06_k1_rep1",
+   "kind": "coarse_step",
+   "shots": 2000
+  },
+  {
+   "id": "diag_patch1_ramw",
+   "kind": "idle_test",
+   "shots": 2000
+  },
+  {
+   "id": "diag_patch1_t1w",
+   "kind": "idle_test",
+   "shots": 2000
+  },
+  {
+   "id": "cal_patch1_all0",
+   "kind": "readout_calibration",
+   "shots": 2000
+  },
+  {
+   "id": "cal_patch1_all1",
+   "kind": "readout_calibration",
+   "shots": 2000
+  }
+ ],
+ "preflight": null,
+ "jobs": [
+  {
+   "group_shots": 2000,
+   "chunk_index": 0,
+   "n_pubs": 5,
+   "circuit_ids": [
+    "B0_ref06_k1_rep1",
+    "diag_patch1_ramw",
+    "diag_patch1_t1w",
+    "cal_patch1_all0",
+    "cal_patch1_all1"
+   ],
+   "job_id": "8271cfd3-1cad-4de2-a069-72514383b80a",
+   "submitted": "2026-09-22 19:51:16 UTC",
+   "status": "DONE",
+   "usage_s": 0.0,
+   "usage_raw": 0,
+   "metrics": {
+    "repr": "{'bss': {'seconds': 0}, 'usage': {'quantum_seconds': 0, 'seconds': 0}, 'timestamps': {'created': datetime.datetime(2026, 9, 22, 13, 51, 20, 170171), 'running': datetime.datetime(2026, 9, 22, 13, 51, 20, 170175), 'finished': datetime.datetime(2026, 9, 22, 13, 51, 20, 170176)}}"
+   },
+   "retrieved": "2026-09-22 19:53:10 UTC",
+   "counts_written": true,
+   "counts_files_written": 5,
+   "counts_files_skipped_existing": 0
+  }
+ ],
+ "total_usage_s": 0.0,
+ "runtime_s": 123.7682135105133
+}

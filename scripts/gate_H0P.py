@@ -73,14 +73,22 @@ def load_index(prep_dir):
         return json.load(fh)
 
 
+CIRCUIT_KINDS = ("coarse_step", "idle_test")   # prompts/19 C2: what --shots applies to
+
+
 def load_manifests(prep_dir):
-    """(coarse-step manifests, calibration manifests), both sorted by id."""
+    """(circuit manifests, readout-calibration manifests), both sorted by id.
+
+    The first list holds the kinds a session submits at `--shots`: `coarse_step` (the
+    frozen set) and, since prompts/19 C2, `idle_test` (the diagnostic T1/Ramsey circuits
+    of `scripts/h0_diag_circuits.py`).  `data/hardware/H0_prep` contains no `idle_test`
+    manifest, so gate_H0P and the production path see exactly what they saw before."""
     cdir = os.path.join(prep_dir, "circuits")
     mans = []
     for p in sorted(glob.glob(os.path.join(cdir, "*.json"))):
         with open(p) as fh:
             mans.append(json.load(fh))
-    return ([m for m in mans if m["kind"] == "coarse_step"],
+    return ([m for m in mans if m["kind"] in CIRCUIT_KINDS],
             [m for m in mans if m["kind"] == "readout_calibration"])
 
 

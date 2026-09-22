@@ -31,6 +31,18 @@ Counts are written to `<out>/counts/<circuit id>.json`, one file per circuit, ea
 carrying the manifest of the circuit it came from.  They are RAW DATA: the script
 refuses to overwrite an existing file and --retrieve skips the ones that exist.
 
+prompts/19 adds three flags for the diagnostic session, whose DEFAULTS reproduce the
+production path (prompts/15 D8) exactly -- `tests/test_h0_scripts.py` pins the default
+options record against the canary job's own record, field for field:
+
+  --dd {XY4,XX,XpXm,off}   dynamical decoupling (default XY4; `--dd-sequence` is an alias)
+  --twirling {on,off}      gate and measurement twirling (default on, `active-accum`)
+  --prereg <json>          an `h0_idle_model.py` output: the preflight refuses to submit
+                           unless the LIVE calibration fingerprint is the one the
+                           predictions were written on (the D9 predicate, referred to the
+                           preregistration instead of the day's H0P prediction, which
+                           becomes optional).  `--job-tags` tags the jobs.
+
 Usage: python scripts/h0_submit.py --dry-run [--shots 40] [--out data/hardware/H0_dryrun]
        python scripts/h0_submit.py --backend ibm_fez --shots-by-rep 1:267 2:130 3:92 \\
                                    --cal-shots 4000 --out data/hardware/H0_ibm_fez
@@ -59,25 +71,56 @@ F_CROSSCHECK_TOL = 1e-9    # h0_support_plan.F_CROSSCHECK_TOL: f identity, not f
 
 
 # --------------------------------------------------------------------------- options
-def sampler_options(shots: int, dd_sequence: str = "XY4"):
-    """SamplerV2 options: dynamical decoupling on, Pauli twirling on, no mitigation."""
+DD_CHOICES = ("XY4", "XX", "XpXm", "off")
+TWIRLING_CHOICES = ("on", "off")
+
+
+def sampler_options(shots: int, dd_sequence: str = "XY4", twirling: str = "on", job_tags=None):
+    """SamplerV2 options: dynamical decoupling and Pauli twirling as asked, no mitigation.
+
+    The defaults reproduce the production path of prompts/15 D8 exactly (DD XY4 on,
+    gate and measurement twirling on with strategy `active-accum`, no error mitigation);
+    prompts/19 C1 adds `off` for both so that the diagnostic factorial can be run, and
+    makes `options_record` report what was actually set instead of hard-coding True."""
     from qiskit_ibm_runtime.options import SamplerOptions
 
+    if dd_sequence not in DD_CHOICES:
+        raise SystemExit(f"--dd must be one of {DD_CHOICES}, not {dd_sequence!r}")
+    if twirling not in TWIRLING_CHOICES:
+        raise SystemExit(f"--twirling must be one of {TWIRLING_CHOICES}, not {twirling!r}")
     o = SamplerOptions()
     o.default_shots = shots
-    o.dynamical_decoupling.enable = True
-    o.dynamical_decoupling.sequence_type = dd_sequence
-    o.twirling.enable_gates = True
-    o.twirling.enable_measure = True
-    o.twirling.strategy = "active-accum"
+    if dd_sequence == "off":
+        o.dynamical_decoupling.enable = False
+    else:
+        o.dynamical_decoupling.enable = True
+        o.dynamical_decoupling.sequence_type = dd_sequence
+    if twirling == "off":
+        o.twirling.enable_gates = False
+        o.twirling.enable_measure = False
+    else:
+        o.twirling.enable_gates = True
+        o.twirling.enable_measure = True
+        o.twirling.strategy = "active-accum"
+    if job_tags:
+        o.environment.job_tags = list(job_tags)
     return o
 
 
-def options_record(o, shots, dd_sequence):
+def options_record(o, shots, dd_sequence, twirling="on"):
+    """What the sampler was actually configured with -- field for field, no defaults."""
+    if dd_sequence == "off":
+        dd = {"enable": False}
+    else:
+        dd = {"enable": True, "sequence_type": dd_sequence}
+    if twirling == "off":
+        tw = {"enable_gates": False, "enable_measure": False}
+    else:
+        tw = {"enable_gates": True, "enable_measure": True, "strategy": "active-accum"}
     return {
         "default_shots": shots,
-        "dynamical_decoupling": {"enable": True, "sequence_type": dd_sequence},
-        "twirling": {"enable_gates": True, "enable_measure": True, "strategy": "active-accum"},
+        "dynamical_decoupling": dd,
+        "twirling": tw,
         "error_mitigation": ("none: SamplerV2 returns raw bit strings; no resilience level, no readout "
                              "mitigation of expectation values (prompts/07 step 2)"),
     }
@@ -380,10 +423,61 @@ def preflight(args, backend, prep, plan, index, outdir=None):
         problems.append(f"{len(live_record['missing_errors'])} target entries of the frozen set "
                         f"carry no error on {backend.name}: f cannot be evaluated today")
 
-    pred_path = os.path.join(ROOT, args.predict_from)
+    # ---- prompts/19 C3: the PREREGISTRATION.  The predicate is the same one as D9 -- the
+    # live calibration content must be the one the predictions were written on -- but the
+    # reference is the idle-model file whose numbers were committed before the submission.
+    record["prereg"] = args.prereg
+    record["prereg_fingerprint"] = None
+    record["prereg_fingerprint_match"] = None
+    if args.prereg:
+        pp = args.prereg if os.path.isabs(args.prereg) else os.path.join(ROOT, args.prereg)
+        if not os.path.exists(pp):
+            problems.append(f"the preregistration {args.prereg} does not exist: run "
+                            f"scripts/h0_idle_model.py --backend {args.backend} first")
+        else:
+            with open(pp) as fh:
+                prereg = json.load(fh)
+            pfp = ((prereg.get("calibration") or {}).get("fingerprint"))
+            record["prereg_fingerprint"] = pfp
+            record["prereg_created"] = prereg.get("created")
+            record["prereg_commit"] = prereg.get("commit")
+            record["prereg_calibration_last_update_date"] = \
+                (prereg.get("calibration") or {}).get("last_update_date")
+            if pfp is None:
+                problems.append(f"{args.prereg} carries no calibration.fingerprint: it was not "
+                                f"written by scripts/h0_idle_model.py")
+            else:
+                record["prereg_fingerprint_match"] = (pfp == live_record["fingerprint"])
+                if pfp != live_record["fingerprint"]:
+                    prec = (prereg.get("calibration") or {}).get("path")
+                    extra = ""
+                    if prec:
+                        p = prec if os.path.isabs(prec) else os.path.join(ROOT, prec)
+                        if os.path.isfile(p):
+                            with open(p) as fh:
+                                d = calibration_diff(json.load(fh), live_record)
+                            record["prereg_calibration_diff"] = {
+                                k: d[k] for k in ("n_leaves", "families", "max_ratio", "min_ratio")}
+                            extra = (f" -- {d['n_leaves']} leaf/leaves moved "
+                                     f"({', '.join(d['families']) or 'none'}), ratios "
+                                     f"{d['min_ratio']} .. {d['max_ratio']}")
+                    problems.append(
+                        f"the live calibration of the patch (fingerprint "
+                        f"{live_record['fingerprint'][:16]}, {live_record.get('last_update_date')}) "
+                        f"is not the one the preregistration {args.prereg} was written on "
+                        f"({pfp[:16]}){extra}: re-run scripts/h0_idle_model.py on this content, "
+                        f"commit it, and submit again")
+
+    pred_path = None if args.predict_from is None else os.path.join(ROOT, args.predict_from)
     record["prediction"] = args.predict_from
     pred, plan_json = None, None
-    if not os.path.exists(pred_path):
+    if args.predict_from is None:
+        # prompts/19 C3: with a preregistration the day's H0P prediction is optional; without
+        # either, nothing was written down first and nothing may be submitted.
+        if not args.prereg:
+            problems.append("no --predict-from and no --prereg: a submission must be made against "
+                            "numbers that were written down first")
+    elif not os.path.exists(pred_path):
         problems.append(f"the day's prediction {args.predict_from} does not exist: "
                         f"run gate_H0P.py --backend {args.backend} first")
     else:
@@ -417,9 +511,11 @@ def preflight(args, backend, prep, plan, index, outdir=None):
     # the live clean-shot fraction of every frozen coarse circuit on the target just read
     # (about 10 s): the numbers the plan sized the shots with and the prediction consumed.
     from gate_S2D import analyse_on_backend
-    coarse, _cals = load_manifests(prep)
+    circs, _cals = load_manifests(prep)
+    # only the coarse-step circuits carry a clean-shot fraction: an idle-test circuit has no
+    # cz instruction at all, so `f` is not defined for it (prompts/19 C2).
     f_live_by_circuit = {m["id"]: float(analyse_on_backend(load_circuit(prep, m), backend)["f"])
-                         for m in coarse}
+                         for m in circs if m["kind"] == "coarse_step"}
     gate_problems, gate_record = calibration_gate(live_record, pred, plan_json, f_live_by_circuit)
     problems += gate_problems
     record.update(gate_record)
@@ -442,7 +538,7 @@ def preflight(args, backend, prep, plan, index, outdir=None):
 
 
 # --------------------------------------------------------------------------- main
-def main():
+def build_parser():
     ap = argparse.ArgumentParser()
     ap.add_argument("--prep", default=os.path.join("data", "hardware", "H0_prep"))
     ap.add_argument("--out", default=None, help="default: data/hardware/H0_dryrun for --dry-run")
@@ -454,7 +550,20 @@ def main():
                          "prompts/16); mutually exclusive with --shots-by-rep / --shots for the "
                          "coarse-step circuits")
     ap.add_argument("--cal-shots", type=int, default=4000)
-    ap.add_argument("--dd-sequence", default="XY4")
+    ap.add_argument("--dd", "--dd-sequence", dest="dd", default="XY4", choices=DD_CHOICES,
+                    help="dynamical decoupling sequence, or 'off' (prompts/19 C1; the default "
+                         "XY4 is the production path of prompts/15 D8).  --dd-sequence is the "
+                         "old name of this flag and stays an alias.")
+    ap.add_argument("--twirling", default="on", choices=TWIRLING_CHOICES,
+                    help="Pauli twirling of gates and measurements (default on, strategy "
+                         "active-accum); 'off' disables both (prompts/19 C1)")
+    ap.add_argument("--job-tags", nargs="*", default=None, metavar="TAG",
+                    help="extra job tags; the submitted list is ['su2qc-skqd', <tags>, <commit>, "
+                         "<out dir name>] (prompts/19 C4).  Without this flag no tags are set.")
+    ap.add_argument("--prereg", default=None, metavar="JSON",
+                    help="a preregistration written by scripts/h0_idle_model.py: the preflight "
+                         "refuses to submit unless the LIVE calibration fingerprint equals "
+                         "JSON['calibration']['fingerprint'] (prompts/19 C3)")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--backend", default=None, help="IBM backend name (production path; implies --submit)")
     ap.add_argument("--submit", action="store_true", help="submission phase (implied by --backend/--dry-run)")
@@ -476,7 +585,11 @@ def main():
     ap.add_argument("--predict-from", default=None,
                     help="the day's prediction (default validation/H0P_<backend>.json)")
     ap.add_argument("--seed", type=int, default=11, help="Aer seed of the dry run")
-    args = ap.parse_args()
+    return ap
+
+
+def main():
+    args = build_parser().parse_args()
 
     if args.retrieve or args.status:
         if args.backend or args.dry_run or args.submit:
@@ -499,7 +612,7 @@ def submit_phase(args):
     index = load_index(prep)
     mans, cals = load_manifests(prep)
     if args.reps:
-        mans = [m for m in mans if m["repetitions"] in args.reps]
+        mans = [m for m in mans if m.get("repetitions") in args.reps]
     if args.only:
         keep = set(args.only)
         mans = [m for m in mans if m["id"] in keep]
@@ -518,7 +631,8 @@ def submit_phase(args):
                              f"selected circuit(s) (e.g. {missing[:3]})")
     if args.shots_by_rep:
         by_rep = {int(x.split(":")[0]): int(x.split(":")[1]) for x in args.shots_by_rep}
-    jobs = [(m, plan_shots[m["id"]] if plan_shots else by_rep.get(m["repetitions"], args.shots))
+    jobs = [(m, plan_shots[m["id"]] if plan_shots
+             else by_rep.get(m.get("repetitions"), args.shots))
             for m in mans] + \
            ([] if args.no_calibration else [(m, args.cal_shots) for m in cals])
     if not jobs:
@@ -533,7 +647,10 @@ def submit_phase(args):
     plan = plan_groups(jobs, args.max_pubs_per_job)
 
     from qiskit_ibm_runtime import SamplerV2
-    opts = sampler_options(args.shots, args.dd_sequence)
+    # prompts/19 C4: tags only when asked for, so the production path's options are untouched
+    tags = (["su2qc-skqd"] + list(args.job_tags) + [git_commit(), os.path.basename(outdir)]
+            if args.job_tags else None)
+    opts = sampler_options(args.shots, args.dd, args.twirling, job_tags=tags)
     preflight_record = None
     if args.dry_run:
         from qiskit_aer import AerSimulator
@@ -543,12 +660,13 @@ def submit_phase(args):
         calibration_date = None
     else:
         backend = resolve_backend(args.backend)
-        if args.predict_from is None:
+        if args.predict_from is None and not args.prereg:
             args.predict_from = os.path.join("validation", f"H0P_{args.backend}.json")
         problems, preflight_record = preflight(args, backend, prep, plan, index, outdir=outdir)
         print("preflight:")
         for k in ("backend_name", "operational", "pending_jobs", "max_circuits", "largest_chunk",
-                  "calibration_last_update_date", "calibration_fingerprint", "prediction",
+                  "calibration_last_update_date", "calibration_fingerprint",
+                  "prereg", "prereg_fingerprint", "prereg_fingerprint_match", "prediction",
                   "prediction_calibration_last_update_date",
                   "prediction_calibration_fingerprint", "fingerprint_match", "stamp_match",
                   "f_live_vs_plan_max_abs_diff", "f_live_vs_prediction_max_abs_diff",
@@ -582,7 +700,11 @@ def submit_phase(args):
             "prediction": args.predict_from,
             "prep": args.prep, "prep_created": index["created"],
             "sampler": "qiskit_ibm_runtime.SamplerV2",
-            "sampler_options": options_record(opts, args.shots, args.dd_sequence),
+            "sampler_options": options_record(opts, args.shots, args.dd, args.twirling),
+            "job_tags": tags,
+            "prereg": args.prereg,
+            "prereg_calibration_fingerprint": (preflight_record or {}).get("prereg_fingerprint"),
+            "prereg_fingerprint_match": (preflight_record or {}).get("prereg_fingerprint_match"),
             "sampler_options_effective": (not args.dry_run),
             "sampler_options_note": ("qiskit-ibm-runtime local testing mode ignores dynamical decoupling "
                                      "and twirling ('Options ... have no effect in local testing mode'): "

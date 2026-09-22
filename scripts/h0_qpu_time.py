@@ -137,12 +137,16 @@ def estimate(prep, backend, shots_by_rep, cal_shots, only=None, shots_default=No
             else:
                 sh = shots_by_rep.get(r, shots_default)
                 key = f"r={r}"
+        elif m["kind"] == "idle_test":      # prompts/19: the diagnostic T1/Ramsey circuits
+            sh = (shots_by_circuit or {}).get(m["id"], shots_default)
+            key = "idle test"
         else:
             sh = cal_shots
             key = "readout calibration"
         if sh is None:
             raise SystemExit(f"no shot count for {m['id']}: give --shots-by-rep or --shots")
-        sort = (1, 0, 0) if m["kind"] != "coarse_step" else (0, int(m["repetitions"]), int(sh))
+        sort = ((0, int(m["repetitions"]), int(sh)) if m["kind"] == "coarse_step"
+                else (1, 0, 0) if m["kind"] == "idle_test" else (2, 0, 0))
         g = groups.setdefault(key, {"group": key, "circuits": 0, "shots_per_circuit": int(sh),
                                     "durations_s": [], "total_shots": 0, "execution_s": 0.0,
                                     "_sort": sort})

@@ -591,3 +591,196 @@ def test_estimate_accepts_a_per_circuit_shot_plan():
     assert est["total_shots"] == 267 + 11700 + 130
     assert est["shots_by_circuit_source"] is not None
     assert est["total_execution_s"] > 0
+
+
+# ------------------------------------------------- the option flags of prompts/19 (C1, C2)
+DIAG_PREP = os.path.join(os.path.dirname(SCRIPTS), "data", "hardware", "H0_diag_prep")
+CANARY_SESSION = os.path.join(os.path.dirname(SCRIPTS), "data", "hardware",
+                              "H0_ibm_fez_canary", "session.json")
+
+
+def test_default_sampler_options_reproduce_the_canary_record_field_for_field():
+    """prompts/19 C1: the DEFAULTS are the production path of prompts/15 D8, unchanged.
+
+    The reference is the options record of the job that actually ran (the canary), so a
+    change of default in `sampler_options` cannot slip through as a diagnostic flag."""
+    import json
+
+    import h0_submit
+    with open(CANARY_SESSION) as fh:
+        canary = json.load(fh)["sampler_options"]
+    o = h0_submit.sampler_options(canary["default_shots"])
+    rec = h0_submit.options_record(o, canary["default_shots"], "XY4")
+    assert rec == canary
+    assert o.dynamical_decoupling.enable is True
+    assert o.dynamical_decoupling.sequence_type == "XY4"
+    assert o.twirling.enable_gates is True and o.twirling.enable_measure is True
+    assert o.twirling.strategy == "active-accum"
+
+
+@pytest.mark.parametrize("dd,twirling", [("off", "off"), ("XY4", "off"), ("off", "on"),
+                                         ("XY4", "on")])
+def test_the_options_record_reports_what_was_set(dd, twirling):
+    import h0_submit
+    o = h0_submit.sampler_options(2000, dd, twirling)
+    rec = h0_submit.options_record(o, 2000, dd, twirling)
+    assert rec["dynamical_decoupling"]["enable"] is (dd != "off")
+    assert o.dynamical_decoupling.enable is (dd != "off")
+    assert rec["twirling"]["enable_gates"] is (twirling == "on")
+    assert rec["twirling"]["enable_measure"] is (twirling == "on")
+    assert o.twirling.enable_gates is (twirling == "on")
+    assert o.twirling.enable_measure is (twirling == "on")
+    if dd != "off":
+        assert rec["dynamical_decoupling"]["sequence_type"] == dd
+    assert rec["error_mitigation"].startswith("none")
+
+
+def test_an_unknown_sequence_or_twirling_value_is_a_clean_exit():
+    import h0_submit
+    with pytest.raises(SystemExit):
+        h0_submit.sampler_options(10, "XY8")
+    with pytest.raises(SystemExit):
+        h0_submit.sampler_options(10, "XY4", "maybe")
+
+
+def test_dd_sequence_stays_an_alias_of_dd():
+    """The old flag name must keep working: prompts/15 commands are on record."""
+    import h0_submit
+    ap = h0_submit.build_parser()
+    assert ap.parse_args(["--dry-run", "--dd-sequence", "XX"]).dd == "XX"
+    assert ap.parse_args(["--dry-run", "--dd", "off"]).dd == "off"
+    assert ap.parse_args(["--dry-run"]).dd == "XY4"
+    assert ap.parse_args(["--dry-run"]).twirling == "on"
+
+
+@pytest.mark.skipif(not os.path.isdir(DIAG_PREP), reason="the diagnostic prep is not built")
+def test_load_manifests_puts_the_idle_tests_in_the_circuit_list():
+    """prompts/19 C2: `idle_test` is submitted at --shots, not at --cal-shots."""
+    from gate_H0P import load_manifests
+    mans, cals = load_manifests(DIAG_PREP)
+    assert sorted(m["id"] for m in mans) == ["B0_ref06_k1_rep1", "diag_patch1_ramw",
+                                             "diag_patch1_t1w"]
+    assert sorted(m["id"] for m in cals) == ["cal_patch1_all0", "cal_patch1_all1"]
+    # the frozen set itself has no idle_test manifest: the production path is unchanged
+    fmans, fcals = load_manifests(os.path.join(os.path.dirname(SCRIPTS), "data", "hardware",
+                                               "H0_prep"))
+    assert len(fmans) == 84 and len(fcals) == 42
+    assert all(m["kind"] == "coarse_step" for m in fmans)
+
+
+@pytest.mark.skipif(not os.path.isdir(DIAG_PREP), reason="the diagnostic prep is not built")
+def test_estimate_groups_the_idle_tests_at_the_circuit_shot_count():
+    import h0_qpu_time
+    b = h0_backends.resolve_backend("FakeFez")
+    est = h0_qpu_time.estimate(DIAG_PREP, b, {}, 2000, shots_default=2000)
+    groups = {g["group"]: g for g in est["groups"]}
+    assert set(groups) == {"r=1", "idle test", "readout calibration"}
+    assert groups["idle test"]["circuits"] == 2
+    assert groups["idle test"]["shots_per_circuit"] == 2000
+    assert est["total_shots"] == 5 * 2000
+    # 5 pubs x 2000 shots is the J1 job of prompts/19: about 5 s of execution at 250 us rep delay
+    assert 2.0 < est["total_execution_s"] < 4.0
+
+
+@pytest.mark.skipif(not os.path.isdir(DIAG_PREP), reason="the diagnostic prep is not built")
+def test_gate_H0_still_runs_on_the_coarse_step_circuit_alone(tmp_path):
+    """prompts/19 C2: gate_H0.py filters on `coarse_step`, so a diagnostic counts
+    directory that also holds idle-test counts is analysed on the canary circuit alone."""
+    import json
+    import subprocess
+
+    from gate_H0P import load_manifests
+    cdir = tmp_path / "counts"
+    cdir.mkdir()
+    mans, cals = load_manifests(DIAG_PREP)
+    for m in mans + cals:
+        rec = dict(m)
+        if m["kind"] == "coarse_step":
+            counts = {"000100100000": 30, "111111111111": 1970}
+        elif m["kind"] == "idle_test":
+            counts = {m["expected_key"]: 2000}
+        else:
+            counts = {"".join(str(b) for b in reversed(m["prep_bits"])): 2000}
+        rec.update({"counts": counts, "shots": 2000, "backend": "test",
+                    "backend_manifest": m["backend"], "dry_run": True,
+                    "sampler_options": {"default_shots": 2000}})
+        with open(cdir / (m["id"] + ".json"), "w") as fh:
+            json.dump(rec, fh)
+    out = tmp_path / "H0_diagtest"
+    proc = subprocess.run([sys.executable, os.path.join(SCRIPTS, "gate_H0.py"),
+                           "--counts", str(cdir), "--out", out.name,
+                           "--predict", "model"],
+                          cwd=os.path.dirname(SCRIPTS), capture_output=True, text=True)
+    assert "Traceback" not in proc.stderr, proc.stderr
+    with open(os.path.join(os.path.dirname(SCRIPTS), "validation", out.name + ".json")) as fh:
+        js = json.load(fh)
+    assert js["data"]["coarse_step_circuits"] == 1
+    assert js["data"]["n_counts_files"] == 5
+    os.remove(os.path.join(os.path.dirname(SCRIPTS), "validation", out.name + ".json"))
+    os.remove(os.path.join(os.path.dirname(SCRIPTS), "reports",
+                           out.name + "_hardware_2x2.md"))
+
+
+@pytest.mark.skipif(not os.path.isdir(DIAG_PREP), reason="the diagnostic prep is not built")
+def test_the_preregistration_is_the_submission_predicate(tmp_path):
+    """prompts/19 C3: the preflight refuses unless the LIVE fingerprint is the prereg's.
+
+    Run against the FakeFez snapshot, which `preflight` treats exactly like a live target
+    (status, frozen-set check, fresh calibration, execution estimate).  No account is used."""
+    import json
+
+    import h0_idle_model
+    import h0_submit
+    from gate_H0P import load_manifests
+
+    b = h0_backends.resolve_backend("FakeFez")
+    qubits, edges = h0_backends.frozen_qubits_and_edges(DIAG_PREP)
+    rec = h0_backends.calibration_record(b, qubits, edges)
+    pre = h0_idle_model.analyse(DIAG_PREP, rec, backend=b, shots=2000, hb=None)
+    pre["calibration"]["path"] = "unused"
+    good = tmp_path / "prereg_good.json"
+    bad = tmp_path / "prereg_bad.json"
+    with open(good, "w") as fh:
+        json.dump(pre, fh)
+    pre2 = json.loads(json.dumps(pre))
+    pre2["calibration"]["fingerprint"] = "0" * 64
+    with open(bad, "w") as fh:
+        json.dump(pre2, fh)
+
+    mans, cals = load_manifests(DIAG_PREP)
+    jobs = [(m, 2000) for m in mans + cals]
+    plan = h0_submit.plan_groups(jobs, 50)
+    ap = h0_submit.build_parser()
+
+    def run(prereg):
+        args = ap.parse_args(["--backend", b.name, "--prep", DIAG_PREP, "--shots", "2000",
+                              "--cal-shots", "2000", "--max-qpu-seconds", "30",
+                              "--prereg", str(prereg)])
+        return h0_submit.preflight(args, b, DIAG_PREP, plan, {}, outdir=str(tmp_path))
+
+    problems, record = run(good)
+    assert record["prereg_fingerprint"] == rec["fingerprint"]
+    assert record["prereg_fingerprint_match"] is True
+    assert problems == [], problems
+    assert record["prediction"] is None          # --predict-from is optional with a prereg
+    # 5 pubs x 2000 shots at a 250 us rep delay is the J1 job: a few seconds of execution
+    assert record["qpu_time_estimate"]["total_shots"] == 10000
+    assert record["qpu_time_estimate"]["total_execution_s"] < 30.0
+
+    problems, record = run(bad)
+    assert record["prereg_fingerprint_match"] is False
+    assert any("preregistration" in p for p in problems), problems
+
+
+@pytest.mark.skipif(not os.path.isdir(DIAG_PREP), reason="the diagnostic prep is not built")
+def test_a_submission_without_a_prereg_or_a_prediction_is_refused(tmp_path):
+    import h0_submit
+    from gate_H0P import load_manifests
+
+    b = h0_backends.resolve_backend("FakeFez")
+    mans, cals = load_manifests(DIAG_PREP)
+    plan = h0_submit.plan_groups([(m, 2000) for m in mans + cals], 50)
+    args = h0_submit.build_parser().parse_args(
+        ["--backend", b.name, "--prep", DIAG_PREP, "--shots", "2000", "--cal-shots", "2000"])
+    problems, record = h0_submit.preflight(args, b, DIAG_PREP, plan, {}, outdir=str(tmp_path))
+    assert any("written down first" in p for p in problems), problems
