@@ -174,21 +174,46 @@ def test_gpu_telemetry_is_null_without_a_file_and_parses_the_sampler_output(tmp_
     assert t2["mean_utilization_pct"] == 50.0
 
 
+SLURM_VARS = ("SLURM_GPUS_PER_TASK", "SLURM_GPUS_ON_NODE", "SLURM_GPUS", "SLURM_NTASKS",
+              "SLURM_PROCID", "SLURM_CPUS_PER_TASK", "SLURM_JOB_NODELIST",
+              "CUDA_VISIBLE_DEVICES")
+
+
 def test_slurm_layout_reads_the_job_environment(monkeypatch):
     from laptop_L4_aer_noise import slurm_layout
 
-    for k in ("SLURM_GPUS_PER_TASK", "SLURM_NTASKS", "SLURM_PROCID", "SLURM_CPUS_PER_TASK",
-              "SLURM_JOB_NODELIST"):
+    for k in SLURM_VARS:
         monkeypatch.delenv(k, raising=False)
-    empty = slurm_layout()
-    assert all(v is None for v in empty.values())
+    assert all(v is None for v in slurm_layout().values())
+
     monkeypatch.setenv("SLURM_GPUS_PER_TASK", "1")
     monkeypatch.setenv("SLURM_NTASKS", "1")
     monkeypatch.setenv("SLURM_PROCID", "0")
     monkeypatch.setenv("SLURM_CPUS_PER_TASK", "32")
     monkeypatch.setenv("SLURM_JOB_NODELIST", "nid001234")
-    assert slurm_layout() == {"gpus_per_task": 1, "tasks": 1, "rank": 0, "cpus_per_task": 32,
-                              "nodelist": "nid001234"}
+    got = slurm_layout()
+    assert got["gpus_per_task"] == 1 and got["gpus"] == 1
+    assert (got["tasks"], got["rank"], got["cpus_per_task"]) == (1, 0, 32)
+    assert got["nodelist"] == "nid001234"
+
+
+def test_gpu_count_falls_back_when_slurm_does_not_export_gpus_per_task(monkeypatch):
+    """Job 58741899 ran on one A100 with SLURM_GPUS_PER_TASK unset, which left the GPU count and
+    the node-hours null in validation/L4.json even though ci/poll.sh passed --gpus-per-task=1."""
+    from laptop_L4_aer_noise import slurm_layout
+
+    for k in SLURM_VARS:
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setenv("SLURM_JOB_ID", "58741899")
+
+    monkeypatch.setenv("SLURM_GPUS_ON_NODE", "1")
+    assert slurm_layout()["gpus"] == 1, "SLURM_GPUS_ON_NODE must be used"
+    monkeypatch.delenv("SLURM_GPUS_ON_NODE")
+
+    monkeypatch.setenv("CUDA_VISIBLE_DEVICES", "0,1")
+    assert slurm_layout()["gpus"] == 2, "the visible-device list is the last resort"
+    monkeypatch.setenv("CUDA_VISIBLE_DEVICES", "")
+    assert slurm_layout()["gpus"] is None, "an empty list is not zero GPUs, it is unknown"
 
 
 def test_gpu_only_options_never_reach_a_cpu_simulator():

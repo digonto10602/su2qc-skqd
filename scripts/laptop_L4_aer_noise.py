@@ -106,7 +106,16 @@ def slurm_layout() -> dict:
             return int(v)
         except (TypeError, ValueError):
             return None
-    return {"gpus_per_task": _int("SLURM_GPUS_PER_TASK"), "tasks": _int("SLURM_NTASKS"),
+    # ci/poll.sh submits with --gpus-per-task, but Slurm does not always export
+    # SLURM_GPUS_PER_TASK to the step (job 58741899 reported it unset while running on one A100),
+    # so fall back to the variables it does set and finally to the visible-device list.
+    gpus = (_int("SLURM_GPUS_PER_TASK") or _int("SLURM_GPUS_ON_NODE") or _int("SLURM_GPUS")
+            or (len([x for x in os.environ.get("CUDA_VISIBLE_DEVICES", "").split(",") if x])
+                or None))
+    return {"gpus_per_task": _int("SLURM_GPUS_PER_TASK"), "gpus": gpus,
+            "gpus_on_node": _int("SLURM_GPUS_ON_NODE"),
+            "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
+            "tasks": _int("SLURM_NTASKS"),
             "rank": _int("SLURM_PROCID"), "cpus_per_task": _int("SLURM_CPUS_PER_TASK"),
             "nodelist": os.environ.get("SLURM_JOB_NODELIST")}
 
@@ -386,7 +395,11 @@ def main():
             "seconds_per_shot_used": best, "seconds_per_shot_from": best_from,
             "seconds": None if q is None else 2 * q * best,
             "hours": None if q is None else 2 * q * best / 3600.0}
-    gpus = (layout["gpus_per_task"] or 0) * (layout["tasks"] or 1) if layout["gpus_per_task"] else None
+    # layout["gpus"] already falls back through SLURM_GPUS_ON_NODE and CUDA_VISIBLE_DEVICES,
+    # because Slurm did not export SLURM_GPUS_PER_TASK to the step in job 58741899 even
+    # though ci/poll.sh requested --gpus-per-task=1, which left this null in that run.
+    gpus = (layout["gpus_per_task"] * (layout["tasks"] or 1)
+            if layout["gpus_per_task"] else layout["gpus"])
     R.data["run"] = {
         "engine": "Qiskit Aer statevector" + (" (GPU, cuStateVec/batched shots)" if device == "GPU"
                                               else " (CPU)"),
