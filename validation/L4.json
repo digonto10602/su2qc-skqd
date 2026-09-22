@@ -1,13 +1,13 @@
 {
  "gate": "L4",
  "title": "Aer noise-model sampling at 2x2 (S3 preparation)",
- "status": "FAIL",
+ "status": "PASS",
  "criteria": [
   {
-   "name": "B=0: measured yield within a factor 3 of the proxy (1-p_ro)^n f, f = <(1-p2)^CZ>",
-   "value": "0.013 vs 0.000",
-   "threshold": "ratio in [1/3, 3] (the proxy is a rough model)",
-   "passed": false
+   "name": "B=0: measured yield within a factor 3 of the model (1-p_ro)^n f + (1-f) a, f = <(1-p2)^CZ>, a = 0.00928 exhaustive",
+   "value": "0.458 vs 0.378 (ratio 1.21; the first term alone, 0.8864 f = 0.373, gives 1.23)",
+   "threshold": "ratio in [1/3, 3] (the model is a rough proxy)",
+   "passed": true
   },
   {
    "name": "B=0: exact E0 inside the Weinstein interval",
@@ -16,10 +16,10 @@
    "passed": true
   },
   {
-   "name": "B=1: measured yield within a factor 3 of the proxy (1-p_ro)^n f, f = <(1-p2)^CZ>",
-   "value": "0.006 vs 0.000",
-   "threshold": "ratio in [1/3, 3] (the proxy is a rough model)",
-   "passed": false
+   "name": "B=1: measured yield within a factor 3 of the model (1-p_ro)^n f + (1-f) a, f = <(1-p2)^CZ>, a = 0.00488 exhaustive",
+   "value": "0.441 vs 0.376 (ratio 1.17; the first term alone, 0.8864 f = 0.373, gives 1.18)",
+   "threshold": "ratio in [1/3, 3] (the model is a rough proxy)",
+   "passed": true
   },
   {
    "name": "B=1: exact E0 inside the Weinstein interval",
@@ -30,38 +30,234 @@
  ],
  "data": {
   "B=0": {
-   "shots": 8,
+   "shots": 20000,
    "circuits": 20,
-   "cz": 35670.0,
-   "yield_": 0.0125,
-   "size": 7,
-   "err": 0.07417730030027236,
-   "recall": 0.375,
-   "t_per_shot": 2.1632344484329225,
-   "pilot_shots": 20,
-   "min_shots": 1
+   "cz": 288.0,
+   "yield_": 0.4579375,
+   "size": 38,
+   "err": 0.0,
+   "recall": 1.0,
+   "t_per_shot": 0.0010457677841186524,
+   "pilot_shots": 1000,
+   "min_shots": 500,
+   "f_model": 0.42092584630938984,
+   "garbage_acceptance": 0.00927734375,
+   "yield_model": "0.82 f + (1-f) a",
+   "readout_factor": 0.8863848717161292,
+   "predicted_yield": 0.3784745722634798,
+   "ratio_measured_over_predicted": 1.2099557897939868,
+   "predicted_yield_clean_term_only": 0.37310230228295166,
+   "ratio_measured_over_clean_term_only": 1.2273778456952844,
+   "random_acceptance": {
+    "accepted": 38,
+    "strings": 4096,
+    "fraction": 0.00927734375,
+    "reasons": {
+     "sector": 44,
+     "link": 1214,
+     "flag": 2800
+    }
+   },
+   "proxy": "(1-p_ro)^n f + (1-f) a, f = <(1-p2)^CZ>, a = 0.00928 exhaustive",
+   "total_shots": 400000,
+   "rejections": {
+    "flag": 116192,
+    "link": 70609,
+    "sector": 30024,
+    "unknown": 0
+   },
+   "weinstein": [
+    -3.6407665507263487,
+    -3.6407665507263425
+   ],
+   "exact_E0": -3.6407665507263425
   },
   "B=1": {
-   "shots": 22,
+   "shots": 20000,
    "circuits": 8,
-   "cz": 35670.0,
-   "yield_": 0.005681818181818182,
-   "size": 3,
-   "err": 0.36158803453502086,
-   "recall": 0.23076923076923078,
-   "t_per_shot": 1.984782302379608,
-   "pilot_shots": 20,
-   "min_shots": 1
+   "cz": 288.0,
+   "yield_": 0.4410625,
+   "size": 20,
+   "err": 0.0,
+   "recall": 1.0,
+   "t_per_shot": 0.0011313416957855224,
+   "pilot_shots": 1000,
+   "min_shots": 500,
+   "f_model": 0.42092584630938984,
+   "garbage_acceptance": 0.0048828125,
+   "yield_model": "0.82 f + (1-f) a",
+   "readout_factor": 0.8863848717161292,
+   "predicted_yield": 0.3759298127990191,
+   "ratio_measured_over_predicted": 1.1732575735774444,
+   "predicted_yield_clean_term_only": 0.37310230228295166,
+   "ratio_measured_over_clean_term_only": 1.1821489637056943,
+   "random_acceptance": {
+    "accepted": 20,
+    "strings": 4096,
+    "fraction": 0.0048828125,
+    "reasons": {
+     "sector": 62,
+     "link": 1214,
+     "flag": 2800
+    }
+   },
+   "proxy": "(1-p_ro)^n f + (1-f) a, f = <(1-p2)^CZ>, a = 0.00488 exhaustive",
+   "total_shots": 160000,
+   "rejections": {
+    "flag": 52310,
+    "link": 19165,
+    "sector": 17955,
+    "unknown": 0
+   },
+   "weinstein": [
+    -1.8615880345350224,
+    -1.8615880345350209
+   ],
+   "exact_E0": -1.8615880345350209
+  },
+  "run": {
+   "engine": "Qiskit Aer statevector (GPU, cuStateVec/batched shots)",
+   "device": "GPU",
+   "batched_shots_gpu": true,
+   "cu_statevec_enable": true,
+   "precision": "double",
+   "active_qubits": 12,
+   "ci": {
+    "CI_GATE": "L4",
+    "SLURM_JOB_ID": "58741899",
+    "SLURM_JOB_NODELIST": "nid008257"
+   },
+   "slurm": {
+    "gpus_per_task": null,
+    "tasks": 1,
+    "rank": 0,
+    "cpus_per_task": 32,
+    "nodelist": "nid008257"
+   },
+   "gpus": null,
+   "tasks": 1,
+   "rank": 0,
+   "wall_seconds": 676.8614845275879,
+   "gpu_node_hours": null,
+   "parallel_efficiency_Ep": null,
+   "parallel_efficiency_note": "E(p) needs T_1 and T_p from at least two task counts; this run is a single task, so it is not measured",
+   "phases_s": {
+    "ladder_s": 12.419313192367554,
+    "pilot_s|B=0": 1.0457677841186523,
+    "sampling_s|B=0": 454.2697892189026,
+    "analysis_s|B=0": 2.3656795024871826,
+    "pilot_s|B=1": 1.1313416957855225,
+    "sampling_s|B=1": 193.27056121826172,
+    "analysis_s|B=1": 1.258072853088379
+   },
+   "gpu_telemetry": {
+    "source": "/pscratch/sd/d/digonto/skqd-ci-runs/79f4dae2ff0d-20260922080711/gpu_telemetry.csv",
+    "samples": 68,
+    "peak_memory_mib": 27915.0,
+    "mean_utilization_pct": 15.308823529411764,
+    "max_utilization_pct": 27.0
+   },
+   "versions": {
+    "qiskit": "1.4.3",
+    "qiskit_aer": "0.15.1"
+   },
+   "seeds": {
+    "aer_seed_simulator": 11,
+    "seed_transpiler": 11,
+    "s2d_analysis_seed_transpiler": 7
+   },
+   "shots_per_circuit": {
+    "B=0": 20000,
+    "B=1": 20000
+   },
+   "seconds_per_shot_pilot": {
+    "B=0": 0.0010457677841186524,
+    "B=1": 0.0011313416957855224
+   },
+   "timing_ladder": [
+    {
+     "shots": 20,
+     "seconds": 0.21124887466430664,
+     "seconds_per_shot": 0.010562443733215332
+    },
+    {
+     "shots": 100,
+     "seconds": 0.2910161018371582,
+     "seconds_per_shot": 0.002910161018371582
+    },
+    {
+     "shots": 500,
+     "seconds": 0.6463747024536133,
+     "seconds_per_shot": 0.0012927494049072266
+    },
+    {
+     "shots": 1000,
+     "seconds": 1.0631585121154785,
+     "seconds_per_shot": 0.0010631585121154785
+    },
+    {
+     "shots": 2000,
+     "seconds": 2.0586180686950684,
+     "seconds_per_shot": 0.001029309034347534
+    }
+   ],
+   "batching": {
+    "B=0": {
+     "experiments": 20,
+     "shots": 20000,
+     "run_calls": 4,
+     "oom_retries": [],
+     "seeds": [
+      11,
+      12,
+      13,
+      14
+     ],
+     "max_experiments": 20,
+     "max_shots_per_run": 6103
+    },
+    "B=1": {
+     "experiments": 8,
+     "shots": 20000,
+     "run_calls": 2,
+     "oom_retries": [],
+     "seeds": [
+      11,
+      12
+     ],
+     "max_experiments": 8,
+     "max_shots_per_run": 15258
+    }
+   },
+   "gpu_memory_bytes_assumed": 8000000000.0,
+   "full_size_estimate": {
+    "definition": "the same 2x2 circuits at the per-sector shot quota of data/S2D_recall_at_f.json (32 circuits x 6250 shots), both sectors",
+    "shots_per_sector": 200000,
+    "sectors": 2,
+    "shots": 400000,
+    "seconds_per_shot_used": 0.001029309034347534,
+    "seconds_per_shot_from": "timing ladder at 2000 shots",
+    "seconds": 411.7236137390136,
+    "hours": 0.11436767048305933
+   },
+   "pilot_shots": 1000,
+   "min_shots": 500,
+   "budget_minutes": 25.0,
+   "noise": {
+    "p1": 0.0003,
+    "p2": 0.003,
+    "p_ro": 0.01
+   }
   }
  },
- "runtime_s": 1011.9893946647644,
+ "runtime_s": 676.8614845275879,
  "environment": {
   "python": "3.12.14",
-  "numpy": "2.5.2",
-  "scipy": "1.18.0",
-  "platform": "Linux-7.2.3-arch1-3-x86_64-with-glibc2.44",
-  "cpu_count": 12,
-  "git_commit": "30684f2",
-  "timestamp": "2026-09-14 18:24:06 MDT"
+  "numpy": "2.5.3",
+  "scipy": "1.18.1",
+  "platform": "Linux-6.4.0-150600.23.125_15.0.28-cray_shasta_c-x86_64-with-glibc2.38",
+  "cpu_count": 128,
+  "git_commit": "n/a",
+  "timestamp": "2026-09-22 01:22:38 PDT"
  }
 }
