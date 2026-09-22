@@ -95,9 +95,20 @@ count >= lambda* = 6.2958 in the r = 1 circuits alone at 0.7 x f_cal): N4 8200/1
 `support_states_decoded` / `missing_states` / the per-state predicted-vs-observed table; the session becomes 6 jobs
 (21/5/2/28/28/42 pubs) at 69.9 s of QPU execution (cap 120).  **`validation/H0P_rehearsal.json` PASS 18/18** on
 FakeFez through the new sampling cache, supports 38/38 and 20/20, `missing_states == []`.  No criterion constant,
-tolerance, convention or frozen circuit changed.  Open: owner sign-off at STOP 0 before part B' (the session day);
-owner signs `proposal/amendment_01_devices_and_budgets.md` with the vendor's error specs for the 2x3 device; S3
-production run on the desktop GPU.
+tolerance, convention or frozen circuit changed.  Session day (prompts/16 part B' and prompts/17, 2026-09-22):
+`validation/H0P_ibm_fez.json` **PASS 18/18** twice, first on the calibration 20260922T0711Z and again on
+20260922T1400Z after ibm_fez recalibrated (N4 6900/16800, r = 1 shots 38505/35202, supports 38/38 and 20/20,
+execution estimate 66.3 s).  prompts/17 replaces the stamp guard of the preflight by **rule D9**: submission
+requires identity of the calibration *content* of the frozen patch (`h0_backends.calibration_fingerprint`, the
+sha256 of the 30 x 9 qubit and 54 x 4 edge leaves the prediction actually reads) and of the 84 live clean-shot
+fractions to 1e-9; `scripts/h0_calwatch.py` logs the windows.  The fingerprint stayed constant through three
+stamp-only updates and fired on the one real recalibration.  **Canary (2026-09-22, the only QPU spend so far:
+2.0 s):** job `dapbusac505c73chv0og`, 3 pubs x 267 shots, DONE, preflight `fingerprint_match` true and the
+retrieval-time record identical to the prediction's -- but **8 accepted of 267 against the preregistered >= 10
+and the simulated 71**, measured f 0.0255 vs predicted 0.2195: **canary NO-GO**, the main 6-job submission is not
+run (`validation/BLOCKED.md`, prompts/07 clause (b) / prompts/15 escalation B5).  Open: the planner decides on the
+canary NO-GO before the main budget is spent; owner signs `proposal/amendment_01_devices_and_budgets.md` with the
+vendor's error specs for the 2x3 device; S3 production run on the desktop GPU.
 
 
 # skqd-ci: how to run tests on Perlmutter (rules for Claude / any agent)
