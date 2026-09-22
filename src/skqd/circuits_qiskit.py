@@ -95,16 +95,103 @@ def generic_noise_model(p1: float = 3e-4, p2: float = 3e-3, p_ro: float = 1e-2):
     return nm
 
 
+def _aer_options(noise_model=None, seed: int = 11, method: str = "automatic",
+                 device: str = "CPU", batched_shots_gpu: bool = False,
+                 cu_statevec_enable: bool = True, precision: str = "double") -> dict:
+    """The AerSimulator keyword arguments, split out from `_aer_simulator` so that the GPU-only
+    set can be checked on a machine without a GPU (tests/test_ci_gpu_mode.py); nothing here
+    imports qiskit."""
+    kwargs = dict(method=method, device=device, seed_simulator=seed)
+    if noise_model is not None:
+        kwargs["noise_model"] = noise_model
+    if device == "GPU":
+        if method == "automatic":
+            kwargs["method"] = "statevector"
+        if batched_shots_gpu:
+            kwargs["batched_shots_gpu"] = True
+        if cu_statevec_enable:
+            kwargs["cuStateVec_enable"] = True
+        if precision != "double":
+            kwargs["precision"] = precision
+    return kwargs
+
+
+def _aer_simulator(noise_model=None, seed: int = 11, method: str = "automatic",
+                   device: str = "CPU", batched_shots_gpu: bool = False,
+                   cu_statevec_enable: bool = True, precision: str = "double"):
+    """AerSimulator configured per the owner's engine and HPC policy (RUNBOOK.md, "Engine and
+    HPC policy for Perlmutter runs"): for noisy shot sampling on a GPU the policy fixes
+    ``AerSimulator(method="statevector", device="GPU", cuStateVec_enable=True,
+    batched_shots_gpu=True)``.
+
+    Every GPU-only option is passed ONLY when device == "GPU", so the CPU path (the laptop and
+    every other gate) is bit-for-bit what it was before this function existed.  On the GPU the
+    policy's method is used when the caller left `method` at its default "automatic"; an explicit
+    method is never overridden.
+
+    precision: "double" per policy -- `precision="single"` is allowed only after a tolerance
+    check, so the flag exists and defaults to double; nothing in this package passes "single".
+
+    Both options exist in qiskit-aer 0.15.1 (the CI pin; verified against the 0.15.1 wheel's
+    `AerSimulator._default_options`: `cuStateVec_enable=False`, `batched_shots_gpu=False`,
+    `batched_shots_gpu_max_qubits=16`) and in 0.17.2 (the laptop).  Aer's own documentation of
+    `batched_shots_gpu` states "cuStateVec_enable is not supported for this option", i.e. with
+    both set Aer batches the shots when the number of ACTIVE qubits is <= 16 and otherwise falls
+    back to the cuStateVec kernels -- at 2x2 the generic-noise circuits use 12 qubits (batched)
+    and the FakeFez patch 17 (cuStateVec).  Neither combination is an error.  If some Aer build
+    nevertheless rejects an option (AerError "Invalid option ..."), it is dropped and the run
+    continues, so the gate never dies on a simulator flag.
+    """
+    from qiskit_aer import AerSimulator
+
+    kwargs = _aer_options(noise_model=noise_model, seed=seed, method=method, device=device,
+                          batched_shots_gpu=batched_shots_gpu,
+                          cu_statevec_enable=cu_statevec_enable, precision=precision)
+    try:
+        return AerSimulator(**kwargs)
+    except Exception as exc:                                        # pragma: no cover (GPU only)
+        dropped = [k for k in ("cuStateVec_enable", "batched_shots_gpu", "precision")
+                   if k in kwargs]
+        if not dropped:
+            raise
+        for k in dropped:
+            kwargs.pop(k)
+        import warnings
+
+        warnings.warn(f"AerSimulator rejected {dropped} ({exc}); retrying without them",
+                      RuntimeWarning)
+        return AerSimulator(**kwargs)
+
+
+def _transpile_for(qc, sim, backend=None, basis=("rz", "sx", "x", "cz"), coupling_map=None,
+                   optimization_level: int = 3, seed: int = 11):
+    """The transpilation `sample` and `sample_many` share, so that a batched run and a loop of
+    single runs execute exactly the same circuits.  With a backend the circuit is mapped ONTO
+    that backend (`basis` and `coupling_map` are then ignored); without one it is put into the
+    given basis at optimization level 1, which is what gate L4 has always done."""
+    from qiskit import transpile
+
+    if backend is not None:
+        return transpile(qc, backend=backend, optimization_level=optimization_level,
+                         seed_transpiler=seed)
+    return transpile(qc, sim, basis_gates=list(basis), coupling_map=coupling_map,
+                     optimization_level=1, seed_transpiler=seed)
+
+
 def sample(gates: list, n: int, shots: int, noise_model=None, coupling_map=None,
            basis=("rz", "sx", "x", "cz"), seed: int = 11, method: str = "automatic",
            device: str = "CPU", backend=None, optimization_level: int = 3,
-           batched_shots_gpu: bool = False) -> dict:
-    """Run the circuit on AerSimulator and return {bit tuple: count} in this package's order.
+           batched_shots_gpu: bool = False, cu_statevec_enable: bool = True,
+           precision: str = "double") -> dict:
+    """Run ONE circuit on AerSimulator and return {bit tuple: count} in this package's order.
+    For many circuits use `sample_many`, which issues a single `run([...])` call as the owner's
+    HPC policy requires; this function stays as it was for the single-circuit callers (gate L2,
+    the L4 pilot and timing ladder).
+
     device='GPU' requires qiskit-aer-gpu (NOT available on this laptop: the 0.15.1 wheel is
     incompatible with the pinned qiskit 2.5.2; the Perlmutter CI runs qiskit 1.4.3 + aer-gpu
-    0.15.1 on an A100).  batched_shots_gpu=True asks Aer to run many shots of one circuit in
-    one GPU batch, which is the whole point of the GPU for noisy sampling; it is passed only
-    when device='GPU', so the CPU path is bit-for-bit unchanged.
+    0.15.1 on an A100).  The GPU options (statevector, cuStateVec_enable, batched_shots_gpu,
+    precision) are handled in `_aer_simulator` and reach Aer only when device='GPU'.
 
     backend: a Qiskit BackendV2 (e.g. FakeFez()).  When given, the circuit is transpiled
     ONTO that backend (its coupling map, basis and layout, optimization_level, seed) before
@@ -112,21 +199,50 @@ def sample(gates: list, n: int, shots: int, noise_model=None, coupling_map=None,
     calibration to the physical qubits the circuit really uses; `basis` and `coupling_map`
     are then ignored.  Aer truncates the idle device qubits, so only the active patch is
     simulated.  Classical bit i still carries IR qubit i."""
-    from qiskit import transpile
-    from qiskit_aer import AerSimulator
-
-    qc = ir_to_qiskit(gates, n, measure=True)
-    kwargs = dict(method=method, device=device, seed_simulator=seed)
-    if noise_model is not None:
-        kwargs["noise_model"] = noise_model
-    if device == "GPU" and batched_shots_gpu:
-        kwargs["batched_shots_gpu"] = True
-    sim = AerSimulator(**kwargs)
-    if backend is not None:
-        tq = transpile(qc, backend=backend, optimization_level=optimization_level, seed_transpiler=seed)
-    else:
-        tq = transpile(qc, sim, basis_gates=list(basis), coupling_map=coupling_map, optimization_level=1,
-                       seed_transpiler=seed)
+    sim = _aer_simulator(noise_model=noise_model, seed=seed, method=method, device=device,
+                         batched_shots_gpu=batched_shots_gpu,
+                         cu_statevec_enable=cu_statevec_enable, precision=precision)
+    tq = _transpile_for(ir_to_qiskit(gates, n, measure=True), sim, backend=backend, basis=basis,
+                        coupling_map=coupling_map, optimization_level=optimization_level, seed=seed)
     result = sim.run(tq, shots=shots).result()
     counts = result.get_counts()
     return {qiskit_key_to_bits(k): v for k, v in counts.items()}
+
+
+def sample_many(gates_list: list, n: int, shots: int, noise_model=None, coupling_map=None,
+                basis=("rz", "sx", "x", "cz"), seed: int = 11, method: str = "automatic",
+                device: str = "CPU", backend=None, optimization_level: int = 3,
+                batched_shots_gpu: bool = False, cu_statevec_enable: bool = True,
+                precision: str = "double") -> list:
+    """Sample MANY IR circuits in ONE `AerSimulator.run([...])` call and return one
+    {bit tuple: count} dict per circuit, in the order given, in this package's bit order.
+
+    The owner's HPC policy (RUNBOOK.md): "transpile once and reuse; submit many circuits in ONE
+    run([...]) call ... rather than a Python loop of run calls".  A loop pays the simulator and
+    transpiler set-up per call -- measured on this laptop CPU as 1.4 s for the first call against
+    0.18 s for the next (gate L4's timing ladder), and about 6 s per call in the H0P work -- and
+    on a GPU it re-enters the CUDA context each time and cannot spread circuits over the device.
+
+    Each circuit is transpiled individually with the same arguments `sample` uses (shared
+    `_transpile_for`), so the executed circuits are identical to the ones a `sample` loop would
+    execute.  The measured counts are NOT bit-for-bit those of such a loop: with one
+    `seed_simulator` Aer derives a separate RNG stream per experiment, so only the first
+    experiment of the batch reproduces a single `sample` call (checked in
+    tests/test_ci_gpu_mode.py, which pins `sample_many([g]) == sample(g)` and the identity of the
+    batched results for circuits whose outcome is deterministic).
+
+    API note: only `transpile`, `AerSimulator`, `run([...])` and `Result.get_counts(i)` are used,
+    all present in qiskit 1.4.3 / aer 0.15.1 (the CI) and 2.5.2 / 0.17.2 (the laptop)."""
+    sim = _aer_simulator(noise_model=noise_model, seed=seed, method=method, device=device,
+                         batched_shots_gpu=batched_shots_gpu,
+                         cu_statevec_enable=cu_statevec_enable, precision=precision)
+    tqs = [_transpile_for(ir_to_qiskit(g, n, measure=True), sim, backend=backend, basis=basis,
+                          coupling_map=coupling_map, optimization_level=optimization_level,
+                          seed=seed)
+           for g in gates_list]
+    result = sim.run(tqs, shots=shots).result()
+    out = []
+    for i in range(len(tqs)):
+        counts = result.get_counts(i)
+        out.append({qiskit_key_to_bits(k): v for k, v in counts.items()})
+    return out

@@ -26,6 +26,24 @@ qiskit 1.4.3 + qiskit-aer-gpu 0.15.1; this module therefore stays on the API tha
 laptop's qiskit 2.5.2 accept (QuantumCircuit, transpile, AerSimulator, NoiseModel) and imports
 nothing from the qiskit family at module load.
 
+The owner's engine and HPC policy (RUNBOOK.md, "Engine and HPC policy for Perlmutter runs") governs
+how the run is laid out and what it must measure:
+
+  * the shots of a whole sector go through ONE `AerSimulator.run([...])` call
+    (`skqd.circuits_qiskit.sample_many`), not a Python loop of runs, with the circuits transpiled
+    once; on the GPU the simulator is the policy's
+    `AerSimulator(method="statevector", device="GPU", cuStateVec_enable=True, batched_shots_gpu=True)`
+    at double precision (`precision="single"` needs a tolerance check and is not used);
+  * `validation/<out>.json` carries a `run` block with the engine, device, GPUs/tasks/rank, wall
+    time, per-phase times (ladder, per-sector pilot, per-sector sampling, per-sector analysis),
+    s/shot at every ladder point, GPU node-hours, peak GPU memory and mean GPU utilization from the
+    `nvidia-smi` sampler that `jobs/gate.sbatch` runs every 10 s, all seeds and the package
+    versions, plus what a full-size run of this gate would cost at the measured s/shot;
+  * E(p) stays null until two task counts have been measured -- it is never estimated.
+
+On a laptop there is no sampler file and no Slurm environment, so those fields are null and the run
+is otherwise unchanged.
+
 Usage: python scripts/laptop_L4_aer_noise.py [--p2 3e-3] [--p1 3e-4] [--pro 0.01]
                                              [--budget-minutes 25] [--pilot-shots 1000]
                                              [--min-shots 500] [--gpu] [--batched-shots-gpu]
@@ -72,6 +90,82 @@ def qiskit_versions() -> dict:
         except Exception as exc:                                  # pragma: no cover
             out[mod] = f"unavailable: {exc}"
     return out
+
+
+SAMPLE_SEED = 11        # Aer seed_simulator and seed_transpiler of every sample here
+S2D_SEED_TRANSPILER = 7  # the seed gate S2D uses for its f analysis (kept identical)
+GPU_TELEMETRY_FILE = "gpu_telemetry.csv"   # written by jobs/gate.sbatch, read back below
+
+
+def slurm_layout() -> dict:
+    """GPUs, tasks and rank of this job, from Slurm's own environment (RUNBOOK.md asks every GPU
+    job to record them).  All None on a laptop, where none of these variables exist."""
+    def _int(name):
+        v = os.environ.get(name)
+        try:
+            return int(v)
+        except (TypeError, ValueError):
+            return None
+    return {"gpus_per_task": _int("SLURM_GPUS_PER_TASK"), "tasks": _int("SLURM_NTASKS"),
+            "rank": _int("SLURM_PROCID"), "cpus_per_task": _int("SLURM_CPUS_PER_TASK"),
+            "nodelist": os.environ.get("SLURM_JOB_NODELIST")}
+
+
+def gpu_telemetry(path: str = None) -> dict:
+    """Peak GPU memory and mean GPU utilization from the background nvidia-smi sampler that
+    jobs/gate.sbatch starts before `srun` (policy: sample
+    `nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv` every 10 s).
+
+    Lines are `<unix seconds>,<utilization>,<memory>` with or without the ` %` / ` MiB` units and
+    with or without nvidia-smi's header; one line per GPU per sample.  On a laptop the file does
+    not exist, and then every field is None and nothing in the gate changes."""
+    path = path or os.environ.get("SKQD_GPU_TELEMETRY", GPU_TELEMETRY_FILE)
+    empty = {"source": path, "samples": 0, "peak_memory_mib": None,
+             "mean_utilization_pct": None, "max_utilization_pct": None}
+    if not os.path.exists(path):
+        return empty
+    util, mem = [], []
+    with open(path) as fh:
+        for line in fh:
+            parts = [c.strip() for c in line.split(",")]
+            if len(parts) < 2:
+                continue
+            nums = []
+            for c in parts:
+                tok = c.split()[0] if c.split() else ""
+                try:
+                    nums.append(float(tok))
+                except ValueError:
+                    nums = []                 # a header line, or nvidia-smi error text
+                    break
+            if len(nums) >= 3:                # unix seconds, utilization, memory
+                util.append(nums[-2])
+                mem.append(nums[-1])
+            elif len(nums) == 2:              # no timestamp column
+                util.append(nums[0])
+                mem.append(nums[1])
+    if not util:
+        return empty
+    return {"source": path, "samples": len(util), "peak_memory_mib": float(max(mem)),
+            "mean_utilization_pct": float(sum(util) / len(util)),
+            "max_utilization_pct": float(max(util))}
+
+
+def s2d_shots_per_sector() -> int:
+    """The per-sector shot quota at which the operational S1 criterion holds on the device model
+    (`data/S2D_recall_at_f.json`: 32 circuits x 6250 shots), used below to extrapolate what a
+    full-size run of this gate would cost from the measured s/shot.  Never hard-coded: it is read
+    from the data file, and is None when the file is absent."""
+    fp = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data",
+                      "S2D_recall_at_f.json")
+    try:
+        import json
+        with open(fp) as fh:
+            res = json.load(fh)["results"]
+        e = next(iter(res.values()))
+        return int(e["circuits"]) * int(e["shots_per_circuit"])
+    except Exception:                                              # pragma: no cover
+        return None
 
 
 def main():
@@ -136,6 +230,8 @@ def main():
     # different shot count -- on a GPU the per-shot cost falls as the batch grows, so the full
     # 1000 + 500 shot run cannot be sized from a 20-shot pilot.
     ladder = []
+    phases = {}          # per-phase wall times, recorded per the HPC policy
+    t_ladder = time.time()
     if args.timing_ladder:
         ref0 = M.reference(g2, 0)
         g0 = F.coarse_step(references(M.basis, 0)[0], 1, ref0.dt)
@@ -145,16 +241,17 @@ def main():
         # per-shot cost there look an order of magnitude worse than it is.
         tw = time.time()
         cq.sample(g0, n, max(1, min(args.timing_ladder)), noise_model=nm, device=device,
-                  backend=backend, batched_shots_gpu=bsg)
+                  backend=backend, batched_shots_gpu=bsg, seed=SAMPLE_SEED)
         warmup_s = time.time() - tw
         print(f"timing ladder: warm-up discarded ({warmup_s:.2f} s)", flush=True)
         for s in args.timing_ladder:
             tt = time.time()
             cq.sample(g0, n, int(s), noise_model=nm, device=device, backend=backend,
-                      batched_shots_gpu=bsg)
+                      batched_shots_gpu=bsg, seed=SAMPLE_SEED)
             el = time.time() - tt
             ladder.append({"shots": int(s), "seconds": el, "seconds_per_shot": el / int(s)})
             print(f"timing ladder: {s:>6} shots -> {el:7.2f} s ({el / int(s):.5f} s/shot)", flush=True)
+    phases["ladder_s"] = time.time() - t_ladder if args.timing_ladder else 0.0
     rows = []
     for twoB in (0, 2):
         ref = M.reference(g2, twoB)
@@ -163,8 +260,10 @@ def main():
         # pilot timing -> shots per circuit within the budget
         tp = time.time()
         cq.sample(circuits[0][2], n, args.pilot_shots, noise_model=nm, device=device, backend=backend,
-                  batched_shots_gpu=bsg)
-        t_per_shot = (time.time() - tp) / args.pilot_shots
+                  batched_shots_gpu=bsg, seed=SAMPLE_SEED)
+        pilot_s = time.time() - tp
+        phases[f"pilot_s|B={twoB // 2}"] = pilot_s
+        t_per_shot = pilot_s / args.pilot_shots
         print(f"B={twoB // 2}: pilot {args.pilot_shots} shots -> {t_per_shot:.3f} s/shot", flush=True)
         budget_s = args.budget_minutes * 60 / 2  # half the budget per sector
         shots = int(min(20000, max(args.min_shots, budget_s / (t_per_shot * len(circuits)))))
@@ -176,10 +275,20 @@ def main():
         prob = np.zeros(M.basis.dim)
         prob[ref.indices] = np.abs(ref.ground) ** 2
         acc_all, rej_all, total = {}, {}, 0
-        cz_counts = []
-        for r, k, g in circuits:
-            counts = cq.sample(g, n, shots, noise_model=nm, device=device, backend=backend,
-                               batched_shots_gpu=bsg)
+        # ONE AerSimulator.run([...]) call for all circuits of the sector, per the owner's HPC
+        # policy (RUNBOOK.md: "submit many circuits in ONE run([...]) call ... rather than a
+        # Python loop of run calls; transpile once and reuse").  A loop of cq.sample calls paid
+        # the simulator/transpiler set-up per circuit (1.4 s for the first call against 0.18 s
+        # for the next on this laptop CPU) and on a GPU re-entered the CUDA context each time.
+        t_samp = time.time()
+        counts_list = cq.sample_many([g for _, _, g in circuits], n, shots, noise_model=nm,
+                                     device=device, backend=backend, batched_shots_gpu=bsg,
+                                     seed=SAMPLE_SEED)
+        phases[f"sampling_s|B={twoB // 2}"] = time.time() - t_samp
+        print(f"B={twoB // 2}: sampled {len(circuits)} circuits x {shots} shots in one run() call "
+              f"({phases[f'sampling_s|B={twoB // 2}']:.1f} s)", flush=True)
+        t_ana = time.time()
+        for counts in counts_list:
             acc, rej = codec.decode_counts(counts, target_twoB=twoB)
             for kk, c in acc.items():
                 acc_all[kk] = acc_all.get(kk, 0) + c
@@ -190,7 +299,8 @@ def main():
             # the f of gate S2D: per-edge CZ errors and per-qubit readout errors of the patch
             # the transpiler chose on this calibration snapshot
             an = [analyse_on_backend(transpile(cq.ir_to_qiskit(g, n, measure=True), backend=backend,
-                                               optimization_level=3, seed_transpiler=7), backend)
+                                               optimization_level=3,
+                                               seed_transpiler=S2D_SEED_TRANSPILER), backend)
                   for _, _, g in circuits]
             czs = [e["cz"] for e in an]
             f_model = float(np.mean([e["f"] for e in an]))
@@ -211,6 +321,7 @@ def main():
         res = ritz(M.H(g2), B)
         met = support_metrics(B, prob, 1e-3)
         cert = certify(res, ref.E0, float(ref.energies[1]))
+        phases[f"analysis_s|B={twoB // 2}"] = time.time() - t_ana
         rows.append([f"B={twoB // 2}", len(circuits), shots, f"{cz:.0f}", f"{f_model:.3f}",
                      f"{a:.5f}", f"{predicted_clean:.3f}", f"{predicted:.3f}", f"{y:.3f}",
                      f"{y / predicted_clean:.2f}", f"{y / predicted:.2f}", len(B),
@@ -236,22 +347,86 @@ def main():
                                        rejections={k: int(v) for k, v in rej_all.items()},
                                        weinstein=[float(cert.weinstein[0]), float(cert.weinstein[1])],
                                        exact_E0=float(ref.E0))
+    wall = time.time() - t0
+    layout = slurm_layout()
+    tele = gpu_telemetry()
+    # the best measured cost per shot on THIS device: the ladder's cheapest point if a ladder was
+    # run (on a GPU the per-shot cost falls as the batch grows), otherwise the pilot
+    best = min([e["seconds_per_shot"] for e in ladder], default=None)
+    pilot_sps = {f"B={tb // 2}": R.data[f"B={tb // 2}"]["t_per_shot"] for tb in (0, 2)}
+    if best is None:
+        best = min(pilot_sps.values())
+        best_from = "pilot"
+    else:
+        best_from = f"timing ladder at {max(e['shots'] for e in ladder)} shots"
+    # what a full-size run of THIS gate would cost: the same 2x2 circuits at the per-sector shot
+    # quota of data/S2D_recall_at_f.json, at the measured s/shot.  The 2x3 cost of gate S3 is NOT
+    # extrapolated here: 20 qubits is a different simulation, so a 2x2 ladder cannot size it.
+    q = s2d_shots_per_sector()
+    full = {"definition": ("the same 2x2 circuits at the per-sector shot quota of "
+                           "data/S2D_recall_at_f.json (32 circuits x 6250 shots), both sectors"),
+            "shots_per_sector": q, "sectors": 2,
+            "shots": None if q is None else 2 * q,
+            "seconds_per_shot_used": best, "seconds_per_shot_from": best_from,
+            "seconds": None if q is None else 2 * q * best,
+            "hours": None if q is None else 2 * q * best / 3600.0}
+    gpus = (layout["gpus_per_task"] or 0) * (layout["tasks"] or 1) if layout["gpus_per_task"] else None
     R.data["run"] = {
+        "engine": "Qiskit Aer statevector" + (" (GPU, cuStateVec/batched shots)" if device == "GPU"
+                                              else " (CPU)"),
         "device": device,
         "batched_shots_gpu": bsg,
+        "cu_statevec_enable": device == "GPU",
+        "precision": "double",
+        "active_qubits": n,
         "ci": ci or None,
+        "slurm": layout,
+        "gpus": gpus,
+        "tasks": layout["tasks"],
+        "rank": layout["rank"],
+        "wall_seconds": wall,
+        "gpu_node_hours": None if not gpus else gpus * wall / 3600.0,
+        "parallel_efficiency_Ep": None,
+        "parallel_efficiency_note": ("E(p) needs T_1 and T_p from at least two task counts; this "
+                                     "run is a single task, so it is not measured"),
+        "phases_s": phases,
+        "gpu_telemetry": tele,
         "versions": qiskit_versions(),
+        "seeds": {"aer_seed_simulator": SAMPLE_SEED, "seed_transpiler": SAMPLE_SEED,
+                  "s2d_analysis_seed_transpiler": S2D_SEED_TRANSPILER},
         "shots_per_circuit": {r[0]: int(r[2]) for r in rows},
-        "seconds_per_shot_pilot": {f"B={tb // 2}": R.data[f"B={tb // 2}"]["t_per_shot"] for tb in (0, 2)},
+        "seconds_per_shot_pilot": pilot_sps,
         "timing_ladder": ladder,
+        "full_size_estimate": full,
         "pilot_shots": args.pilot_shots,
         "min_shots": args.min_shots,
         "budget_minutes": args.budget_minutes,
         "noise": ({"backend": args.backend} if backend is not None
                   else {"p1": args.p1, "p2": args.p2, "p_ro": args.pro}),
     }
-    R.runtime_s = time.time() - t0
+    R.runtime_s = wall
     R.save()
+    run = R.data["run"]
+    def _fmt(x, fmt="{:.3g}"):
+        return "not measured" if x is None else fmt.format(x)
+    gpus_txt = ("none (CPU run)" if device != "GPU" and gpus is None else _fmt(gpus, "{:d}"))
+    nodeh_txt = ("0 (CPU run)" if not gpus and device != "GPU" else
+                 _fmt(run["gpu_node_hours"], "{:.4f}"))
+    mem_txt = ("not measured (no nvidia-smi sampler file in the working directory)"
+               if tele["peak_memory_mib"] is None else f"{tele['peak_memory_mib']:.0f} MiB")
+    util_txt = ("not measured" if tele["mean_utilization_pct"] is None else
+                f"{tele['mean_utilization_pct']:.1f} % mean, {tele['max_utilization_pct']:.0f} % peak "
+                f"over {tele['samples']} nvidia-smi samples")
+    policy_line = (
+        f"**Engine and resources** (RUNBOOK.md policy): engine {run['engine']}, qiskit "
+        f"{run['versions']['qiskit']} / aer {run['versions']['qiskit_aer']}, device {device}, "
+        f"GPUs {gpus_txt}, tasks {_fmt(layout['tasks'], '{:d}')}, walltime "
+        f"{wall:.0f} s, E(p) {_fmt(run['parallel_efficiency_Ep'])} ({run['parallel_efficiency_note']}), "
+        f"GPU node-hours used {nodeh_txt}, peak GPU memory {mem_txt}, GPU utilization {util_txt}. "
+        f"Cheapest measured cost {best:.5f} s/shot ({best_from}), so a full-size run of this gate "
+        f"({full['definition']}, {_fmt(full['shots'], '{:d}')} shots) would take "
+        f"{_fmt(full['hours'], '{:.2f}')} h on this device.  The 2x3 cost of gate S3 is not "
+        f"extrapolated from this ladder: 20 qubits is a different simulation.")
     noise_desc = (f"NoiseModel.from_backend({args.backend}) (calibration snapshot: per-edge CZ, per-qubit "
                   f"readout, T1/T2), circuits transpiled onto {args.backend} at optimization level 3, seed 7"
                   if backend is not None else f"generic depolarizing model p1 = {args.p1}, p2 = {args.p2}, readout {args.pro}")
@@ -267,6 +442,9 @@ device {device}, budget {args.budget_minutes} min, pilot {args.pilot_shots} shot
            "fp", "Weinstein", "rejections"], rows)}
 
 {R.criteria_table()}
+
+{policy_line}
+
 {("" if not ladder else "Timing ladder on one circuit, device " + device
    + (" with batched_shots_gpu" if bsg else "") + " (the per-shot cost falls as the batch grows, so a "
    "run at a different shot count cannot be sized from a single pilot point):\n\n"
