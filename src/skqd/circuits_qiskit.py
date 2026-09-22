@@ -240,7 +240,8 @@ def sample_many(gates_list: list, n: int, shots: int, noise_model=None, coupling
                 device: str = "CPU", backend=None, optimization_level: int = 3,
                 batched_shots_gpu: bool = False, cu_statevec_enable: bool = True,
                 precision: str = "double", max_experiments: int = None,
-                max_shots_per_run: int = None, return_info: bool = False) -> list:
+                max_shots_per_run: int = None, return_info: bool = False,
+                transpiled: list = None) -> list:
     """Sample MANY IR circuits in ONE `AerSimulator.run([...])` call and return one
     {bit tuple: count} dict per circuit, in the order given, in this package's bit order.
 
@@ -274,15 +275,25 @@ def sample_many(gates_list: list, n: int, shots: int, noise_model=None, coupling
     returns what the call actually did -- chunk sizes, number of `run` calls, the seeds used and
     any OOM retries -- so the gate can record it.
 
+    `transpiled`: a list of QuantumCircuits ALREADY mapped to the target, used instead of
+    transpiling `gates_list` here (`gates_list` is then ignored and may be None).  Added for gate
+    S3, which transpiles the all-to-all RZZ circuits itself at optimization level 3 and counts
+    their two-qubit gates before sampling; without this the 20-qubit circuits would be transpiled
+    twice, and at a different optimization level, since the no-backend path of `_transpile_for` is
+    fixed at level 1 (which is what gate L4 has always used and is left untouched).  The caller is
+    then responsible for the circuits being in the simulator's basis and for classical bit i still
+    carrying IR qubit i; nothing else in the function changes.
+
     API note: only `transpile`, `AerSimulator`, `run([...])` and `Result.get_counts(i)` are used,
     all present in qiskit 1.4.3 / aer 0.15.1 (the CI) and 2.5.2 / 0.17.2 (the laptop)."""
     sim = _aer_simulator(noise_model=noise_model, seed=seed, method=method, device=device,
                          batched_shots_gpu=batched_shots_gpu,
                          cu_statevec_enable=cu_statevec_enable, precision=precision)
-    tqs = [_transpile_for(ir_to_qiskit(g, n, measure=True), sim, backend=backend, basis=basis,
-                          coupling_map=coupling_map, optimization_level=optimization_level,
-                          seed=seed)
-           for g in gates_list]
+    tqs = list(transpiled) if transpiled is not None else \
+        [_transpile_for(ir_to_qiskit(g, n, measure=True), sim, backend=backend, basis=basis,
+                        coupling_map=coupling_map, optimization_level=optimization_level,
+                        seed=seed)
+         for g in gates_list]
 
     n_exp = max(1, int(max_experiments or len(tqs)))
     n_sh = max(1, int(max_shots_per_run or shots))

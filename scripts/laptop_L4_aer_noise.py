@@ -64,100 +64,21 @@ from skqd.codec import Codec  # noqa: E402
 from skqd.exact import Model  # noqa: E402
 from skqd.krylov import references  # noqa: E402
 from skqd.report import GateResult, env_block, md_table, write_report  # noqa: E402
+from skqd.hpc import (GPU_TELEMETRY_FILE, ci_context, gpu_telemetry,  # noqa: E402,F401
+                      qiskit_versions, slurm_layout)
 from skqd.skqd import certify, ritz, support_metrics, yield_model  # noqa: E402
 
 from gate_H0P import YIELD_MODEL_NAME, random_acceptance  # noqa: E402  (same a as gate H0P)
 from gate_S2D import YIELD_FACTOR, analyse_on_backend  # noqa: E402  (same f as gate S2D)
 
 
-def ci_context() -> dict:
-    """Non-empty when this run is the Perlmutter CI job rather than a laptop run.
-
-    The CI passes only the gate token: it runs `python scripts/run_gate.py L4` with no extra
-    arguments (ci/README.md), so the gate has to choose GPU mode itself.  CI_GATE is set by the
-    poller; SLURM_JOB_ID is the fallback for a hand-submitted Slurm job."""
-    ctx = {k: os.environ[k] for k in ("CI_GATE", "SLURM_JOB_ID", "SLURM_JOB_NODELIST")
-           if os.environ.get(k)}
-    return ctx if ("CI_GATE" in ctx or "SLURM_JOB_ID" in ctx) else {}
-
-
-def qiskit_versions() -> dict:
-    """Recorded in validation/L4.json: the CI runs qiskit 1.4.3, the laptop 2.5.2."""
-    out = {}
-    for mod in ("qiskit", "qiskit_aer"):
-        try:
-            out[mod] = __import__(mod).__version__
-        except Exception as exc:                                  # pragma: no cover
-            out[mod] = f"unavailable: {exc}"
-    return out
-
-
 SAMPLE_SEED = 11        # Aer seed_simulator and seed_transpiler of every sample here
 S2D_SEED_TRANSPILER = 7  # the seed gate S2D uses for its f analysis (kept identical)
-GPU_TELEMETRY_FILE = "gpu_telemetry.csv"   # written by jobs/gate.sbatch, read back below
 
-
-def slurm_layout() -> dict:
-    """GPUs, tasks and rank of this job, from Slurm's own environment (RUNBOOK.md asks every GPU
-    job to record them).  All None on a laptop, where none of these variables exist."""
-    def _int(name):
-        v = os.environ.get(name)
-        try:
-            return int(v)
-        except (TypeError, ValueError):
-            return None
-    # ci/poll.sh submits with --gpus-per-task, but Slurm does not always export
-    # SLURM_GPUS_PER_TASK to the step (job 58741899 reported it unset while running on one A100),
-    # so fall back to the variables it does set and finally to the visible-device list.
-    gpus = (_int("SLURM_GPUS_PER_TASK") or _int("SLURM_GPUS_ON_NODE") or _int("SLURM_GPUS")
-            or (len([x for x in os.environ.get("CUDA_VISIBLE_DEVICES", "").split(",") if x])
-                or None))
-    return {"gpus_per_task": _int("SLURM_GPUS_PER_TASK"), "gpus": gpus,
-            "gpus_on_node": _int("SLURM_GPUS_ON_NODE"),
-            "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
-            "tasks": _int("SLURM_NTASKS"),
-            "rank": _int("SLURM_PROCID"), "cpus_per_task": _int("SLURM_CPUS_PER_TASK"),
-            "nodelist": os.environ.get("SLURM_JOB_NODELIST")}
-
-
-def gpu_telemetry(path: str = None) -> dict:
-    """Peak GPU memory and mean GPU utilization from the background nvidia-smi sampler that
-    jobs/gate.sbatch starts before `srun` (policy: sample
-    `nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv` every 10 s).
-
-    Lines are `<unix seconds>,<utilization>,<memory>` with or without the ` %` / ` MiB` units and
-    with or without nvidia-smi's header; one line per GPU per sample.  On a laptop the file does
-    not exist, and then every field is None and nothing in the gate changes."""
-    path = path or os.environ.get("SKQD_GPU_TELEMETRY", GPU_TELEMETRY_FILE)
-    empty = {"source": path, "samples": 0, "peak_memory_mib": None,
-             "mean_utilization_pct": None, "max_utilization_pct": None}
-    if not os.path.exists(path):
-        return empty
-    util, mem = [], []
-    with open(path) as fh:
-        for line in fh:
-            parts = [c.strip() for c in line.split(",")]
-            if len(parts) < 2:
-                continue
-            nums = []
-            for c in parts:
-                tok = c.split()[0] if c.split() else ""
-                try:
-                    nums.append(float(tok))
-                except ValueError:
-                    nums = []                 # a header line, or nvidia-smi error text
-                    break
-            if len(nums) >= 3:                # unix seconds, utilization, memory
-                util.append(nums[-2])
-                mem.append(nums[-1])
-            elif len(nums) == 2:              # no timestamp column
-                util.append(nums[0])
-                mem.append(nums[1])
-    if not util:
-        return empty
-    return {"source": path, "samples": len(util), "peak_memory_mib": float(max(mem)),
-            "mean_utilization_pct": float(sum(util) / len(util)),
-            "max_utilization_pct": float(max(util))}
+# ci_context, qiskit_versions, slurm_layout, gpu_telemetry and GPU_TELEMETRY_FILE were defined
+# here until 2026-09-22; they now live in skqd.hpc (unchanged) so that gate S3 uses the same
+# detection, Slurm fallbacks and telemetry parser instead of a copy.  They are imported above
+# under their original names, so this gate and everything importing it are unaffected.
 
 
 def s2d_shots_per_sector() -> int:

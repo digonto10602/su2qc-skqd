@@ -35,6 +35,17 @@ GATES = [  # gate, description (manual Step 10), where it runs
 ]
 
 
+def calibration_note(d: dict) -> str:
+    """The suffix that marks a gate row as a calibration rather than the gate itself.
+
+    A calibration run (`scripts/s3_device_model.py --calibration`, which is what the Perlmutter CI
+    runs for token S3) writes the gate's own validation JSON but evaluates THROUGHPUT criteria
+    only, so its PASS must never be read here as the gate's physics criterion."""
+    if isinstance(d.get("data"), dict) and d["data"].get("calibration"):
+        return " — CALIBRATION RUN (throughput only): the gate criterion was NOT evaluated"
+    return ""
+
+
 def main():
     rows = []
     for g, desc, where in GATES:
@@ -43,6 +54,7 @@ def main():
             d = json.load(open(p))
             nf = sum(1 for c in d["criteria"] if not c["passed"])
             status = f"**{d['status']}** ({len(d['criteria'])} criteria, {nf} failing, {d['runtime_s']:.0f} s, {d['environment']['timestamp']}, commit {d['environment']['git_commit']})"
+            status += calibration_note(d)
         else:
             status = "open"
         rows.append(f"| {g} | {desc} | {where} | {status} |")
