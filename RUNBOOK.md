@@ -307,3 +307,75 @@ transpilations and never edits source; `executor-opus` (high effort) implements 
 logs and never touches a number; `planner-fable` (max effort) is for a blocked gate or a physics decision
 only — do not call it for anything routine. There is also a `/gate <GATE>` skill that wraps the
 run → read JSON → push → route-on-failure sequence.
+
+## Engine and HPC policy for Perlmutter runs (owner, 2026-09-21)
+
+Recorded here at the owner's instruction and binding on **every CI job**.  The loop itself (request
+tokens, the allowlist, the never-do list) is in the `skqd-ci` section of `CLAUDE.md` and in
+`ci/README.md`; this section is about which engine a gate may use and how a GPU job must be laid out
+and measured.
+
+### Engines
+
+| gates | engine | why |
+|---|---|---|
+| E1–E3, S1 | exact Krylov states in the gauge-invariant basis (numpy/scipy; dims 82 / 1727 / 37165) | a qubit simulator is 600–7200× larger; keep them out of the simulator |
+| L2, L3, L4, S2/S2D, S3, H0/H0P | Qiskit + Aer-GPU (qiskit 1.4.3 + qiskit-aer-gpu 0.15.1 on Perlmutter) | these must match IBM hardware |
+| L5 at 2×2 now, then L5 extended to 2×3 (20 q) and 2×4 (28 q) against the exact Krylov states | CUDA-Q 0.16, target `nvidia` | gate-level validation of the compiled circuits |
+
+Code that the CI may execute must run on **qiskit 1.4.3** (the laptop has 2.5.2; aer-gpu 0.15.1 breaks
+on Qiskit 2.x, which is why the CI is pinned back).  Any CUDA-Q result used alongside Qiskit results
+must first pass the L5 equivalence check.
+
+### Resources — enforced on Perlmutter, not changeable from the repo
+
+A CI job gets 1 or 2 A100s (shared QOS), 32 CPU threads per GPU, and the walltime of its allowlist
+entry.  Inside that allocation work may be laid out freely in `jobs/gate.sbatch` or in the gate script
+(srun tasks, threads, processes), but **never request more than the allocation**.  Whole-node (4 GPU)
+or multi-node runs need a new allowlist entry from the owner, and such a proposal is made **only with
+measured scaling data** (see *Measure before scaling*).
+
+### Parallelize along the problem's natural axes
+
+The independent work units are: Krylov index k, sector (B=0, B=1), g² value, lattice size, shot batch,
+seed, bootstrap resample.  Partition those over GPUs and processes — they need no communication.  The
+physics itself is never split.
+
+- **Multi-GPU in one job:** one srun task per GPU (`srun -n $G --gpus-per-task=1`), each task taking the
+  units with `index % n_tasks == rank` (`rank = SLURM_PROCID`), merged in a final step.
+- **CUDA-Q:** target `nvidia`; option `mqpu` with `sample_async` / `observe_async` to spread independent
+  circuits over the visible GPUs; option `fp32` for sampling only after a tolerance check shows it is
+  enough; build each kernel once and reuse it (the translator writes kernel source — cache by hash).
+- **Qiskit Aer GPU:** `AerSimulator(method="statevector", device="GPU", cuStateVec_enable=True,
+  batched_shots_gpu=True)` for noisy shot sampling; transpile once and reuse; submit many circuits in
+  **one** `run([...])` call with parameter binding rather than a Python loop of `run` calls;
+  `precision="single"` only after a tolerance check.
+- **CPU parts** (numpy/scipy, decoding, CIPSI, certification): set `OMP_NUM_THREADS` /
+  `MKL_NUM_THREADS` / `OPENBLAS_NUM_THREADS` to `SLURM_CPUS_PER_TASK` for a single threaded process, or
+  to 1 per worker when using a process pool (`concurrent.futures`, workers =
+  `SLURM_CPUS_PER_TASK // 2`).  Never oversubscribe.  Keep sparse matrices sparse; use
+  `expm_multiply` / Lanczos, never a dense `expm` at 2×3 and above.
+- The sbatch file exports `SLURM_CPU_BIND=cores`, `OMP_PROC_BIND=spread`, `OMP_PLACES=threads`.
+
+### Measure before scaling
+
+- Every GPU job records in its validation JSON: wall time, per-phase timings, GPUs and tasks used,
+  seconds per shot (or per circuit), peak GPU memory, and mean GPU utilization (sample
+  `nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv` every 10 s in the background).
+- The **first run of any new heavy workload is a calibration at reduced size**; extrapolate from it
+  before asking for a longer walltime.
+- Before proposing more GPUs: measure T₁ and T₂ (and T₄ once available), report the parallel efficiency
+  E(p) = T₁ / (p · T_p) and the cost in GPU node-hours, and propose more GPUs **only if E(p) ≥ 0.7**.
+
+### I/O, checkpoints, reproducibility
+
+- Write outputs relative to the job's working directory (the CI snapshot on `$SCRATCH`); keep them
+  compact (json/npz), no thousands of small files; only summaries go into git.
+- Anything that could exceed 30 min must checkpoint and resume from the last completed work unit, so it
+  can later run in preempt QOS (charge factor 0.25) or be split over several jobs.
+- Seed = `base_seed + rank + unit index`; record every seed and all package versions in the JSON.
+
+### Reporting
+
+The gate report states, for every GPU run: engine, device, GPUs, walltime, E(p) if measured, GPU
+node-hours used, and what a full-size run would cost.

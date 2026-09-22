@@ -105,6 +105,13 @@ production run on the desktop GPU.
 You have NO login to Perlmutter and must not try to get one (no ssh, sshproxy, SF API).
 Perlmutter pulls this repo every hour at :07 UTC and runs at most one allowlisted job.
 
+**Which engine a gate may use, how a GPU job is laid out, and what it must measure** are fixed by the
+owner's engine and HPC policy in `RUNBOOK.md` ("Engine and HPC policy for Perlmutter runs"): exact
+numpy/scipy for E1-E3 and S1, Aer-GPU for the hardware-matching gates (code must run on qiskit 1.4.3),
+CUDA-Q for gate-level validation; parallelise only along k, sector, g2, lattice, shot batch, seed or
+resample; every GPU job records wall time, per-phase timings, GPUs, s/shot, peak GPU memory and mean
+GPU utilization in its validation JSON; more GPUs are proposed only with measured E(p) >= 0.7.
+
 ## Loop
 1. Make your change, run the fast CPU tests locally, commit, push to master.
 2. `scripts/ci_request.sh <TOKEN>`  - TOKEN is one of: smoke E1 E2 E3 S1 L1 L2 L3 L4 L5
