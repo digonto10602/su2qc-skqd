@@ -1,0 +1,2044 @@
+{
+ "title": "Device requirements for the 2x3 coarse-step circuits -- open item 4 of proposal/amendment_01_devices_and_budgets.md",
+ "scope": "a requirement, not a device claim: no vendor product is named and no vendor specification is asserted anywhere in this file.  The owner matches a device to the region below",
+ "produced_by": "scripts/s2d_2x3_device_requirements.py",
+ "criterion": {
+  "mean_f_min": 0.1,
+  "worst_f_min": 0.05,
+  "f_model": "f = (1-eps2)^n_2q (1-eps1)^n_1q (1-eps_ro)^n_meas (gate_S2D.analyse_rzz / skqd.device_req.clean_shot_fraction)",
+  "source": "amendment 01 section 1(c); gate S2D; manual Step 4.4"
+ },
+ "shot_rule_inputs": {
+  "p": 0.001,
+  "k": 3,
+  "confidence": 0.95,
+  "lambda_star": 6.295793621871989,
+  "yield": "y = 0.82 f (clean shots, manual Step 4.4)"
+ },
+ "counts": {
+  "device": "all-to-all, native two-qubit RZZ (no routing)",
+  "n_qubits": 20,
+  "measured_qubits": 20,
+  "n_circuits_production_set": 44,
+  "n_circuits_recomputed_here": 44,
+  "per_term": {
+   "diag": {
+    "rzz": 14,
+    "n_1q": 51,
+    "n_rz": 31,
+    "depth": 17,
+    "cz_all_to_all": 20,
+    "ir_gates": 37
+   },
+   "hop0": {
+    "rzz": 194,
+    "n_1q": 667,
+    "n_rz": 385,
+    "depth": 531,
+    "cz_all_to_all": 194,
+    "ir_gates": 536
+   },
+   "hop1": {
+    "rzz": 48,
+    "n_1q": 173,
+    "n_rz": 91,
+    "depth": 110,
+    "cz_all_to_all": 48,
+    "ir_gates": 94
+   },
+   "hop2": {
+    "rzz": 182,
+    "n_1q": 633,
+    "n_rz": 359,
+    "depth": 485,
+    "cz_all_to_all": 182,
+    "ir_gates": 484
+   },
+   "hop3": {
+    "rzz": 184,
+    "n_1q": 640,
+    "n_rz": 358,
+    "depth": 479,
+    "cz_all_to_all": 184,
+    "ir_gates": 486
+   },
+   "hop4": {
+    "rzz": 358,
+    "n_1q": 1255,
+    "n_rz": 710,
+    "depth": 968,
+    "cz_all_to_all": 358,
+    "ir_gates": 746
+   },
+   "hop5": {
+    "rzz": 156,
+    "n_1q": 538,
+    "n_rz": 305,
+    "depth": 444,
+    "cz_all_to_all": 156,
+    "ir_gates": 478
+   },
+   "hop6": {
+    "rzz": 44,
+    "n_1q": 161,
+    "n_rz": 79,
+    "depth": 109,
+    "cz_all_to_all": 44,
+    "ir_gates": 90
+   },
+   "plaq0": {
+    "rzz": 214,
+    "n_1q": 743,
+    "n_rz": 431,
+    "depth": 594,
+    "cz_all_to_all": 214,
+    "ir_gates": 430
+   },
+   "plaq1": {
+    "rzz": 764,
+    "n_1q": 2523,
+    "n_rz": 1531,
+    "depth": 2079,
+    "cz_all_to_all": 764,
+    "ir_gates": 1546
+   }
+  },
+  "per_term_note": "theta = dt of the B = 0 reference, the same angle validation/S2.json used for per_term_cz; the coarse step is diag + all 7 hopping terms + both plaquettes.  Compare per_term_rzz_sum with coarse_step.rzz to see how much the transpiler merges across term boundaries",
+  "per_term_rzz_sum": 2158,
+  "coarse_step": {
+   "rzz": {
+    "mean": 2158.0,
+    "min": 2158,
+    "max": 2158
+   },
+   "n_1q": {
+    "mean": 7309.909090909091,
+    "min": 7247,
+    "max": 7347
+   },
+   "n_rz": {
+    "mean": 4256.954545454545,
+    "min": 4255,
+    "max": 4261
+   },
+   "n_1q_virtual_rz": {
+    "mean": 3052.9545454545455
+   },
+   "depth": {
+    "mean": 5654.704545454545,
+    "min": 5641.0,
+    "max": 5677.0
+   },
+   "depth_source": "validation/S2D.json data.2x3.depth (same circuits, same transpiler settings)",
+   "mean_counts_used_for_the_region": {
+    "n_2q": 2158,
+    "n_1q": 7310,
+    "n_rz": 4257,
+    "n_meas": 20
+   }
+  },
+  "cz_basis_all_to_all": 2164,
+  "cz_basis_routed_heavy_hex_d5": 5477,
+  "per_circuit_recomputed": [
+   {
+    "label": "B=0 ref25 k1",
+    "rzz": 2158,
+    "n_1q": 7346,
+    "n_rz": 4255,
+    "depth": 5659,
+    "f": 0.05319682814558777,
+    "f_virtual_rz": 0.0814117856729667
+   },
+   {
+    "label": "B=0 ref25 k2",
+    "rzz": 2158,
+    "n_1q": 7282,
+    "n_rz": 4256,
+    "depth": 5642,
+    "f": 0.05353839677811476,
+    "f_virtual_rz": 0.08194271246931441
+   },
+   {
+    "label": "B=0 ref25 k3",
+    "rzz": 2158,
+    "n_1q": 7324,
+    "n_rz": 4257,
+    "depth": 5651,
+    "f": 0.05331399586322098,
+    "f_virtual_rz": 0.08160741840575242
+   },
+   {
+    "label": "B=0 ref25 k4",
+    "rzz": 2158,
+    "n_1q": 7319,
+    "n_rz": 4256,
+    "depth": 5659,
+    "f": 0.05334066086011832,
+    "f_virtual_rz": 0.081640069535489
+   },
+   {
+    "label": "B=0 ref795 k1",
+    "rzz": 2158,
+    "n_1q": 7341,
+    "n_rz": 4256,
+    "depth": 5658,
+    "f": 0.05322343454104705,
+    "f_virtual_rz": 0.08146064984540555
+   },
+   {
+    "label": "B=0 ref795 k2",
+    "rzz": 2158,
+    "n_1q": 7283,
+    "n_rz": 4257,
+    "depth": 5643,
+    "f": 0.05353304293843695,
+    "f_virtual_rz": 0.08194271246931441
+   },
+   {
+    "label": "B=0 ref795 k3",
+    "rzz": 2158,
+    "n_1q": 7327,
+    "n_rz": 4258,
+    "depth": 5652,
+    "f": 0.05329800326382857,
+    "f_virtual_rz": 0.08159109773814543
+   },
+   {
+    "label": "B=0 ref795 k4",
+    "rzz": 2158,
+    "n_1q": 7321,
+    "n_rz": 4256,
+    "depth": 5660,
+    "f": 0.053329993261352904,
+    "f_virtual_rz": 0.08162374233798257
+   },
+   {
+    "label": "B=0 ref525 k1",
+    "rzz": 2158,
+    "n_1q": 7342,
+    "n_rz": 4255,
+    "depth": 5658,
+    "f": 0.05321811219759294,
+    "f_virtual_rz": 0.08144435853004298
+   },
+   {
+    "label": "B=0 ref525 k2",
+    "rzz": 2158,
+    "n_1q": 7280,
+    "n_rz": 4256,
+    "depth": 5641,
+    "f": 0.05354910606383647,
+    "f_virtual_rz": 0.08195910347041745
+   },
+   {
+    "label": "B=0 ref525 k3",
+    "rzz": 2158,
+    "n_1q": 7327,
+    "n_rz": 4257,
+    "depth": 5651,
+    "f": 0.05329800326382857,
+    "f_virtual_rz": 0.08158293862837163
+   },
+   {
+    "label": "B=0 ref525 k4",
+    "rzz": 2158,
+    "n_1q": 7321,
+    "n_rz": 4256,
+    "depth": 5660,
+    "f": 0.053329993261352904,
+    "f_virtual_rz": 0.08162374233798257
+   },
+   {
+    "label": "B=0 ref333 k1",
+    "rzz": 2158,
+    "n_1q": 7341,
+    "n_rz": 4255,
+    "depth": 5658,
+    "f": 0.05322343454104705,
+    "f_virtual_rz": 0.08145250378042102
+   },
+   {
+    "label": "B=0 ref333 k2",
+    "rzz": 2158,
+    "n_1q": 7279,
+    "n_rz": 4256,
+    "depth": 5641,
+    "f": 0.05355446150998747,
+    "f_virtual_rz": 0.08196730020043749
+   },
+   {
+    "label": "B=0 ref333 k3",
+    "rzz": 2158,
+    "n_1q": 7322,
+    "n_rz": 4257,
+    "depth": 5651,
+    "f": 0.05332466026202677,
+    "f_virtual_rz": 0.08162374233798257
+   },
+   {
+    "label": "B=0 ref333 k4",
+    "rzz": 2158,
+    "n_1q": 7318,
+    "n_rz": 4256,
+    "depth": 5660,
+    "f": 0.05334599545966428,
+    "f_virtual_rz": 0.08164823435892488
+   },
+   {
+    "label": "B=0 ref169 k1",
+    "rzz": 2158,
+    "n_1q": 7347,
+    "n_rz": 4256,
+    "depth": 5658,
+    "f": 0.053191508462773214,
+    "f_virtual_rz": 0.0814117856729667
+   },
+   {
+    "label": "B=0 ref169 k2",
+    "rzz": 2158,
+    "n_1q": 7281,
+    "n_rz": 4257,
+    "depth": 5643,
+    "f": 0.05354375115323009,
+    "f_virtual_rz": 0.08195910347041745
+   },
+   {
+    "label": "B=0 ref169 k3",
+    "rzz": 2158,
+    "n_1q": 7326,
+    "n_rz": 4258,
+    "depth": 5651,
+    "f": 0.053303333597188286,
+    "f_virtual_rz": 0.08159925766391184
+   },
+   {
+    "label": "B=0 ref169 k4",
+    "rzz": 2158,
+    "n_1q": 7318,
+    "n_rz": 4256,
+    "depth": 5659,
+    "f": 0.05334599545966428,
+    "f_virtual_rz": 0.08164823435892488
+   },
+   {
+    "label": "B=0 ref117 k1",
+    "rzz": 2158,
+    "n_1q": 7345,
+    "n_rz": 4256,
+    "depth": 5658,
+    "f": 0.053202148360423814,
+    "f_virtual_rz": 0.08142807047278054
+   },
+   {
+    "label": "B=0 ref117 k2",
+    "rzz": 2158,
+    "n_1q": 7283,
+    "n_rz": 4256,
+    "depth": 5642,
+    "f": 0.05353304293843695,
+    "f_virtual_rz": 0.08193451819806749
+   },
+   {
+    "label": "B=0 ref117 k3",
+    "rzz": 2158,
+    "n_1q": 7327,
+    "n_rz": 4257,
+    "depth": 5651,
+    "f": 0.05329800326382857,
+    "f_virtual_rz": 0.08158293862837163
+   },
+   {
+    "label": "B=0 ref117 k4",
+    "rzz": 2158,
+    "n_1q": 7321,
+    "n_rz": 4255,
+    "depth": 5659,
+    "f": 0.053329993261352904,
+    "f_virtual_rz": 0.08161557996374878
+   },
+   {
+    "label": "B=0 ref86 k1",
+    "rzz": 2158,
+    "n_1q": 7345,
+    "n_rz": 4255,
+    "depth": 5659,
+    "f": 0.053202148360423814,
+    "f_virtual_rz": 0.08141992766573328
+   },
+   {
+    "label": "B=0 ref86 k2",
+    "rzz": 2158,
+    "n_1q": 7281,
+    "n_rz": 4256,
+    "depth": 5642,
+    "f": 0.05354375115323009,
+    "f_virtual_rz": 0.08195090756007041
+   },
+   {
+    "label": "B=0 ref86 k3",
+    "rzz": 2158,
+    "n_1q": 7327,
+    "n_rz": 4257,
+    "depth": 5651,
+    "f": 0.05329800326382857,
+    "f_virtual_rz": 0.08158293862837163
+   },
+   {
+    "label": "B=0 ref86 k4",
+    "rzz": 2158,
+    "n_1q": 7320,
+    "n_rz": 4256,
+    "depth": 5659,
+    "f": 0.05333532679403231,
+    "f_virtual_rz": 0.08163190552853543
+   },
+   {
+    "label": "B=0 ref70 k1",
+    "rzz": 2158,
+    "n_1q": 7345,
+    "n_rz": 4255,
+    "depth": 5659,
+    "f": 0.053202148360423814,
+    "f_virtual_rz": 0.08141992766573328
+   },
+   {
+    "label": "B=0 ref70 k2",
+    "rzz": 2158,
+    "n_1q": 7283,
+    "n_rz": 4257,
+    "depth": 5642,
+    "f": 0.05353304293843695,
+    "f_virtual_rz": 0.08194271246931441
+   },
+   {
+    "label": "B=0 ref70 k3",
+    "rzz": 2158,
+    "n_1q": 7325,
+    "n_rz": 4257,
+    "depth": 5651,
+    "f": 0.05330866446363465,
+    "f_virtual_rz": 0.08159925766391184
+   },
+   {
+    "label": "B=0 ref70 k4",
+    "rzz": 2158,
+    "n_1q": 7320,
+    "n_rz": 4256,
+    "depth": 5659,
+    "f": 0.05333532679403231,
+    "f_virtual_rz": 0.08163190552853543
+   },
+   {
+    "label": "B=1 ref57 k1",
+    "rzz": 2158,
+    "n_1q": 7247,
+    "n_rz": 4258,
+    "depth": 5653,
+    "f": 0.0537261188751267,
+    "f_virtual_rz": 0.08224647731234344
+   },
+   {
+    "label": "B=1 ref57 k2",
+    "rzz": 2158,
+    "n_1q": 7325,
+    "n_rz": 4260,
+    "depth": 5677,
+    "f": 0.05330866446363465,
+    "f_virtual_rz": 0.08162374233798257
+   },
+   {
+    "label": "B=1 ref57 k3",
+    "rzz": 2158,
+    "n_1q": 7255,
+    "n_rz": 4257,
+    "depth": 5642,
+    "f": 0.053683153020331595,
+    "f_virtual_rz": 0.08217248508458651
+   },
+   {
+    "label": "B=1 ref57 k4",
+    "rzz": 2158,
+    "n_1q": 7326,
+    "n_rz": 4261,
+    "depth": 5668,
+    "f": 0.053303333597188286,
+    "f_virtual_rz": 0.08162374233798257
+   },
+   {
+    "label": "B=1 ref29 k1",
+    "rzz": 2158,
+    "n_1q": 7248,
+    "n_rz": 4258,
+    "depth": 5653,
+    "f": 0.05372074626323918,
+    "f_virtual_rz": 0.08223825266461221
+   },
+   {
+    "label": "B=1 ref29 k2",
+    "rzz": 2158,
+    "n_1q": 7327,
+    "n_rz": 4261,
+    "depth": 5677,
+    "f": 0.05329800326382857,
+    "f_virtual_rz": 0.08161557996374878
+   },
+   {
+    "label": "B=1 ref29 k3",
+    "rzz": 2158,
+    "n_1q": 7257,
+    "n_rz": 4258,
+    "depth": 5642,
+    "f": 0.05367241692655906,
+    "f_virtual_rz": 0.08216426783607805
+   },
+   {
+    "label": "B=1 ref29 k4",
+    "rzz": 2158,
+    "n_1q": 7327,
+    "n_rz": 4261,
+    "depth": 5668,
+    "f": 0.05329800326382857,
+    "f_virtual_rz": 0.08161557996374878
+   },
+   {
+    "label": "B=1 ref27 k1",
+    "rzz": 2158,
+    "n_1q": 7248,
+    "n_rz": 4257,
+    "depth": 5653,
+    "f": 0.05372074626323918,
+    "f_virtual_rz": 0.08223002883934574
+   },
+   {
+    "label": "B=1 ref27 k2",
+    "rzz": 2158,
+    "n_1q": 7326,
+    "n_rz": 4259,
+    "depth": 5677,
+    "f": 0.053303333597188286,
+    "f_virtual_rz": 0.08160741840575242
+   },
+   {
+    "label": "B=1 ref27 k3",
+    "rzz": 2158,
+    "n_1q": 7256,
+    "n_rz": 4256,
+    "depth": 5642,
+    "f": 0.05367778470502956,
+    "f_virtual_rz": 0.08215605140929444
+   },
+   {
+    "label": "B=1 ref27 k4",
+    "rzz": 2158,
+    "n_1q": 7327,
+    "n_rz": 4261,
+    "depth": 5668,
+    "f": 0.05329800326382857,
+    "f_virtual_rz": 0.08161557996374878
+   }
+  ],
+  "reproduction_checks": {
+   "per_term_cz_all_to_all_vs_S2": {
+    "recomputed": {
+     "diag": 20,
+     "hop0": 194,
+     "hop1": 48,
+     "hop2": 182,
+     "hop3": 184,
+     "hop4": 358,
+     "hop5": 156,
+     "hop6": 44,
+     "plaq0": 214,
+     "plaq1": 764
+    },
+    "S2_json": {
+     "diag": 20,
+     "hop0": 194,
+     "hop1": 48,
+     "hop2": 182,
+     "hop3": 184,
+     "hop4": 358,
+     "hop5": 156,
+     "hop6": 44,
+     "plaq0": 214,
+     "plaq1": 764
+    },
+    "match": true
+   },
+   "coarse_step_cz_all_to_all_vs_S2": {
+    "recomputed": 2164,
+    "S2_json": 2164,
+    "match": true
+   },
+   "k1_rzz_counts_vs_S2D": {
+    "recomputed": {
+     "rzz": 2158,
+     "n_1q": 7346,
+     "n_rz": 4255,
+     "depth": 5659
+    },
+    "S2D_json": {
+     "rzz": 2158,
+     "n_1q": 7346,
+     "n_rz": 4255,
+     "depth": 5659
+    },
+    "match": true
+   },
+   "every_recomputed_circuit_is_in_the_S2D_record": true,
+   "region_counts_source": "recomputed here"
+  }
+ },
+ "feasible_region": {
+  "criterion": {
+   "mean_f_min": 0.1,
+   "worst_f_min": 0.05,
+   "source": "amendment 01 section 1(c) / gate S2D"
+  },
+  "declared_inputs": {
+   "eps2": 0.001,
+   "eps1": 0.0001,
+   "eps_ro": 0.002,
+   "source": "validation/S2D.json data.assumed_inputs"
+  },
+  "physical_rz": {
+   "half_space": {
+    "f_target": 0.1,
+    "budget_log": 2.3025850929940455,
+    "weights": {
+     "2q": 2158,
+     "1q": 7310,
+     "ro": 20
+    },
+    "virtual_rz": false,
+    "statement": "n_2q * (-ln(1-eps2)) + n_1q * (-ln(1-eps1)) + n_meas * (-ln(1-eps_ro)) <= ln(1/f_target); to first order n_2q eps2 + n_1q eps1 + n_meas eps_ro <= ln(1/f_target)"
+   },
+   "at_declared_inputs": {
+    "mean_f": 0.05338942314406414,
+    "worst_f": 0.053191508462769016,
+    "max_f": 0.05372611887512251,
+    "worst_circuit": "B=0 ref169 k1",
+    "min_over_mean": 0.9962929983198905,
+    "budget_shares": {
+     "spend": {
+      "2q": 2.159079719873265,
+      "1q": 0.7310365524368495,
+      "ro": 0.04004005341346155
+     },
+     "total": 2.9301563257235763,
+     "budget_log": 2.3025850929940455,
+     "over_budget_by": 0.6275712327295309,
+     "fraction_of_budget": {
+      "2q": 0.9376764083301778,
+      "1q": 0.31748514079290097,
+      "ro": 0.017389174252577817
+     },
+     "fraction_of_total": {
+      "2q": 0.7368479629973665,
+      "1q": 0.2494872188282741,
+      "ro": 0.013664818174359352
+     },
+     "f": 0.05338869146698946
+    }
+   },
+   "marginal_requirements": {
+    "2q": {
+     "declared": 0.001,
+     "eps_for_mean_f_0.1": 0.0007094434028515578,
+     "eps_for_worst_f_0.05": 0.0010286436519356444,
+     "factor_improvement_needed": 1.409555710829885,
+     "feasible_alone": true
+    },
+    "1q": {
+     "declared": 0.0001,
+     "eps_for_mean_f_0.1": 1.4154030992809451e-05,
+     "eps_for_worst_f_0.05": 0.00010842103099395329,
+     "factor_improvement_needed": 7.065125125895381,
+     "feasible_alone": true
+    },
+    "ro": {
+     "declared": 0.002,
+     "eps_for_mean_f_0.1": null,
+     "eps_for_worst_f_0.05": 0.0050828292953173145,
+     "factor_improvement_needed": null,
+     "feasible_alone": false
+    }
+   },
+   "eps2_grid": [
+    {
+     "eps1": 0.0,
+     "eps_ro": 0.001,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.0010571679059607248,
+     "eps2_for_worst_f_0.05": 0.0013779756993554425,
+     "eps2_required": 0.0010571679059607248,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 1e-05,
+     "eps_ro": 0.001,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.0010233294589078862,
+     "eps2_for_worst_f_0.05": 0.0013439764519350872,
+     "eps2_required": 0.0010233294589078862,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 2e-05,
+     "eps_ro": 0.001,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.0009894895698811894,
+     "eps2_for_worst_f_0.05": 0.0013099757069559017,
+     "eps2_required": 0.0009894895698811894,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 5e-05,
+     "eps_ro": 0.001,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.0008879612503184714,
+     "eps2_for_worst_f_0.05": 0.0012079644858559418,
+     "eps2_required": 0.0008879612503184714,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0001,
+     "eps_ro": 0.001,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.0007187185389342374,
+     "eps2_for_worst_f_0.05": 0.0010379158252906886,
+     "eps2_required": 0.0007187185389342374,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0002,
+     "eps_ro": 0.001,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.0003801249169489188,
+     "eps2_for_worst_f_0.05": 0.0006977061224743336,
+     "eps2_required": 0.0003801249169489188,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0005,
+     "eps_ro": 0.001,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": null,
+     "eps2_for_worst_f_0.05": null,
+     "eps2_required": null,
+     "binding": null
+    },
+    {
+     "eps1": 0.0,
+     "eps_ro": 0.002,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.0010478959112997794,
+     "eps2_for_worst_f_0.05": 0.0013687066823705482,
+     "eps2_required": 0.0010478959112997794,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 1e-05,
+     "eps_ro": 0.002,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.0010140571501650033,
+     "eps2_for_worst_f_0.05": 0.0013347071193757375,
+     "eps2_required": 0.0010140571501650033,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 2e-05,
+     "eps_ro": 0.002,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.0009802169470429845,
+     "eps2_for_worst_f_0.05": 0.001300706058808196,
+     "eps2_required": 0.0009802169470429845,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 5e-05,
+     "eps_ro": 0.002,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.0008786876851139901,
+     "eps2_for_worst_f_0.05": 0.0011986938908597608,
+     "eps2_required": 0.0008786876851139901,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0001,
+     "eps_ro": 0.002,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.0007094434028515578,
+     "eps2_for_worst_f_0.05": 0.0010286436519356444,
+     "eps2_required": 0.0007094434028515578,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0002,
+     "eps_ro": 0.002,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.00037084663810555817,
+     "eps2_for_worst_f_0.05": 0.0006884307913584579,
+     "eps2_required": 0.00037084663810555817,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0005,
+     "eps_ro": 0.002,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": null,
+     "eps2_for_worst_f_0.05": null,
+     "eps2_required": null,
+     "binding": null
+    },
+    {
+     "eps1": 0.0,
+     "eps_ro": 0.005,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.001020023563047649,
+     "eps2_for_worst_f_0.05": 0.001340843285247804,
+     "eps2_required": 0.001020023563047649,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 1e-05,
+     "eps_ro": 0.005,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.000986183857757762,
+     "eps2_for_worst_f_0.05": 0.0013068427736112553,
+     "eps2_required": 0.000986183857757762,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 2e-05,
+     "eps_ro": 0.005,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.0009523427104403985,
+     "eps2_for_worst_f_0.05": 0.0012728407643601912,
+     "eps2_required": 0.0009523427104403985,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 5e-05,
+     "eps_ro": 0.005,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.0008508106156839493,
+     "eps2_for_worst_f_0.05": 0.0011708257501104576,
+     "eps2_required": 0.0008508106156839493,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0001,
+     "eps_ro": 0.005,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.000681561611237585,
+     "eps2_for_worst_f_0.05": 0.0010007707665149396,
+     "eps2_required": 0.000681561611237585,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0002,
+     "eps_ro": 0.005,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.0003429553991047633,
+     "eps2_for_worst_f_0.05": 0.000660548413459294,
+     "eps2_required": 0.0003429553991047633,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0005,
+     "eps_ro": 0.005,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": null,
+     "eps2_for_worst_f_0.05": null,
+     "eps2_required": null,
+     "binding": null
+    },
+    {
+     "eps1": 0.0,
+     "eps_ro": 0.01,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.000973380626539956,
+     "eps2_for_worst_f_0.05": 0.001294215327993235,
+     "eps2_required": 0.000973380626539956,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 1e-05,
+     "eps_ro": 0.01,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.0009395393412552115,
+     "eps2_for_worst_f_0.05": 0.0012602132288536902,
+     "eps2_required": 0.0009395393412552115,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 2e-05,
+     "eps_ro": 0.01,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.0009056966138756616,
+     "eps2_for_worst_f_0.05": 0.0012262096320297055,
+     "eps2_required": 0.0009056966138756616,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 5e-05,
+     "eps_ro": 0.01,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.0008041597785286492,
+     "eps2_for_worst_f_0.05": 0.0011241898546416262,
+     "eps2_required": 0.0008041597785286492,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0001,
+     "eps_ro": 0.01,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.0006349028717511525,
+     "eps2_for_worst_f_0.05": 0.0009541269310833567,
+     "eps2_required": 0.0006349028717511525,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0002,
+     "eps_ro": 0.01,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": 0.00029628084990399603,
+     "eps2_for_worst_f_0.05": 0.0006138886928548483,
+     "eps2_required": 0.00029628084990399603,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0005,
+     "eps_ro": 0.01,
+     "virtual_rz": false,
+     "eps2_for_mean_f_0.1": null,
+     "eps2_for_worst_f_0.05": null,
+     "eps2_required": null,
+     "binding": null
+    }
+   ],
+   "uniform_scale_for_mean_f_0.1": 0.7858931409861992,
+   "routing_overhead": [
+    {
+     "routing_overhead": 1.0,
+     "n_2q": 2158,
+     "n_1q": 7310,
+     "eps2_required": 0.0007094370567424235
+    },
+    {
+     "routing_overhead": 1.25,
+     "n_2q": 2698,
+     "n_1q": 7310,
+     "eps2_required": 0.0005674847635899205
+    },
+    {
+     "routing_overhead": 1.5,
+     "n_2q": 3237,
+     "n_1q": 7310,
+     "eps2_required": 0.00047301397779453414
+    },
+    {
+     "routing_overhead": 1.75,
+     "n_2q": 3776,
+     "n_1q": 7310,
+     "eps2_required": 0.00040550793080884606
+    },
+    {
+     "routing_overhead": 2.0,
+     "n_2q": 4316,
+     "n_1q": 7310,
+     "eps2_required": 0.0003547814633145796
+    },
+    {
+     "routing_overhead": 2.5,
+     "n_2q": 5395,
+     "n_1q": 7310,
+     "eps2_required": 0.00028383524167185925
+    }
+   ]
+  },
+  "virtual_rz": {
+   "half_space": {
+    "f_target": 0.1,
+    "budget_log": 2.3025850929940455,
+    "weights": {
+     "2q": 2158,
+     "1q": 3053,
+     "ro": 20
+    },
+    "virtual_rz": true,
+    "statement": "n_2q * (-ln(1-eps2)) + n_1q * (-ln(1-eps1)) + n_meas * (-ln(1-eps_ro)) <= ln(1/f_target); to first order n_2q eps2 + n_1q eps1 + n_meas eps_ro <= ln(1/f_target)"
+   },
+   "at_declared_inputs": {
+    "mean_f": 0.08172250657676039,
+    "worst_f": 0.0814117856729641,
+    "max_f": 0.08224647731234089,
+    "worst_circuit": "B=0 ref25 k1",
+    "min_over_mean": 0.9961978539717888,
+    "budget_shares": {
+     "spend": {
+      "2q": 2.159079719873265,
+      "1q": 0.305315266017743,
+      "ro": 0.04004005341346155
+     },
+     "total": 2.50443503930447,
+     "budget_log": 2.3025850929940455,
+     "over_budget_by": 0.2018499463104244,
+     "fraction_of_budget": {
+      "2q": 0.9376764083301778,
+      "1q": 0.1325967352723292,
+      "ro": 0.017389174252577817
+     },
+     "fraction_of_total": {
+      "2q": 0.8621025045524373,
+      "1q": 0.12190983644061096,
+      "ro": 0.0159876590069517
+     },
+     "f": 0.08172175452502678
+    }
+   },
+   "marginal_requirements": {
+    "2q": {
+     "declared": 0.001,
+     "eps_for_mean_f_0.1": 0.0009065577696489984,
+     "eps_for_worst_f_0.05": 0.001225650854059118,
+     "factor_improvement_needed": 1.1030736633443456,
+     "feasible_alone": true
+    },
+    "1q": {
+     "declared": 0.0001,
+     "eps_for_mean_f_0.1": 3.388982687836909e-05,
+     "eps_for_worst_f_0.05": 0.00025768678667127177,
+     "factor_improvement_needed": 2.9507380004890837,
+     "feasible_alone": true
+    },
+    "ro": {
+     "declared": 0.002,
+     "eps_for_mean_f_0.1": null,
+     "eps_for_worst_f_0.05": 0.026032024148325485,
+     "factor_improvement_needed": null,
+     "feasible_alone": false
+    }
+   },
+   "eps2_grid": [
+    {
+     "eps1": 0.0,
+     "eps_ro": 0.001,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.0010571679059607248,
+     "eps2_for_worst_f_0.05": 0.0013779756993554425,
+     "eps2_required": 0.0010571679059607248,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 1e-05,
+     "eps_ro": 0.001,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.001043035564750638,
+     "eps2_for_worst_f_0.05": 0.0013636718151217519,
+     "eps2_required": 0.001043035564750638,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 2e-05,
+     "eps_ro": 0.001,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.001028902925365169,
+     "eps2_for_worst_f_0.05": 0.0013493675829605715,
+     "eps2_required": 0.001028902925365169,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 5e-05,
+     "eps_ro": 0.001,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.0009865032181734436,
+     "eps2_for_worst_f_0.05": 0.0013064527987926644,
+     "eps2_required": 0.0009865032181734436,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0001,
+     "eps_ro": 0.001,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.0009158310761711325,
+     "eps2_for_worst_f_0.05": 0.0012349211988482891,
+     "eps2_required": 0.0009158310761711325,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0002,
+     "eps_ro": 0.001,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.0007744644303649663,
+     "eps2_for_worst_f_0.05": 0.001091831894841601,
+     "eps2_required": 0.0007744644303649663,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0005,
+     "eps_ro": 0.001,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.000350185613536472,
+     "eps2_for_worst_f_0.05": 0.0006623550423017869,
+     "eps2_required": 0.000350185613536472,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0,
+     "eps_ro": 0.002,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.0010478959112997794,
+     "eps2_for_worst_f_0.05": 0.0013687066823705482,
+     "eps2_required": 0.0010478959112997794,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 1e-05,
+     "eps_ro": 0.002,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.001033763438916028,
+     "eps2_for_worst_f_0.05": 0.0013544026653709636,
+     "eps2_required": 0.001033763438916028,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 2e-05,
+     "eps_ro": 0.002,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.0010196306683541263,
+     "eps2_for_worst_f_0.05": 0.0013400983004406596,
+     "eps2_required": 0.0010196306683541263,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 5e-05,
+     "eps_ro": 0.002,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.0009772305676164982,
+     "eps2_for_worst_f_0.05": 0.0012971831179460047,
+     "eps2_required": 0.0009772305676164982,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0001,
+     "eps_ro": 0.002,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.0009065577696489984,
+     "eps2_for_worst_f_0.05": 0.001225650854059118,
+     "eps2_required": 0.0009065577696489984,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0002,
+     "eps_ro": 0.002,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.0007651898117048971,
+     "eps2_for_worst_f_0.05": 0.0010825602219251133,
+     "eps2_required": 0.0007651898117048971,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0005,
+     "eps_ro": 0.002,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.00034090705680227273,
+     "eps2_for_worst_f_0.05": 0.0006530793830640045,
+     "eps2_required": 0.00034090705680227273,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0,
+     "eps_ro": 0.005,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.001020023563047649,
+     "eps2_for_worst_f_0.05": 0.001340843285247804,
+     "eps2_required": 0.001020023563047649,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 1e-05,
+     "eps_ro": 0.005,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.001005890696345501,
+     "eps2_for_worst_f_0.05": 0.001326538869143456,
+     "eps2_required": 0.001005890696345501,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 2e-05,
+     "eps_ro": 0.005,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.0009917575314568833,
+     "eps2_for_worst_f_0.05": 0.001312234105098681,
+     "eps2_required": 0.0009917575314568833,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 5e-05,
+     "eps_ro": 0.005,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.0009493562476891892,
+     "eps2_for_worst_f_0.05": 0.0012693177252023615,
+     "eps2_required": 0.0009493562476891892,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0001,
+     "eps_ro": 0.005,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.000878681477838524,
+     "eps2_for_worst_f_0.05": 0.0011977834654518474,
+     "eps2_required": 0.000878681477838524,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0002,
+     "eps_ro": 0.005,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.0007373095755041567,
+     "eps2_for_worst_f_0.05": 0.0010546888408622342,
+     "eps2_required": 0.0007373095755041567,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0005,
+     "eps_ro": 0.005,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.000313014982439669,
+     "eps2_for_worst_f_0.05": 0.0006251960188044745,
+     "eps2_required": 0.000313014982439669,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0,
+     "eps_ro": 0.01,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.000973380626539956,
+     "eps2_for_worst_f_0.05": 0.001294215327993235,
+     "eps2_required": 0.000973380626539956,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 1e-05,
+     "eps_ro": 0.01,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.0009592470999663191,
+     "eps2_for_worst_f_0.05": 0.0012799102440076604,
+     "eps2_required": 0.0009592470999663191,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 2e-05,
+     "eps_ro": 0.01,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.0009451132751922902,
+     "eps2_for_worst_f_0.05": 0.0012656048120654128,
+     "eps2_required": 0.0009451132751922902,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 5e-05,
+     "eps_ro": 0.01,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.0009027100116848283,
+     "eps2_for_worst_f_0.05": 0.0012226864283791982,
+     "eps2_required": 0.0009027100116848283,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0001,
+     "eps_ro": 0.01,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.0008320319419894409,
+     "eps2_for_worst_f_0.05": 0.0011511488286538951,
+     "eps2_required": 0.0008320319419894409,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0002,
+     "eps_ro": 0.01,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.0006906534389215052,
+     "eps2_for_worst_f_0.05": 0.0010080475228958436,
+     "eps2_required": 0.0006906534389215052,
+     "binding": "mean f >= 0.1"
+    },
+    {
+     "eps1": 0.0005,
+     "eps_ro": 0.01,
+     "virtual_rz": true,
+     "eps2_for_mean_f_0.1": 0.00026633903530402174,
+     "eps2_for_worst_f_0.05": 0.0005785346475768549,
+     "eps2_required": 0.00026633903530402174,
+     "binding": "mean f >= 0.1"
+    }
+   ],
+   "uniform_scale_for_mean_f_0.1": 0.9194398330160499,
+   "routing_overhead": [
+    {
+     "routing_overhead": 1.0,
+     "n_2q": 2158,
+     "n_1q": 3053,
+     "eps2_required": 0.0009065535091280497
+    },
+    {
+     "routing_overhead": 1.25,
+     "n_2q": 2698,
+     "n_1q": 3053,
+     "eps2_required": 0.000725174211075319
+    },
+    {
+     "routing_overhead": 1.5,
+     "n_2q": 3237,
+     "n_1q": 3053,
+     "eps2_required": 0.0006044603583709174
+    },
+    {
+     "routing_overhead": 1.75,
+     "n_2q": 3776,
+     "n_1q": 3053,
+     "eps2_required": 0.0005181998441926572
+    },
+    {
+     "routing_overhead": 2.0,
+     "n_2q": 4316,
+     "n_1q": 3053,
+     "eps2_required": 0.0004533795310636135
+    },
+    {
+     "routing_overhead": 2.5,
+     "n_2q": 5395,
+     "n_1q": 3053,
+     "eps2_required": 0.0003627200720737189
+    }
+   ]
+  },
+  "measured_routed_heavy_hex_point": {
+   "n_2q": 5477,
+   "n_1q": 17465,
+   "n_rz": 5513,
+   "routing_overhead_vs_all_to_all": 2.5309611829944547,
+   "eps2_required_for_f_0.1": 9.42000012358335e-05,
+   "source": "validation/S2.json data.2x3.coarse_step.routed (CZ basis, heavy-hex d = 5)",
+   "requirement_tightens_by": 7.531246215968062,
+   "one_qubit_gate_overhead_vs_all_to_all": 2.3892225994602594
+  }
+ },
+ "candidate_error_sets": [
+  {
+   "name": "D0: declared inputs of gate S2D",
+   "eps2": 0.001,
+   "eps1": 0.0001,
+   "eps_ro": 0.002,
+   "virtual_rz": false,
+   "mean_f": 0.05338942314406414,
+   "worst_f": 0.053191508462769016,
+   "max_f": 0.05372611887512251,
+   "worst_circuit": "B=0 ref169 k1",
+   "meets_mean": false,
+   "meets_worst": true,
+   "log_budget_spend": {
+    "2q": 2.159079719873265,
+    "1q": 0.7346367324488504,
+    "ro": 0.04004005341346155
+   },
+   "log_budget": 2.3025850929940455,
+   "over_budget_by": 0.6311714127415318,
+   "f_shortfall_factor": 1.8730301642361544,
+   "note": "the amendment's 2x3 row; reproduces validation/S2D.json data.2x3.f",
+   "shot_budget": {
+    "B=0": {
+     "n_circuits": 32,
+     "mean_f": 0.05334763471362032,
+     "yield_clean": 0.04374506046516866,
+     "N_circuit": 143921,
+     "N_sector": 4605472
+    },
+    "B=1": {
+     "n_circuits": 12,
+     "mean_f": 0.053500858958581,
+     "yield_clean": 0.04387070434603642,
+     "N_circuit": 143508,
+     "N_sector": 1722096
+    }
+   },
+   "meets_criterion": false
+  },
+  {
+   "name": "D0v: declared inputs, virtual rz",
+   "eps2": 0.001,
+   "eps1": 0.0001,
+   "eps_ro": 0.002,
+   "virtual_rz": true,
+   "mean_f": 0.08172250657676039,
+   "worst_f": 0.0814117856729641,
+   "max_f": 0.08224647731234089,
+   "worst_circuit": "B=0 ref25 k1",
+   "meets_mean": false,
+   "meets_worst": true,
+   "log_budget_spend": {
+    "2q": 2.159079719873265,
+    "1q": 0.30911545603041063,
+    "ro": 0.04004005341346155
+   },
+   "log_budget": 2.3025850929940455,
+   "over_budget_by": 0.20565013632309181,
+   "f_shortfall_factor": 1.2236531182027794,
+   "note": "reproduces validation/S2D.json data.2x3.f_virtual_rz",
+   "shot_budget": {
+    "B=0": {
+     "n_circuits": 32,
+     "mean_f": 0.08165253385182074,
+     "yield_clean": 0.066955077758493,
+     "N_circuit": 94031,
+     "N_sector": 3008992
+    },
+    "B=1": {
+     "n_circuits": 12,
+     "mean_f": 0.08190910050993279,
+     "yield_clean": 0.06716546241814489,
+     "N_circuit": 93736,
+     "N_sector": 1124832
+    }
+   },
+   "meets_criterion": false
+  },
+  {
+   "name": "R1: the amendment's eps2, declared eps1/eps_ro",
+   "eps2": 0.0007094434028515578,
+   "eps1": 0.0001,
+   "eps_ro": 0.002,
+   "virtual_rz": false,
+   "mean_f": 0.1,
+   "worst_f": 0.09962929983198908,
+   "max_f": 0.10063064126044186,
+   "worst_circuit": "B=0 ref169 k1",
+   "meets_mean": true,
+   "meets_worst": true,
+   "log_budget_spend": {
+    "2q": 1.531522191769956,
+    "1q": 0.7346367324488504,
+    "ro": 0.04004005341346155
+   },
+   "log_budget": 2.3025850929940455,
+   "over_budget_by": 0.00361388463822232,
+   "f_shortfall_factor": 1.0,
+   "note": "the minimum two-qubit error at the declared eps1 and eps_ro",
+   "shot_budget": {
+    "B=0": {
+     "n_circuits": 32,
+     "mean_f": 0.09992172900926265,
+     "yield_clean": 0.08193581778759537,
+     "N_circuit": 76839,
+     "N_sector": 2458848
+    },
+    "B=1": {
+     "n_circuits": 12,
+     "mean_f": 0.10020872264196629,
+     "yield_clean": 0.08217115256641234,
+     "N_circuit": 76619,
+     "N_sector": 919428
+    }
+   },
+   "meets_criterion": true
+  },
+  {
+   "name": "R1v: minimum eps2 with virtual rz",
+   "eps2": 0.0009065577696489984,
+   "eps1": 0.0001,
+   "eps_ro": 0.002,
+   "virtual_rz": true,
+   "mean_f": 0.1,
+   "worst_f": 0.09961978539717886,
+   "max_f": 0.10064115842444012,
+   "worst_circuit": "B=0 ref25 k1",
+   "meets_mean": true,
+   "meets_worst": true,
+   "log_budget_spend": {
+    "2q": 1.9572389761096731,
+    "1q": 0.30911545603041063,
+    "ro": 0.04004005341346155
+   },
+   "log_budget": 2.3025850929940455,
+   "over_budget_by": 0.003809392559499969,
+   "f_shortfall_factor": 1.0,
+   "note": "what a virtual-rz frame change buys on the two-qubit requirement",
+   "shot_budget": {
+    "B=0": {
+     "n_circuits": 32,
+     "mean_f": 0.09991437765693846,
+     "yield_clean": 0.08192978967868954,
+     "N_circuit": 76844,
+     "N_sector": 2459008
+    },
+    "B=1": {
+     "n_circuits": 12,
+     "mean_f": 0.10022832624816413,
+     "yield_clean": 0.08218722752349458,
+     "N_circuit": 76604,
+     "N_sector": 919248
+    }
+   },
+   "meets_criterion": true
+  },
+  {
+   "name": "R2: declared eps2, minimum eps1",
+   "eps2": 0.001,
+   "eps1": 1.4154030992809451e-05,
+   "eps_ro": 0.002,
+   "virtual_rz": false,
+   "mean_f": 0.1,
+   "worst_f": 0.09994750558911245,
+   "max_f": 0.10008907276383869,
+   "worst_circuit": "B=0 ref169 k1",
+   "meets_mean": true,
+   "meets_worst": true,
+   "log_budget_spend": {
+    "2q": 2.159079719873265,
+    "1q": 0.10397624751642902,
+    "ro": 0.04004005341346155
+   },
+   "log_budget": 2.3025850929940455,
+   "over_budget_by": 0.0005109278091102176,
+   "f_shortfall_factor": 1.0,
+   "note": "the one-qubit-limited corner: eps2 stays at 1e-3",
+   "shot_budget": {
+    "B=0": {
+     "n_circuits": 32,
+     "mean_f": 0.09998894269258314,
+     "yield_clean": 0.08199093300791817,
+     "N_circuit": 76787,
+     "N_sector": 2457184
+    },
+    "B=1": {
+     "n_circuits": 12,
+     "mean_f": 0.1000294861531116,
+     "yield_clean": 0.0820241786455515,
+     "N_circuit": 76756,
+     "N_sector": 921072
+    }
+   },
+   "meets_criterion": true
+  },
+  {
+   "name": "R3: all three declared errors scaled by the same factor",
+   "eps2": 0.0007858931409861992,
+   "eps1": 7.858931409861993e-05,
+   "eps_ro": 0.0015717862819723985,
+   "virtual_rz": false,
+   "mean_f": 0.1,
+   "worst_f": 0.09970863405927174,
+   "max_f": 0.10049535563579591,
+   "worst_circuit": "B=0 ref169 k1",
+   "meets_mean": true,
+   "meets_worst": true,
+   "log_budget_spend": {
+    "2q": 1.6966241682544332,
+    "1q": 0.5773397880345965,
+    "ro": 0.03146045667861253
+   },
+   "log_budget": 2.3025850929940455,
+   "over_budget_by": 0.0028393199735967656,
+   "f_shortfall_factor": 1.0,
+   "note": "uniform improvement factor 1/lam = 1.272 on every channel",
+   "shot_budget": {
+    "B=0": {
+     "n_circuits": 32,
+     "mean_f": 0.09993851672699877,
+     "yield_clean": 0.08194958371613899,
+     "N_circuit": 76826,
+     "N_sector": 2458432
+    },
+    "B=1": {
+     "n_circuits": 12,
+     "mean_f": 0.10016395539466992,
+     "yield_clean": 0.08213444342362933,
+     "N_circuit": 76653,
+     "N_sector": 919836
+    }
+   },
+   "meets_criterion": true
+  },
+  {
+   "name": "R4: round vendor point eps2 = 5e-4",
+   "eps2": 0.0005,
+   "eps1": 0.0001,
+   "eps_ro": 0.002,
+   "virtual_rz": false,
+   "mean_f": 0.15718485573765903,
+   "worst_f": 0.15660217121335177,
+   "max_f": 0.15817612829310673,
+   "worst_circuit": "B=0 ref169 k1",
+   "meets_mean": true,
+   "meets_worst": true,
+   "log_budget_spend": {
+    "2q": 1.079269839950399,
+    "1q": 0.7346367324488504,
+    "ro": 0.04004005341346155
+   },
+   "log_budget": 2.3025850929940455,
+   "over_budget_by": -0.4486384671813344,
+   "f_shortfall_factor": 0.6361936048527452,
+   "note": "a round number inside the feasible region",
+   "shot_budget": {
+    "B=0": {
+     "n_circuits": 32,
+     "mean_f": 0.15706182559378407,
+     "yield_clean": 0.12879069698690293,
+     "N_circuit": 48884,
+     "N_sector": 1564288
+    },
+    "B=1": {
+     "n_circuits": 12,
+     "mean_f": 0.15751293612132558,
+     "yield_clean": 0.12916060761948697,
+     "N_circuit": 48744,
+     "N_sector": 584928
+    }
+   },
+   "meets_criterion": true
+  },
+  {
+   "name": "R5: round vendor point eps2 = 5e-4, eps_ro = 5e-3, virtual rz",
+   "eps2": 0.0005,
+   "eps1": 0.0001,
+   "eps_ro": 0.005,
+   "virtual_rz": true,
+   "mean_f": 0.22654158789632292,
+   "worst_f": 0.22568024369767825,
+   "max_f": 0.22799407837198052,
+   "worst_circuit": "B=0 ref25 k1",
+   "meets_mean": true,
+   "meets_worst": true,
+   "log_budget_spend": {
+    "2q": 1.079269839950399,
+    "1q": 0.30911545603041063,
+    "ro": 0.10025083647088565
+   },
+   "log_budget": 2.3025850929940455,
+   "over_budget_by": -0.8139489605423502,
+   "f_shortfall_factor": 0.4414200541657947,
+   "note": "shows how much readout error the region tolerates",
+   "shot_budget": {
+    "B=0": {
+     "n_circuits": 32,
+     "mean_f": 0.22634761768075723,
+     "yield_clean": 0.1856050464982209,
+     "N_circuit": 33921,
+     "N_sector": 1085472
+    },
+    "B=1": {
+     "n_circuits": 12,
+     "mean_f": 0.22705884180449806,
+     "yield_clean": 0.1861882502796884,
+     "N_circuit": 33815,
+     "N_sector": 405780
+    }
+   },
+   "meets_criterion": true
+  },
+  {
+   "name": "H1: today's Heron (live ibm_fez patch) AS IF all-to-all",
+   "eps2": 0.002348136404176,
+   "eps1": 0.0,
+   "eps_ro": 0.00958251953125,
+   "virtual_rz": false,
+   "mean_f": 0.005165199425286626,
+   "worst_f": 0.005165199425286626,
+   "max_f": 0.005165199425286626,
+   "worst_circuit": "B=0 ref25 k1",
+   "meets_mean": false,
+   "meets_worst": false,
+   "log_budget_spend": {
+    "2q": 5.073237020264262,
+    "1q": 0.0,
+    "ro": 0.19257454599395357
+   },
+   "log_budget": 2.3025850929940455,
+   "over_budget_by": 2.96322647326417,
+   "f_shortfall_factor": 19.36033670073655,
+   "note": "eps1 = 0, i.e. an upper bound on f; the 2x3 counts are the all-to-all ones, which a heavy-hex device cannot execute without routing",
+   "shot_budget": {
+    "B=0": {
+     "n_circuits": 32,
+     "mean_f": 0.005165199425286626,
+     "yield_clean": 0.004235463528735033,
+     "N_circuit": 1486448,
+     "N_sector": 47566336
+    },
+    "B=1": {
+     "n_circuits": 12,
+     "mean_f": 0.005165199425286626,
+     "yield_clean": 0.004235463528735033,
+     "N_circuit": 1486448,
+     "N_sector": 17837376
+    }
+   },
+   "meets_criterion": false
+  },
+  {
+   "name": "H2: FakeFez snapshot patch AS IF all-to-all",
+   "eps2": 0.0030469027261051823,
+   "eps1": 0.0,
+   "eps_ro": 0.007455008370535714,
+   "virtual_rz": false,
+   "mean_f": 0.001188679543402887,
+   "worst_f": 0.001188679543402887,
+   "max_f": 0.001188679543402887,
+   "worst_circuit": "B=0 ref25 k1",
+   "meets_mean": false,
+   "meets_worst": false,
+   "log_budget_spend": {
+    "2q": 6.585253498710513,
+    "1q": 0.0,
+    "ro": 0.14965871663299107
+   },
+   "log_budget": 2.3025850929940455,
+   "over_budget_by": 4.432327122349458,
+   "f_shortfall_factor": 84.12696302800455,
+   "note": "the calibration snapshot on which the 2x2 row of the amendment passes",
+   "shot_budget": {
+    "B=0": {
+     "n_circuits": 32,
+     "mean_f": 0.001188679543402887,
+     "yield_clean": 0.0009747172255903672,
+     "N_circuit": 6459098,
+     "N_sector": 206691136
+    },
+    "B=1": {
+     "n_circuits": 12,
+     "mean_f": 0.001188679543402887,
+     "yield_clean": 0.0009747172255903672,
+     "N_circuit": 6459098,
+     "N_sector": 77509176
+    }
+   },
+   "meets_criterion": false
+  },
+  {
+   "name": "H3: today's Heron on the ROUTED 2x3 circuit (what it would run)",
+   "eps2": 0.002348136404176,
+   "eps1": 0.0,
+   "eps_ro": 0.00958251953125,
+   "virtual_rz": false,
+   "mean_f": 2.1108059853521186e-06,
+   "worst_f": 2.1108059853521186e-06,
+   "max_f": 2.1108059853521186e-06,
+   "worst_circuit": "B=0 routed heavy-hex",
+   "meets_mean": false,
+   "meets_worst": false,
+   "log_budget_spend": {
+    "2q": 12.875866153840297,
+    "1q": 0.0,
+    "ro": 0.19257454599395357
+   },
+   "log_budget": 2.3025850929940455,
+   "over_budget_by": 10.765855606840205,
+   "f_shortfall_factor": 47375.26835433826,
+   "note": "validation/S2.json routed counts on the heavy-hex d = 5 map, eps1 = 0",
+   "shot_budget": {
+    "B=0": {
+     "n_circuits": 32,
+     "mean_f": 2.1108059853521186e-06,
+     "yield_clean": 1.730860907988737e-06,
+     "N_circuit": 3637376980,
+     "N_sector": 116396063360
+    },
+    "B=1": {
+     "n_circuits": 12,
+     "mean_f": 2.1108059853521186e-06,
+     "yield_clean": 1.730860907988737e-06,
+     "N_circuit": 3637376980,
+     "N_sector": 43648523760
+    }
+   },
+   "meets_criterion": false
+  }
+ ],
+ "levers": {
+  "virtual_rz": {
+   "status": "UNSPENT -- a platform property, not a compilation choice",
+   "what_it_removes": "4257 of the 7310 one-qubit gates per circuit carry no error",
+   "mean_f_before": 0.05338942314406414,
+   "mean_f_after": 0.08172250657676039,
+   "eps2_requirement_before": 0.0007094434028515578,
+   "eps2_requirement_after": 0.0009065577696489984,
+   "evidence": "validation/S2D.json data.2x3.f_virtual_rz (reproduced here)"
+  },
+  "connectivity": {
+   "status": "SPENT -- all-to-all is the floor; the requirement is already quoted there",
+   "all_to_all_cz": 2164,
+   "grid_best_cz": 4026,
+   "heavy_hex_best_cz": 5401,
+   "line_cz": 7052,
+   "seeds": 8,
+   "evidence": "data/S2_escalation_experiments.json coupling_maps"
+  },
+  "fixed_angle_generator": {
+   "status": "UNSPENT ON AN ALL-TO-ALL DEVICE -- gate S2_fixed was stopped on the ROUTED heavy-hex cost (3736 CZ against the old 500-CZ budget), a routing cost that does not exist on an all-to-all device; its all-to-all cost is 25 % below the exact generator.  Not adopted by amendment 01 section 1(b): the owner decides",
+   "counts_rzz_recomputed": {
+    "label": "B=0 fixed-angle k1",
+    "rzz": 1620,
+    "n_1q": 5415,
+    "n_rz": 3216,
+    "depth": 4494,
+    "f": 0.11054001790230344,
+    "f_virtual_rz": 0.1524739389679499
+   },
+   "cz_all_to_all_recomputed": 1626,
+   "cz_all_to_all_S2_fixed_json": 1626,
+   "cz_all_to_all_exact_S2_json": 2164,
+   "cz_routed_heavy_hex_S2_fixed_json": 3736,
+   "f_at_declared_inputs": 0.11054001790229702,
+   "f_at_declared_inputs_virtual_rz": 0.15247393896794642,
+   "eps2_required_for_mean_f_0.1": 0.001061792665971572,
+   "eps2_required_virtual_rz": 0.0012600906304862103,
+   "recall_evidence": {
+    "2x3 B=0: emulated recall of the 99.9 % support at f = 0.1": 1.0,
+    "2x3 B=1: emulated recall of the 99.9 % support at f = 0.1": 0.937
+   },
+   "price": "a different generator: per-term deviation from exp(-i theta H) is ~1e-1, not 1e-14 (validation/S2_fixed.json per_term_max_deviation); it is justified by the S1 recall criterion, not by Trotter accuracy"
+  },
+  "term_ablation": {
+   "status": "PARTLY UNSPENT -- dropping plaq1 keeps the S1 recall criterion in both sectors; dropping both plaquettes breaks it in B = 1",
+   "variants": {
+    "no plaq1 (interior-corner plaquette)": {
+     "counts": {
+      "label": "B=0 no plaq1 (interior-corner plaquette) k1",
+      "rzz": 1394,
+      "n_1q": 4830,
+      "n_rz": 2727,
+      "depth": 3582,
+      "f": 0.14693548441966137,
+      "f_virtual_rz": 0.19300329182590403
+     },
+     "cz_all_to_all": 1400,
+     "eps2_required_for_mean_f_0.1": 0.001275742855764828,
+     "eps2_required_virtual_rz": 0.0014711080517413923,
+     "f_at_declared_inputs": 0.1469354844196537,
+     "f_at_declared_inputs_virtual_rz": 0.19300329182589981
+    },
+    "no plaquettes": {
+     "counts": {
+      "label": "B=0 no plaquettes k1",
+      "rzz": 1180,
+      "n_1q": 4099,
+      "n_rz": 2303,
+      "depth": 3103,
+      "f": 0.195821657750167,
+      "f_virtual_rz": 0.24653792887991505
+     },
+     "cz_all_to_all": 1186,
+     "eps2_required_for_mean_f_0.1": 0.0015687889614335647,
+     "eps2_required_virtual_rz": 0.0017636430006789947,
+     "f_at_declared_inputs": 0.19582165775015836,
+     "f_at_declared_inputs_virtual_rz": 0.24653792887991044
+    }
+   },
+   "s1_recall_threshold": 0.9,
+   "recall_at_f_0.1": {
+    "full (S1 generator)": {
+     "B=0": 1.0,
+     "B=1": 1.0,
+     "meets_s1": true
+    },
+    "no plaq1 (interior-corner plaquette)": {
+     "B=0": 0.9767441860465116,
+     "B=1": 0.9368421052631579,
+     "meets_s1": true
+    },
+    "no plaquettes": {
+     "B=0": 0.9302325581395349,
+     "B=1": 0.8947368421052632,
+     "meets_s1": false
+    }
+   },
+   "evidence": "data/S2_escalation_experiments.json ablation_2x3 (2e5 shots per sector)"
+  },
+  "combined_fixed_angle_no_plaq1_virtual_rz": {
+   "status": "UNSPENT but UNMEASURED as a combination",
+   "counts_rzz_recomputed": {
+    "label": "B=0 fixed-angle, no plaq1, k1",
+    "rzz": 1218,
+    "n_1q": 4111,
+    "n_rz": 2412,
+    "depth": 3338,
+    "f": 0.1882903644140325,
+    "f_virtual_rz": 0.23965426535068923
+   },
+   "f_at_declared_inputs_virtual_rz": 0.239654265350685,
+   "eps2_required_virtual_rz": 0.001716617324813004,
+   "caveat": "the recall of the fixed-angle generator WITHOUT plaq1 has not been emulated; each lever is measured alone.  Nothing may be claimed for the combination until that emulation is run"
+  },
+  "shot_quota": {
+   "status": "OPEN ITEM 5 of the amendment, decided separately -- not a device lever",
+   "note": "raising the quota does not change f; it changes what f the run can afford"
+  }
+ },
+ "vendor_summary": {
+  "qubits": 20,
+  "connectivity": {
+   "statement": "all-to-all preferred; the requirement below is quoted at zero routing overhead, and the tolerable overhead is tabulated",
+   "max_two_qubit_gates_at_eps2_5e-4": 3062,
+   "max_routing_overhead_at_eps2_5e-4": 1.4189063948100094
+  },
+  "native_two_qubit_gate": "RZZ(theta) with a continuous angle (the compilation measured here uses basis {rz, rx, ry, rzz}); a CZ-only device needs 2164 CZ instead of 2158 RZZ for the same step",
+  "two_qubit_error": {
+   "required": 0.0007094434028515578,
+   "required_with_virtual_rz": 0.0009065577696489984,
+   "declared_in_the_amendment": 0.001,
+   "at_gate_counts": 2158
+  },
+  "one_qubit_error": {
+   "required_if_eps2_stays_at_declared": 1.4154030992809451e-05,
+   "declared": 0.0001,
+   "gate_count_physical_rz": 7310,
+   "gate_count_virtual_rz": 3053,
+   "note": "no requirement on rz if rz is a virtual frame change"
+  },
+  "readout_error": {
+   "declared": 0.002,
+   "measured_qubits": 20,
+   "marginal_requirement": null,
+   "note": "readout spends only 1.7 % of the error budget at the declared 2e-3, so it is not the binding channel; it becomes binding only once the two-qubit channel is inside the region",
+   "tolerable_at_the_R4_point": 0.024314150858340176
+  },
+  "mid_circuit_measurement_or_reset": "not required: the circuits measure once, at the end",
+  "depth": {
+   "mean": 5654.704545454545,
+   "min": 5641.0,
+   "max": 5677.0
+  },
+  "today_heron_gap": {
+   "live_ibm_fez": {
+    "backend": "ibm_fez",
+    "live": true,
+    "calibration_stamp": "20260921T2053Z",
+    "calibration_last_update": "2026-09-21T14:53:59-06:00",
+    "n_qubits": 30,
+    "n_edges": 54,
+    "distinct_patches": [
+     {
+      "mean_edge_error": 0.002348136404176,
+      "mean_readout_error": 0.00958251953125
+     },
+     {
+      "mean_edge_error": 0.00301307813391,
+      "mean_readout_error": 0.008056640625
+     },
+     {
+      "mean_edge_error": 0.003340588380523,
+      "mean_readout_error": 0.010721842447917
+     }
+    ],
+    "best_patch_mean_edge_error": 0.002348136404176,
+    "best_patch_mean_readout_error": 0.00958251953125,
+    "source": "validation/H0P_ibm_fez.json -> data.f_recomputed_on_the_day.per_circuit (gate_S2D.analyse_on_backend on the live ibm_fez target)"
+   },
+   "FakeFez_snapshot": {
+    "patch_mean_edge_error": 0.0030469027261051823,
+    "patch_mean_readout_error": 0.007455008370535714,
+    "snapshot_median_cz_error": 0.0039033828523107883,
+    "source": "validation/S2D.json data.2x2.snapshots.FakeFez"
+   },
+   "two_qubit_error_factor_to_close": 3.309829078313832,
+   "two_qubit_error_factor_to_close_virtual_rz": 2.5901674253866394,
+   "readout_factor_at_the_R4_point": 0.39411285991766515
+  }
+ },
+ "sources": {
+  "validation/S2.json": {
+   "2x3 all-to-all CZ": 2164,
+   "2x3 routed heavy-hex CZ": 5477,
+   "2x3 per-term CZ": {
+    "diag": 20,
+    "hop0": 194,
+    "hop1": 48,
+    "hop2": 182,
+    "hop3": 184,
+    "hop4": 358,
+    "hop5": 156,
+    "hop6": 44,
+    "plaq0": 214,
+    "plaq1": 764
+   }
+  },
+  "validation/S2D.json": {
+   "2x3 mean f": 0.05338942314406832,
+   "2x3 worst f": 0.053191508462773214,
+   "2x3 f virtual rz": 0.08172250657676296,
+   "2x3 eps2 required (mean counts)": 0.000709441266619093,
+   "declared inputs": {
+    "eps2_two_qubit_all_to_all": 0.001,
+    "eps1_one_qubit_all_to_all": 0.0001,
+    "eps_ro_readout_all_to_all": 0.002,
+    "p_configuration_probability": 0.001,
+    "k_min_counts": 3,
+    "confidence": 0.95,
+    "lambda_star": 6.295793621871989,
+    "yield_model": "y = 0.82 f (manual Step 4.4)",
+    "note": "eps2, eps1, eps_ro are vendor-class SPECIFICATIONS for the all-to-all trapped-ion device, declared inputs of this gate, not measurements; p, k and the confidence are the preregistered shot rule of manual Step 4.4.  The 2x2/Heron f is NOT in this list: it is computed from the per-edge and per-qubit errors of a calibration snapshot (FakeFez / FakeTorino).",
+    "calibration_snapshots": "qiskit_ibm_runtime.fake_provider FakeFez (Heron r2), FakeTorino (Heron r1)"
+   }
+  },
+  "validation/S2_fixed.json": {
+   "2x3 all-to-all CZ": 1626,
+   "2x3 routed CZ": 3736
+  },
+  "data/S2_escalation_experiments.json": {
+   "all_to_all": 2164,
+   "heavy_hex_distance": 5,
+   "heavy_hex_seed7": 5477,
+   "heavy_hex_best": 5401,
+   "heavy_hex_mean": 5559.375,
+   "grid": [
+    4,
+    5
+   ],
+   "grid_best": 4026,
+   "grid_mean": 4127.0,
+   "line": 7052,
+   "seeds": 8
+  },
+  "validation/H0P_ibm_fez.json": {
+   "backend": "ibm_fez",
+   "live": true,
+   "calibration_stamp": "20260921T2053Z",
+   "calibration_last_update": "2026-09-21T14:53:59-06:00",
+   "n_qubits": 30,
+   "n_edges": 54,
+   "distinct_patches": [
+    {
+     "mean_edge_error": 0.002348136404176,
+     "mean_readout_error": 0.00958251953125
+    },
+    {
+     "mean_edge_error": 0.00301307813391,
+     "mean_readout_error": 0.008056640625
+    },
+    {
+     "mean_edge_error": 0.003340588380523,
+     "mean_readout_error": 0.010721842447917
+    }
+   ],
+   "best_patch_mean_edge_error": 0.002348136404176,
+   "best_patch_mean_readout_error": 0.00958251953125,
+   "source": "validation/H0P_ibm_fez.json -> data.f_recomputed_on_the_day.per_circuit (gate_S2D.analyse_on_backend on the live ibm_fez target)"
+  }
+ },
+ "runtime_s": 96.58473587036133,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.2",
+  "scipy": "1.18.0",
+  "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+  "cpu_count": 12,
+  "git_commit": "d5e357d",
+  "timestamp": "2026-09-22 00:55:54 MDT"
+ },
+ "quick": false,
+ "pytest": "80 passed, 5 warnings in 105.53s (0:01:45)",
+ "pytest_returncode": 0
+}
