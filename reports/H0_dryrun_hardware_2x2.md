@@ -2,7 +2,7 @@
 
 **Status: PASS** — `scripts/gate_H0.py --counts data/hardware/H0_dryrun/counts --out H0_dryrun`,
 126 counts files (84 coarse-step + 42 readout-calibration circuits),
-dry run: **True**.  Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44, 12 CPUs, commit 1e5c03b, 2026-09-21 18:01:29 MDT.  Runtime 1 s.
+dry run: **True**.  Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44, 12 CPUs, commit 1b71217, 2026-09-22 10:43:24 MDT.  Runtime 2 s.
 
 Sampler options of the session: `{"default_shots": 40, "dynamical_decoupling": {"enable": true, "sequence_type": "XY4"}, "twirling": {"enable_gates": true, "enable_measure": true, "strategy": "active-accum"}, "error_mitigation": "none: SamplerV2 returns raw bit strings; no resilience level, no readout mitigation of expectation values (prompts/07 step 2)"}`.
 

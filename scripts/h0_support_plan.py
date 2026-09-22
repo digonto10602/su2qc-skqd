@@ -63,7 +63,8 @@ from skqd.report import env_block, md_table  # noqa: E402
 from skqd.skqd import READOUT_FACTOR, poisson_lambda_star  # noqa: E402
 
 from gate_H0P import load_circuit, load_index, load_manifests, random_acceptance  # noqa: E402
-from h0_backends import is_fake, last_update_date, resolve_backend  # noqa: E402
+from h0_backends import (calibration_fingerprint, fresh_calibration,  # noqa: E402
+                         frozen_qubits_and_edges, is_fake, last_update_date, resolve_backend)
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 RULE = ("D3' (prompts/16): r=2 and r=3 keep their shots, every r=1 circuit keeps the floor, "
@@ -408,7 +409,9 @@ N4 rounded up to a multiple of {plan['round_to']}, r = 2 / 3 unchanged at
 {plan['reps_shots'].get('2')} / {plan['reps_shots'].get('3')} shots, {plan['calibration_shots']} calibration shots.
 
 Clean-shot fraction f: {plan['f_source']}.  Calibration `{c['path']}`
-({c.get('backend')}, `last_update_date` {c.get('last_update_date')}, stamp {c.get('stamp')}).
+({c.get('backend')}, `last_update_date` {c.get('last_update_date')}, stamp {c.get('stamp')},
+fingerprint `{(c.get('fingerprint') or 'n/a')[:16]}` of the 30 qubits and 54 edges of the frozen
+patch -- the key the submission preflight compares, prompts/17 D9).
 Ideal probabilities: {plan['amplitude_crosscheck']}; largest disagreement
 **{plan['amplitude_crosscheck_max_dp']:.2e}** (tolerance {AMPLITUDE_TOL:g}).
 
@@ -468,6 +471,12 @@ def main():
         from gate_S2D import analyse_on_backend
         backend_name = args.backend
         backend = resolve_backend(args.backend)
+        # prompts/17 F2: the record is taken FIRST, from a target refreshed in this
+        # invocation, and the f values are then read from that same (now cached) target --
+        # so the plan's fingerprint is the fingerprint of the calibration its shots were
+        # sized on, not of one read a minute earlier or later.
+        qubits, edges = frozen_qubits_and_edges(prep)
+        live_record = fresh_calibration(backend, qubits, edges)
         for m in mans:
             f_live[m["id"]] = float(analyse_on_backend(load_circuit(prep, m), backend)["f"])
         iso = last_update_date(backend)
@@ -477,15 +486,26 @@ def main():
                      (f"{args.backend} snapshot" if is_fake(args.backend) else f"live {args.backend} target")),
             "backend": args.backend, "last_update_date": iso,
             "stamp": ("FakeFez snapshot" if is_fake(args.backend) else calibration_stamp(iso)),
+            "fingerprint": live_record["fingerprint"],
+            "fingerprint_source": (f"{args.backend} snapshot record" if is_fake(args.backend)
+                                   else f"live {args.backend} target (h0_backends.fresh_calibration)"),
         }
         f_source = f"gate_S2D.analyse_on_backend(frozen circuit, {args.backend}.target)"
     if args.calibration:
         cal, cz, meas = load_calibration(args.calibration)
         for m in mans:
             f_file[m["id"]] = f_from_calibration(load_circuit(prep, m), cz, meas)[0]
+        file_fp = calibration_fingerprint(cal)
+        if calibration_block is not None and calibration_block.get("fingerprint") != file_fp:
+            raise SystemExit(
+                f"the live {args.backend} calibration (fingerprint "
+                f"{calibration_block.get('fingerprint', '')[:16]}) and {args.calibration} "
+                f"(fingerprint {file_fp[:16]}) are not the same calibration of the frozen patch "
+                f"(prompts/17 D9).  Nothing was written.")
         calibration_block = {
             "path": args.calibration, "backend": cal.get("backend"),
             "last_update_date": cal.get("last_update_date"), "stamp": cal.get("stamp"),
+            "fingerprint": file_fp, "fingerprint_source": args.calibration,
         }
         if not args.backend:
             f_source = (f"offline recomputation from {args.calibration} with the formula of "
@@ -514,7 +534,8 @@ def main():
     with open(out, "w") as fh:
         json.dump(plan, fh, indent=1)
     print(f"rule D3' on {backend_name or calibration_block['path']} "
-          f"(calibration {calibration_block.get('last_update_date')})")
+          f"(calibration {calibration_block.get('last_update_date')}, fingerprint "
+          f"{(calibration_block.get('fingerprint') or 'n/a')[:16]})")
     for sec, v in plan["sectors"].items():
         print(f"  {sec}: N4 {v['N4']}, r=1 shots {v['r1_shots_total']}, "
               f"min lambda at {args.margin} f {v['min_lambda_r1_at_margin']:.4f} "

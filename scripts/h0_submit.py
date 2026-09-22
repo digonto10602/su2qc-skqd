@@ -47,12 +47,15 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from gate_H0P import load_circuit, load_index, load_manifests  # noqa: E402
-from h0_backends import is_fake, last_update_date, resolve_backend  # noqa: E402
+from h0_backends import (calibration_diff, calibration_fingerprint,  # noqa: E402
+                         fresh_calibration, frozen_qubits_and_edges, is_fake,
+                         last_update_date, resolve_backend)
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 POLL_S = 30
 MAX_WAIT_S = 1500          # one --retrieve invocation stays inside the 30-minute rule
 TERMINAL = ("DONE", "ERROR", "CANCELLED", "FAILED")
+F_CROSSCHECK_TOL = 1e-9    # h0_support_plan.F_CROSSCHECK_TOL: f identity, not f agreement
 
 
 # --------------------------------------------------------------------------- options
@@ -225,8 +228,111 @@ def write_counts_for_job(cdir, session, entry, mans_by_id, result):
     return written, skipped
 
 
+# --------------------------------------------------------------------------- calibration gate
+def calibration_gate(live_record, prediction, plan=None, f_live_by_circuit=None,
+                     prediction_record=None, tol=F_CROSSCHECK_TOL):
+    """Rule D9 of prompts/17: may these jobs be submitted on THIS calibration?
+
+    The predicate is identity of the calibration CONTENT of the frozen patch -- the 30 x 9
+    qubit leaves and 54 x 4 edge leaves the prediction reads -- with no tolerance, plus
+    identity of the 84 live clean-shot fractions with the plan's and the prediction's to
+    `tol`.  The calibration TIMESTAMP is recorded (`stamp_match`) and is never a problem:
+    ibm_fez moved it three times in one night without changing one of these numbers
+    (prompts/17, diagnosis), and in every such case re-running the prediction is a no-op.
+
+    Pure: it takes the records and returns `(problems, record)`, so it is exercised on the
+    committed calibration files in `tests/test_h0_scripts.py`.  `prediction_record` is the
+    full record the prediction was made from; when it is None the function tries to load it
+    from `prediction.data.calibration.path`, only to describe a refusal (`calibration_diff`).
+
+    Returns (problems, record).  An empty `problems` is the go."""
+    problems, rec = [], {}
+    live_fp = live_record.get("fingerprint") or calibration_fingerprint(live_record)
+    rec["calibration_fingerprint"] = live_fp
+    rec["calibration_last_update_date"] = live_record.get("last_update_date")
+    rec["calibration_stamp"] = live_record.get("stamp")
+
+    pcal = ((prediction or {}).get("data", {}).get("calibration") or {})
+    pred_fp = pcal.get("fingerprint")
+    rec["prediction_calibration_fingerprint"] = pred_fp
+    rec["prediction_calibration_last_update_date"] = pcal.get("last_update_date")
+    rec["prediction_calibration_path"] = pcal.get("path")
+    rec["stamp_match"] = (pcal.get("last_update_date") == live_record.get("last_update_date")
+                          if pcal.get("last_update_date") else None)
+    rec["calibration_diff"] = None
+    if prediction is None:
+        rec["fingerprint_match"] = None
+    elif pred_fp is None:
+        rec["fingerprint_match"] = False
+        problems.append("the prediction carries no data.calibration.fingerprint: it was made "
+                        "before prompts/17 F3.  Re-run gate_H0P.py on the live backend.")
+    else:
+        rec["fingerprint_match"] = (pred_fp == live_fp)
+        if pred_fp != live_fp:
+            if prediction_record is None and pcal.get("path"):
+                p = pcal["path"] if os.path.isabs(pcal["path"]) else os.path.join(ROOT, pcal["path"])
+                if os.path.isfile(p):
+                    try:
+                        with open(p) as fh:
+                            prediction_record = json.load(fh)
+                    except Exception:
+                        prediction_record = None
+            extra = ""
+            if prediction_record is not None:
+                d = calibration_diff(prediction_record, live_record)
+                rec["calibration_diff"] = {k: d[k] for k in
+                                           ("n_leaves", "families", "max_ratio", "min_ratio")}
+                extra = (f" -- {d['n_leaves']} leaf/leaves moved ({', '.join(d['families']) or 'none'}), "
+                         f"ratios {d['min_ratio']} .. {d['max_ratio']}")
+            problems.append(
+                f"the live calibration of the frozen patch (fingerprint {live_fp[:16]}, "
+                f"{live_record.get('last_update_date')}) is not the one the prediction was made "
+                f"from ({pred_fp[:16]}, {pcal.get('last_update_date')}){extra}: re-run the "
+                f"prediction on this content (prompts/17 D10), commit, and submit again")
+
+    plan_fp = ((plan or {}).get("calibration") or {}).get("fingerprint") if plan else None
+    rec["shots_plan_calibration_fingerprint"] = plan_fp
+    if plan is not None:
+        if plan_fp is None:
+            problems.append("the shot plan carries no calibration.fingerprint: it was written "
+                            "before prompts/17 F2.  Re-run h0_support_plan.py.")
+        elif plan_fp != live_fp:
+            problems.append(
+                f"the shot plan was built on the calibration fingerprint {plan_fp[:16]}, the live "
+                f"target reports {live_fp[:16]}: re-run h0_support_plan.py on this content")
+
+    # the 84 clean-shot fractions: what the prediction and the plan actually consumed
+    rec["f_live_vs_plan_max_abs_diff"] = None
+    rec["f_live_vs_prediction_max_abs_diff"] = None
+    rec["f_live_circuits_checked"] = None if f_live_by_circuit is None else len(f_live_by_circuit)
+    if f_live_by_circuit:
+        pf = (plan or {}).get("f_by_circuit") or {}
+        common = [c for c in f_live_by_circuit if c in pf]
+        if plan is not None and common:
+            d = max(abs(float(f_live_by_circuit[c]) - float(pf[c])) for c in common)
+            rec["f_live_vs_plan_max_abs_diff"] = float(d)
+            if d >= tol:
+                worst = max(common, key=lambda c: abs(float(f_live_by_circuit[c]) - float(pf[c])))
+                problems.append(
+                    f"the live clean-shot fraction of {worst} is {f_live_by_circuit[worst]:.9f}, the "
+                    f"shot plan sized its shots at {float(pf[worst]):.9f} (max |df| {d:.3e} >= "
+                    f"{tol:g} over {len(common)} circuits): the plan is not this calibration's")
+        ppc = ((prediction or {}).get("data", {}).get("f_recomputed_on_the_day") or {}).get("per_circuit") or {}
+        common = [c for c in f_live_by_circuit if c in ppc and ppc[c].get("f_live") is not None]
+        if common:
+            d = max(abs(float(f_live_by_circuit[c]) - float(ppc[c]["f_live"])) for c in common)
+            rec["f_live_vs_prediction_max_abs_diff"] = float(d)
+            if d >= tol:
+                worst = max(common, key=lambda c: abs(float(f_live_by_circuit[c]) - float(ppc[c]["f_live"])))
+                problems.append(
+                    f"the live clean-shot fraction of {worst} is {f_live_by_circuit[worst]:.9f}, the "
+                    f"prediction used {float(ppc[worst]['f_live']):.9f} (max |df| {d:.3e} >= {tol:g} "
+                    f"over {len(common)} circuits): the prediction is not this calibration's")
+    return problems, rec
+
+
 # --------------------------------------------------------------------------- preflight
-def preflight(args, backend, prep, plan, index):
+def preflight(args, backend, prep, plan, index, outdir=None):
     """Everything that must hold before a single pub goes to the device (prompts/15 A3)."""
     from ibm_account import check_backend, frozen_requirements
     from h0_qpu_time import estimate
@@ -255,10 +361,28 @@ def preflight(args, backend, prep, plan, index):
     if mc is not None and largest > mc:
         problems.append(f"largest job has {largest} pubs > max_circuits {mc}")
 
-    live_date = last_update_date(backend)
+    # ---- prompts/17 D9: the calibration CONTENT of the frozen patch, read fresh here.
+    # The record is written to disk BEFORE the decision, so a refusal leaves its evidence.
+    qubits, edges = frozen_qubits_and_edges(prep)
+    live_record = fresh_calibration(backend, qubits, edges)
+    live_date = live_record["last_update_date"]
     record["calibration_last_update_date"] = live_date
+    record["calibration_stamp"] = live_record["stamp"]
+    record["calibration_fingerprint"] = live_record["fingerprint"]
+    record["calibration_missing_errors"] = live_record["missing_errors"]
+    if outdir:
+        os.makedirs(outdir, exist_ok=True)
+        capath = os.path.join(outdir, f"calibration_at_submission_{live_record['stamp']}.json")
+        with open(capath, "w") as fh:
+            json.dump(live_record, fh, indent=1)
+        record["calibration_at_submission_file"] = os.path.relpath(capath, ROOT)
+    if live_record["missing_errors"]:
+        problems.append(f"{len(live_record['missing_errors'])} target entries of the frozen set "
+                        f"carry no error on {backend.name}: f cannot be evaluated today")
+
     pred_path = os.path.join(ROOT, args.predict_from)
     record["prediction"] = args.predict_from
+    pred, plan_json = None, None
     if not os.path.exists(pred_path):
         problems.append(f"the day's prediction {args.predict_from} does not exist: "
                         f"run gate_H0P.py --backend {args.backend} first")
@@ -272,21 +396,14 @@ def preflight(args, backend, prep, plan, index):
         if pd is None:
             problems.append(f"{args.predict_from} carries no calibration date: it was not produced "
                             f"by gate_H0P.py --backend {args.backend}")
-        elif pd != live_date:
-            problems.append(f"the live calibration ({live_date}) is not the one the prediction was "
-                            f"made from ({pd}): re-run gate_H0P.py --backend {args.backend}")
         if args.shots_plan:
             # prompts/16 F3: the plan that sizes the shots and the plan the PREDICTION was made
             # with must be the same file's content -- like for like, or the device is not being
             # compared against the numbers that were preregistered for it.
-            pshots, pcal, _pl = shot_plan_shots(args.shots_plan)
+            pshots, pcal, plan_json = shot_plan_shots(args.shots_plan)
             record["shots_plan"] = args.shots_plan
             record["shots_plan_calibration_last_update_date"] = pcal.get("last_update_date")
             record["shots_plan_stamp"] = pcal.get("stamp")
-            if pcal.get("last_update_date") != live_date:
-                problems.append(f"the shot plan {args.shots_plan} was built on the calibration "
-                                f"{pcal.get('last_update_date')}, the live target reports "
-                                f"{live_date}: re-run h0_support_plan.py --backend {args.backend}")
             predshots = (pred.get("data", {}).get("sampling") or {}).get("shots_by_circuit")
             if predshots is None:
                 problems.append(f"{args.predict_from} carries no data.sampling.shots_by_circuit: the "
@@ -296,6 +413,16 @@ def preflight(args, backend, prep, plan, index):
                 problems.append(f"the shot plan and the prediction disagree on the shots of "
                                 f"{len(diff)} circuit(s) (e.g. {diff[:3]}): the prediction must be "
                                 f"the one made with this plan")
+
+    # the live clean-shot fraction of every frozen coarse circuit on the target just read
+    # (about 10 s): the numbers the plan sized the shots with and the prediction consumed.
+    from gate_S2D import analyse_on_backend
+    coarse, _cals = load_manifests(prep)
+    f_live_by_circuit = {m["id"]: float(analyse_on_backend(load_circuit(prep, m), backend)["f"])
+                         for m in coarse}
+    gate_problems, gate_record = calibration_gate(live_record, pred, plan_json, f_live_by_circuit)
+    problems += gate_problems
+    record.update(gate_record)
 
     by_rep, by_circuit = {}, None
     if args.shots_by_rep:
@@ -333,6 +460,10 @@ def main():
     ap.add_argument("--submit", action="store_true", help="submission phase (implied by --backend/--dry-run)")
     ap.add_argument("--retrieve", action="store_true", help="retrieval phase: job ids -> counts files")
     ap.add_argument("--status", action="store_true", help="refresh and print the status of every job")
+    ap.add_argument("--record-calibration", action="store_true",
+                    help="write <out>/calibration_at_retrieval_<stamp>.json with a FRESH record of "
+                         "the backend and store its fingerprint and its diff against the "
+                         "prediction's in session.json (prompts/15 B7, scripted by prompts/17 F4)")
     ap.add_argument("--resume", action="store_true", help="--submit only the groups without a job id")
     ap.add_argument("--wait", type=float, default=0.0,
                     help=f"--retrieve: poll for up to this many seconds (<= {MAX_WAIT_S})")
@@ -414,11 +545,14 @@ def submit_phase(args):
         backend = resolve_backend(args.backend)
         if args.predict_from is None:
             args.predict_from = os.path.join("validation", f"H0P_{args.backend}.json")
-        problems, preflight_record = preflight(args, backend, prep, plan, index)
+        problems, preflight_record = preflight(args, backend, prep, plan, index, outdir=outdir)
         print("preflight:")
         for k in ("backend_name", "operational", "pending_jobs", "max_circuits", "largest_chunk",
-                  "calibration_last_update_date", "prediction",
-                  "prediction_calibration_last_update_date"):
+                  "calibration_last_update_date", "calibration_fingerprint", "prediction",
+                  "prediction_calibration_last_update_date",
+                  "prediction_calibration_fingerprint", "fingerprint_match", "stamp_match",
+                  "f_live_vs_plan_max_abs_diff", "f_live_vs_prediction_max_abs_diff",
+                  "calibration_at_submission_file"):
             if k in preflight_record:
                 print(f"  {k}: {preflight_record[k]}")
         print(f"  execution estimate: "
@@ -460,6 +594,20 @@ def submit_phase(args):
             "shots_plan": args.shots_plan,
             "shots_plan_calibration_last_update_date": plan_cal.get("last_update_date"),
             "shots_plan_stamp": plan_cal.get("stamp"),
+            # prompts/17 D9: what was true of the calibration at the moment of submission.
+            # A dry run has no live target, so the live-only keys are null.
+            "calibration_fingerprint": (preflight_record or {}).get("calibration_fingerprint"),
+            "prediction_calibration_fingerprint":
+                (preflight_record or {}).get("prediction_calibration_fingerprint"),
+            "shots_plan_calibration_fingerprint": plan_cal.get("fingerprint"),
+            "fingerprint_match": (preflight_record or {}).get("fingerprint_match"),
+            "stamp_match": (preflight_record or {}).get("stamp_match"),
+            "f_live_vs_plan_max_abs_diff":
+                (preflight_record or {}).get("f_live_vs_plan_max_abs_diff"),
+            "f_live_vs_prediction_max_abs_diff":
+                (preflight_record or {}).get("f_live_vs_prediction_max_abs_diff"),
+            "calibration_at_submission_file":
+                (preflight_record or {}).get("calibration_at_submission_file"),
             "shots_by_circuit": (None if plan_shots is None else
                                  {m["id"]: int(sh) for m, sh in jobs}),
             "calibration_shots": args.cal_shots,
@@ -533,6 +681,50 @@ def submit_phase(args):
     return 0
 
 
+def record_retrieval_calibration(args, session, outdir, prep):
+    """The retrieval-time calibration record of prompts/15 B7, scripted (prompts/17 F4 iv).
+
+    It is information, never a gate: a fingerprint that moved between submission and
+    retrieval is the drift that prompts/15 D7 and escalation (d) were written for, and
+    gate_H0.py keeps comparing the device against the PREDICTION's record."""
+    jobs = [j for j in session["jobs"] if j.get("job_id")]
+    if not args.status and jobs and not all(j.get("status") in TERMINAL for j in jobs):
+        print("--record-calibration: not every job is terminal yet; nothing written", flush=True)
+        return None
+    backend = resolve_backend(session["backend"])
+    qubits, edges = frozen_qubits_and_edges(prep)
+    rec = fresh_calibration(backend, qubits, edges)
+    path = os.path.join(outdir, f"calibration_at_retrieval_{rec['stamp']}.json")
+    with open(path, "w") as fh:
+        json.dump(rec, fh, indent=1)
+    session["retrieval_calibration_file"] = os.path.relpath(path, ROOT)
+    session["retrieval_calibration_last_update_date"] = rec["last_update_date"]
+    session["retrieval_calibration_fingerprint"] = rec["fingerprint"]
+    pred_fp = session.get("prediction_calibration_fingerprint")
+    pred_path = None
+    if session.get("prediction"):
+        pp = os.path.join(ROOT, session["prediction"])
+        if os.path.isfile(pp):
+            with open(pp) as fh:
+                pcal = (json.load(fh).get("data", {}).get("calibration") or {})
+            pred_fp = pred_fp or pcal.get("fingerprint")
+            pred_path = pcal.get("path")
+    session["retrieval_fingerprint_match"] = (None if pred_fp is None else pred_fp == rec["fingerprint"])
+    session["retrieval_calibration_diff"] = None
+    if pred_path:
+        p = pred_path if os.path.isabs(pred_path) else os.path.join(ROOT, pred_path)
+        if os.path.isfile(p):
+            with open(p) as fh:
+                d = calibration_diff(json.load(fh), rec)
+            session["retrieval_calibration_diff"] = {k: d[k] for k in
+                                                     ("n_leaves", "families", "max_ratio", "min_ratio")}
+    print(f"retrieval calibration {rec['last_update_date']} (fingerprint {rec['fingerprint'][:16]}, "
+          f"match with the prediction: {session['retrieval_fingerprint_match']}, diff "
+          f"{session['retrieval_calibration_diff']}) -> {session['retrieval_calibration_file']}",
+          flush=True)
+    return rec
+
+
 def retrieve_phase(args):
     if not args.out:
         raise SystemExit("--retrieve / --status need --out <session directory>")
@@ -586,6 +778,10 @@ def retrieve_phase(args):
             break
         time.sleep(min(POLL_S, max(1.0, wait - (time.time() - t0))))
         pending = still
+
+    if args.record_calibration:
+        record_retrieval_calibration(args, session, outdir, prep)
+        save_session(outdir, session)
 
     n = len([f for f in os.listdir(cdir) if f.endswith(".json")])
     done = [j for j in session["jobs"] if j.get("counts_written")]

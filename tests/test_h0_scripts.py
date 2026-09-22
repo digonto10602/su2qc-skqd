@@ -103,6 +103,207 @@ def test_calibration_record_reports_a_none_error_instead_of_defaulting():
         props.error = saved
 
 
+# --------------------------------------------------------------------- calibration fingerprint (prompts/17)
+CAL_DIR = os.path.join(os.path.dirname(SCRIPTS), "data", "hardware", "H0_ibm_fez")
+FP_2053Z = "54c0a533945c6178a4c5f75584f657d3188a415b6faed7406843796f0a80a795"
+FP_NIGHT = "d937c672ec9fce9ab8cf51ed58c70c41b05cd9d4599daee2c42492377886a848"
+
+
+def _record(stamp):
+    import json
+
+    with open(os.path.join(CAL_DIR, f"calibration_{stamp}.json")) as fh:
+        return json.load(fh)
+
+
+def test_fingerprint_of_the_committed_records():
+    """The serialization of prompts/17 F1 is pinned by these four hashes: three consecutive
+    `last_update_date` changes of ibm_fez left every number the prediction reads untouched."""
+    assert h0_backends.calibration_fingerprint(_record("20260921T2053Z")) == FP_2053Z
+    for stamp in ("20260922T0544Z", "20260922T0620Z", "20260922T0711Z"):
+        assert h0_backends.calibration_fingerprint(_record(stamp)) == FP_NIGHT
+    # the fingerprint excludes itself and the device metadata
+    rec = dict(_record("20260922T0711Z"), fingerprint="nonsense",
+               last_update_date="2099-01-01T00:00:00-06:00", stamp="20990101T0600Z",
+               status={"operational": False, "pending_jobs": 999})
+    assert h0_backends.calibration_fingerprint(rec) == FP_NIGHT
+
+
+def test_calibration_diff_reports_the_readout_recalibration():
+    """The one content change on record (2026-09-21 14:53:59 -> 23:44:00) was a readout
+    recalibration of all 30 qubits of the patch; the two later stamp changes moved nothing."""
+    d = h0_backends.calibration_diff(_record("20260921T2053Z"), _record("20260922T0544Z"))
+    assert d["n_leaves"] == 30
+    assert d["families"] == ["measure_error"]
+    assert d["min_ratio"] == pytest.approx(0.3735, abs=5e-4)
+    assert d["max_ratio"] == pytest.approx(2.6571, abs=5e-4)
+    worst = {v["path"]: v["ratio"] for v in d["leaves"]}
+    assert worst["qubits/141/measure_error"] == pytest.approx(d["min_ratio"])
+    assert worst["qubits/146/measure_error"] == pytest.approx(d["max_ratio"])
+    for a, b in (("20260922T0544Z", "20260922T0620Z"), ("20260922T0620Z", "20260922T0711Z")):
+        z = h0_backends.calibration_diff(_record(a), _record(b))
+        assert z["n_leaves"] == 0 and z["families"] == [] and z["max_ratio"] is None
+
+
+def test_fingerprint_is_the_noise_model_key():
+    """The fingerprint is exactly the key of the seeded Aer prediction (prompts/17 F6 c).
+
+    A perturbation OUTSIDE the frozen patch leaves both the counts and the fingerprint
+    alone; three perturbations INSIDE change both.  The assertion on the fingerprint is the
+    load-bearing one: a small in-patch readout change can leave 300 seeded shots identical
+    by luck (measured: a x 1.5 on one qubit did), so the perturbations here are hard."""
+    from gate_H0P import load_circuit, load_manifests
+    from qiskit.providers import QubitProperties
+    from qiskit.transpiler import InstructionProperties
+    from qiskit_aer import AerSimulator
+    from qiskit_ibm_runtime.fake_provider import FakeFez
+
+    prep = os.path.join(os.path.dirname(SCRIPTS), "data", "hardware", "H0_prep")
+    qubits, edges = h0_backends.frozen_qubits_and_edges(prep)
+    mans, _ = load_manifests(prep)
+    man = next(x for x in mans if x["id"] == "B0_ref06_k1_rep1")
+    qc = load_circuit(prep, man)
+
+    def run(perturb=None, shots=300):
+        b = FakeFez()
+        t = b.target
+        if perturb:
+            perturb(t)
+        rec = h0_backends.calibration_record(b, qubits, edges)
+        counts = AerSimulator.from_backend(b, seed_simulator=11).run(qc, shots=shots).result().get_counts()
+        return counts, h0_backends.calibration_fingerprint(rec)
+
+    base, fp0 = run()
+
+    def out_of_patch(t):
+        assert 0 not in qubits
+        p = t["measure"][(0,)]
+        t.update_instruction_properties("measure", (0,), InstructionProperties(duration=p.duration,
+                                                                               error=0.3))
+        e0 = next(k for k in t["cz"].keys() if 0 in k)
+        pe = t["cz"][e0]
+        t.update_instruction_properties("cz", e0, InstructionProperties(duration=pe.duration, error=0.2))
+        qp = list(t.qubit_properties)
+        q = qp[0]
+        qp[0] = QubitProperties(t1=q.t1 * 0.5, t2=min(q.t2, q.t1 * 0.999), frequency=q.frequency)
+        t.qubit_properties = qp
+
+    def in_patch_measure(t):
+        p = t["measure"][(117,)]
+        t.update_instruction_properties("measure", (117,), InstructionProperties(duration=p.duration,
+                                                                                 error=0.3))
+
+    def in_patch_sx(t):
+        p = t["sx"][(117,)]
+        t.update_instruction_properties("sx", (117,), InstructionProperties(duration=p.duration,
+                                                                            error=0.2))
+
+    def in_patch_t1(t):
+        qp = list(t.qubit_properties)
+        q = qp[117]
+        qp[117] = QubitProperties(t1=q.t1 * 0.1, t2=min(q.t2, q.t1 * 0.099), frequency=q.frequency)
+        t.qubit_properties = qp
+
+    c, fp = run(out_of_patch)
+    assert c == base and fp == fp0
+    for perturb in (in_patch_measure, in_patch_sx, in_patch_t1):
+        c, fp = run(perturb)
+        assert fp != fp0, perturb.__name__
+        assert c != base, perturb.__name__
+
+
+def test_fresh_calibration_refreshes_a_live_backend_and_never_a_fake_one(monkeypatch):
+    """The cache trap of qiskit-ibm-runtime 0.49.0: `properties(refresh=True)` alone leaves
+    `_target` stale, so every live read goes through `IBMBackend.refresh()` -- which must
+    never be called on a FakeBackendV2 (it needs a service argument)."""
+    prep = os.path.join(os.path.dirname(SCRIPTS), "data", "hardware", "H0_prep")
+    qubits, edges = h0_backends.frozen_qubits_and_edges(prep)
+    inner = h0_backends.resolve_backend("FakeFez")
+
+    class _Live:
+        def __init__(self, wrapped):
+            self._w = wrapped
+            self.refreshed = 0
+
+        def refresh(self):
+            self.refreshed += 1
+
+        def __getattr__(self, name):
+            return getattr(self._w, name)
+
+    live = _Live(inner)
+    assert not h0_backends._is_live_ibm_backend(inner)      # FakeFez is never "live"
+    monkeypatch.setattr(h0_backends, "_is_live_ibm_backend", lambda b: isinstance(b, _Live))
+    rec = h0_backends.fresh_calibration(live, qubits, edges)
+    assert live.refreshed == 1
+    assert rec["fingerprint"] == h0_backends.calibration_fingerprint(rec)
+
+    calls = []
+    monkeypatch.setattr(inner, "refresh", lambda *a, **k: calls.append(1), raising=False)
+    h0_backends.fresh_calibration(inner, qubits, edges)
+    assert calls == []
+
+
+# --------------------------------------------------------------------- the submission gate (D9)
+def test_calibration_gate_on_the_committed_records():
+    """Rule D9 on the real records: a stamp that moved while the content did not is a GO;
+    a content change is a refusal that names what moved; an f that is not identical is a
+    refusal even when the fingerprints agree."""
+    import h0_submit
+
+    live_0620 = _record("20260922T0620Z")
+    pred = {"data": {"calibration": {
+        "fingerprint": h0_backends.calibration_fingerprint(_record("20260922T0711Z")),
+        "last_update_date": "2026-09-22T01:11:12-06:00",
+        "path": "data/hardware/H0_ibm_fez/calibration_20260922T0711Z.json"},
+        "f_recomputed_on_the_day": {"per_circuit": {"c1": {"f_live": 0.17}}}}}
+    plan = {"calibration": {"fingerprint": pred["data"]["calibration"]["fingerprint"]},
+            "f_by_circuit": {"c1": 0.17}}
+
+    problems, rec = h0_submit.calibration_gate(live_0620, pred, plan, {"c1": 0.17})
+    assert problems == []
+    assert rec["fingerprint_match"] is True
+    assert rec["stamp_match"] is False          # 00:20:08 vs 01:11:12, recorded, not a refusal
+    assert rec["f_live_vs_plan_max_abs_diff"] == 0.0
+
+    problems, rec = h0_submit.calibration_gate(_record("20260921T2053Z"), pred, plan, {"c1": 0.17})
+    assert len(problems) == 2 and rec["fingerprint_match"] is False
+    assert "30 leaf/leaves moved" in problems[0] and "measure_error" in problems[0]
+    assert rec["calibration_diff"]["n_leaves"] == 30
+
+    problems, rec = h0_submit.calibration_gate(live_0620, pred, plan, {"c1": 0.17 + 2e-9})
+    assert len(problems) == 2                   # against the plan and against the prediction
+    assert all("clean-shot fraction" in p for p in problems)
+    assert rec["fingerprint_match"] is True
+
+
+# --------------------------------------------------------------------- the watch log
+def test_calwatch_summary_reproduces_hand_computed_windows(tmp_path):
+    import json
+
+    import h0_calwatch
+
+    stamps = ["A", "A", "B", "B", "B", "C"]
+    fps = ["X", "X", "X", "Y", "Y", "Y"]
+    p = tmp_path / "watch.jsonl"
+    with open(p, "w") as fh:
+        for i, (s, f) in enumerate(zip(stamps, fps)):
+            fh.write(json.dumps({"utc": f"2026-09-22T12:{5 * i:02d}:00Z", "backend": "ibm_fez",
+                                 "last_update_date": s, "fingerprint": f}) + "\n")
+    out = h0_calwatch.summarise(str(p))
+    assert out["polls"] == 6
+    # stamps: A held 12:00 -> 12:05 (300 s, next value seen at 12:10), B 12:10 -> 12:20 (600 s),
+    # C is the open window at 12:25 (0 s so far)
+    assert out["stamp"]["values"] == 3 and out["stamp"]["closed_windows"] == 2
+    assert out["stamp"]["min_s"] == 300 and out["stamp"]["median_s"] == 450
+    assert out["stamp"]["max_s"] == 600 and out["stamp"]["open_window_s"] == 0
+    assert [w["seconds_upper_bound"] for w in out["stamp"]["windows"]] == [600, 900, 0]
+    # fingerprints: X 12:00 -> 12:10 (600 s), Y open since 12:15 (600 s so far)
+    assert out["fingerprint"]["values"] == 2 and out["fingerprint"]["closed_windows"] == 1
+    assert out["fingerprint"]["max_s"] == 600 and out["fingerprint"]["open_window_s"] == 600
+    assert out["fingerprint"]["open_value"] == "Y"
+
+
 # --------------------------------------------------------------------- ASAP schedule
 def test_circuit_duration_is_the_asap_critical_path():
     from qiskit import QuantumCircuit
@@ -256,13 +457,14 @@ def test_f_from_a_calibration_record_equals_analyse_on_backend():
 # --------------------------------------------------------------------- the sampling cache
 def _cache_expect():
     return {"backend": "FakeFez", "seed": 11, "sector": "B=0", "repetition": 1,
+            "calibration_fingerprint": "a" * 64,
             "calibration_last_update_date": "snapshot", "shot_plan_stamp": "s1",
             "shots_by_circuit": {"c1": 267, "c2": 11700}}
 
 
 @pytest.mark.parametrize("field,value", [("seed", 7), ("backend", "FakeTorino"),
-                                         ("calibration_last_update_date", "2026-09-21T14:53:59-06:00"),
-                                         ("shot_plan_stamp", "s2")])
+                                         ("calibration_fingerprint", "b" * 64),
+                                         ("sector", "B=1")])
 def test_cache_refuses_a_mismatched_field(field, value):
     import gate_H0P
 
@@ -272,6 +474,31 @@ def test_cache_refuses_a_mismatched_field(field, value):
     with pytest.raises(SystemExit) as e:
         gate_H0P.cache_stamp(exp, found, "/tmp/B=0_r1.json")
     assert field in str(e.value)
+
+
+@pytest.mark.parametrize("field,value", [
+    ("calibration_last_update_date", "2026-09-22T00:20:08-06:00"),
+    ("shot_plan_stamp", "20260922T0620Z"),
+    ("shots_plan_file", "data/hardware/H0_ibm_fez/shot_plan_20260922T0620Z.json")])
+def test_cache_accepts_a_record_that_differs_only_in_the_timestamps(field, value):
+    """prompts/17 D11: the cache is keyed by the calibration CONTENT.  ibm_fez moved its
+    `last_update_date` three times in one night without changing one number the seeded Aer
+    sampling reads, so a stamp difference must not invalidate the counts."""
+    import gate_H0P
+
+    exp = _cache_expect()
+    gate_H0P.cache_stamp(exp, dict(exp, **{field: value}), "/tmp/B=0_r1.json")
+
+
+def test_cache_refuses_a_file_without_a_fingerprint():
+    import gate_H0P
+
+    exp = _cache_expect()
+    found = {k: v for k, v in exp.items() if k != "calibration_fingerprint"}
+    with pytest.raises(SystemExit) as e:
+        gate_H0P.cache_stamp(exp, found, "/tmp/B=0_r1.json")
+    assert "calibration_fingerprint" in str(e.value)
+    assert "A''6" in str(e.value)
 
 
 def test_cache_refuses_mismatched_shots():
@@ -290,6 +517,28 @@ def test_cache_accepts_a_matching_record_and_a_partial_one():
     exp = _cache_expect()
     gate_H0P.cache_stamp(exp, dict(exp), "/tmp/B=0_r1.json")          # complete
     gate_H0P.cache_stamp(exp, dict(exp, shots_by_circuit={"c1": 267}), "/tmp/B=0_r1.json")
+
+
+def test_the_committed_caches_carry_the_fingerprint_of_their_calibration():
+    """The seven live cache files belong to the 0711Z content, the rehearsal ones to the
+    FakeFez snapshot (prompts/17 A''6)."""
+    import glob
+    import json
+
+    import h0_backends as hb
+
+    root = os.path.dirname(SCRIPTS)
+    live = json.load(open(os.path.join(root, "data", "hardware", "H0_ibm_fez",
+                                       "calibration_20260922T0711Z.json")))
+    fp_live = hb.calibration_fingerprint(live)
+    files = sorted(glob.glob(os.path.join(root, "data", "hardware", "H0_ibm_fez",
+                                          "sim_cache", "*.json")))
+    assert len(files) == 7
+    for p in files:
+        assert json.load(open(p))["calibration_fingerprint"] == fp_live, p
+    for p in sorted(glob.glob(os.path.join(root, "data", "hardware", "H0_rehearsal_cache",
+                                           "*.json"))):
+        assert len(json.load(open(p))["calibration_fingerprint"]) == 64, p
 
 
 # --------------------------------------------------------------------- six jobs, per-circuit estimate

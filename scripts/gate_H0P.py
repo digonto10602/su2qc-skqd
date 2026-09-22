@@ -51,7 +51,8 @@ from skqd.report import GateResult, env_block, md_table, write_report  # noqa: E
 from skqd.skqd import (READOUT_FACTOR, certify, clean_fraction_from_yield,  # noqa: E402
                        ritz, shot_rule, support_metrics, yield_model)
 
-from h0_backends import (calibration_record, frozen_qubits_and_edges,  # noqa: E402
+from h0_backends import (calibration_diff, calibration_record,  # noqa: E402
+                         fresh_calibration, frozen_qubits_and_edges,
                          is_fake, last_update_date, resolve_backend)
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -270,6 +271,37 @@ def analyse_records(records, cal_records, model, g2, plan=None):
     return out
 
 
+def plan_calibration_diff(support_plan, live_record, caldir, bname):
+    """' -- 30 leaves changed (measure_error), ratios 0.37..2.66' if the record the plan was
+    built from is still on disk, '' otherwise (prompts/17 F3(i): a refusal says WHAT moved).
+
+    The plan stores the live target, not a file, so the record is looked up by the stamp in
+    the calibration directory gate_H0P itself writes to."""
+    cb = support_plan.get("calibration") or {}
+    cands = [cb.get("fingerprint_source"), cb.get("path")]
+    if cb.get("stamp"):
+        cands.append(os.path.join(caldir or "", f"calibration_{cb['stamp']}.json"))
+    for c in cands:
+        if not c or not isinstance(c, str):
+            continue
+        p = c if os.path.isabs(c) else os.path.join(ROOT, c)
+        if not os.path.isfile(p):
+            continue
+        try:
+            with open(p) as fh:
+                old = json.load(fh)
+            d = calibration_diff(old, live_record)
+        except Exception:
+            continue
+        if d["n_leaves"] == 0:
+            continue
+        return (f" -- {d['n_leaves']} leaf/leaves changed against {os.path.relpath(p, ROOT)} "
+                f"({', '.join(d['families'])}; ratios "
+                f"{d['min_ratio'] if d['min_ratio'] is None else round(d['min_ratio'], 4)} .. "
+                f"{d['max_ratio'] if d['max_ratio'] is None else round(d['max_ratio'], 4)})")
+    return ""
+
+
 # ------------------------------------------------------------------ sampling cache (prompts/16 F2)
 def cache_path(cdir, sector, r):
     return os.path.join(cdir, f"{sector}_r{r}.json")
@@ -277,9 +309,21 @@ def cache_path(cdir, sector, r):
 
 def cache_stamp(rec_expect, rec_found, path):
     """Every field that would make a cached class a different experiment is compared;
-    a mismatch is a SystemExit naming it -- a stale cache is never silently reused."""
-    for key in ("backend", "seed", "calibration_last_update_date", "shot_plan_stamp",
-                "sector", "repetition"):
+    a mismatch is a SystemExit naming it -- a stale cache is never silently reused.
+
+    prompts/17 D11: the key is the calibration FINGERPRINT of the frozen patch, not its
+    timestamp.  `calibration_last_update_date`, `shot_plan_stamp` and `shots_plan_file`
+    stay in the files as information (a cached class is a seeded Aer run of fixed
+    circuits at fixed shots against a fixed noise model, and the noise model is the
+    fingerprinted content); a file written before the migration of prompts/17 A''6 has no
+    fingerprint and is refused rather than trusted."""
+    if "calibration_fingerprint" not in rec_found:
+        raise SystemExit(
+            f"{os.path.basename(path)} carries no `calibration_fingerprint`: it predates "
+            f"prompts/17 D11.  Add it with the A''6 migration (snippet 5 of prompts/17) if it "
+            f"belongs to the calibration content you are running on, or re-sample the class "
+            f"with --refresh-cache.")
+    for key in ("backend", "seed", "calibration_fingerprint", "sector", "repetition"):
         if str(rec_found.get(key)) != str(rec_expect.get(key)):
             raise SystemExit(
                 f"{os.path.basename(path)}: cached {key} is {rec_found.get(key)!r}, this run needs "
@@ -407,7 +451,10 @@ def main():
     bname = args.backend or snapshot_name
     live = not is_fake(bname)
     backend = resolve_backend(bname)
-    sim = AerSimulator.from_backend(backend, seed_simulator=args.seed)
+    # the simulator is built AFTER the live calibration record below: `fresh_calibration`
+    # refreshes the backend object, and the noise model of the prediction must come from
+    # the same target content the record fingerprints (prompts/17 D9).
+    sim = None
     g2 = index["common"]["g2"]
     M = Model(int(index["common"]["lattice"].split("x")[1]))
     n = index["common"]["n_logical_qubits"]
@@ -429,7 +476,10 @@ def main():
         # imported here, not at module level: gate_S2D imports random_acceptance from this module
         from gate_S2D import analyse_on_backend      # the f of gate S2D, same definition
         qubits, edges = frozen_qubits_and_edges(prep)
-        calibration = calibration_record(backend, qubits, edges)
+        # prompts/17 F1: the record comes from a target refreshed in THIS invocation
+        # (IBMBackend.properties() is cached per object, so a long-lived object can report
+        # an hour-old calibration) and the Aer noise model below is built from that target.
+        calibration = fresh_calibration(backend, qubits, edges)
         caldir = os.path.join(ROOT, args.calibration_dir or
                               os.path.join("data", "hardware", f"H0_{bname}"))
         os.makedirs(caldir, exist_ok=True)
@@ -464,11 +514,14 @@ def main():
         print(f"recomputed f on the live target for {len(f_live)} circuits: mean live "
               f"{np.mean([v['f_live'] for v in f_live.values()]):.4f} vs manifest "
               f"{np.mean([v['f_manifest'] for v in f_live.values()]):.4f}", flush=True)
+    sim = AerSimulator.from_backend(backend, seed_simulator=args.seed)
+
     # ------------------------------------------------------- pinned shots (prompts/16 F2)
     # Either the per-circuit shot plan of rule D3' (scripts/h0_support_plan.py) or the
     # --shots-by-rep of prompts/15.  Both pin the shots BEFORE the pilot, which is what makes
     # a sampling cache meaningful: the cached counts belong to a known shot count.
     support_plan, plan_stamp, shots_of, shots_by_rep_pinned = None, None, None, None
+    plan_fingerprint = None
     if args.shots_plan and args.shots_by_rep:
         raise SystemExit("--shots-plan and --shots-by-rep are mutually exclusive")
     if args.shots_by_rep:
@@ -487,17 +540,36 @@ def main():
             raise SystemExit(f"the shot plan {args.shots_plan} carries no shots for {len(missing)} "
                              f"frozen circuit(s) (e.g. {missing[:3]})")
         plan_stamp = (support_plan.get("calibration") or {}).get("stamp")
+        plan_fingerprint = (support_plan.get("calibration") or {}).get("fingerprint")
         if live:
-            pd = (support_plan.get("calibration") or {}).get("last_update_date")
-            if pd != calibration["last_update_date"]:
+            # prompts/17 F3(i): the plan must have been sized on the calibration CONTENT of
+            # the record just written, not merely on a record carrying the same timestamp.
+            if plan_fingerprint is None:
                 raise SystemExit(
-                    f"the shot plan was built on the calibration {pd} and the live {bname} target "
-                    f"reports {calibration['last_update_date']}: re-run h0_support_plan.py "
-                    f"--backend {bname} (prompts/16 F2).")
-        print(f"shot plan {args.shots_plan} (calibration stamp {plan_stamp}): "
+                    f"{args.shots_plan} carries no `calibration.fingerprint`: it was written "
+                    f"before prompts/17 F2.  Re-run h0_support_plan.py --backend {bname}.")
+            if plan_fingerprint != calibration["fingerprint"]:
+                diff = plan_calibration_diff(support_plan, calibration, caldir, bname)
+                raise SystemExit(
+                    f"the shot plan was built on the calibration fingerprint "
+                    f"{plan_fingerprint[:16]} (stamp {plan_stamp}, {(support_plan['calibration'] or {}).get('last_update_date')}) "
+                    f"and the live {bname} target reports {calibration['fingerprint'][:16]} "
+                    f"({calibration['last_update_date']}){diff}: re-run h0_support_plan.py "
+                    f"--backend {bname} (prompts/17 D9/D10).")
+        print(f"shot plan {args.shots_plan} (calibration stamp {plan_stamp}, fingerprint "
+              f"{(plan_fingerprint or 'n/a')[:16]}): "
               + ", ".join(f"{sec} N4 {v['N4']}" for sec, v in support_plan["sectors"].items()),
               flush=True)
     cal_date = calibration["last_update_date"] if live else "snapshot"
+    # prompts/17 D11: the cache is keyed by the calibration CONTENT.  On a fake backend that
+    # content is the snapshot's own record, which is constant per qiskit-ibm-runtime version.
+    if live:
+        cal_fingerprint = calibration["fingerprint"]
+        cal_fingerprint_source = os.path.relpath(cal_path, ROOT)
+    else:
+        snap_qubits, snap_edges = frozen_qubits_and_edges(prep)
+        cal_fingerprint = calibration_record(backend, snap_qubits, snap_edges)["fingerprint"]
+        cal_fingerprint_source = f"{bname} snapshot record"
 
     # ------------------------------------------------------- which classes this invocation samples
     classes = sorted({(m["sector"], m["repetitions"]) for m in mans})
@@ -527,7 +599,10 @@ def main():
 
     def expect(sector, repetition, ids):
         return {"backend": bname, "seed": int(args.seed), "sector": sector,
-                "repetition": int(repetition), "calibration_last_update_date": cal_date,
+                "repetition": int(repetition),
+                "calibration_fingerprint": cal_fingerprint,
+                "calibration_fingerprint_source": cal_fingerprint_source,
+                "calibration_last_update_date": cal_date,
                 "shot_plan_stamp": plan_stamp, "shots_plan_file": args.shots_plan,
                 "shots_by_circuit": {i: int(shots_of[i]) for i in ids}}
 
@@ -542,7 +617,9 @@ def main():
             cached[c] = load_cache(path, expect(c[0], c[1], [m["id"] for m in by_class[c]]))
         calpath = os.path.join(cdir, "calibration_circuits.json")
         cal_exp = {"backend": bname, "seed": int(args.seed), "sector": "calibration",
-                   "repetition": 0, "calibration_last_update_date": cal_date,
+                   "repetition": 0, "calibration_fingerprint": cal_fingerprint,
+                   "calibration_fingerprint_source": cal_fingerprint_source,
+                   "calibration_last_update_date": cal_date,
                    "shot_plan_stamp": plan_stamp, "shots_plan_file": args.shots_plan,
                    "shots_by_circuit": {m["id"]: int(args.cal_shots) for m in cals}}
         cal_cached = None if (args.refresh_cache and cal_selected) else load_cache(calpath, cal_exp)
@@ -672,7 +749,9 @@ def main():
             cal_circuits = {m["id"]: load_circuit(prep, m) for m in cals}
             got = run_by_shots(sim, cal_circuits, cals, {m["id"]: args.cal_shots for m in cals})
             cal_cached = {"backend": bname, "seed": int(args.seed), "sector": "calibration",
-                          "repetition": 0, "calibration_last_update_date": cal_date,
+                          "repetition": 0, "calibration_fingerprint": cal_fingerprint,
+                          "calibration_fingerprint_source": cal_fingerprint_source,
+                          "calibration_last_update_date": cal_date,
                           "shot_plan_stamp": plan_stamp, "shots_plan_file": args.shots_plan,
                           "shots_by_circuit": {m["id"]: int(args.cal_shots) for m in cals},
                           "counts": got, "seconds": time.time() - tc,
@@ -747,6 +826,7 @@ def main():
         "shot_plan": plan,
         "shot_plan_file": args.shots_plan,
         "shot_plan_stamp": plan_stamp,
+        "shot_plan_calibration_fingerprint": plan_fingerprint,
         "support_shot_plan": (None if support_plan is None else {
             kk: support_plan[kk] for kk in
             ("rule", "lambda_star", "margin", "readout_factor", "floor", "round_to", "backend",
@@ -760,6 +840,11 @@ def main():
             "backend": calibration["backend"],
             "last_update_date": calibration["last_update_date"],
             "stamp": calibration["stamp"],
+            # prompts/17 D9: the identity the submission preflight compares.  The stamp is
+            # kept as information -- IBM moves it when it calibrates other parts of the device.
+            "fingerprint": calibration["fingerprint"],
+            "fingerprint_fields": calibration["fingerprint_fields"],
+            "fingerprint_note": calibration["fingerprint_note"],
             "dt_s": calibration["dt_s"], "default_rep_delay_s": calibration["default_rep_delay_s"],
             "max_circuits": calibration["max_circuits"], "status": calibration["status"],
             "n_qubits_frozen_set": calibration["n_qubits_frozen_set"],
@@ -931,7 +1016,10 @@ def gate_report(args, R, D, index):
         calblock = (
             f"\n**The calibration of the session day** (prompts/15 D1: the circuits stay frozen, the "
             f"prediction is recomputed).  `{c['path']}` -- {c['backend']}, `last_update_date` "
-            f"{c['last_update_date']}, dt {c['dt_s']}, default rep delay "
+            f"{c['last_update_date']}, fingerprint `{(c.get('fingerprint') or 'n/a')[:16]}` "
+            f"(prompts/17 D9: the sha256 of the {c['n_qubits_frozen_set']} qubit and "
+            f"{c['n_edges_frozen_set']} edge blocks this prediction reads), dt {c['dt_s']}, "
+            f"default rep delay "
             f"{c['default_rep_delay_s']} s, max_circuits {c['max_circuits']}, "
             f"{'operational' if st.get('operational') else 'NOT operational'}, "
             f"{st.get('pending_jobs')} pending jobs.  It covers the {c['n_qubits_frozen_set']} qubits and "
@@ -1070,7 +1158,13 @@ def prereg_report(args, R, D, index):
             f"{len(c['missing_errors'])} of those target entries carry no error value (a non-empty list "
             f"is a hard stop, not a defaulted value).  The clean-shot fraction f was recomputed circuit "
             f"by circuit on that target with `gate_S2D.analyse_on_backend`: mean {fr['mean_f_live']:.4f} "
-            f"against {fr['mean_f_manifest']:.4f} frozen into the manifests.\n")
+            f"against {fr['mean_f_manifest']:.4f} frozen into the manifests.\n"
+            f"\n**Submission rule (prompts/17 D9)**: the jobs are submitted only while the live "
+            f"calibration of these {c['n_qubits_frozen_set']} qubits and {c['n_edges_frozen_set']} edges "
+            f"is identical to this record (fingerprint `{c.get('fingerprint')}`) and the live "
+            f"clean-shot fraction of all {len(fr['per_circuit'])} circuits equals the plan's to 1e-9; "
+            f"the calibration timestamp at submission is recorded and may differ from the one above "
+            f"when IBM's update touched other parts of the device.\n")
 
     prows = [[v["sector"], v["repetitions"], v["circuits"], fmt(v["model_yield_0.82f"]),
               v["N_circuit_model"], fmt(v["N_sector_model"], ".3e"),
