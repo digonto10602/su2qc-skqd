@@ -1,0 +1,33 @@
+CI run (CI_GATE=L4, SLURM_JOB_ID=58737320, SLURM_JOB_NODELIST=nid008301): device GPU, batched_shots_gpu True, qiskit {'qiskit': '1.4.3', 'qiskit_aer': '0.15.1'}
+timing ladder: warm-up discarded (7.06 s)
+timing ladder:     20 shots ->    0.24 s (0.01189 s/shot)
+timing ladder:    100 shots ->    0.31 s (0.00311 s/shot)
+timing ladder:    500 shots ->    0.66 s (0.00132 s/shot)
+timing ladder:   1000 shots ->    1.29 s (0.00129 s/shot)
+timing ladder:   2000 shots ->    2.36 s (0.00118 s/shot)
+B=0: pilot 1000 shots -> 0.001 s/shot
+B=0: 20 circuits, 20000 shots/circuit (min-shots 500)
+Simulation failed and returned the following error message:
+PARTIAL COMPLETED
+Traceback (most recent call last):
+  File "/pscratch/sd/d/digonto/skqd-ci-runs/12cad25414fa-20260922060714/scripts/laptop_L4_aer_noise.py", line 469, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/pscratch/sd/d/digonto/skqd-ci-runs/12cad25414fa-20260922060714/scripts/laptop_L4_aer_noise.py", line 284, in main
+    counts_list = cq.sample_many([g for _, _, g in circuits], n, shots, noise_model=nm,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/pscratch/sd/d/digonto/skqd-ci-runs/12cad25414fa-20260922060714/scripts/../src/skqd/circuits_qiskit.py", line 246, in sample_many
+    counts = result.get_counts(i)
+             ^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/d/digonto/.conda/envs/skqd/lib/python3.12/site-packages/qiskit/result/result.py", line 353, in get_counts
+    exp = self._get_experiment(key)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/d/digonto/.conda/envs/skqd/lib/python3.12/site-packages/qiskit/result/result.py", line 481, in _get_experiment
+    raise QiskitError(result_status, ", ", exp_status)
+qiskit.exceptions.QiskitError: 'PARTIAL COMPLETED ,  ERROR: std::bad_alloc: cudaErrorMemoryAllocation: out of memory'
+gate L4: status FAIL, exit code 1, 607 s
+srun: error: nid008301: task 0: Exited with exit code 1
+srun: Terminating StepId=58737320.0
+/var/spool/slurmd/job58737320/slurm_script: line 47: 2311913 Terminated              ( while true; do
+    nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader,nounits | sed "s/^/$(date +%s),/"; sleep 10;
+done ) > "$SKQD_GPU_TELEMETRY" 2> /dev/null
