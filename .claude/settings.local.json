@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Bash(scripts/ci_request.sh *)", "Bash(scripts/ci_check.sh)", "Bash(scripts/ci_check.sh *)",
+      "Bash(git pull *)", "Bash(git add *)", "Bash(git commit *)", "Bash(git push *)",
+      "Bash(git status *)", "Bash(git diff *)", "Bash(git log *)",
+      "Bash(python *)", "Bash(python3 *)", "Bash(pytest *)", "Bash(sleep *)"
+    ],
+    "deny": [
+      "Bash(ssh *)", "Bash(sshproxy *)", "Bash(scp *)", "Bash(rsync *)",
+      "Read(~/.ssh/**)", "Edit(ci/poll.sh)", "Edit(ci/status.json)"
+    ]
+  }
+}
