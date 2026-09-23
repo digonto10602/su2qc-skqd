@@ -106,9 +106,26 @@ stamp-only updates and fired on the one real recalibration.  **Canary (2026-09-2
 2.0 s):** job `dapbusac505c73chv0og`, 3 pubs x 267 shots, DONE, preflight `fingerprint_match` true and the
 retrieval-time record identical to the prediction's -- but **8 accepted of 267 against the preregistered >= 10
 and the simulated 71**, measured f 0.0255 vs predicted 0.2195: **canary NO-GO**, the main 6-job submission is not
-run (`validation/BLOCKED.md`, prompts/07 clause (b) / prompts/15 escalation B5).  Open: the planner decides on the
-canary NO-GO before the main budget is spent; owner signs `proposal/amendment_01_devices_and_budgets.md` with the
-vendor's error specs for the 2x3 device; S3 production run on the desktop GPU.
+run (`validation/BLOCKED.md`, prompts/07 clause (b) / prompts/15 escalation B5).  **Diagnostic H0_diag
+(2026-09-22, 15.0 s of QPU, 17.0 s spent in total):** the cause is idle-time relaxation, which neither
+`gate_S2D.analyse_on_backend` nor the unscheduled Aer path contains -- J1 (both options off) gave 35 accepted of
+2000 against a preregistered 30.8 +- 5.5 for idle relaxation and 374.5 +- 17.4 for the options hypothesis, so the
+options are exonerated and D8's set is the worst of the four cells.  The re-plan (`prompts/20`) then found that the
+accepted shots are mostly near-clean strings, not clean ones: 6 reference-string hits in 8267 shots against 2.02
+from garbage give f_clean = 6.7e-4, so the yield inversion overstates the clean fraction 15x and "31 vs 35" did not
+validate the echo-T2 model (S_eff 5.76 sits between the echo 3.32 and the T2* 7.52).  Criterion 3 is void as a
+device test (garbage saturation reaches it at every planned budget).  r = 1 only at 2x2 on this device class; 2x3
+on any superconducting device is dead.  **Amendment 01 items 1-3 are SIGNED (2026-09-23, commit 336a60b):** patch
+selection by the idle-aware objective (`scripts/h0_patch_select.py`, worth 1.41x on the day's record and 3.31x
+device-wide, a factor and not a rescue), the budget criterion read on the *scheduled* circuit with the 0.1/0.05
+thresholds unchanged, and the exact circuit family kept but judged on duration.  **Gate S2D's 2x2 PASS is withdrawn
+as a hardware statement** (idle-aware mean f 6.71e-03 against 0.1; `validation/S2D_idle.json` FAIL, not registered
+in the gate table); `validation/S2D.json` is not rewritten and stands as the gate-only computation it was.  **L4
+PASSES on the GPU** (job 58741899, 19.8x over this laptop) and the **S3 GPU calibration PASSES** (job 58771538,
+0.0199 s/shot at 20 qubits, 161x over the laptop's 3.198: a 2e5-shot sector is 1.1 h instead of 178 h).  Open:
+amendment items 4 (the 2x3 device -- now also needs the vendor's gate durations and T1/T2, not only error rates)
+and 5 (the shot quota, whose figures scale as 1/f); the owner's nine named changes in `prompts/20`; whether H0 can
+be made to fit the 583 s left on this device class.
 
 
 # skqd-ci: how to run tests on Perlmutter (rules for Claude / any agent)
