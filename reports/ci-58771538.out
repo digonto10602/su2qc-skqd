@@ -1,0 +1,54 @@
+CI run (CI_GATE=S3, SLURM_JOB_ID=58771538, SLURM_JOB_NODELIST=nid001665): device GPU (available ['CPU', 'GPU']), batched_shots_gpu True, qiskit {'qiskit': '1.4.3', 'qiskit_aer': '0.15.1'}
+2x3 B=0: 32 circuits on 20 qubits, Aer GPU (available: ['CPU', 'GPU'])
+noise: all-to-all RZZ depolarizing model of the declared inputs eps2 = 0.001, eps1 = 0.0001, eps_ro = 0.002
+  transpiled [1/32] ref 25 k 1: 2162 2q gates (21 s total)
+  transpiled [2/32] ref 25 k 2: 2162 2q gates (26 s total)
+  transpiled [3/32] ref 25 k 3: 2162 2q gates (31 s total)
+  transpiled [4/32] ref 25 k 4: 2162 2q gates (36 s total)
+  transpiled [5/32] ref 795 k 1: 2162 2q gates (37 s total)
+  transpiled [6/32] ref 795 k 2: 2162 2q gates (37 s total)
+  transpiled [7/32] ref 795 k 3: 2162 2q gates (38 s total)
+  transpiled [8/32] ref 795 k 4: 2162 2q gates (38 s total)
+  transpiled [9/32] ref 525 k 1: 2162 2q gates (38 s total)
+  transpiled [10/32] ref 525 k 2: 2162 2q gates (39 s total)
+  transpiled [11/32] ref 525 k 3: 2162 2q gates (39 s total)
+  transpiled [12/32] ref 525 k 4: 2162 2q gates (40 s total)
+  transpiled [13/32] ref 333 k 1: 2162 2q gates (41 s total)
+  transpiled [14/32] ref 333 k 2: 2162 2q gates (41 s total)
+  transpiled [15/32] ref 333 k 3: 2162 2q gates (42 s total)
+  transpiled [16/32] ref 333 k 4: 2162 2q gates (42 s total)
+  transpiled [17/32] ref 169 k 1: 2162 2q gates (43 s total)
+  transpiled [18/32] ref 169 k 2: 2162 2q gates (43 s total)
+  transpiled [19/32] ref 169 k 3: 2162 2q gates (44 s total)
+  transpiled [20/32] ref 169 k 4: 2162 2q gates (44 s total)
+  transpiled [21/32] ref 117 k 1: 2162 2q gates (45 s total)
+  transpiled [22/32] ref 117 k 2: 2162 2q gates (45 s total)
+  transpiled [23/32] ref 117 k 3: 2162 2q gates (46 s total)
+  transpiled [24/32] ref 117 k 4: 2162 2q gates (46 s total)
+  transpiled [25/32] ref 86 k 1: 2162 2q gates (47 s total)
+  transpiled [26/32] ref 86 k 2: 2162 2q gates (47 s total)
+  transpiled [27/32] ref 86 k 3: 2162 2q gates (47 s total)
+  transpiled [28/32] ref 86 k 4: 2162 2q gates (48 s total)
+  transpiled [29/32] ref 70 k 1: 2162 2q gates (48 s total)
+  transpiled [30/32] ref 70 k 2: 2162 2q gates (49 s total)
+  transpiled [31/32] ref 70 k 3: 2162 2q gates (49 s total)
+  transpiled [32/32] ref 70 k 4: 2162 2q gates (50 s total)
+timing ladder [47, 238, 476, 1428] (chunk bound for one circuit: 476 shots, chunk used: 476)
+timing ladder: warm-up of 32 shots discarded (1.55 s)
+timing ladder:      47 shots ->     1.19 s (0.02530 s/shot, 1 run call(s))
+timing ladder:     238 shots ->     4.96 s (0.02083 s/shot, 1 run call(s))
+timing ladder:     476 shots ->     9.56 s (0.02008 s/shot, 1 run call(s))
+timing ladder:    1428 shots ->    28.37 s (0.01987 s/shot, 3 run call(s))
+sampling 32 circuits x 100 shots/circuit (as requested)
+sampled 32 circuits x 100 shots in 8 run() call(s) (<= 32 circuits x 14 shots each, 0 OOM retries) (149.7 s)
+| check | value | criterion | result |
+|---|---|---|---|
+| calibration: Aer ran on the requested device (auto, GPU under the CI) | GPU (available ['CPU', 'GPU']) | GPU | PASS |
+| calibration: the timing ladder measured at least two shot counts | 4 of 4 points | >= 2 points | PASS |
+| calibration: the batched sampling fitted the assumed GPU memory | 0 out-of-memory retries at 32 circuits x 14 shots per run() call | no OOM retry | PASS |
+| calibration: wall time inside the budget the CI allows | 245 s | <= 3300 s | PASS |
+seconds per shot 0.0468 measured, 0.0199 used for the projection; a 2e+05-shot sector costs 1.1 h on this device, four sectors 4.4 h
+gate S3: status PASS, exit code 0, 254 s
+/var/spool/slurmd/job58771538/slurm_script: line 47: 670702 Terminated              ( while true; do
+    nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader,nounits | sed "s/^/$(date +%s),/"; sleep 10;
+done ) > "$SKQD_GPU_TELEMETRY" 2> /dev/null

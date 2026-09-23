@@ -1,0 +1,487 @@
+{
+ "gate": "S3",
+ "title": "GPU throughput calibration of the 2x3 B=0 circuit set (reduced size; the S3 recall criterion is NOT evaluated)",
+ "status": "PASS",
+ "criteria": [
+  {
+   "name": "calibration: Aer ran on the requested device (auto, GPU under the CI)",
+   "value": "GPU (available ['CPU', 'GPU'])",
+   "threshold": "GPU",
+   "passed": true
+  },
+  {
+   "name": "calibration: the timing ladder measured at least two shot counts",
+   "value": "4 of 4 points",
+   "threshold": ">= 2 points",
+   "passed": true
+  },
+  {
+   "name": "calibration: the batched sampling fitted the assumed GPU memory",
+   "value": "0 out-of-memory retries at 32 circuits x 14 shots per run() call",
+   "threshold": "no OOM retry",
+   "passed": true
+  },
+  {
+   "name": "calibration: wall time inside the budget the CI allows",
+   "value": "245 s",
+   "threshold": "<= 3300 s",
+   "passed": true
+  }
+ ],
+ "data": {
+  "lattice": "2x3",
+  "sector": "B=0",
+  "twoB": 0,
+  "repetitions": 1,
+  "kmax": 4,
+  "g2": 4.0,
+  "n_qubits": 20,
+  "n_circuits": 32,
+  "shots_per_circuit": 100,
+  "circuits_dropped_for_budget": 0,
+  "shots_per_circuit_requested": 100,
+  "shots_per_circuit_reason": "as requested",
+  "shots_per_sector_requested": 3200.0,
+  "total_shots": 3200,
+  "run_kind": "CALIBRATION (throughput at 20 qubits; the S3 recall criterion is NOT evaluated and the yield/recall below are measurements at the calibration shot count, not gate results)",
+  "calibration": true,
+  "gate_S3_criterion": "NOT EVALUATED in a calibration run (recall >= 0.9 with the production budget is the gate; this job measures compute throughput)",
+  "noise_model": "all-to-all RZZ depolarizing model of the declared inputs eps2 = 0.001, eps1 = 0.0001, eps_ro = 0.002",
+  "declared_inputs": {
+   "eps2": 0.001,
+   "eps1": 0.0001,
+   "eps_ro": 0.002,
+   "note": "vendor-class specifications, declared inputs (prompts/12)"
+  },
+  "aer": {
+   "device": "GPU",
+   "available_devices": [
+    "CPU",
+    "GPU"
+   ],
+   "batched_shots_gpu": true,
+   "method": "statevector"
+  },
+  "two_qubit_gates": {
+   "mean": 2162.0,
+   "min": 2162,
+   "max": 2162
+  },
+  "yield": 0.2171875,
+  "accepted": 695,
+  "rejections": {
+   "flag": 1460,
+   "link": 796,
+   "sector": 249,
+   "unknown": 0
+  },
+  "f_implied_by_yield": 0.2648628048780488,
+  "support": {
+   "size_decoded": 58,
+   "size_with_references": 58,
+   "sector_dimension": 677,
+   "recall_99.9pct": 0.5232558139534884,
+   "exact_support_size": 86,
+   "false_positives": 0,
+   "captured_weight": 0.988219928915653
+  },
+  "ritz": {
+   "ER": -5.542788188565919,
+   "exact_E0": -5.602600457881765,
+   "error": 0.059812269315846045,
+   "rH": 0.5808478999021544,
+   "weinstein": [
+    -6.123636088468073,
+    -5.542788188565919
+   ],
+   "exact_E0_inside_weinstein": true
+  },
+  "cost": {
+   "seconds_per_shot_mean": 0.0467854905128479,
+   "shots_per_simulator_call": 14,
+   "seconds_per_shot_best_ladder": 0.0198662576555204,
+   "seconds_per_shot_used_for_projection": 0.0198662576555204,
+   "wall_seconds": 245.0419783592224,
+   "projected_hours_per_sector_at_2e5_shots": 1.1036809808622445,
+   "projected_hours_four_sectors": 4.414723923448978,
+   "reference_S2D": {
+    "seconds_per_shot": 3.198385763168335,
+    "shots_per_simulator_call": 10,
+    "source": "validation/S2D.json"
+   },
+   "projected_hours_per_sector_at_reference_rate": 177.6880979537964,
+   "note": "the seconds per shot are measured over the whole batched sector and include the per-call set-up of every chunked run (circuit load, noise-model binding); the projection uses the cheapest ladder point when a ladder was run",
+   "extrapolation_note": "gate L4's 19.8x GPU speed-up is at 12 qubits and must NOT be extrapolated to this gate: at 20 qubits each statevector is 256x larger and the run is chunk-dominated (prompts/18 sec. 2.1)"
+  },
+  "shot_rule": {
+   "p": 0.001,
+   "k": 3,
+   "confidence": 0.95,
+   "N_circuit_at_measured_yield": 28988,
+   "N_sector_at_measured_yield": 927616
+  },
+  "per_circuit": [
+   {
+    "reference": 25,
+    "k": 1,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 43
+   },
+   {
+    "reference": 25,
+    "k": 2,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 13
+   },
+   {
+    "reference": 25,
+    "k": 3,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 27
+   },
+   {
+    "reference": 25,
+    "k": 4,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 29
+   },
+   {
+    "reference": 795,
+    "k": 1,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 30
+   },
+   {
+    "reference": 795,
+    "k": 2,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 14
+   },
+   {
+    "reference": 795,
+    "k": 3,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 42
+   },
+   {
+    "reference": 795,
+    "k": 4,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 18
+   },
+   {
+    "reference": 525,
+    "k": 1,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 14
+   },
+   {
+    "reference": 525,
+    "k": 2,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 15
+   },
+   {
+    "reference": 525,
+    "k": 3,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 23
+   },
+   {
+    "reference": 525,
+    "k": 4,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 11
+   },
+   {
+    "reference": 333,
+    "k": 1,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 19
+   },
+   {
+    "reference": 333,
+    "k": 2,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 9
+   },
+   {
+    "reference": 333,
+    "k": 3,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 37
+   },
+   {
+    "reference": 333,
+    "k": 4,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 24
+   },
+   {
+    "reference": 169,
+    "k": 1,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 1
+   },
+   {
+    "reference": 169,
+    "k": 2,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 24
+   },
+   {
+    "reference": 169,
+    "k": 3,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 33
+   },
+   {
+    "reference": 169,
+    "k": 4,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 24
+   },
+   {
+    "reference": 117,
+    "k": 1,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 14
+   },
+   {
+    "reference": 117,
+    "k": 2,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 26
+   },
+   {
+    "reference": 117,
+    "k": 3,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 14
+   },
+   {
+    "reference": 117,
+    "k": 4,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 44
+   },
+   {
+    "reference": 86,
+    "k": 1,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 26
+   },
+   {
+    "reference": 86,
+    "k": 2,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 21
+   },
+   {
+    "reference": 86,
+    "k": 3,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 14
+   },
+   {
+    "reference": 86,
+    "k": 4,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 18
+   },
+   {
+    "reference": 70,
+    "k": 1,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 31
+   },
+   {
+    "reference": 70,
+    "k": 2,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 8
+   },
+   {
+    "reference": 70,
+    "k": 3,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 21
+   },
+   {
+    "reference": 70,
+    "k": 4,
+    "two_qubit_gates": 2162,
+    "shots": 100,
+    "accepted": 8
+   }
+  ],
+  "run": {
+   "engine": "Qiskit Aer statevector (GPU, cuStateVec/batched shots)",
+   "device": "GPU",
+   "device_requested": "auto",
+   "available_devices": [
+    "CPU",
+    "GPU"
+   ],
+   "batched_shots_gpu": true,
+   "cu_statevec_enable": true,
+   "precision": "double",
+   "active_qubits": 20,
+   "ci": {
+    "CI_GATE": "S3",
+    "SLURM_JOB_ID": "58771538",
+    "SLURM_JOB_NODELIST": "nid001665"
+   },
+   "slurm": {
+    "gpus_per_task": null,
+    "gpus": 1,
+    "gpus_on_node": 1,
+    "cuda_visible_devices": "0",
+    "tasks": 1,
+    "rank": 0,
+    "cpus_per_task": 32,
+    "nodelist": "nid001665"
+   },
+   "gpus": 1,
+   "tasks": 1,
+   "rank": 0,
+   "wall_seconds": 245.0419783592224,
+   "gpu_node_hours": 0.06806721621089512,
+   "parallel_efficiency_Ep": null,
+   "parallel_efficiency_note": "E(p) needs T_1 and T_p from at least two task counts; this run is a single task, so it is not measured",
+   "phases_s": {
+    "transpile_s": 40.37752318382263,
+    "ladder_s": 45.623350381851196,
+    "sampling_s": 149.71356964111328,
+    "analysis_s": 0.008632183074951172
+   },
+   "gpu_telemetry": {
+    "source": "/pscratch/sd/d/digonto/skqd-ci-runs/ea600be3fda5-20260922230711/gpu_telemetry.csv",
+    "samples": 25,
+    "peak_memory_mib": 1783.0,
+    "mean_utilization_pct": 30.04,
+    "max_utilization_pct": 100.0
+   },
+   "versions": {
+    "qiskit": "1.4.3",
+    "qiskit_aer": "0.15.1"
+   },
+   "seeds": {
+    "aer_seed_simulator": 11,
+    "seed_transpiler": 7,
+    "chunk_seed_rule": "seed + chunk index (skqd.circuits_qiskit.sample_many)"
+   },
+   "timing_ladder": [
+    {
+     "shots": 47,
+     "seconds": 1.1890082359313965,
+     "seconds_per_shot": 0.025298047573008436,
+     "run_calls": 1,
+     "oom_retries": 0
+    },
+    {
+     "shots": 238,
+     "seconds": 4.9573657512664795,
+     "seconds_per_shot": 0.0208292678624642,
+     "run_calls": 1,
+     "oom_retries": 0
+    },
+    {
+     "shots": 476,
+     "seconds": 9.560451984405518,
+     "seconds_per_shot": 0.020084983160515792,
+     "run_calls": 1,
+     "oom_retries": 0
+    },
+    {
+     "shots": 1428,
+     "seconds": 28.36901593208313,
+     "seconds_per_shot": 0.0198662576555204,
+     "run_calls": 3,
+     "oom_retries": 0
+    }
+   ],
+   "timing_ladder_requested": [
+    47,
+    238,
+    476,
+    1428
+   ],
+   "timing_ladder_skipped_for_budget": [],
+   "timing_ladder_warmup_seconds_per_shot": 0.04835400730371475,
+   "batching": {
+    "experiments": 32,
+    "shots": 100,
+    "run_calls": 8,
+    "oom_retries": [],
+    "seeds": [
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18
+    ],
+    "max_experiments": 32,
+    "max_shots_per_run": 14
+   },
+   "gpu_memory_bytes_assumed": 8000000000.0,
+   "gpu_memory_model_factor_measured_in_L4": 3.5,
+   "gpu_memory_bytes_implied_real": 28000000000.0,
+   "shot_chunk_one_circuit": 476,
+   "shot_chunk_all_circuits": 14,
+   "budget_minutes": 40.0,
+   "ladder_budget_minutes": 12.0,
+   "walltime_budget_s": 3300.0,
+   "min_shots": 8,
+   "noise": {
+    "eps2": 0.001,
+    "eps1": 0.0001,
+    "eps_ro": 0.002
+   }
+  }
+ },
+ "runtime_s": 248.18805241584778,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.3",
+  "scipy": "1.18.1",
+  "platform": "Linux-6.4.0-150600.23.125_15.0.29-cray_shasta_c-x86_64-with-glibc2.38",
+  "cpu_count": 128,
+  "git_commit": "n/a",
+  "timestamp": "2026-09-22 18:01:22 PDT"
+ }
+}
