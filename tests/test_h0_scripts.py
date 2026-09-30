@@ -599,23 +599,44 @@ CANARY_SESSION = os.path.join(os.path.dirname(SCRIPTS), "data", "hardware",
                               "H0_ibm_fez_canary", "session.json")
 
 
-def test_default_sampler_options_reproduce_the_canary_record_field_for_field():
-    """prompts/19 C1: the DEFAULTS are the production path of prompts/15 D8, unchanged.
+def test_the_canary_options_stay_reproducible_but_only_when_asked_for_explicitly():
+    """The job that ran is still reproducible field for field -- by explicit argument.
 
-    The reference is the options record of the job that actually ran (the canary), so a
-    change of default in `sampler_options` cannot slip through as a diagnostic flag."""
+    Until rule D8' (owner-approved 2026-09-30) these were the DEFAULTS, and the canary ran with
+    them.  That record must stay reproducible, or `validation/H0_canary.json` and
+    `H0_diag.json` could not be re-derived; but reproducing it must now be a deliberate act."""
     import json
 
     import h0_submit
     with open(CANARY_SESSION) as fh:
         canary = json.load(fh)["sampler_options"]
-    o = h0_submit.sampler_options(canary["default_shots"])
-    rec = h0_submit.options_record(o, canary["default_shots"], "XY4")
+    o = h0_submit.sampler_options(canary["default_shots"], dd_sequence="XY4", twirling="on")
+    rec = h0_submit.options_record(o, canary["default_shots"], "XY4", twirling="on")
     assert rec == canary
     assert o.dynamical_decoupling.enable is True
     assert o.dynamical_decoupling.sequence_type == "XY4"
     assert o.twirling.enable_gates is True and o.twirling.enable_measure is True
     assert o.twirling.strategy == "active-accum"
+
+
+def test_rule_D8_prime_the_defaults_are_off(monkeypatch):
+    """D8', owner-approved 2026-09-30: production jobs carry neither dynamical decoupling nor
+    twirling, so that the prediction of record contains no quantity that is neither computable
+    from the calibration nor measurable on the patch.  A default that must be remembered is a
+    default that will eventually be forgotten, so it is pinned here and in the parser."""
+    import h0_submit
+
+    o = h0_submit.sampler_options(267)
+    assert o.dynamical_decoupling.enable is False, "D8': decoupling must default to off"
+    assert o.twirling.enable_gates is False and o.twirling.enable_measure is False, \
+        "D8': twirling must default to off"
+
+    # and the command line agrees with the function
+    monkeypatch.setattr("sys.argv", ["h0_submit.py", "--dry-run"])
+    ap = h0_submit.build_parser() if hasattr(h0_submit, "build_parser") else None
+    if ap is not None:
+        a = ap.parse_args(["--dry-run"])
+        assert a.dd == "off" and a.twirling == "off"
 
 
 @pytest.mark.parametrize("dd,twirling", [("off", "off"), ("XY4", "off"), ("off", "on"),
@@ -649,8 +670,9 @@ def test_dd_sequence_stays_an_alias_of_dd():
     ap = h0_submit.build_parser()
     assert ap.parse_args(["--dry-run", "--dd-sequence", "XX"]).dd == "XX"
     assert ap.parse_args(["--dry-run", "--dd", "off"]).dd == "off"
-    assert ap.parse_args(["--dry-run"]).dd == "XY4"
-    assert ap.parse_args(["--dry-run"]).twirling == "on"
+    assert ap.parse_args(["--dry-run", "--dd-sequence", "XY4"]).dd == "XY4"
+    # the DEFAULTS are rule D8' and are asserted in
+    # test_rule_D8_prime_the_defaults_are_off, not here: this test is about the alias only.
 
 
 @pytest.mark.skipif(not os.path.isdir(DIAG_PREP), reason="the diagnostic prep is not built")

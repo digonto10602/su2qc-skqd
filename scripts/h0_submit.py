@@ -75,7 +75,7 @@ DD_CHOICES = ("XY4", "XX", "XpXm", "off")
 TWIRLING_CHOICES = ("on", "off")
 
 
-def sampler_options(shots: int, dd_sequence: str = "XY4", twirling: str = "on", job_tags=None):
+def sampler_options(shots: int, dd_sequence: str = "off", twirling: str = "off", job_tags=None):
     """SamplerV2 options: dynamical decoupling and Pauli twirling as asked, no mitigation.
 
     The defaults reproduce the production path of prompts/15 D8 exactly (DD XY4 on,
@@ -550,13 +550,17 @@ def build_parser():
                          "prompts/16); mutually exclusive with --shots-by-rep / --shots for the "
                          "coarse-step circuits")
     ap.add_argument("--cal-shots", type=int, default=4000)
-    ap.add_argument("--dd", "--dd-sequence", dest="dd", default="XY4", choices=DD_CHOICES,
-                    help="dynamical decoupling sequence, or 'off' (prompts/19 C1; the default "
-                         "XY4 is the production path of prompts/15 D8).  --dd-sequence is the "
-                         "old name of this flag and stays an alias.")
-    ap.add_argument("--twirling", default="on", choices=TWIRLING_CHOICES,
-                    help="Pauli twirling of gates and measurements (default on, strategy "
-                         "active-accum); 'off' disables both (prompts/19 C1)")
+    ap.add_argument("--dd", "--dd-sequence", dest="dd", default="off", choices=DD_CHOICES,
+                    help="dynamical decoupling sequence, or 'off' (the DEFAULT since rule D8', "
+                         "owner-approved 2026-09-30: the prediction of record must contain no "
+                         "quantity that cannot be computed from the calibration or measured on "
+                         "the patch, and the decoupling's refocusing efficiency is neither).  "
+                         "Pass --dd XY4 to reproduce the pre-D8' production path of prompts/15 "
+                         "D8.  --dd-sequence is the old name of this flag and stays an alias.")
+    ap.add_argument("--twirling", default="off", choices=TWIRLING_CHOICES,
+                    help="Pauli twirling of gates and measurements, or 'off' (the DEFAULT since "
+                         "rule D8'; the twirling's pulse cost is likewise not computable).  "
+                         "Pass --twirling on for the pre-D8' path, strategy active-accum.")
     ap.add_argument("--job-tags", nargs="*", default=None, metavar="TAG",
                     help="extra job tags; the submitted list is ['su2qc-skqd', <tags>, <commit>, "
                          "<out dir name>] (prompts/19 C4).  Without this flag no tags are set.")
