@@ -44,7 +44,11 @@ Create a task list at the start with one task per phase and keep it updated as y
    site ordering, `codec.py` qubit layout, `reference_sim.py` bit order) without stopping and telling me
    first. If you do change one, gates E1, E2 and E3 must all be re-run in the same session.
 5. **30-minute rule.** No single command may run longer than 30 minutes on this laptop (i7-8750H,
-   GTX 1060 Max-Q, 6 GB VRAM). If one does, kill it, re-run with the reduced parameters named in the
+   6 cores / 12 threads, 62 GiB RAM since 2026-09-30, GTX 1060 Max-Q with 6 GB VRAM and therefore no
+   usable local GPU for the pinned qiskit 2.5.2 / aer 0.17.2 stack).  Note that the rule binds on TIME,
+   not memory: the 62 GiB holds a 2x4 statevector (2^28 amplitudes, 4.3 GB) and several work vectors
+   comfortably, but the processor is unchanged, so large state-space work is split per term rather than
+   run as one command. If one does, kill it, re-run with the reduced parameters named in the
    phase (`--quick`, fewer shots, one sector), and record in the report both what the reduced run showed
    and what hardware the full run needs (desktop RTX 3070, Slurm GPU cluster, or QPU).
 6. **Never `git push --force`, never rewrite history, never delete `validation/` or `reports/`.**

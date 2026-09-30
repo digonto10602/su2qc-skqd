@@ -54,7 +54,8 @@ qiskit 2.5.2 / aer 0.17.2 stack is never touched).  The graph is gitignored: it 
    `reference_sim.py` (qubit k = bit k, little-endian).  Do not change a convention without re-running E1–E3.
 3. The manual's numbers (Tables 1–4) are reproduced by this package; any new disagreement is a bug until proven
    otherwise — stop and escalate.
-4. The 30-minute rule on the laptop (i7-8750H, GTX 1060 Max-Q, 6 GB): if a run exceeds 30 minutes,
+4. The 30-minute rule on the laptop (i7-8750H, 6 cores / 12 threads, **62 GiB RAM** since 2026-09-30,
+   GTX 1060 Max-Q 6 GB and therefore no usable local GPU): if a run exceeds 30 minutes,
    re-parametrize (fewer shots, `--quick`, smaller sector) and record in the report what the laptop can do and
    what needs the RTX 3070 desktop, the Slurm GPU cluster, or the QPU.
 5. Git: commit after every gate; `scripts/run_gate.py <G> --push` pushes on PASS.  The remote is
