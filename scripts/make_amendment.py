@@ -91,6 +91,7 @@ def build(C):
     SI = C.load("S2D_idle", os.path.join(ROOT, "validation", "S2D_idle.json"))
     C.load("H0_patch_select", os.path.join(ROOT, "data", "H0_patch_select.json"))
     C.load("S2_duration_compare", os.path.join(ROOT, "data", "S2_duration_compare.json"))
+    C.load("H0_model", os.path.join(ROOT, "validation", "H0_model.json"))
     l4p = os.path.join(ROOT, "validation", "L4_fez.json")
     has_l4 = os.path.exists(l4p)
     if has_l4:
@@ -121,6 +122,18 @@ def build(C):
          f"declared eps2 = {C('S2D:data.assumed_inputs.eps2_two_qubit_all_to_all', '{:g}')}", "**no**"],
     ]
     budget = S["data"]["shot_budget"]
+    _m = "H0_model:data.C1_estimator_validation.scheduled.per_circuit.0."
+    _pt = "H0_model:data.C2_pooled_device_clean_count.pooled_reference_test."
+    shots_m44 = C(_m + "shots")
+    acc_m44 = C(_m + "accepted")
+    clean_m44 = C(_m + "clean_accepted_mixture", "{:.1f}")
+    near_m44 = C(_m + "near_clean_accepted", "{:.1f}")
+    garb_m44 = C(_m + "expected_garbage_accepted", "{:.1f}")
+    j1_m44 = C("S2D_idle:data.hardware_anchor.measured_f_by_cell.J1", "{:.4f}")
+    refhit_m44 = C(_pt + "n_reference")
+    garbexp_m44 = C(_pt + "expected_from_garbage", "{:.2f}")
+    refshots_m44 = C(_pt + "shots")
+    fclean_m44 = C(_pt + "f_clean", "{:.3e}")
     b_rows = []
     for tag in budget:
         for sec in budget[tag]:
@@ -343,6 +356,38 @@ N_sector = N_circuit x (number of circuits).  Implementation: `skqd.skqd.shot_ru
 
 {tbl(["circuit set / device", "sector", "circuits", "mean f", "yield y", "N_circuit", "N_sector",
       "within the 2e5 of Step 9.2"], b_rows)}
+
+### Rule M4.4 — the yield model gains the near-clean term (owner-approved 2026-09-30)
+
+Manual Step 4.4 writes the accepted-shot yield as `y = 0.82 f + (1 - f) a`: the clean fraction times
+the readout survival, plus the share of uniform garbage that decodes as a valid codeword.  **Hardware
+and simulation both show a third contribution the model does not contain**: strings carrying a *few*
+errors, which still satisfy the codeword and parity checks and are therefore accepted, but which
+encode no physical configuration.  The amended model is
+
+    y = 0.82 f + n + (1 - f) a,
+
+with `n` the near-clean acceptance (`skqd.skqd.near_clean_yield`), and **equation (5)'s `y` is the
+CLEAN yield `0.82 f`, not the accepted yield** — a shot accepted only because its errored string
+happens to remain a codeword adds no support and must not be counted toward the three-observation
+condition.
+
+The term's size, on the frozen 2x2 canary circuit at {shots_m44} shots of the scheduled simulation
+(`validation/H0_model.json`, gate H0_model): of its {acc_m44} accepted shots only {clean_m44} are
+clean, while {near_m44} are near-clean and {garb_m44} are uniform garbage.  **The near-clean term is
+therefore the largest of the three contributions to the accepted count**, and it is not a hardware
+artefact — the same simulator produces it.
+
+On the device the consequence is that inverting the unamended model overstates the clean fraction
+about fifteenfold: cell J1 of the diagnostic reports a measured f of {j1_m44} by that inversion,
+where the reference-string estimator over the five hardware pubs gives {refhit_m44} observed
+reference hits against {garbexp_m44} expected from garbage in {refshots_m44} shots, i.e. a clean
+fraction of {fclean_m44}.
+
+The term is derivable from the decoder alone — it is the population of codewords at small Hamming
+distance from one another, enumerated exhaustively by gate E2 — so it was computable on the day Step
+4.4 was written and needed no hardware to discover.  **This is a correction to the reference
+document, not to this package**; the thresholds, the confidence, `lambda*` and `p` are untouched.
 
 Two findings, neither of which is repaired by lowering p or the confidence (they are preregistered and
 were left untouched):

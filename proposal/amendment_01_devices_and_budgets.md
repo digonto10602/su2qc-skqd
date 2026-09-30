@@ -172,6 +172,38 @@ N_sector = N_circuit x (number of circuits).  Implementation: `skqd.skqd.shot_ru
 | 2x2 / Heron FakeFez | B=1 | 8 | 0.1214 | 0.0995 | 63270 | 5.062e+05 | no |
 | manual design point f = 0.2 (manual eq. 5) | any sector | 44 | 0.2000 | 0.1640 | 38389 | 1.689e+06 | no |
 
+### Rule M4.4 — the yield model gains the near-clean term (owner-approved 2026-09-30)
+
+Manual Step 4.4 writes the accepted-shot yield as `y = 0.82 f + (1 - f) a`: the clean fraction times
+the readout survival, plus the share of uniform garbage that decodes as a valid codeword.  **Hardware
+and simulation both show a third contribution the model does not contain**: strings carrying a *few*
+errors, which still satisfy the codeword and parity checks and are therefore accepted, but which
+encode no physical configuration.  The amended model is
+
+    y = 0.82 f + n + (1 - f) a,
+
+with `n` the near-clean acceptance (`skqd.skqd.near_clean_yield`), and **equation (5)'s `y` is the
+CLEAN yield `0.82 f`, not the accepted yield** — a shot accepted only because its errored string
+happens to remain a codeword adds no support and must not be counted toward the three-observation
+condition.
+
+The term's size, on the frozen 2x2 canary circuit at 2000 shots of the scheduled simulation
+(`validation/H0_model.json`, gate H0_model): of its 73 accepted shots only 24.0 are
+clean, while 30.7 are near-clean and 18.3 are uniform garbage.  **The near-clean term is
+therefore the largest of the three contributions to the accepted count**, and it is not a hardware
+artefact — the same simulator produces it.
+
+On the device the consequence is that inverting the unamended model overstates the clean fraction
+about fifteenfold: cell J1 of the diagnostic reports a measured f of 0.0101 by that inversion,
+where the reference-string estimator over the five hardware pubs gives 6 observed
+reference hits against 2.02 expected from garbage in 8267 shots, i.e. a clean
+fraction of 6.650e-04.
+
+The term is derivable from the decoder alone — it is the population of codewords at small Hamming
+distance from one another, enumerated exhaustively by gate E2 — so it was computable on the day Step
+4.4 was written and needed no hardware to discover.  **This is a correction to the reference
+document, not to this package**; the thresholds, the confidence, `lambda*` and `p` are untouched.
+
 Two findings, neither of which is repaired by lowering p or the confidence (they are preregistered and
 were left untouched):
 
@@ -499,6 +531,16 @@ laptop job.
 | `0.0534` | `validation/S2D.json` -> `data.2x3.f.mean` | `0.05338942314406832` |
 | `0.0532` | `validation/S2D.json` -> `data.2x3.f.min` | `0.053191508462773214` |
 | `0.001` | `validation/S2D.json` -> `data.assumed_inputs.eps2_two_qubit_all_to_all` | `0.001` |
+| `2000` | `validation/H0_model.json` -> `data.C1_estimator_validation.scheduled.per_circuit.0.shots` | `2000` |
+| `73` | `validation/H0_model.json` -> `data.C1_estimator_validation.scheduled.per_circuit.0.accepted` | `73` |
+| `24.0` | `validation/H0_model.json` -> `data.C1_estimator_validation.scheduled.per_circuit.0.clean_accepted_mixture` | `24.031637497868413` |
+| `30.7` | `validation/H0_model.json` -> `data.C1_estimator_validation.scheduled.per_circuit.0.near_clean_accepted` | `30.68556495572075` |
+| `18.3` | `validation/H0_model.json` -> `data.C1_estimator_validation.scheduled.per_circuit.0.expected_garbage_accepted` | `18.282797546410833` |
+| `0.0101` | `validation/S2D_idle.json` -> `data.hardware_anchor.measured_f_by_cell.J1` | `0.010142378761232506` |
+| `6` | `validation/H0_model.json` -> `data.C2_pooled_device_clean_count.pooled_reference_test.n_reference` | `6` |
+| `2.02` | `validation/H0_model.json` -> `data.C2_pooled_device_clean_count.pooled_reference_test.expected_from_garbage` | `2.018310546875` |
+| `8267` | `validation/H0_model.json` -> `data.C2_pooled_device_clean_count.pooled_reference_test.shots` | `8267` |
+| `6.650e-04` | `validation/H0_model.json` -> `data.C2_pooled_device_clean_count.pooled_reference_test.f_clean` | `0.0006649808530393149` |
 | `32` | `validation/S2D.json` -> `data.shot_budget.2x3 / all-to-all.B=0.n_circuits` | `32` |
 | `0.0533` | `validation/S2D.json` -> `data.shot_budget.2x3 / all-to-all.B=0.mean_f` | `0.05334763471362451` |
 | `0.0437` | `validation/S2D.json` -> `data.shot_budget.2x3 / all-to-all.B=0.yield` | `0.0437450604651721` |
@@ -580,7 +622,6 @@ laptop job.
 | `0.1` | `validation/S2D_idle.json` -> `data.records.live ibm_fez at the canary submission.by_convention.echo.criterion_dd_off.mean_f_min` | `0.1` |
 | `0.05` | `validation/S2D_idle.json` -> `data.records.live ibm_fez at the canary submission.by_convention.echo.criterion_dd_off.worst_f_min` | `0.05` |
 | `0.0e+00` | `validation/S2D_idle.json` -> `criteria.0.value` | `0.0` |
-| `0.0101` | `validation/S2D_idle.json` -> `data.hardware_anchor.measured_f_by_cell.J1` | `0.010142378761232506` |
 | `0.0052` | `validation/S2D_idle.json` -> `data.hardware_anchor.measured_f_by_cell.J2` | `0.005208508998048616` |
 | `0.0040` | `validation/S2D_idle.json` -> `data.hardware_anchor.measured_f_by_cell.J3` | `0.003975041557252645` |
 | `-0.0010` | `validation/S2D_idle.json` -> `data.hardware_anchor.measured_f_by_cell.J4` | `-0.0009588282059312431` |
