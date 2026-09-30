@@ -1,0 +1,1628 @@
+{
+ "script": "scripts/h0_device_survey.py",
+ "created": "2026-09-30 17:21:40 MDT",
+ "qpu_seconds": 0,
+ "requested_devices": [
+  "ibm_fez",
+  "ibm_marrakesh",
+  "ibm_kingston"
+ ],
+ "outdir": "data/hardware/device_survey_20260922",
+ "prep": "data/hardware/H0_prep",
+ "criteria_of_the_component_search": {
+  "readout_error_max": 0.03,
+  "cz_error_max": 0.01,
+  "T2_min_us": [
+   40,
+   60,
+   80,
+   100,
+   120,
+   150
+  ],
+  "method": "breadth-first search over the coupling map; no networkx"
+ },
+ "budget_inputs": {
+  "D3prime": {
+   "floor": 267,
+   "margin": 0.7,
+   "round_to": 100,
+   "lambda_star": 6.295793621871989,
+   "reps_shots": {
+    "2": 130,
+    "3": 92
+   },
+   "calibration_circuits": 14,
+   "calibration_shots": 4000
+  },
+  "D3primeprime_H0": {
+   "shots_per_k1_circuit": "140 / f_clean",
+   "other_r1_shots": 267,
+   "reps_shots": {
+    "2": 130,
+    "3": 92
+   },
+   "calibration_circuits": 14,
+   "calibration_shots": 4000
+  },
+  "readout_factor": 0.82
+ },
+ "devices": [
+  {
+   "device": "ibm_fez",
+   "backend": "ibm_fez",
+   "record": "data/hardware/device_survey_20260922/ibm_fez_20260930T2257Z.json",
+   "fingerprint": "f094f8db741eccd9e835257e174824131af3baa706de9f210941da5b8acee602",
+   "stamp": "20260930T2257Z",
+   "last_update_date": "2026-09-30T16:57:15-06:00",
+   "source": {
+    "kind": "live device target, read-only metadata (0 QPU seconds)",
+    "requested_name": "ibm_fez",
+    "n_qubits_surveyed": 156,
+    "n_edges_surveyed": 352,
+    "note": "this record covers the WHOLE device, not only the 30 qubits the frozen set touches: rule D1' needs the full candidate space"
+   },
+   "num_qubits": 156,
+   "n_undirected_edges": 176,
+   "dt_s": 4e-09,
+   "default_rep_delay_s": 0.00025,
+   "n_missing_errors": 0,
+   "t2_statistics": {
+    "n_qubits": 156,
+    "n_with_T2": 155,
+    "fraction_without_T2": 0.00641025641025641,
+    "T2_percentiles_us": {
+     "10": 24.802631442691773,
+     "25": 48.69465034681551,
+     "50": 92.1647326992375,
+     "75": 131.06920852614084,
+     "90": 169.09250499878215
+    },
+    "T2_min_us": 4.57311909684215,
+    "T2_max_us": 259.76979558691187,
+    "fraction_T2_at_least": {
+     "50": 0.7354838709677419,
+     "100": 0.44516129032258067,
+     "150": 0.15483870967741936
+    },
+    "T1_percentiles_us": {
+     "10": 63.12812997421147,
+     "25": 93.14226196139826,
+     "50": 118.0048561740801,
+     "75": 159.2010679798186,
+     "90": 189.7861726690854
+    }
+   },
+   "components": [
+    {
+     "t2_min_us": 40,
+     "n_good_qubits": 107,
+     "n_components": 44,
+     "largest_sizes": [
+      11,
+      11,
+      7,
+      6
+     ],
+     "largest": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      16,
+      22,
+      23,
+      24
+     ],
+     "components_of_at_least_12": 0
+    },
+    {
+     "t2_min_us": 60,
+     "n_good_qubits": 91,
+     "n_components": 43,
+     "largest_sizes": [
+      10,
+      7,
+      6,
+      5
+     ],
+     "largest": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      16,
+      22,
+      23,
+      24
+     ],
+     "components_of_at_least_12": 0
+    },
+    {
+     "t2_min_us": 80,
+     "n_good_qubits": 75,
+     "n_components": 43,
+     "largest_sizes": [
+      8,
+      7,
+      4,
+      4
+     ],
+     "largest": [
+      1,
+      2,
+      3,
+      4,
+      16,
+      22,
+      23,
+      24
+     ],
+     "components_of_at_least_12": 0
+    },
+    {
+     "t2_min_us": 100,
+     "n_good_qubits": 59,
+     "n_components": 36,
+     "largest_sizes": [
+      8,
+      7,
+      4,
+      3
+     ],
+     "largest": [
+      1,
+      2,
+      3,
+      4,
+      16,
+      22,
+      23,
+      24
+     ],
+     "components_of_at_least_12": 0
+    },
+    {
+     "t2_min_us": 120,
+     "n_good_qubits": 43,
+     "n_components": 32,
+     "largest_sizes": [
+      3,
+      3,
+      3,
+      2
+     ],
+     "largest": [
+      1,
+      2,
+      3
+     ],
+     "components_of_at_least_12": 0
+    },
+    {
+     "t2_min_us": 150,
+     "n_good_qubits": 21,
+     "n_components": 17,
+     "largest_sizes": [
+      3,
+      2,
+      2,
+      1
+     ],
+     "largest": [
+      1,
+      2,
+      3
+     ],
+     "components_of_at_least_12": 0
+    }
+   ],
+   "components_readout_only": [
+    {
+     "t2_min_us": 40,
+     "n_good_qubits": 107,
+     "n_components": 36,
+     "largest_sizes": [
+      17,
+      13,
+      7,
+      6
+     ],
+     "largest": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      16,
+      17,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      37
+     ],
+     "components_of_at_least_12": 2
+    },
+    {
+     "t2_min_us": 60,
+     "n_good_qubits": 91,
+     "n_components": 35,
+     "largest_sizes": [
+      16,
+      7,
+      6,
+      6
+     ],
+     "largest": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      16,
+      17,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      37
+     ],
+     "components_of_at_least_12": 1
+    },
+    {
+     "t2_min_us": 80,
+     "n_good_qubits": 75,
+     "n_components": 37,
+     "largest_sizes": [
+      13,
+      7,
+      5,
+      4
+     ],
+     "largest": [
+      1,
+      2,
+      3,
+      4,
+      16,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      37
+     ],
+     "components_of_at_least_12": 1
+    },
+    {
+     "t2_min_us": 100,
+     "n_good_qubits": 59,
+     "n_components": 34,
+     "largest_sizes": [
+      10,
+      7,
+      5,
+      3
+     ],
+     "largest": [
+      1,
+      2,
+      3,
+      4,
+      16,
+      22,
+      23,
+      24,
+      25,
+      37
+     ],
+     "components_of_at_least_12": 0
+    },
+    {
+     "t2_min_us": 120,
+     "n_good_qubits": 43,
+     "n_components": 32,
+     "largest_sizes": [
+      3,
+      3,
+      3,
+      2
+     ],
+     "largest": [
+      1,
+      2,
+      3
+     ],
+     "components_of_at_least_12": 0
+    },
+    {
+     "t2_min_us": 150,
+     "n_good_qubits": 21,
+     "n_components": 17,
+     "largest_sizes": [
+      3,
+      2,
+      2,
+      1
+     ],
+     "largest": [
+      1,
+      2,
+      3
+     ],
+     "components_of_at_least_12": 0
+    }
+   ],
+   "components_note": "`components` applies the prompt's E2 criteria (readout error <= 3 %, CZ error <= 1 %, T2 >= the floor); `components_readout_only` drops the CZ ceiling and is the variant P12 of the planner analysis reported",
+   "patch_select": {
+    "json": "data/H0_patch_select_ibm_fez_20260922.json",
+    "md": "reports/H0_patch_select_ibm_fez_20260922.md",
+    "n_candidates": 1350,
+    "n_skipped_not_covered_by_the_record": 144,
+    "objective": "f_dd_off = f_gates x exp(-S_T1 - S_T2)",
+    "tie_break": "1. larger f_dd_off; 2. larger f_gates; 3. smaller max_q S_T2; 4. lexicographically smallest tuple of physical qubits",
+    "method": "scripts/h0_patch_select.py, run unmodified as a subprocess",
+    "incumbent_is_the_patch_this_set_was_transpiled_onto": true,
+    "winner": {
+     "physical_qubits": [
+      120,
+      121,
+      122,
+      123,
+      124,
+      136,
+      140,
+      141,
+      142,
+      143,
+      144,
+      145
+     ],
+     "mapping": {
+      "117": 120,
+      "122": 124,
+      "123": 123,
+      "124": 122,
+      "125": 121,
+      "136": 136,
+      "141": 145,
+      "142": 144,
+      "143": 143,
+      "144": 142,
+      "145": 141,
+      "146": 140
+     },
+     "f_gates": 0.20305233584577095,
+     "f_pta_clean": 0.019950436784601545,
+     "S_T1": 0.7777026328669207,
+     "S_T2": 1.5425100879339912,
+     "S_idle": 2.320212720800912,
+     "T_total_s": 4.536799999999948e-05,
+     "idle_s": 0.00040219199999999404,
+     "min_T2_s": 6.0558215236513405e-05,
+     "min_T1_s": 8.180955200413053e-05,
+     "worst_qubit": 122,
+     "weakest_three_qubits_by_T2": [
+      {
+       "qubit": 122,
+       "T2_us": 60.558215236513405
+      },
+      {
+       "qubit": 123,
+       "T2_us": 80.59044037203782
+      },
+      {
+       "qubit": 124,
+       "T2_us": 101.05730407671997
+      }
+     ]
+    },
+    "incumbent_patch_of_the_transpiler": {
+     "physical_qubits": [
+      117,
+      122,
+      123,
+      124,
+      125,
+      136,
+      141,
+      142,
+      143,
+      144,
+      145,
+      146
+     ],
+     "f_pta_clean": 0.005771798856354722,
+     "f_gates": 0.21889097519939518,
+     "rank": 51,
+     "meaning": "the gain is a like-for-like comparison only on the device the frozen set was transpiled onto; on any other device the identity embedding is just the same twelve qubit NUMBERS, not a layout that device's transpiler chose"
+    },
+    "gain_over_incumbent": 3.456537083345552,
+    "budget_D3prime_echo_end": {
+     "rule": "D3' (prompts/16), unchanged; f input = the patch's PTA clean f at the record's echo T2 (decision D3'-f)",
+     "f_r1": 0.019950436784601545,
+     "lambda_star": 6.295793621871989,
+     "margin": 0.7,
+     "floor": 267,
+     "N4": {
+      "B=0": 75300,
+      "B=1": 178900
+     },
+     "r1_shots_by_sector": {
+      "B=0": 380505,
+      "B=1": 359402
+     },
+     "total_coarse_shots": 746123,
+     "calibration_circuits": 14,
+     "calibration_shots": 4000,
+     "calibration_circuit_duration_s": 1.6822857142857142e-06,
+     "rep_delay_s": 0.00025,
+     "execution_s": 234.8733628399996,
+     "p11_interpolated_execution_s": 234.83848584798213
+    },
+    "budget_D3primeprime_H0_echo_end": {
+     "rule": "D3''-H0 (owner, 2026-09-30): gate H0's k = 1 circuits are sized for criterion 2's clean-f statistic, not for clean saturation",
+     "f_clean": 0.019950436784601545,
+     "shots_per_k1_circuit": 7018,
+     "n_k1_circuits": 7,
+     "shots_per_other_r1_circuit": 267,
+     "n_other_r1_circuits": 21,
+     "deep_shots": {
+      "2": 130,
+      "3": 92
+     },
+     "n_deep_circuits": 56,
+     "calibration_circuits": 14,
+     "calibration_shots": 4000,
+     "total_coarse_shots": 60949,
+     "rep_delay_s": 0.00025,
+     "execution_s": 32.47727183199996,
+     "execution_breakdown_s": {
+      "k1_circuits": 14.519568271999972,
+      "other_r1_circuits": 1.656662375999997,
+      "r2_r3_circuits": 2.206833183999988,
+      "readout_calibration": 14.094208
+     }
+    },
+    "budgets_note": "both budgets are the ECHO-T2 end: the patch score uses the record's Hahn-echo T2 because the free-induction T2* of the selected patch is unknown before the pilot.  On patch 1 the measured in-circuit budget was 1.73x the echo-PTA value (S_eff 5.76 against S_echo 3.32), and whether that ratio transfers to a high-T2 patch is not known.  The durations are the frozen circuits' own on this record; a re-freeze on the winning patch (decision D1') would move them."
+   }
+  },
+  {
+   "device": "ibm_marrakesh",
+   "backend": "ibm_marrakesh",
+   "record": "data/hardware/device_survey_20260922/ibm_marrakesh_20260930T2253Z.json",
+   "fingerprint": "246a8fed316fb98d718363751c81e03a1c6f0d6d710c48e326949781e669d613",
+   "stamp": "20260930T2253Z",
+   "last_update_date": "2026-09-30T16:53:40-06:00",
+   "source": {
+    "kind": "live device target, read-only metadata (0 QPU seconds)",
+    "requested_name": "ibm_marrakesh",
+    "n_qubits_surveyed": 156,
+    "n_edges_surveyed": 352,
+    "note": "this record covers the WHOLE device, not only the 30 qubits the frozen set touches: rule D1' needs the full candidate space"
+   },
+   "num_qubits": 156,
+   "n_undirected_edges": 176,
+   "dt_s": 4e-09,
+   "default_rep_delay_s": 0.00025,
+   "n_missing_errors": 0,
+   "t2_statistics": {
+    "n_qubits": 156,
+    "n_with_T2": 153,
+    "fraction_without_T2": 0.019230769230769232,
+    "T2_percentiles_us": {
+     "10": 19.874137143394865,
+     "25": 43.35592315662195,
+     "50": 78.08472932731895,
+     "75": 121.25802970354198,
+     "90": 176.21013483376163
+    },
+    "T2_min_us": 1.403685551990451,
+    "T2_max_us": 466.06112506883323,
+    "fraction_T2_at_least": {
+     "50": 0.6666666666666666,
+     "100": 0.3660130718954248,
+     "150": 0.13725490196078433
+    },
+    "T1_percentiles_us": {
+     "10": 79.11778864889953,
+     "25": 108.97015078866777,
+     "50": 157.34286417136957,
+     "75": 220.00249519534685,
+     "90": 285.7504271080653
+    }
+   },
+   "components": [
+    {
+     "t2_min_us": 40,
+     "n_good_qubits": 98,
+     "n_components": 28,
+     "largest_sizes": [
+      11,
+      10,
+      10,
+      9
+     ],
+     "largest": [
+      20,
+      21,
+      36,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      57
+     ],
+     "components_of_at_least_12": 0
+    },
+    {
+     "t2_min_us": 60,
+     "n_good_qubits": 77,
+     "n_components": 38,
+     "largest_sizes": [
+      7,
+      5,
+      4,
+      4
+     ],
+     "largest": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "components_of_at_least_12": 0
+    },
+    {
+     "t2_min_us": 80,
+     "n_good_qubits": 62,
+     "n_components": 36,
+     "largest_sizes": [
+      6,
+      4,
+      4,
+      3
+     ],
+     "largest": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "components_of_at_least_12": 0
+    },
+    {
+     "t2_min_us": 100,
+     "n_good_qubits": 47,
+     "n_components": 34,
+     "largest_sizes": [
+      3,
+      3,
+      2,
+      2
+     ],
+     "largest": [
+      1,
+      2,
+      3
+     ],
+     "components_of_at_least_12": 0
+    },
+    {
+     "t2_min_us": 120,
+     "n_good_qubits": 33,
+     "n_components": 26,
+     "largest_sizes": [
+      3,
+      3,
+      2,
+      2
+     ],
+     "largest": [
+      1,
+      2,
+      3
+     ],
+     "components_of_at_least_12": 0
+    },
+    {
+     "t2_min_us": 150,
+     "n_good_qubits": 16,
+     "n_components": 15,
+     "largest_sizes": [
+      2,
+      1,
+      1,
+      1
+     ],
+     "largest": [
+      53,
+      54
+     ],
+     "components_of_at_least_12": 0
+    }
+   ],
+   "components_readout_only": [
+    {
+     "t2_min_us": 40,
+     "n_good_qubits": 98,
+     "n_components": 20,
+     "largest_sizes": [
+      14,
+      12,
+      11,
+      11
+     ],
+     "largest": [
+      78,
+      89,
+      90,
+      91,
+      92,
+      93,
+      98,
+      109,
+      110,
+      111,
+      112,
+      118,
+      128,
+      129
+     ],
+     "components_of_at_least_12": 2
+    },
+    {
+     "t2_min_us": 60,
+     "n_good_qubits": 77,
+     "n_components": 35,
+     "largest_sizes": [
+      7,
+      6,
+      6,
+      5
+     ],
+     "largest": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "components_of_at_least_12": 0
+    },
+    {
+     "t2_min_us": 80,
+     "n_good_qubits": 62,
+     "n_components": 33,
+     "largest_sizes": [
+      6,
+      6,
+      6,
+      4
+     ],
+     "largest": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "components_of_at_least_12": 0
+    },
+    {
+     "t2_min_us": 100,
+     "n_good_qubits": 47,
+     "n_components": 32,
+     "largest_sizes": [
+      5,
+      3,
+      3,
+      2
+     ],
+     "largest": [
+      89,
+      90,
+      91,
+      92,
+      93
+     ],
+     "components_of_at_least_12": 0
+    },
+    {
+     "t2_min_us": 120,
+     "n_good_qubits": 33,
+     "n_components": 25,
+     "largest_sizes": [
+      3,
+      3,
+      3,
+      2
+     ],
+     "largest": [
+      1,
+      2,
+      3
+     ],
+     "components_of_at_least_12": 0
+    },
+    {
+     "t2_min_us": 150,
+     "n_good_qubits": 16,
+     "n_components": 14,
+     "largest_sizes": [
+      2,
+      2,
+      1,
+      1
+     ],
+     "largest": [
+      53,
+      54
+     ],
+     "components_of_at_least_12": 0
+    }
+   ],
+   "components_note": "`components` applies the prompt's E2 criteria (readout error <= 3 %, CZ error <= 1 %, T2 >= the floor); `components_readout_only` drops the CZ ceiling and is the variant P12 of the planner analysis reported",
+   "patch_select": {
+    "json": "data/H0_patch_select_ibm_marrakesh_20260922.json",
+    "md": "reports/H0_patch_select_ibm_marrakesh_20260922.md",
+    "n_candidates": 1084,
+    "n_skipped_not_covered_by_the_record": 410,
+    "objective": "f_dd_off = f_gates x exp(-S_T1 - S_T2)",
+    "tie_break": "1. larger f_dd_off; 2. larger f_gates; 3. smaller max_q S_T2; 4. lexicographically smallest tuple of physical qubits",
+    "method": "scripts/h0_patch_select.py, run unmodified as a subprocess",
+    "incumbent_is_the_patch_this_set_was_transpiled_onto": false,
+    "winner": {
+     "physical_qubits": [
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      18,
+      30,
+      31,
+      32,
+      33,
+      34
+     ],
+     "mapping": {
+      "117": 34,
+      "122": 30,
+      "123": 31,
+      "124": 32,
+      "125": 33,
+      "136": 18,
+      "141": 9,
+      "142": 10,
+      "143": 11,
+      "144": 12,
+      "145": 13,
+      "146": 14
+     },
+     "f_gates": 0.13734302551700336,
+     "f_pta_clean": 0.004626927148623476,
+     "S_T1": 0.6962780842787595,
+     "S_T2": 2.6943105831048433,
+     "S_idle": 3.3905886673836028,
+     "T_total_s": 5.32439999999996e-05,
+     "idle_s": 0.0004664759999999952,
+     "min_T2_s": 4.665678470551852e-05,
+     "min_T1_s": 8.556006158260521e-05,
+     "worst_qubit": 30,
+     "weakest_three_qubits_by_T2": [
+      {
+       "qubit": 32,
+       "T2_us": 46.656784705518525
+      },
+      {
+       "qubit": 30,
+       "T2_us": 49.26764261659911
+      },
+      {
+       "qubit": 31,
+       "T2_us": 52.622994446888406
+      }
+     ]
+    },
+    "incumbent_patch_of_the_transpiler": {
+     "physical_qubits": [
+      117,
+      122,
+      123,
+      124,
+      125,
+      136,
+      141,
+      142,
+      143,
+      144,
+      145,
+      146
+     ],
+     "f_pta_clean": 1.977321944892692e-07,
+     "f_gates": 0.09866830900085834,
+     "rank": 1037,
+     "meaning": "the gain is a like-for-like comparison only on the device the frozen set was transpiled onto; on any other device the identity embedding is just the same twelve qubit NUMBERS, not a layout that device's transpiler chose"
+    },
+    "gain_over_incumbent": 23399.96863219245,
+    "budget_D3prime_echo_end": {
+     "rule": "D3' (prompts/16), unchanged; f input = the patch's PTA clean f at the record's echo T2 (decision D3'-f)",
+     "f_r1": 0.004626927148623476,
+     "lambda_star": 6.295793621871989,
+     "margin": 0.7,
+     "floor": 267,
+     "N4": {
+      "B=0": 325400,
+      "B=1": 772200
+     },
+     "r1_shots_by_sector": {
+      "B=0": 1631005,
+      "B=1": 1546002
+     },
+     "total_coarse_shots": 3183223,
+     "calibration_circuits": 14,
+     "calibration_shots": 4000,
+     "calibration_circuit_duration_s": 2.717428571428572e-06,
+     "rep_delay_s": 0.00025,
+     "execution_s": 978.5659994599988,
+     "p11_interpolated_execution_s": 954.8597235918328
+    },
+    "budget_D3primeprime_H0_echo_end": {
+     "rule": "D3''-H0 (owner, 2026-09-30): gate H0's k = 1 circuits are sized for criterion 2's clean-f statistic, not for clean saturation",
+     "f_clean": 0.004626927148623476,
+     "shots_per_k1_circuit": 30258,
+     "n_k1_circuits": 7,
+     "shots_per_other_r1_circuit": 267,
+     "n_other_r1_circuits": 21,
+     "deep_shots": {
+      "2": 130,
+      "3": 92
+     },
+     "n_deep_circuits": 56,
+     "calibration_circuits": 14,
+     "calibration_shots": 4000,
+     "total_coarse_shots": 223629,
+     "rep_delay_s": 0.00025,
+     "execution_s": 82.3318877639999,
+     "execution_breakdown_s": {
+      "k1_circuits": 64.17540251999992,
+      "other_r1_circuits": 1.6983517559999979,
+      "r2_r3_circuits": 2.30595748799998,
+      "readout_calibration": 14.152176
+     }
+    },
+    "budgets_note": "both budgets are the ECHO-T2 end: the patch score uses the record's Hahn-echo T2 because the free-induction T2* of the selected patch is unknown before the pilot.  On patch 1 the measured in-circuit budget was 1.73x the echo-PTA value (S_eff 5.76 against S_echo 3.32), and whether that ratio transfers to a high-T2 patch is not known.  The durations are the frozen circuits' own on this record; a re-freeze on the winning patch (decision D1') would move them."
+   }
+  },
+  {
+   "device": "ibm_kingston",
+   "backend": "ibm_kingston",
+   "record": "data/hardware/device_survey_20260922/ibm_kingston_20260930T2255Z.json",
+   "fingerprint": "cbbde18212cd33c4e5a25320cc61384537f605efc4afca3a760102658051a9fa",
+   "stamp": "20260930T2255Z",
+   "last_update_date": "2026-09-30T16:55:44-06:00",
+   "source": {
+    "kind": "live device target, read-only metadata (0 QPU seconds)",
+    "requested_name": "ibm_kingston",
+    "n_qubits_surveyed": 156,
+    "n_edges_surveyed": 352,
+    "note": "this record covers the WHOLE device, not only the 30 qubits the frozen set touches: rule D1' needs the full candidate space"
+   },
+   "num_qubits": 156,
+   "n_undirected_edges": 176,
+   "dt_s": 4e-09,
+   "default_rep_delay_s": 0.00025,
+   "n_missing_errors": 0,
+   "t2_statistics": {
+    "n_qubits": 156,
+    "n_with_T2": 155,
+    "fraction_without_T2": 0.00641025641025641,
+    "T2_percentiles_us": {
+     "10": 40.22025988830214,
+     "25": 76.43353464726411,
+     "50": 141.242268961317,
+     "75": 235.37684131362212,
+     "90": 342.11301068551165
+    },
+    "T2_min_us": 15.883335666622528,
+    "T2_max_us": 508.87639014972154,
+    "fraction_T2_at_least": {
+     "50": 0.8387096774193549,
+     "100": 0.6645161290322581,
+     "150": 0.45806451612903226
+    },
+    "T1_percentiles_us": {
+     "10": 132.16803366012354,
+     "25": 192.82346576896256,
+     "50": 250.2487727673215,
+     "75": 290.899649691664,
+     "90": 334.88027745206443
+    }
+   },
+   "components": [
+    {
+     "t2_min_us": 40,
+     "n_good_qubits": 128,
+     "n_components": 12,
+     "largest_sizes": [
+      57,
+      32,
+      10,
+      10
+     ],
+     "largest": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      11,
+      16,
+      17,
+      18,
+      21,
+      22,
+      23,
+      24,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      36,
+      38,
+      39,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      49,
+      50,
+      51,
+      52,
+      53,
+      56,
+      57,
+      58,
+      61,
+      62,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      77,
+      85
+     ],
+     "components_of_at_least_12": 2
+    },
+    {
+     "t2_min_us": 60,
+     "n_good_qubits": 113,
+     "n_components": 20,
+     "largest_sizes": [
+      26,
+      20,
+      13,
+      10
+     ],
+     "largest": [
+      80,
+      81,
+      82,
+      83,
+      84,
+      96,
+      97,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111,
+      117,
+      118,
+      124,
+      125,
+      126,
+      129,
+      130
+     ],
+     "components_of_at_least_12": 3
+    },
+    {
+     "t2_min_us": 80,
+     "n_good_qubits": 107,
+     "n_components": 24,
+     "largest_sizes": [
+      25,
+      15,
+      13,
+      10
+     ],
+     "largest": [
+      80,
+      81,
+      82,
+      83,
+      96,
+      97,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111,
+      117,
+      118,
+      124,
+      125,
+      126,
+      129,
+      130
+     ],
+     "components_of_at_least_12": 3
+    },
+    {
+     "t2_min_us": 100,
+     "n_good_qubits": 94,
+     "n_components": 27,
+     "largest_sizes": [
+      24,
+      10,
+      10,
+      6
+     ],
+     "largest": [
+      80,
+      81,
+      82,
+      83,
+      96,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111,
+      117,
+      118,
+      124,
+      125,
+      126,
+      129,
+      130
+     ],
+     "components_of_at_least_12": 1
+    },
+    {
+     "t2_min_us": 120,
+     "n_good_qubits": 79,
+     "n_components": 24,
+     "largest_sizes": [
+      22,
+      9,
+      6,
+      5
+     ],
+     "largest": [
+      80,
+      81,
+      82,
+      83,
+      96,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111,
+      117,
+      118,
+      124,
+      125,
+      126
+     ],
+     "components_of_at_least_12": 1
+    },
+    {
+     "t2_min_us": 150,
+     "n_good_qubits": 65,
+     "n_components": 28,
+     "largest_sizes": [
+      6,
+      5,
+      5,
+      5
+     ],
+     "largest": [
+      104,
+      105,
+      117,
+      124,
+      125,
+      126
+     ],
+     "components_of_at_least_12": 0
+    }
+   ],
+   "components_readout_only": [
+    {
+     "t2_min_us": 40,
+     "n_good_qubits": 128,
+     "n_components": 10,
+     "largest_sizes": [
+      89,
+      10,
+      10,
+      7
+     ],
+     "largest": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      11,
+      16,
+      17,
+      18,
+      21,
+      22,
+      23,
+      24,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      36,
+      38,
+      39,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      49,
+      50,
+      51,
+      52,
+      53,
+      56,
+      57,
+      58,
+      61,
+      62,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      77,
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      87,
+      89,
+      90,
+      91,
+      96,
+      97,
+      98,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111,
+      117,
+      118,
+      124,
+      125,
+      126,
+      128,
+      129,
+      130
+     ],
+     "components_of_at_least_12": 1
+    },
+    {
+     "t2_min_us": 60,
+     "n_good_qubits": 113,
+     "n_components": 17,
+     "largest_sizes": [
+      39,
+      21,
+      10,
+      10
+     ],
+     "largest": [
+      44,
+      45,
+      46,
+      47,
+      57,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      77,
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      96,
+      97,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111,
+      117,
+      118,
+      124,
+      125,
+      126,
+      129,
+      130
+     ],
+     "components_of_at_least_12": 2
+    },
+    {
+     "t2_min_us": 80,
+     "n_good_qubits": 107,
+     "n_components": 23,
+     "largest_sizes": [
+      25,
+      15,
+      13,
+      10
+     ],
+     "largest": [
+      80,
+      81,
+      82,
+      83,
+      96,
+      97,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111,
+      117,
+      118,
+      124,
+      125,
+      126,
+      129,
+      130
+     ],
+     "components_of_at_least_12": 3
+    },
+    {
+     "t2_min_us": 100,
+     "n_good_qubits": 94,
+     "n_components": 26,
+     "largest_sizes": [
+      24,
+      10,
+      10,
+      6
+     ],
+     "largest": [
+      80,
+      81,
+      82,
+      83,
+      96,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111,
+      117,
+      118,
+      124,
+      125,
+      126,
+      129,
+      130
+     ],
+     "components_of_at_least_12": 1
+    },
+    {
+     "t2_min_us": 120,
+     "n_good_qubits": 79,
+     "n_components": 24,
+     "largest_sizes": [
+      22,
+      9,
+      6,
+      5
+     ],
+     "largest": [
+      80,
+      81,
+      82,
+      83,
+      96,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111,
+      117,
+      118,
+      124,
+      125,
+      126
+     ],
+     "components_of_at_least_12": 1
+    },
+    {
+     "t2_min_us": 150,
+     "n_good_qubits": 65,
+     "n_components": 28,
+     "largest_sizes": [
+      6,
+      5,
+      5,
+      5
+     ],
+     "largest": [
+      104,
+      105,
+      117,
+      124,
+      125,
+      126
+     ],
+     "components_of_at_least_12": 0
+    }
+   ],
+   "components_note": "`components` applies the prompt's E2 criteria (readout error <= 3 %, CZ error <= 1 %, T2 >= the floor); `components_readout_only` drops the CZ ceiling and is the variant P12 of the planner analysis reported",
+   "patch_select_error": "[committed record ibm_kingston_20260930T2255Z.json] data/hardware/device_survey_20260922/ibm_kingston_20260930T2255Z.json ...\nthe identity embedding (the transpiler's own patch [117, 122, 123, 124, 125, 136, 141, 142, 143, 144, 145, 146]) is not among the candidates -- the enumeration is wrong\n",
+   "patch_select": {
+    "json": null,
+    "md": null,
+    "n_candidates": 1454,
+    "n_skipped_not_covered_by_the_record": 40,
+    "objective": "f_dd_off = f_gates x exp(-S_T1 - S_T2)",
+    "tie_break": "1. larger f_dd_off; 2. larger f_gates; 3. smaller max_q S_T2; 4. lexicographically smallest tuple of physical qubits",
+    "method": "scripts/h0_patch_select.py's own enumerate_embeddings / score_patch / rank_key called directly, because search() refused on this record (see patch_select_error): the identity embedding cannot be scored, so the incumbent comparison and the h0_idle_model consistency check are NOT available",
+    "incumbent_is_the_patch_this_set_was_transpiled_onto": false,
+    "winner": {
+     "physical_qubits": [
+      82,
+      83,
+      96,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      117,
+      125,
+      126
+     ],
+     "mapping": {
+      "117": 82,
+      "122": 102,
+      "123": 103,
+      "124": 96,
+      "125": 83,
+      "136": 104,
+      "141": 107,
+      "142": 106,
+      "143": 105,
+      "144": 117,
+      "145": 125,
+      "146": 126
+     },
+     "f_gates": 0.24930226267490707,
+     "f_pta_clean": 0.05622012608266227,
+     "S_T1": 0.49389348458842963,
+     "S_T2": 0.9954977738711279,
+     "S_idle": 1.4893912584595577,
+     "T_total_s": 5.0144000000000345e-05,
+     "idle_s": 0.0004425520000000041,
+     "min_T2_s": 0.00013180330456655077,
+     "min_T1_s": 0.0001073891262563841,
+     "worst_qubit": 106,
+     "weakest_three_qubits_by_T2": [
+      {
+       "qubit": 103,
+       "T2_us": 131.80330456655076
+      },
+      {
+       "qubit": 106,
+       "T2_us": 143.55466907942628
+      },
+      {
+       "qubit": 96,
+       "T2_us": 158.0519611332466
+      }
+     ]
+    },
+    "incumbent_patch_of_the_transpiler": null,
+    "gain_over_incumbent": null,
+    "budget_D3prime_echo_end": {
+     "rule": "D3' (prompts/16), unchanged; f input = the patch's PTA clean f at the record's echo T2 (decision D3'-f)",
+     "f_r1": 0.05622012608266227,
+     "lambda_star": 6.295793621871989,
+     "margin": 0.7,
+     "floor": 267,
+     "N4": {
+      "B=0": 26500,
+      "B=1": 63300
+     },
+     "r1_shots_by_sector": {
+      "B=0": 136505,
+      "B=1": 128202
+     },
+     "total_coarse_shots": 270923,
+     "calibration_circuits": 14,
+     "calibration_shots": 4000,
+     "calibration_circuit_duration_s": 2.2097142857142853e-06,
+     "rep_delay_s": 0.00025,
+     "execution_s": 95.85921708800011,
+     "p11_interpolated_execution_s": 94.59655401730615
+    },
+    "budget_D3primeprime_H0_echo_end": {
+     "rule": "D3''-H0 (owner, 2026-09-30): gate H0's k = 1 circuits are sized for criterion 2's clean-f statistic, not for clean saturation",
+     "f_clean": 0.05622012608266227,
+     "shots_per_k1_circuit": 2491,
+     "n_k1_circuits": 7,
+     "shots_per_other_r1_circuit": 267,
+     "n_other_r1_circuits": 21,
+     "deep_shots": {
+      "2": 130,
+      "3": 92
+     },
+     "n_deep_circuits": 56,
+     "calibration_circuits": 14,
+     "calibration_shots": 4000,
+     "total_coarse_shots": 29260,
+     "rep_delay_s": 0.00025,
+     "execution_s": 23.316166960000007,
+     "execution_breakdown_s": {
+      "k1_circuits": 5.237058472000006,
+      "other_r1_circuits": 1.6835161680000021,
+      "r2_r3_circuits": 2.271848320000001,
+      "readout_calibration": 14.123743999999999
+     }
+    },
+    "budgets_note": "both budgets are the ECHO-T2 end: the patch score uses the record's Hahn-echo T2 because the free-induction T2* of the selected patch is unknown before the pilot.  On patch 1 the measured in-circuit budget was 1.73x the echo-PTA value (S_eff 5.76 against S_echo 3.32), and whether that ratio transfers to a high-T2 patch is not known.  The durations are the frozen circuits' own on this record; a re-freeze on the winning patch (decision D1') would move them."
+   }
+  }
+ ],
+ "unreachable": [],
+ "runtime_s": 335.5117108821869
+}
