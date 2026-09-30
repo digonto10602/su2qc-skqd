@@ -269,11 +269,16 @@ def sample_many(gates_list: list, n: int, shots: int, noise_model=None, coupling
     it fits or a single experiment of one shot still fails (which is then raised).  On the CPU no
     OOM occurs, so the CPU path remains one call, unchanged.
 
-    Splitting the shots of one circuit over several calls is statistically identical but not the
-    same random draw, so each chunk gets `seed + chunk index` (the policy's
-    `base_seed + unit index` rule) and the counts are summed.  `return_info=True` additionally
-    returns what the call actually did -- chunk sizes, number of `run` calls, the seeds used and
-    any OOM retries -- so the gate can record it.
+    SEEDING, and this is not a detail.  Aer seeds the noise trajectory of shot j with
+    `seed_simulator + j`, so CONSECUTIVE seeds do not give independent samples: verified bit for
+    bit that 200 shots at seed 11 plus 200 at seed 211 equal 400 at seed 11, while seed 11 and
+    seed 12 share 199 of 200 shots.  A chunked call must therefore stride its seeds by at least
+    the chunk size, or the chunks are near-duplicates of each other -- chunking 400 shots into
+    four calls at seeds 11..14 draws only 103 distinct trajectories, 26 % of the sample the run
+    claims.  Each chunk accordingly gets `seed + chunk index * stride` with
+    `stride >= max_shots_per_run`, and `return_info=True` reports the stride alongside the chunk
+    sizes, the number of `run` calls, the seeds used and any OOM retries, so the gate can record
+    that its shots were genuinely independent.
 
     `transpiled`: a list of QuantumCircuits ALREADY mapped to the target, used instead of
     transpiling `gates_list` here (`gates_list` is then ignored and may be None).  Added for gate
@@ -299,7 +304,8 @@ def sample_many(gates_list: list, n: int, shots: int, noise_model=None, coupling
     n_sh = max(1, int(max_shots_per_run or shots))
     totals = [{} for _ in tqs]
     info = {"experiments": len(tqs), "shots": shots, "run_calls": 0, "oom_retries": [],
-            "seeds": [], "max_experiments": n_exp, "max_shots_per_run": n_sh}
+            "seeds": [], "max_experiments": n_exp, "max_shots_per_run": n_sh,
+            "seed_stride": n_sh}
     chunk_index = 0
     i = 0
     while i < len(tqs):
@@ -307,7 +313,8 @@ def sample_many(gates_list: list, n: int, shots: int, noise_model=None, coupling
         done = 0
         while done < shots:
             take = min(n_sh, shots - done)
-            s = seed + chunk_index
+            # stride by the chunk size: consecutive seeds overlap in Aer (see the docstring)
+            s = seed + chunk_index * max(n_sh, take)
             try:
                 res = sim.run(block, shots=take, seed_simulator=s).result()
                 got = [res.get_counts(j) for j in range(len(block))]
@@ -323,6 +330,7 @@ def sample_many(gates_list: list, n: int, shots: int, noise_model=None, coupling
                 info["oom_retries"].append({"max_experiments": n_exp, "max_shots_per_run": n_sh,
                                             "error": str(exc)[:200]})
                 info["max_experiments"], info["max_shots_per_run"] = n_exp, n_sh
+                info["seed_stride"] = n_sh
                 block = tqs[i:i + n_exp]
                 done = 0
                 totals[i:] = [{} for _ in range(len(totals) - i)]   # discard partial accumulation

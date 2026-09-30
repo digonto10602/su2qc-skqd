@@ -49,7 +49,9 @@ from skqd.krylov import references  # noqa: E402
 from skqd.reference_sim import qiskit_key_to_bits  # noqa: E402
 from skqd.report import GateResult, env_block, md_table, write_report  # noqa: E402
 from skqd.skqd import (READOUT_FACTOR, certify, clean_fraction_from_yield,  # noqa: E402
-                       ritz, shot_rule, support_metrics, yield_model)
+                       clean_fraction_mixture, pooled_reference_string_test,
+                       reference_string_test, ritz, shot_rule, support_metrics,
+                       yield_model)
 
 from h0_backends import (calibration_diff, calibration_record,  # noqa: E402
                          fresh_calibration, frozen_qubits_and_edges,
@@ -279,6 +281,313 @@ def analyse_records(records, cal_records, model, g2, plan=None):
     return out
 
 
+# ------------------------------------------------------------------ prompts/20: the clean statistic
+# Decisions C2' / C3' / M4.4 (data/H0_replan_owner_decisions.md, signed 2026-09-30).  The
+# accepted-shot yield of `analyse_records` above counts three things at once -- clean shots,
+# uniformly random garbage that decodes, and strings with a few structured errors that decode --
+# and gate H0_diag measured the third to be comparable with the second (0.65 % against 0.93 %),
+# so the yield inversion overstated the clean fraction 15x on the device.  The functions below
+# estimate the CLEAN component from the shape of the accepted histogram.  They are OUTPUTS of
+# `analyse_records`' callers, never inputs to it: gate H0's criteria block is untouched unless
+# it is run with `--clean-statistic mixture` (D1 of prompts/20).
+def sector_distributions(records, model, g2):
+    """{circuit id: ideal sector distribution} plus the codeword Hamming-distance map.
+
+    Cached by (twoB, reference, k, dt, repetitions) -- the frozen set has 84 circuits over 24
+    distinct such keys.  `skqd.krylov.ideal_sector_distribution` is the group-evolution route;
+    `scripts/h0_support_plan.ideal_probabilities` takes the same object off the frozen QPY and
+    the two agree to 1.8e-14 (tests/test_clean_yield.py)."""
+    from skqd.krylov import ideal_sector_distribution
+    codec = Codec(model.basis)
+    dcache, distcache, out = {}, {}, {}
+    for man, _ in records:
+        key = (int(man["twoB"]), int(man["reference"]), int(man["k"]),
+               round(float(man["dt"]), 15), int(man["repetitions"]))
+        if key not in dcache:
+            dcache[key] = ideal_sector_distribution(model, g2, int(man["twoB"]),
+                                                    int(man["reference"]), int(man["k"]),
+                                                    float(man["dt"]), int(man["repetitions"]))
+        d = dcache[key]
+        dk = (int(man["twoB"]), int(man["reference"]))
+        if dk not in distcache:
+            refbits = tuple(int(x) for x in codec.encode(model.basis.labels[int(man["reference"])]))
+            distcache[dk] = {int(b): int(sum(x != y for x, y in
+                                             zip(codec.encode(model.basis.labels[int(b)]), refbits)))
+                             for b in d["sector_indices"]}
+        out[man["id"]] = (d, distcache[dk])
+    return out
+
+
+def clean_statistics(records, model, g2, acceptance_by_sector):
+    """The clean-yield statistic of decision C2' and the reference-string test of C3'.
+
+    Returns `per_circuit`, `by_sector_repetition` (one w fitted jointly over the class's
+    circuits: their ideal distributions differ, so the histograms cannot be added but the
+    log-likelihoods can), `by_sector`, `reference_string_tests` (the k = 1 circuits, where the
+    output is concentrated at p 0.883 / 0.889 and the count is an independent check on the
+    fit) and the pooled reference test per sector.
+
+    `near_clean_accepted` is the residual of the amended Step-4.4 model (M4.4):
+    accepted - clean - N a (1 - f_clean).  It is a measurement, not a model."""
+    codec = Codec(model.basis)
+    dists = sector_distributions(records, model, g2)
+    per_circuit, groups, sectors = {}, {}, {}
+    for man, counts in records:
+        d, dmap = dists[man["id"]]
+        pos = {int(b): i for i, b in enumerate(d["sector_indices"])}
+        acc, _rej = codec.decode_counts(counts, target_twoB=int(man["twoB"]))
+        shots = int(sum(counts.values()))
+        n = np.zeros(d["dim"])
+        hist = np.zeros(model.basis.lat.n_links + model.basis.lat.n_sites * 2 + 1)
+        for st, v in acc.items():
+            n[pos[int(st)]] += int(v)
+            hist[dmap[int(st)]] += int(v)
+        a = float(acceptance_by_sector[man["sector"]])
+        mix = clean_fraction_mixture(n, d["p"], d["dim"], shots)
+        n_ref = int(round(float(n[d["reference_position"]])))
+        rst = reference_string_test(n_ref, shots, float(d["p_reference"]), a, d["dim"])
+        garbage = shots * a * (1.0 - mix["f_clean"])
+        per_circuit[man["id"]] = {
+            "id": man["id"], "sector": man["sector"], "twoB": int(man["twoB"]),
+            "reference": int(man["reference"]), "k": int(man["k"]),
+            "repetitions": int(man["repetitions"]), "cz": man.get("cz"),
+            "shots": shots, "accepted": int(n.sum()), "dim": d["dim"],
+            "p_reference": float(d["p_reference"]), "reference_hits": n_ref,
+            "garbage_acceptance": a,
+            "mixture": mix, "reference_string_test": rst,
+            "expected_garbage_accepted": float(garbage),
+            "near_clean_accepted": float(n.sum() - mix["clean_accepted"] - garbage),
+            "distance_histogram": [int(x) for x in hist],
+        }
+        gkey = f"{man['sector']} r={int(man['repetitions'])}"
+        g = groups.setdefault(gkey, {"sector": man["sector"], "repetitions": int(man["repetitions"]),
+                                     "rows": [], "p": [], "shots": 0, "accepted": 0,
+                                     "dim": d["dim"], "ids": [], "ref_rows": [],
+                                     "distance_histogram": np.zeros_like(hist)})
+        g["rows"].append(n)
+        g["p"].append(d["p"])
+        g["shots"] += shots
+        g["accepted"] += int(n.sum())
+        g["ids"].append(man["id"])
+        g["ref_rows"].append((n_ref, shots, float(d["p_reference"]), a, d["dim"]))
+        g["distance_histogram"] = g["distance_histogram"] + hist
+        s = sectors.setdefault(man["sector"], {"ref_rows": [], "k1_ref_rows": [], "shots": 0})
+        s["ref_rows"].append((n_ref, shots, float(d["p_reference"]), a, d["dim"]))
+        s["shots"] += shots
+        if int(man["k"]) == 1:
+            s["k1_ref_rows"].append((n_ref, shots, float(d["p_reference"]), a, d["dim"]))
+
+    bsr = {}
+    for key, g in sorted(groups.items()):
+        mix = clean_fraction_mixture(np.array(g["rows"]), np.array(g["p"]), g["dim"], g["shots"])
+        a = float(g["ref_rows"][0][3])
+        garbage = g["shots"] * a * (1.0 - mix["f_clean"])
+        bsr[key] = {
+            "sector": g["sector"], "repetitions": g["repetitions"], "circuits": len(g["ids"]),
+            "shots": g["shots"], "accepted": g["accepted"], "dim": g["dim"],
+            "mixture": mix, "reference_pooled": pooled_reference_string_test(g["ref_rows"]),
+            "expected_garbage_accepted": float(garbage),
+            "near_clean_accepted": float(g["accepted"] - mix["clean_accepted"] - garbage),
+            "distance_histogram": [int(x) for x in g["distance_histogram"]],
+        }
+    bysec = {}
+    for sec, s in sorted(sectors.items()):
+        bysec[sec] = {"reference_pooled": pooled_reference_string_test(s["ref_rows"]),
+                      "reference_pooled_k1": (pooled_reference_string_test(s["k1_ref_rows"])
+                                              if s["k1_ref_rows"] else None),
+                      "shots": s["shots"]}
+    k1 = {cid: v["reference_string_test"] for cid, v in sorted(per_circuit.items())
+          if v["k"] == 1}
+    return {"per_circuit": per_circuit, "by_sector_repetition": bsr, "by_sector": bysec,
+            "reference_string_tests": k1,
+            "statistic": ("clean_fraction_mixture (decision C2') and reference_string_test "
+                          "(decision C3'); the near-clean term is the residual of the amended "
+                          "Step-4.4 model (decision M4.4)")}
+
+
+# ------------------------------------------------------------------ prompts/20 B1: scheduling
+SCHEDULE_SEED = 7          # seed_transpiler of the scheduling pass (P9 of the planner analysis)
+
+
+def schedule_circuit(circ, backend, seed_transpiler=SCHEDULE_SEED):
+    """`transpile(..., optimization_level=0, scheduling_method='asap')`: the idle windows of
+    the circuit become explicit `Delay` instructions on the target's own durations, which is
+    what `AerSimulator.from_backend` charges with thermal relaxation.
+
+    The unscheduled path of the dry run had no delays at all, which is why it reported the
+    wrong hypothesis as confirmed (decision H0P-Y').  Asserts that no NON-delay operation
+    count moved: scheduling must add time, never gates."""
+    from qiskit import transpile
+    before = {k: v for k, v in circ.count_ops().items() if k != "delay"}
+    sched = transpile(circ, backend=backend, optimization_level=0, scheduling_method="asap",
+                      seed_transpiler=seed_transpiler)
+    after = {k: v for k, v in sched.count_ops().items() if k != "delay"}
+    if before != after:
+        raise SystemExit(f"scheduling changed the operations of the circuit: before {before}, "
+                         f"after {after} (prompts/20 escalation B1)")
+    dt = float(backend.dt) if getattr(backend, "dt", None) else None
+    dur_dt = sum(int(inst.operation.duration) for inst in sched.data
+                 if inst.operation.name == "delay")
+    info = {"n_delays": int(sched.count_ops().get("delay", 0)),
+            "n_cz": int(after.get("cz", 0)),
+            "delay_dt_total": int(dur_dt),
+            "ops_non_delay": {k: int(v) for k, v in sorted(after.items())},
+            "dt_s": dt, "seed_transpiler": int(seed_transpiler)}
+    try:
+        from h0_qpu_time import circuit_duration_s
+        t = backend.target
+        info["scheduled_duration_s"] = float(circuit_duration_s(sched, t.durations(), t))
+        info["unscheduled_duration_s"] = float(circuit_duration_s(circ, t.durations(), t))
+        info["duration_agreement_dt"] = (
+            None if dt is None else
+            abs(info["scheduled_duration_s"] - info["unscheduled_duration_s"]) / dt)
+    except Exception as exc:                        # pragma: no cover - reported, never silent
+        info["duration_check_error"] = str(exc)
+    return sched, info
+
+
+# ------------------------------------------------------------------ prompts/20 B2: the T2 override
+def load_t2_override(path):
+    """A `{source, per_qubit: {physical: {T2_s, provenance}}}` file, or None."""
+    if not path:
+        return None, None
+    p = path if os.path.isabs(path) else os.path.join(ROOT, path)
+    with open(p) as fh:
+        blob = fh.read()
+    ov = json.loads(blob)
+    if "per_qubit" not in ov:
+        raise SystemExit(f"{path} is not a T2 override file of scripts/h0_t2_override.py "
+                         f"(no 'per_qubit' block)")
+    import hashlib
+    return ov, hashlib.sha256(blob.encode()).hexdigest()
+
+
+def apply_t2_override(backend, override):
+    """Replace `target.qubit_properties` by a NEW list carrying the override T2 per qubit.
+
+    prompts/17 PC 3: `Target.qubit_properties` must be ASSIGNED as a list -- mutating the
+    objects in place does not reach the target, and therefore does not reach
+    `AerSimulator.from_backend`'s relaxation pass.  T1 is left as the record has it; a T2
+    above 2 T1 is unphysical for the relaxation channel and is clipped, with the clip
+    recorded rather than silently applied."""
+    from qiskit.providers.backend import QubitProperties
+    target = backend.target
+    qp = list(target.qubit_properties)
+    table, clipped = [], []
+    for q, v in sorted(override["per_qubit"].items(), key=lambda kv: int(kv[0])):
+        qi = int(q)
+        if qi >= len(qp):
+            raise SystemExit(f"the T2 override names qubit {qi} but the target has {len(qp)}")
+        old = qp[qi]
+        t1 = None if old is None else old.t1
+        t2_new = float(v["T2_s"])
+        clip = False
+        if t1 is not None and t2_new > 2.0 * t1:
+            clipped.append({"qubit": qi, "T2_requested_s": t2_new, "T2_used_s": 2.0 * t1,
+                            "T1_s": t1, "reason": "T2 <= 2 T1"})
+            t2_new, clip = 2.0 * t1, True
+        qp[qi] = QubitProperties(t1=t1, t2=t2_new,
+                                 frequency=None if old is None else old.frequency)
+        table.append({"qubit": qi, "T1_s": t1,
+                      "T2_original_s": None if old is None else old.t2,
+                      "T2_override_s": t2_new,
+                      "provenance": v.get("provenance"), "clipped_to_2T1": clip})
+    target.qubit_properties = qp                # ASSIGNED, never mutated in place
+    check = {int(r["qubit"]): target.qubit_properties[int(r["qubit"])].t2 for r in table}
+    for r in table:
+        if abs(check[int(r["qubit"])] - r["T2_override_s"]) > 1e-18:
+            raise SystemExit(f"the T2 override did not reach the target for qubit {r['qubit']} "
+                             f"(prompts/20 escalation B2)")
+    return {"source": override.get("source"), "n_qubits": len(table), "per_qubit": table,
+            "clipped": clipped,
+            "note": ("target.qubit_properties assigned as a new list (prompts/17 PC 3); T1 "
+                     "unchanged; AerSimulator.from_backend reads these values for the thermal "
+                     "relaxation of every delay")}
+
+
+# ------------------------------------------------------------------ prompts/20 B3: the PTA bound
+def pta_bounds(circuits, mans, record, t2_s=None):
+    """`skqd.idle`'s analytic clean-f bound per circuit on `record` at the T2 actually used.
+
+    The bound is parameter-free and charges every relaxation error as fatal, so it sits BELOW
+    the scheduled simulation by an understood factor (11.8x on the FakeFez snapshot, of which
+    22.4 % of the phase budget provably cannot matter).  Decision H0P-Y' requires the ordering
+    PTA <= Aer-scheduled <= Aer-unscheduled to be tested rather than a number asserted."""
+    import h0_idle_model as im
+    out = {}
+    for m in mans:
+        qc = circuits[m["id"]]
+        sch = im.schedule(qc, record)
+        _per_q, tot = im.budgets(sch, record, t2_s)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            f_gates, f_gates_only, ro, n_cz, n_meas = im.f_on_record(qc, record)
+        from skqd import idle
+        out[m["id"]] = {
+            "f_gates": float(f_gates), "f_pta": float(idle.f_idle_aware(f_gates, tot)),
+            "S_T1": tot["S_T1"], "S_T2": tot["S_T2"], "idle_s": tot["idle_s"],
+            "T_total_s": sch["T_total_s"], "n_cz": int(n_cz), "n_measure": int(n_meas),
+        }
+    return out
+
+
+class LazySchedule(dict):
+    """`circuits[id]` returns the ASAP-scheduled circuit, transpiled on first access.
+
+    Lazy so that a run restricted with `--only-ids` does not pay for scheduling the other
+    83 circuits of the frozen set; the schedule info of every circuit that was actually
+    scheduled lands in `self.info` and from there in the JSON."""
+
+    def __init__(self, base, backend):
+        super().__init__()
+        self.base = base
+        self.backend = backend
+        self.info = {}
+        self.seconds = 0.0
+
+    def __getitem__(self, key):
+        if key not in self:
+            t = time.time()
+            sched, info = schedule_circuit(self.base[key], self.backend)
+            self.seconds += time.time() - t
+            self.info[key] = info
+            super().__setitem__(key, sched)
+            print(f"    scheduled {key}: {info['n_delays']} delays, "
+                  f"{info['n_cz']} cz, {info.get('scheduled_duration_s', float('nan')) * 1e6:.2f} us "
+                  f"({time.time() - t:.1f} s)", flush=True)
+        return super().__getitem__(key)
+
+
+def yield_bracket(pta_by_circuit, clean_stats, mans):
+    """The H0P-Y' sandwich per (sector, repetition): PTA bound <= scheduled Aer clean f.
+
+    The unscheduled end is not recomputed here -- it is the clean f of a `--schedule none`
+    run of the same command, which the report names -- so what this function checks is the
+    lower edge of the ordering, the one a single invocation can see."""
+    out = {}
+    by_class = {}
+    for m in mans:
+        by_class.setdefault(f"{m['sector']} r={int(m['repetitions'])}", []).append(m["id"])
+    for key, ids in sorted(by_class.items()):
+        ids = [i for i in ids if i in pta_by_circuit]
+        if not ids or key not in clean_stats["by_sector_repetition"]:
+            continue
+        mix = clean_stats["by_sector_repetition"][key]["mixture"]
+        f_pta = float(np.mean([pta_by_circuit[i]["f_pta"] for i in ids]))
+        f_sim = float(mix["f_clean"])
+        out[key] = {
+            "f_pta_bound_mean": f_pta,
+            "f_pta_bound_min": float(np.min([pta_by_circuit[i]["f_pta"] for i in ids])),
+            "f_pta_bound_max": float(np.max([pta_by_circuit[i]["f_pta"] for i in ids])),
+            "f_gates_mean": float(np.mean([pta_by_circuit[i]["f_gates"] for i in ids])),
+            "f_clean_scheduled_simulation": f_sim,
+            "f_clean_scheduled_simulation_68": mix["f_clean_68"],
+            "ratio_simulation_over_bound": (f_sim / f_pta) if f_pta > 0 else None,
+            "bound_below_simulation": bool(f_pta <= f_sim),
+            "ordering": "PTA bound <= Aer-scheduled clean f (<= Aer-unscheduled clean f)",
+        }
+    return out
+
+
 def plan_calibration_diff(support_plan, live_record, caldir, bname):
     """' -- 30 leaves changed (measure_error), ratios 0.37..2.66' if the record the plan was
     built from is still on disk, '' otherwise (prompts/17 F3(i): a refusal says WHAT moved).
@@ -311,6 +620,11 @@ def plan_calibration_diff(support_plan, live_record, caldir, bname):
 
 
 # ------------------------------------------------------------------ sampling cache (prompts/16 F2)
+# prompts/20 B1/B2: the two keys the cache gained.  A cache file written before prompts/20
+# carries neither key and is, by construction, the unscheduled run with the target's own T2.
+CACHE_KEY_DEFAULTS = {"schedule": "none", "t2_override_sha": None}
+
+
 def cache_path(cdir, sector, r):
     return os.path.join(cdir, f"{sector}_r{r}.json")
 
@@ -331,11 +645,21 @@ def cache_stamp(rec_expect, rec_found, path):
             f"prompts/17 D11.  Add it with the A''6 migration (snippet 5 of prompts/17) if it "
             f"belongs to the calibration content you are running on, or re-sample the class "
             f"with --refresh-cache.")
-    for key in ("backend", "seed", "calibration_fingerprint", "sector", "repetition"):
-        if str(rec_found.get(key)) != str(rec_expect.get(key)):
+    for key in ("backend", "seed", "calibration_fingerprint", "sector", "repetition",
+                "schedule", "t2_override_sha"):
+        # prompts/20 B1: `schedule` and `t2_override_sha` join the key because a scheduled run
+        # and a run at an overridden T2 are different experiments on the same circuits.  A file
+        # written before prompts/20 carries neither and is the unscheduled, un-overridden
+        # experiment -- the default below, so the 14 committed cache files stay valid.
+        # the default is applied to BOTH sides: absent on both sides means "the unscheduled
+        # run with the target's own T2", which is what a pre-prompts/20 file and a
+        # pre-prompts/20 expectation both describe
+        got = rec_found.get(key, CACHE_KEY_DEFAULTS.get(key))
+        want = rec_expect.get(key, CACHE_KEY_DEFAULTS.get(key))
+        if str(got) != str(want):
             raise SystemExit(
-                f"{os.path.basename(path)}: cached {key} is {rec_found.get(key)!r}, this run needs "
-                f"{rec_expect.get(key)!r}.  The cache is not reused silently: delete the file or "
+                f"{os.path.basename(path)}: cached {key} is {got!r}, this run needs "
+                f"{want!r}.  The cache is not reused silently: delete the file or "
                 f"re-sample the class with --refresh-cache.")
     for cid, sh in rec_expect["shots_by_circuit"].items():
         got = rec_found.get("shots_by_circuit", {}).get(cid)
@@ -442,6 +766,23 @@ def main():
                     help="FakeFez / FakeTorino (default: the snapshot named in index.json) or a LIVE "
                          "IBM backend: the day's calibration is then the reference of the prediction "
                          "(prompts/15 D1) and is recorded in --calibration-dir")
+    ap.add_argument("--schedule", default="none", choices=("none", "asap"),
+                    help="prompts/20 B1: with 'asap' every circuit is passed through "
+                         "transpile(optimization_level=0, scheduling_method='asap') before "
+                         "sim.run, so its idle windows become explicit Delay instructions and "
+                         "Aer charges them with thermal relaxation.  The default 'none' is the "
+                         "path every committed H0P output was produced with; a scheduled run "
+                         "is a different experiment and gets its own sampling cache.")
+    ap.add_argument("--t2-override", default=None, metavar="JSON",
+                    help="prompts/20 B2: a {source, per_qubit: {physical: {T2_s, provenance}}} "
+                         "file (scripts/h0_t2_override.py) whose T2 values replace the "
+                         "target's before the Aer noise model is built.  T1 is untouched.")
+    ap.add_argument("--yield-criterion", default="auto", choices=("auto", "ratio", "bracket"),
+                    help="decision H0P-Y': 'bracket' judges the yield by the ordering "
+                         "PTA bound <= scheduled-Aer clean f instead of the [1/3, 3] band of "
+                         "the simulated-over-model ratio.  'auto' (the default) uses the "
+                         "bracket when --schedule asap makes it computable and the ratio "
+                         "otherwise, so every unscheduled output keeps the criteria it had.")
     ap.add_argument("--calibration-dir", default=None,
                     help="where calibration_<stamp>.json goes (default data/hardware/H0_<backend>)")
     ap.add_argument("--out", default="H0P")
@@ -522,7 +863,43 @@ def main():
         print(f"recomputed f on the live target for {len(f_live)} circuits: mean live "
               f"{np.mean([v['f_live'] for v in f_live.values()]):.4f} vs manifest "
               f"{np.mean([v['f_manifest'] for v in f_live.values()]):.4f}", flush=True)
+
+    # ------------------------------------------------------- prompts/20 D11 + B2
+    # The calibration RECORD and its fingerprint are read from the target as the device
+    # reported it, BEFORE any T2 override: the record on disk keeps the device's own T2 and
+    # the override is recorded next to it as a separate, named table.  The cache key then
+    # carries both the fingerprint and the sha256 of the override file, so a run at the
+    # measured T2* is never confused with a run at the record's Hahn-echo T2.
+    cal_date = calibration["last_update_date"] if live else "snapshot"
+    if live:
+        cal_fingerprint = calibration["fingerprint"]
+        cal_fingerprint_source = os.path.relpath(cal_path, ROOT)
+    else:
+        snap_qubits, snap_edges = frozen_qubits_and_edges(prep)
+        snapshot_rec = calibration_record(backend, snap_qubits, snap_edges)
+        cal_fingerprint = snapshot_rec["fingerprint"]
+        cal_fingerprint_source = f"{bname} snapshot record"
+    t2_override, t2_override_sha = load_t2_override(args.t2_override)
+    t2_table = None
+    if t2_override is not None:
+        t2_table = apply_t2_override(backend, t2_override)
+        t2_table["file"] = args.t2_override
+        t2_table["sha256"] = t2_override_sha
+        print(f"T2 override {args.t2_override} ({t2_override_sha[:16]}): "
+              f"{t2_table['n_qubits']} qubits, {len(t2_table['clipped'])} clipped to 2 T1",
+              flush=True)
+        if live:
+            calibration["t2_override"] = t2_table
+            with open(cal_path, "w") as fh:
+                json.dump(calibration, fh, indent=1)
+    # the simulator is built from the target as it stands now: the override above is inside
+    # the noise model, the fingerprint recorded above is not a function of it
     sim = AerSimulator.from_backend(backend, seed_simulator=args.seed)
+    if args.schedule == "asap":
+        circuits = LazySchedule(circuits, backend)
+        print(f"--schedule asap: circuits are transpiled with optimization_level=0, "
+              f"scheduling_method='asap', seed_transpiler={SCHEDULE_SEED} on first use",
+              flush=True)
 
     # ------------------------------------------------------- pinned shots (prompts/16 F2)
     # Either the per-circuit shot plan of rule D3' (scripts/h0_support_plan.py) or the
@@ -534,7 +911,17 @@ def main():
         raise SystemExit("--shots-plan and --shots-by-rep are mutually exclusive")
     if args.shots_by_rep:
         shots_by_rep_pinned = {int(x.split(":")[0]): int(x.split(":")[1]) for x in args.shots_by_rep}
-        shots_of = {m["id"]: int(shots_by_rep_pinned[m["repetitions"]]) for m in mans}
+        # prompts/20 B4: a PARTIAL map is allowed so that a restricted invocation
+        # (--only-ids / --reps) does not have to invent shot counts for the repetitions it
+        # never samples.  A class with an unpinned repetition is simply not cacheable, and the
+        # analysis (which needs every class) refuses as it always did.
+        shots_of = {m["id"]: int(shots_by_rep_pinned[m["repetitions"]]) for m in mans
+                    if m["repetitions"] in shots_by_rep_pinned}
+        unpinned_reps = sorted({m["repetitions"] for m in mans} - set(shots_by_rep_pinned))
+        if unpinned_reps:
+            print(f"--shots-by-rep pins {sorted(shots_by_rep_pinned)}; repetition(s) "
+                  f"{unpinned_reps} are unpinned and cannot be sampled or cached in this "
+                  f"invocation", flush=True)
     if args.shots_plan:
         pp = (args.shots_plan if os.path.isabs(args.shots_plan)
               else os.path.join(ROOT, args.shots_plan))
@@ -568,16 +955,9 @@ def main():
               f"{(plan_fingerprint or 'n/a')[:16]}): "
               + ", ".join(f"{sec} N4 {v['N4']}" for sec, v in support_plan["sectors"].items()),
               flush=True)
-    cal_date = calibration["last_update_date"] if live else "snapshot"
-    # prompts/17 D11: the cache is keyed by the calibration CONTENT.  On a fake backend that
-    # content is the snapshot's own record, which is constant per qiskit-ibm-runtime version.
-    if live:
-        cal_fingerprint = calibration["fingerprint"]
-        cal_fingerprint_source = os.path.relpath(cal_path, ROOT)
-    else:
-        snap_qubits, snap_edges = frozen_qubits_and_edges(prep)
-        cal_fingerprint = calibration_record(backend, snap_qubits, snap_edges)["fingerprint"]
-        cal_fingerprint_source = f"{bname} snapshot record"
+    # prompts/17 D11: the cache is keyed by the calibration CONTENT (computed above, before
+    # the T2 override).  On a fake backend that content is the snapshot's own record, which
+    # is constant per qiskit-ibm-runtime version.
 
     # ------------------------------------------------------- which classes this invocation samples
     classes = sorted({(m["sector"], m["repetitions"]) for m in mans})
@@ -611,6 +991,8 @@ def main():
                 "calibration_fingerprint": cal_fingerprint,
                 "calibration_fingerprint_source": cal_fingerprint_source,
                 "calibration_last_update_date": cal_date,
+                "schedule": args.schedule, "t2_override_sha": t2_override_sha,
+                "t2_override_file": args.t2_override,
                 "shot_plan_stamp": plan_stamp, "shots_plan_file": args.shots_plan,
                 "shots_by_circuit": {i: int(shots_of[i]) for i in ids}}
 
@@ -619,15 +1001,25 @@ def main():
     if use_cache:
         for c in classes:
             path = cache_path(cdir, c[0], c[1])
+            ids = [m["id"] for m in by_class[c]]
+            if any(i not in shots_of for i in ids):
+                if c in selected:
+                    raise SystemExit(
+                        f"class {c[0]} r={c[1]} is selected but its shots are not pinned: give "
+                        f"--shots-by-rep {c[1]}:<shots> (or a --shots-plan covering it)")
+                cached[c] = None                # unpinned and unselected: not this invocation's
+                continue
             if args.refresh_cache and c in selected:
                 cached[c] = None
                 continue
-            cached[c] = load_cache(path, expect(c[0], c[1], [m["id"] for m in by_class[c]]))
+            cached[c] = load_cache(path, expect(c[0], c[1], ids))
         calpath = os.path.join(cdir, "calibration_circuits.json")
         cal_exp = {"backend": bname, "seed": int(args.seed), "sector": "calibration",
                    "repetition": 0, "calibration_fingerprint": cal_fingerprint,
                    "calibration_fingerprint_source": cal_fingerprint_source,
                    "calibration_last_update_date": cal_date,
+                   "schedule": args.schedule, "t2_override_sha": t2_override_sha,
+                   "t2_override_file": args.t2_override,
                    "shot_plan_stamp": plan_stamp, "shots_plan_file": args.shots_plan,
                    "shots_by_circuit": {m["id"]: int(args.cal_shots) for m in cals}}
         cal_cached = None if (args.refresh_cache and cal_selected) else load_cache(calpath, cal_exp)
@@ -647,7 +1039,12 @@ def main():
     t_shot, setup = {}, {}
     pilot_reps = reps if shots_of is None else sorted({r for _, r in to_sample})
     for r in pilot_reps:
-        ms = [m for m in mans if m["repetitions"] == r][:args.pilot_circuits]
+        # prompts/20 B1: with --only-ids the pilot times the circuits this invocation will
+        # actually run, so a scheduled run does not transpile three circuits it never samples
+        ms = [m for m in mans if m["repetitions"] == r
+              and (only_ids is None or m["id"] in only_ids)][:args.pilot_circuits]
+        if not ms:
+            continue
         qs = [circuits[m["id"]] for m in ms]
         tt = []
         for sh in (args.pilot_shots_low, args.pilot_shots):
@@ -679,7 +1076,8 @@ def main():
                         for r in reps}
     if shots_of is None:
         shots_of = {m["id"]: int(shots_by_rep[m["repetitions"]]) for m in mans}
-    predicted_s = sum(shots_of[m["id"]] * t_shot.get(m["repetitions"], 0.0) for m in mans) + setup_total
+    predicted_s = sum(shots_of.get(m["id"], 0) * t_shot.get(m["repetitions"], 0.0)
+                      for m in mans) + setup_total
     per_shot_total = sum(t_shot.get(m["repetitions"], 0.0) for m in mans)
     print(f"{len(mans)} circuits, {per_shot_total:.2f} s per shot over the whole set -> shots per circuit "
           f"{shots_by_rep} ({args.shot_allocation}, predicted {predicted_s / 60:.1f} min of a "
@@ -701,7 +1099,9 @@ def main():
         t_sample = time.time() - ts
         tc = time.time()
         cal_records = []
-        cal_counts = sim.run([load_circuit(prep, m) for m in cals],
+        cal_base = {m["id"]: load_circuit(prep, m) for m in cals}
+        cal_view = LazySchedule(cal_base, backend) if args.schedule == "asap" else cal_base
+        cal_counts = sim.run([cal_view[m["id"]] for m in cals],
                              shots=args.cal_shots).result().get_counts()
         if isinstance(cal_counts, dict):
             cal_counts = [cal_counts]
@@ -755,11 +1155,15 @@ def main():
             print(f"  sampling the {len(cals)} readout-calibration circuits x {args.cal_shots} shots "
                   f"({time.time() - t0:.0f} s elapsed)", flush=True)
             cal_circuits = {m["id"]: load_circuit(prep, m) for m in cals}
+            if args.schedule == "asap":
+                cal_circuits = LazySchedule(cal_circuits, backend)
             got = run_by_shots(sim, cal_circuits, cals, {m["id"]: args.cal_shots for m in cals})
             cal_cached = {"backend": bname, "seed": int(args.seed), "sector": "calibration",
                           "repetition": 0, "calibration_fingerprint": cal_fingerprint,
                           "calibration_fingerprint_source": cal_fingerprint_source,
                           "calibration_last_update_date": cal_date,
+                          "schedule": args.schedule, "t2_override_sha": t2_override_sha,
+                          "t2_override_file": args.t2_override,
                           "shot_plan_stamp": plan_stamp, "shots_plan_file": args.shots_plan,
                           "shots_by_circuit": {m["id"]: int(args.cal_shots) for m in cals},
                           "counts": got, "seconds": time.time() - tc,
@@ -782,6 +1186,49 @@ def main():
                   f"({time.time() - t0:.0f} s)")
             for k, v in sorted(class_log.items()):
                 print(f"  {k}: {v}")
+            # prompts/20 B4: the clean statistic of exactly the circuits this invocation has in
+            # the cache, so that a restricted run (--only-ids) can be checked without the full
+            # 84-circuit analysis.  Written next to the cache as sample_check.json.
+            sampled = []
+            for c in selected:
+                rec = cached.get(c)
+                if rec is None:
+                    continue
+                for m in by_class[c]:
+                    if only_ids is not None and m["id"] not in only_ids:
+                        continue
+                    if m["id"] in rec["counts"]:
+                        sampled.append((m, {qiskit_key_to_bits(kk): int(v)
+                                            for kk, v in rec["counts"][m["id"]].items()}))
+            if sampled:
+                codec0 = Codec(M.basis)
+                acc_by_sec = {m["sector"]: random_acceptance(codec0, m["twoB"])["fraction"]
+                              for m, _ in sampled}
+                cs = clean_statistics(sampled, M, g2, acc_by_sec)
+                print(f"  clean statistic of the {len(sampled)} circuit(s) sampled here "
+                      f"(schedule {args.schedule}, seed {args.seed}, "
+                      f"T2 override {args.t2_override or 'none'}):")
+                for cid, v in sorted(cs["per_circuit"].items()):
+                    print(f"    {cid}: {v['shots']} shots, accepted {v['accepted']}, "
+                          f"reference hits {v['reference_hits']}, w {v['mixture']['w']:.4f}, "
+                          f"clean accepted {v['mixture']['clean_accepted']:.1f}, "
+                          f"near-clean {v['near_clean_accepted']:.1f}, "
+                          f"f_clean(mixture) {v['mixture']['f_clean']:.4e}, "
+                          f"f_clean(reference) {v['reference_string_test']['f_clean']:.4e}")
+                chk = {"gate": args.out, "backend": bname, "seed": int(args.seed),
+                       "schedule": args.schedule, "seed_transpiler": SCHEDULE_SEED,
+                       "t2_override_file": args.t2_override, "t2_override_sha": t2_override_sha,
+                       "t2_override": t2_table,
+                       "calibration_fingerprint": cal_fingerprint,
+                       "calibration_fingerprint_source": cal_fingerprint_source,
+                       "circuits": sorted(cs["per_circuit"]),
+                       "schedule_info": (dict(circuits.info) if isinstance(circuits, LazySchedule)
+                                         else None),
+                       "clean_statistics": cs,
+                       "when": time.strftime("%Y-%m-%d %H:%M:%S %Z")}
+                with open(os.path.join(cdir, "sample_check.json"), "w") as fh:
+                    json.dump(chk, fh, indent=1)
+                print(f"  wrote {os.path.relpath(os.path.join(cdir, 'sample_check.json'), ROOT)}")
             return 0
         incomplete = [k for k, v in class_log.items() if not v["complete"]]
         if incomplete:
@@ -794,6 +1241,35 @@ def main():
     # ------------------------------------------------------- analysis
     A = analyse_records(records, cal_records, M, g2, plan=support_plan)
     plan = shot_plan(A, args.p, args.k, args.conf)
+    # prompts/20 B3: the clean statistic of the SIMULATED counts (decisions C2'/C3'/M4.4) and,
+    # when the circuits were scheduled, the analytic PTA bound at the T2 actually used, so that
+    # the H0P-Y' ordering "bound <= scheduled simulation" is computed and not asserted.
+    tcs = time.time()
+    clean = clean_statistics(records, M, g2,
+                             {sec: A["random_acceptance"][sec]["fraction"]
+                              for sec in A["random_acceptance"]})
+    A["clean_statistics"] = clean
+    print(f"clean statistic of {len(clean['per_circuit'])} circuits "
+          f"({time.time() - tcs:.0f} s)", flush=True)
+    pta, bracket, pta_record = None, None, None
+    if args.schedule == "asap":
+        pta_record = calibration if live else snapshot_rec
+        t2_s = (None if t2_table is None else
+                {int(r["qubit"]): float(r["T2_override_s"]) for r in t2_table["per_qubit"]})
+        try:
+            pta = pta_bounds(circuits, mans, pta_record, t2_s)
+            bracket = yield_bracket(pta, clean, mans)
+        except SystemExit as exc:                  # a record that cannot carry the model
+            print(f"the PTA bound could not be computed on this record: {exc}", flush=True)
+            pta, bracket = None, {"error": str(exc)}
+        if bracket:
+            for key, v in sorted(bracket.items()):
+                if "f_pta_bound_mean" not in v:
+                    continue
+                print(f"  {key}: PTA bound {v['f_pta_bound_mean']:.4e} <= scheduled-Aer clean f "
+                      f"{v['f_clean_scheduled_simulation']:.4e} "
+                      f"({v['ratio_simulation_over_bound']:.1f}x) -> "
+                      f"{'ordered' if v['bound_below_simulation'] else 'VIOLATED'}", flush=True)
     data = {
         "frozen_set": {kk: index[kk] for kk in ("created", "n_circuits", "n_calibration_circuits",
                                                 "repetitions", "kmax", "sectors", "references",
@@ -841,6 +1317,27 @@ def main():
              "calibration", "f_source", "amplitude_crosscheck_max_dp", "sectors",
              "shots_by_circuit", "calibration_shots", "totals") if kk in support_plan}),
         "analysis": A,
+        # ---------------------------------------------------- prompts/20 B1/B2/B3
+        "schedule": {
+            "mode": args.schedule,
+            "seed_transpiler": SCHEDULE_SEED,
+            "method": ("transpile(circ, backend, optimization_level=0, "
+                       "scheduling_method='asap', seed_transpiler=7): the idle windows become "
+                       "explicit Delay instructions, which AerSimulator.from_backend charges "
+                       "with thermal relaxation from target.qubit_properties"),
+            "seconds": (float(circuits.seconds) if isinstance(circuits, LazySchedule) else 0.0),
+            "per_circuit": (dict(circuits.info) if isinstance(circuits, LazySchedule) else None),
+        },
+        "t2_override": t2_table,
+        "pta_bound": pta,
+        "yield_bracket": bracket,
+        "yield_criterion": None,          # filled in with the criteria below
+        "clean_statistic": {
+            "statistic": clean["statistic"],
+            "decisions": ("C2' (mixture estimator), C3' (reference-string / bit-order test), "
+                          "M4.4 (near-clean acceptance term) -- data/H0_replan_owner_decisions.md"),
+            "readout_factor": READOUT_FACTOR,
+        },
     }
     if live:
         data["calibration"] = {
@@ -896,8 +1393,38 @@ def main():
         R.add(f"{sec}: acceptance of random bit strings (exhaustive over all {ra['strings']} strings)",
               f"{100 * ra['fraction']:.3f}%", f"< {100 * RANDOM_ACCEPT_MAX:.0f}%",
               ra["fraction"] < RANDOM_ACCEPT_MAX)
+    # decision H0P-Y' (signed 2026-09-30): the factor-of-three band around the manual's yield
+    # model compared a BOUND against a simulation as though it were a prediction, which is the
+    # failure mode that produced the misreported "1.13x agreement".  With a scheduled run the
+    # criterion becomes the ordering PTA bound <= scheduled-Aer clean f, which tests mutual
+    # consistency instead of asserting a number none of the three quantities claims.  Without a
+    # scheduled run there is no bound to order against, so the old ratio band is what is
+    # evaluated -- which is why every unscheduled output keeps exactly the criteria it had.
+    use_bracket = (args.yield_criterion == "bracket" or
+                   (args.yield_criterion == "auto" and args.schedule == "asap"))
+    if use_bracket and not (bracket and any("f_pta_bound_mean" in v for v in bracket.values())):
+        raise SystemExit(
+            f"--yield-criterion {args.yield_criterion} needs the analytic PTA bound, which needs "
+            f"--schedule asap and a calibration record covering the frozen set "
+            f"({(bracket or {}).get('error', 'no bound computed')}).  Use --yield-criterion ratio "
+            f"for the unscheduled band of prompts/13.")
+    data["yield_criterion"] = ("bracket: PTA bound <= scheduled-Aer clean f (decision H0P-Y')"
+                               if use_bracket else
+                               f"ratio: simulated / model yield in [{RATIO_LO:.2f}, {RATIO_HI:.0f}] "
+                               f"(prompts/13)")
     for key in sorted(A["by_sector_repetition"]):
         v = A["by_sector_repetition"][key]
+        if use_bracket:
+            b = bracket[key]
+            R.add(f"{key} ({v['cz_mean']:.0f} CZ): the analytic PTA bound "
+                  f"{b['f_pta_bound_mean']:.3e} does not exceed the clean f of the scheduled "
+                  f"simulation {b['f_clean_scheduled_simulation']:.3e} (decision H0P-Y'; the "
+                  f"bound charges every relaxation error as fatal, so the ordering is the "
+                  f"statement, not the ratio)",
+                  round(b["ratio_simulation_over_bound"], 3)
+                  if b["ratio_simulation_over_bound"] is not None else None,
+                  "scheduled clean f / PTA bound >= 1", b["bound_below_simulation"])
+            continue
         ratio = v["ratio_simulated_over_full_model"]
         R.add(f"{key} ({v['cz_mean']:.0f} CZ): simulated yield {v['yield']:.3f} vs the model "
               f"{YIELD_MODEL_NAME} = {v['model_yield_full']:.3f} (a = {v['garbage_acceptance']:.5f}; "

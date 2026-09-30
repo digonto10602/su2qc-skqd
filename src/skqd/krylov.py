@@ -150,3 +150,41 @@ def references(basis: Basis, twoB: int) -> list:
     if twoB == 2:
         return diquark_references(basis)
     raise ValueError("references are defined for B = 0, B = 1 and the static sectors")
+
+
+# ---------------------------------------------------------------- ideal sector distribution
+def ideal_sector_distribution(model, g2: float, twoB: int, reference: int, k: int,
+                              dt: float, repetitions: int = 1, m=None) -> dict:
+    """The ideal output distribution of one frozen coarse-step circuit over its sector.
+
+    The circuit of `data/hardware/H0_prep` with manifest (reference, k, dt, repetitions) is
+    `apply_groups` applied `repetitions` times at the angle k*dt to `basis_vector(reference)`
+    -- exactly the cross-check branch of `scripts/h0_support_plan.ideal_probabilities`, whose
+    primary source is the noiseless statevector of the frozen QPY (the two agree to 1.8e-14
+    over all 84 circuits).  The evolution stays inside the gauge-invariant sector, so the
+    returned `p` is a probability distribution over the sector positions and `sector_mass`
+    records how much of the norm it carries (1 up to round-off).
+
+    `p` is the input `p_ideal` of `skqd.skqd.clean_fraction_mixture`, and `p[position of the
+    reference]` the `p_ref` of `skqd.skqd.reference_string_test`.  Layout-independent: it is a
+    property of the Hamiltonian and the manifest, not of the transpilation.
+    """
+    from .exact import mass_default
+    idx = np.asarray(model.reference(g2, twoB).indices, dtype=int)
+    groups = term_groups(model.terms, g2, mass_default(g2) if m is None else m)
+    psi = basis_vector(model.basis.dim, int(reference))
+    for _ in range(int(repetitions)):
+        psi = apply_groups(groups, psi, int(k) * float(dt))
+    prob = np.abs(psi) ** 2
+    p = prob[idx]
+    mass = float(p.sum())
+    pos = {int(b): i for i, b in enumerate(idx)}
+    return {"p": p / mass if mass > 0 else p,
+            "p_unnormalised": p,
+            "sector_indices": [int(b) for b in idx],
+            "dim": int(len(idx)),
+            "sector_mass": mass,
+            "reference_position": pos.get(int(reference)),
+            "p_reference": float(p[pos[int(reference)]] / mass) if int(reference) in pos else None,
+            "source": ("skqd.krylov.apply_groups applied `repetitions` times at k*dt from the "
+                       "reference basis vector, projected on the sector indices")}

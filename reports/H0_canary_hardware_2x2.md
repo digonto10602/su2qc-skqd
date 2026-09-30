@@ -2,7 +2,7 @@
 
 **Status: FAIL** — `scripts/gate_H0.py --counts data/hardware/H0_ibm_fez_canary/counts --out H0_canary`,
 3 counts files (1 coarse-step + 2 readout-calibration circuits),
-dry run: **False**.  Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44, 12 CPUs, commit 390c325, 2026-09-22 11:49:01 MDT.  Runtime 1 s.
+dry run: **False**.  Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44, 12 CPUs, commit 6180c6a, 2026-09-30 15:41:49 MDT.  Runtime 11 s.
 
 Sampler options of the session: `{"default_shots": 267, "dynamical_decoupling": {"enable": true, "sequence_type": "XY4"}, "twirling": {"enable_gates": true, "enable_measure": true, "strategy": "active-accum"}, "error_mitigation": "none: SamplerV2 returns raw bit strings; no resilience level, no readout mitigation of expectation values (prompts/07 step 2)"}`.
 
@@ -29,6 +29,31 @@ two f values** (r = 1 circuits only: at r = 2, 3 the inversion is ill-conditione
 | sector | r | circuits | CZ | shots | accepted | measured yield | a (garbage) | model 0.82 f (old) | model 0.82 f + (1−f) a | predicted yield | measured f | predicted f | measured f (0.82 f model) | relative deviation of f | rejections |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | B=0 | 1 | 1 | 663 | 267 | 8 | 0.0300 | 0.00928 | 0.1034 | 0.1115 | 0.1872 | 0.0255 | 0.2195 | 0.0365 | 0.884 | {'flag': 176, 'link': 78, 'sector': 5, 'unknown': 0} |
+
+## 2b. The clean-shot statistic (information; decisions C2', C3', M4.4)
+
+The statistic: clean_fraction_mixture (decision C2') and reference_string_test (decision C3'); the near-clean term is the residual of the amended Step-4.4 model (decision M4.4)
+Decisions: C2' (the mixture estimator replaces the yield inversion), C3' (the reference-string count is the bit-order test), M4.4 (the yield model gains the near-clean acceptance term) -- data/H0_replan_owner_decisions.md, signed 2026-09-30.
+Setting of this run: `--clean-statistic mixture`.  no criterion of this gate reads these tables; criterion 2 is still the 30 % test on the yield-inverted f of `f_comparison`, so every committed value is reproduced.
+Prediction side: data/hardware/H0_ibm_fez/sim_cache: the gate_H0P sampling cache the prediction was drawn from, re-analysed here.
+
+| sector | r | circuits | shots | accepted | w | measured f_clean (mixture) | 68 % interval | f_clean (reference pooled) | f_clean (yield inversion) | inversion / mixture | near-clean shots | garbage shots | predicted f_clean (mixture) | relative deviation |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| B=0 | 1 | 1 | 267 | 8 | 0.4074 | 1.4888e-02 | 7.08e-03 – 2.36e-02 | 1.0005e-02 | 2.5515e-02 | 1.71 | 2.3 | 2.4 | 1.9341e-01 | 0.923 |
+
+**Decision C3' — the bit-order test.**  A bit-order error does not show in the energy (the
+sector saturates from accidentally-valid noise at every planned budget, which is the decoder's
+exhaustive property established by gate E2), but it does show as clean shots landing on the
+wrong strings.  The shortest-depth circuits concentrate most of their output on one
+codeword, so its count against the accidental expectation is the test.  At this device's clean
+fractions the test is statistically thin: a miss can mean a poor patch rather than a wiring
+fault, which is a true statement about the device.  **1 of 1** k = 1
+circuits reach 3.0 sigma.
+
+| circuit | shots | reference hits | p(reference) | expected from garbage | excess | z | P(>= n \| garbage) | f_clean | >= 3 sigma |
+|---|---|---|---|---|---|---|---|---|---|
+| B0_ref06_k1_rep1 | 267 | 2 | 0.8833 | 0.07 | 1.93 | 7.58 | 0.00203 | 1.001e-02 | yes |
+
 
 ## 3. Ritz consistency
 

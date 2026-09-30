@@ -348,3 +348,48 @@ def test_sample_many_recovers_from_an_out_of_memory_error(monkeypatch):
     assert info["max_experiments"] == 2, info["max_experiments"]
     assert max(c for c, _ in stub.calls) == 4, "it should have tried the full batch first"
     assert all(c <= 2 for c, _ in stub.calls[1:]), "it must not retry at a size it knows fails"
+
+
+# ---------------------------------------------------------------------------------------------
+# Aer seeds the noise trajectory of shot j with seed_simulator + j, so CONSECUTIVE seeds are not
+# independent samples.  A chunked sample_many must stride its seeds by the chunk size or the
+# chunks are near-duplicates: at seeds 11..14 with 100-shot chunks, 400 requested shots drew only
+# 103 distinct trajectories (26 %).  Found by the prompts/20 executor, whose first post-diction
+# draw FAILED at 3.65 for that reason and PASSED at 1.05 once the seeds were strided.
+# ---------------------------------------------------------------------------------------------
+def test_aer_seeds_per_shot_so_consecutive_seeds_overlap():
+    """The property that makes the stride necessary, pinned so nobody 'simplifies' it away."""
+    from skqd import circuits_qiskit as cq
+
+    gs, n, _ = _sector_circuits(k_list=(1,), n_refs=1)
+    g = gs[0]
+    nm = cq.generic_noise_model(3e-4, 3e-3, 1e-2)
+    a = cq.sample(g, n, 200, noise_model=nm, seed=11)
+    b = cq.sample(g, n, 200, noise_model=nm, seed=211)
+    merged = {}
+    for d in (a, b):
+        for k, v in d.items():
+            merged[k] = merged.get(k, 0) + v
+    assert merged == cq.sample(g, n, 400, noise_model=nm, seed=11), \
+        "200@11 + 200@211 must equal 400@11: Aer seeds per shot"
+
+    near = cq.sample(g, n, 200, noise_model=nm, seed=12)
+    shared = sum(min(a.get(k, 0), near.get(k, 0)) for k in set(a) | set(near))
+    assert shared >= 190, f"seeds 11 and 12 should share almost every shot, shared {shared}"
+
+
+def test_sample_many_strides_its_seeds_so_chunks_are_independent():
+    """Every requested shot must be a distinct noise trajectory, not a re-draw of an earlier one."""
+    from skqd import circuits_qiskit as cq
+
+    gs, n, _ = _sector_circuits(k_list=(1,), n_refs=1)
+    nm = cq.generic_noise_model(3e-4, 3e-3, 1e-2)
+    counts, info = cq.sample_many(gs, n, 400, noise_model=nm, seed=11,
+                                  max_shots_per_run=100, return_info=True)
+    assert info["run_calls"] == 4 and info["seed_stride"] >= info["max_shots_per_run"]
+    drawn = {s + j for s in info["seeds"] for j in range(info["max_shots_per_run"])}
+    assert len(drawn) == 400, f"only {len(drawn)} distinct trajectories for 400 shots"
+    assert sum(counts[0].values()) == 400
+    # and the un-chunked call is unaffected
+    _, info1 = cq.sample_many(gs, n, 400, noise_model=nm, seed=11, return_info=True)
+    assert info1["run_calls"] == 1 and info1["seeds"] == [11]

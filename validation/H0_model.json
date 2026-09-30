@@ -1,0 +1,1197 @@
+{
+ "gate": "H0_model",
+ "title": "post-diction of the H0 hardware counts by the scheduled-Aer model at both ends of the T2 bracket; the clean-yield statistic",
+ "status": "PASS",
+ "criteria": [
+  {
+   "name": "C1 unscheduled Aer sample (2000 shots, seed 11): the mixture estimate of the clean accepted shots 206.3 against the reference-count estimate n_ref / p_ref = 201.5 (near-clean 105.5, garbage 16.2)",
+   "value": 0.0237,
+   "threshold": "relative deviation <= 0.25",
+   "passed": true
+  },
+  {
+   "name": "C1 scheduled Aer sample (2000 shots, seed 11): the mixture estimate of the clean accepted shots 24.0 against the reference-count estimate n_ref / p_ref = 23.8 (near-clean 30.7, garbage 18.3)",
+   "value": 0.0108,
+   "threshold": "relative deviation <= 0.25",
+   "passed": true
+  },
+  {
+   "name": "C2 the device counts carry a clean component: 6 reference-string hits over 8267 shots of 5 pubs against a garbage expectation of 2.018 (2.80 sigma; clean 4.0 shots, f_clean 6.650e-04)",
+   "value": 0.0172,
+   "threshold": "P(>= n | garbage) < 0.05",
+   "passed": true
+  },
+  {
+   "name": "C3 the T2* end of the bracket post-dicts the measured clean count: predicted 4.18 clean reference hits over 8267 shots against the measured 3.98 (echo end 197.42, ratio 49.58)",
+   "value": 1.0503,
+   "threshold": "predicted / measured in [0.33, 3.00]",
+   "passed": true
+  },
+  {
+   "name": "C4 the T2* end reproduces the acceptance structure: predicted 30.2 accepted shots per 2000 against J1's 35 (echo end 126.0; distance chi-square vs J1 16.9, information)",
+   "value": 0.8643,
+   "threshold": "predicted / measured in [0.50, 2]",
+   "passed": true
+  }
+ ],
+ "data": {
+  "question": "does the corrected model -- Aer on the SCHEDULED circuit, at a measured dephasing time, read with the clean-yield statistic -- reproduce the hardware counts that already exist?",
+  "circuit": "B0_ref06_k1_rep1",
+  "cz": 663,
+  "sector": "B=0",
+  "prep": "data/hardware/H0_prep",
+  "record": "data/hardware/H0_ibm_fez/calibration_20260922T1400Z.json",
+  "record_fingerprint": "7fd6d65eaa1a1b4f7b8cd2202a6a30991f6df4e23c9c98f0cbf5982afaf7bd38",
+  "record_stamp": "20260922T1400Z",
+  "record_last_update_date": "2026-09-22T08:00:30-06:00",
+  "t2_override_file": "data/hardware/H0_model/t2_override_J1_ramw.json",
+  "t2_override_sha256": "67de9b24b186576e7680ea8d5658eedcca141c6c012b1bf710c47ada6715358e",
+  "t2_override_rule": "measured T2* where the readout-corrected inversion resolves it; else the 3 sigma upper bound; else the smallest resolved value on the patch (rule M-T2, prompts/20)",
+  "t2_override_source": "validation/H0_diag.json: data.idle_tests.J1.ramw (diag_patch1_ramw, 2000 shots, total delay 43.52 us, readout reference J1 own all-0/all-1)",
+  "t2_override_table": [
+   {
+    "qubit": 117,
+    "logical": 0,
+    "P_zero": 0.7744282744282743,
+    "sigma": 0.00972913416403162,
+    "fully_dephased": false,
+    "T2star_measured_s": 7.25432273881147e-05,
+    "T2star_upper_bound_s": 8.72414549188297e-05,
+    "T2_record_echo_s": 0.00018393068988361834,
+    "T2_used_s": 7.25432273881147e-05,
+    "provenance": "measured",
+    "echo_over_used": 2.5354632886619144
+   },
+   {
+    "qubit": 122,
+    "logical": 1,
+    "P_zero": 0.6517083120856706,
+    "sigma": 0.0108372318651083,
+    "fully_dephased": false,
+    "T2star_measured_s": 3.6490217273130014e-05,
+    "T2star_upper_bound_s": 4.358636629389036e-05,
+    "T2_record_echo_s": 5.380401761537366e-05,
+    "T2_used_s": 3.6490217273130014e-05,
+    "provenance": "measured",
+    "echo_over_used": 1.474477863824419
+   },
+   {
+    "qubit": 123,
+    "logical": 2,
+    "P_zero": 0.4846311475409836,
+    "sigma": 0.011453410374697727,
+    "fully_dephased": true,
+    "T2star_measured_s": null,
+    "T2star_upper_bound_s": 1.3306333475303084e-05,
+    "T2_record_echo_s": 0.0001247968739551538,
+    "T2_used_s": 1.3306333475303084e-05,
+    "provenance": "upper_bound",
+    "echo_over_used": 9.378757430570953
+   },
+   {
+    "qubit": 124,
+    "logical": 3,
+    "P_zero": 0.5430161943319838,
+    "sigma": 0.011270209964519913,
+    "fully_dephased": false,
+    "T2star_measured_s": 1.774131357145972e-05,
+    "T2star_upper_bound_s": 2.32347782265319e-05,
+    "T2_record_echo_s": 0.00010194697386558735,
+    "T2_used_s": 1.774131357145972e-05,
+    "provenance": "measured",
+    "echo_over_used": 5.746303589920673
+   },
+   {
+    "qubit": 125,
+    "logical": 4,
+    "P_zero": 0.4427164333851736,
+    "sigma": 0.011516280407667763,
+    "fully_dephased": true,
+    "T2star_measured_s": null,
+    "T2star_upper_bound_s": null,
+    "T2_record_echo_s": 5.0522204674662705e-05,
+    "T2_used_s": 1.3306333475303084e-05,
+    "provenance": "patch_minimum",
+    "echo_over_used": 3.7968539393991056
+   },
+   {
+    "qubit": 136,
+    "logical": 5,
+    "P_zero": 0.6488821138211383,
+    "sigma": 0.010831612418416197,
+    "fully_dephased": false,
+    "T2star_measured_s": 3.592379535374706e-05,
+    "T2star_upper_bound_s": 4.2917835720805e-05,
+    "T2_record_echo_s": 8.742908014598714e-05,
+    "T2_used_s": 3.592379535374706e-05,
+    "provenance": "measured",
+    "echo_over_used": 2.4337372843002734
+   },
+   {
+    "qubit": 141,
+    "logical": 6,
+    "P_zero": 0.3617245005257623,
+    "sigma": 0.011421459611710844,
+    "fully_dephased": true,
+    "T2star_measured_s": null,
+    "T2star_upper_bound_s": null,
+    "T2_record_echo_s": 0.00010810977983654403,
+    "T2_used_s": 1.3306333475303084e-05,
+    "provenance": "patch_minimum",
+    "echo_over_used": 8.124685890158903
+   },
+   {
+    "qubit": 142,
+    "logical": 7,
+    "P_zero": 0.547993905535805,
+    "sigma": 0.011292383243530366,
+    "fully_dephased": false,
+    "T2star_measured_s": 1.857024426328505e-05,
+    "T2star_upper_bound_s": 2.4051340075679474e-05,
+    "T2_record_echo_s": 0.0002650540388099523,
+    "T2_used_s": 1.857024426328505e-05,
+    "provenance": "measured",
+    "echo_over_used": 14.273050750010146
+   },
+   {
+    "qubit": 143,
+    "logical": 8,
+    "P_zero": 0.5285786545270612,
+    "sigma": 0.011290032504679233,
+    "fully_dephased": false,
+    "T2star_measured_s": 1.5206425809345786e-05,
+    "T2star_upper_bound_s": 2.0920443307012497e-05,
+    "T2_record_echo_s": 0.00011561272954151909,
+    "T2_used_s": 1.5206425809345786e-05,
+    "provenance": "measured",
+    "echo_over_used": 7.602886502787798
+   },
+   {
+    "qubit": 144,
+    "logical": 9,
+    "P_zero": 0.443267776096823,
+    "sigma": 0.011211451120796552,
+    "fully_dephased": true,
+    "T2star_measured_s": null,
+    "T2star_upper_bound_s": null,
+    "T2_record_echo_s": 0.00019088355601850428,
+    "T2_used_s": 1.3306333475303084e-05,
+    "provenance": "patch_minimum",
+    "echo_over_used": 14.34531581316441
+   },
+   {
+    "qubit": 145,
+    "logical": 10,
+    "P_zero": 0.48475452196382435,
+    "sigma": 0.011554236911260144,
+    "fully_dephased": true,
+    "T2star_measured_s": null,
+    "T2star_upper_bound_s": 1.3397170426576838e-05,
+    "T2_record_echo_s": 0.00013077297318243722,
+    "T2_used_s": 1.3397170426576838e-05,
+    "provenance": "upper_bound",
+    "echo_over_used": 9.761238307681328
+   },
+   {
+    "qubit": 146,
+    "logical": 11,
+    "P_zero": 0.5528044466902476,
+    "sigma": 0.011232890241688123,
+    "fully_dephased": false,
+    "T2star_measured_s": 1.935932128994145e-05,
+    "T2star_upper_bound_s": 2.4805810663036256e-05,
+    "T2_record_echo_s": 1.6015796811329427e-05,
+    "T2_used_s": 1.935932128994145e-05,
+    "provenance": "measured",
+    "echo_over_used": 0.8272912346183735
+   }
+  ],
+  "t2_override_provenance_counts": {
+   "measured": 7,
+   "upper_bound": 2,
+   "patch_minimum": 3
+  },
+  "aer_settings": {
+   "schedule": "asap",
+   "seed_transpiler": 7,
+   "seed_base": 11,
+   "seeds": [
+    11,
+    2011,
+    4011,
+    6011
+   ],
+   "shots_per_chunk": 2000,
+   "chunks": 4,
+   "shots_per_end": 8000,
+   "backend": "AerSimulator.from_backend(h0_backends.backend_from_record(record, base=FakeFez())) -- the record's 30 x 9 qubit and 54 x 4 edge leaves written into a FakeFez target, fingerprint asserted equal to the record's",
+   "seed_note": "chunk i runs at seed_simulator = seed + i * shots_per_chunk, so the four invocations ARE one 8000-shot run at seed_simulator = 11: qiskit-aer seeds the noise trajectory of shot j with seed_simulator + j, verified bit for bit by 200@11 + 200@211 == 400@11 (0 differing keys).  Consecutive seeds would have shared all but one shot -- 11 and 12 differ in 2 of 200 keys -- which is why the offset is the chunk's shot count and not 1.",
+   "counts_files": [
+    "data/hardware/H0_model/aer_echo_chunk0_seed11_2000shots.json",
+    "data/hardware/H0_model/aer_echo_chunk1_seed2011_2000shots.json",
+    "data/hardware/H0_model/aer_echo_chunk2_seed4011_2000shots.json",
+    "data/hardware/H0_model/aer_echo_chunk3_seed6011_2000shots.json",
+    "data/hardware/H0_model/aer_t2star_chunk0_seed11_2000shots.json",
+    "data/hardware/H0_model/aer_t2star_chunk1_seed2011_2000shots.json",
+    "data/hardware/H0_model/aer_t2star_chunk2_seed4011_2000shots.json",
+    "data/hardware/H0_model/aer_t2star_chunk3_seed6011_2000shots.json"
+   ]
+  },
+  "C1_estimator_validation": {
+   "scheduled": {
+    "label": "scheduled",
+    "cache": "data/hardware/H0_model/cache_asap_echo",
+    "settings": {
+     "backend": "FakeFez",
+     "seed": 11,
+     "schedule": "asap",
+     "t2_override_sha": null,
+     "t2_override_file": null,
+     "calibration_fingerprint": "0e9c28df6e8e1272b503b6236a50a3ca8486232908e31542eeacbc9e7660b138",
+     "calibration_fingerprint_source": "FakeFez snapshot record"
+    },
+    "n_circuits": 1,
+    "per_circuit": [
+     {
+      "circuit": "B0_ref06_k1_rep1",
+      "shots": 2000,
+      "accepted": 73,
+      "reference_hits": 21,
+      "p_reference": 0.8832760485718513,
+      "clean_accepted_mixture": 24.031637497868413,
+      "clean_accepted_reference_count": 23.775126738638978,
+      "clean_accepted_reference_count_garbage_corrected": 23.222319662312735,
+      "ratio_mixture_over_reference": 1.0107890385632543,
+      "relative_deviation": 0.010789038563254342,
+      "near_clean_accepted": 30.68556495572075,
+      "expected_garbage_accepted": 18.282797546410833,
+      "f_clean_mixture": 0.014653437498700253,
+      "f_clean_reference": 0.01415995101360533,
+      "distance_histogram": [
+       21,
+       0,
+       20,
+       12,
+       2,
+       6,
+       2,
+       6,
+       1,
+       1,
+       2,
+       0,
+       0
+      ],
+      "w": 0.3292005136694303,
+      "w_68": [
+       0.267761461436815,
+       0.3941078133489922
+      ]
+     }
+    ],
+    "worst_relative_deviation": 0.010789038563254342
+   },
+   "unscheduled": {
+    "label": "unscheduled",
+    "cache": "data/hardware/H0_model/cache_none_snapshot",
+    "settings": {
+     "backend": "FakeFez",
+     "seed": 11,
+     "schedule": "none",
+     "t2_override_sha": null,
+     "t2_override_file": null,
+     "calibration_fingerprint": "0e9c28df6e8e1272b503b6236a50a3ca8486232908e31542eeacbc9e7660b138",
+     "calibration_fingerprint_source": "FakeFez snapshot record"
+    },
+    "n_circuits": 1,
+    "per_circuit": [
+     {
+      "circuit": "B0_ref06_k1_rep1",
+      "shots": 2000,
+      "accepted": 328,
+      "reference_hits": 178,
+      "p_reference": 0.8832760485718513,
+      "clean_accepted_mixture": 206.305741881764,
+      "clean_accepted_reference_count": 201.52250283227323,
+      "clean_accepted_reference_count_garbage_corrected": 200.969695755947,
+      "ratio_mixture_over_reference": 1.0237355083539819,
+      "relative_deviation": 0.023735508353981888,
+      "near_clean_accepted": 105.47367950242612,
+      "expected_garbage_accepted": 16.220578615809885,
+      "f_clean_mixture": 0.12579618407424634,
+      "f_clean_reference": 0.12254249741216282,
+      "distance_histogram": [
+       178,
+       0,
+       78,
+       45,
+       1,
+       6,
+       2,
+       5,
+       8,
+       0,
+       5,
+       0,
+       0
+      ],
+      "w": 0.6289809203712317,
+      "w_68": [
+       0.5987278540570222,
+       0.6585793063219051
+      ]
+     }
+    ],
+    "worst_relative_deviation": 0.023735508353981888
+   }
+  },
+  "C2_pooled_device_clean_count": {
+   "jobs": [
+    "H0_ibm_fez_canary",
+    "H0_diag_J1",
+    "H0_diag_J2",
+    "H0_diag_J3",
+    "H0_diag_J4"
+   ],
+   "garbage_acceptance": 0.00927734375,
+   "dim": 38,
+   "p_reference": 0.8832760485718513,
+   "ideal_by_distance": [
+    0.8832760485718513,
+    0.0,
+    0.0008369952446760047,
+    0.10905440330114839,
+    1.9245936778102793e-07,
+    0.000865226437285824,
+    0.0016671718799399623,
+    0.000948764521380908,
+    0.003322295375060771
+   ],
+   "per_pub": [
+    {
+     "job": "H0_ibm_fez_canary",
+     "options": {
+      "default_shots": 267,
+      "dynamical_decoupling": {
+       "enable": true,
+       "sequence_type": "XY4"
+      },
+      "twirling": {
+       "enable_gates": true,
+       "enable_measure": true,
+       "strategy": "active-accum"
+      },
+      "error_mitigation": "none: SamplerV2 returns raw bit strings; no resilience level, no readout mitigation of expectation values (prompts/07 step 2)"
+     },
+     "shots": 267,
+     "accepted": 8,
+     "garbage_floor": 2.47705078125,
+     "excess_accepted": 5.52294921875,
+     "reference_hits": 2,
+     "expected_reference_hits_if_the_excess_were_clean": 4.943474309275493,
+     "P_le_seen": 0.12949430250573243,
+     "reference_string_test": {
+      "n_reference": 2,
+      "shots": 267,
+      "p_reference": 0.8832760485718513,
+      "garbage_acceptance": 0.00927734375,
+      "dim": 38,
+      "expected_from_garbage": 0.065185546875,
+      "sigma": 0.255314603724503,
+      "excess": 1.934814453125,
+      "z": 7.578158181710435,
+      "P_ge": 0.0020344681292308047,
+      "n_reference_68": [
+       0.7081703772244352,
+       4.637910099146559
+      ],
+      "confidence": 0.6827,
+      "clean_yield": 0.008204112509148802,
+      "clean_yield_68": [
+       0.00272642158597826,
+       0.019389531972738093
+      ],
+      "f_clean": 0.010005015255059516,
+      "f_clean_68": [
+       0.0033249043731442196,
+       0.02364577069846109
+      ],
+      "n_reference_68_sqrt_n": [
+       0.5857864376269049,
+       3.414213562373095
+      ],
+      "f_clean_68_sqrt_n": [
+       0.002692051346503909,
+       0.017317979163615122
+      ],
+      "readout_factor": 0.82,
+      "estimator": "(n_ref - n_shots a / dim) / (n_shots p_ref readout_factor); Poisson (Garwood) interval on n_ref at the stated confidence"
+     },
+     "mixture": {
+      "w": 0.4074346622255334,
+      "w_68": [
+       0.19384652791466017,
+       0.6448714825046025
+      ],
+      "accepted": 8.0,
+      "shots": 267.0,
+      "dim": 38,
+      "circuits": 1,
+      "clean_accepted": 3.259477297804267,
+      "clean_accepted_68": [
+       1.5507722233172814,
+       5.15897186003682
+      ],
+      "clean_yield": 0.012207780141589014,
+      "f_clean": 0.014887536758035384,
+      "f_clean_68": [
+       0.007083092277871935,
+       0.023563404859947106
+      ],
+      "logL_gain": 3.8903706804787532,
+      "readout_factor": 0.82,
+      "estimator": "maximum likelihood in P(s|accepted) = w p_ideal(s) + (1-w)/dim, profile-likelihood 68 % interval at Delta log L = 0.5"
+     },
+     "distance_histogram": [
+      2,
+      0,
+      2,
+      3,
+      0,
+      0,
+      0,
+      0,
+      1
+     ]
+    },
+    {
+     "job": "H0_diag_J1",
+     "options": {
+      "default_shots": 2000,
+      "dynamical_decoupling": {
+       "enable": false
+      },
+      "twirling": {
+       "enable_gates": false,
+       "enable_measure": false
+      },
+      "error_mitigation": "none: SamplerV2 returns raw bit strings; no resilience level, no readout mitigation of expectation values (prompts/07 step 2)"
+     },
+     "shots": 2000,
+     "accepted": 35,
+     "garbage_floor": 18.5546875,
+     "excess_accepted": 16.4453125,
+     "reference_hits": 2,
+     "expected_reference_hits_if_the_excess_were_clean": 15.014031892529273,
+     "P_le_seen": 3.88284789817637e-05,
+     "reference_string_test": {
+      "n_reference": 2,
+      "shots": 2000,
+      "p_reference": 0.8832760485718513,
+      "garbage_acceptance": 0.00927734375,
+      "dim": 38,
+      "expected_from_garbage": 0.48828125,
+      "sigma": 0.6987712429686843,
+      "excess": 1.51171875,
+      "z": 2.1633957682310463,
+      "P_ge": 0.08667118864619296,
+      "n_reference_68": [
+       0.7081703772244352,
+       4.637910099146559
+      ],
+      "confidence": 0.6827,
+      "clean_yield": 0.0008557453541530212,
+      "clean_yield_68": [
+       0.00012447361590975375,
+       0.0023489988525421915
+      ],
+      "f_clean": 0.0010435918953085625,
+      "f_clean_68": [
+       0.00015179709257287044,
+       0.0028646327470026726
+      ],
+      "n_reference_68_sqrt_n": [
+       0.5857864376269049,
+       3.414213562373095
+      ],
+      "f_clean_68_sqrt_n": [
+       6.731121351638897e-05,
+       0.002019872577100736
+      ],
+      "readout_factor": 0.82,
+      "estimator": "(n_ref - n_shots a / dim) / (n_shots p_ref readout_factor); Poisson (Garwood) interval on n_ref at the stated confidence"
+     },
+     "mixture": {
+      "w": 0.03877146988406113,
+      "w_68": [
+       0.001070462925227211,
+       0.09621922092725624
+      ],
+      "accepted": 35.0,
+      "shots": 2000.0,
+      "dim": 38,
+      "circuits": 1,
+      "clean_accepted": 1.3570014459421396,
+      "clean_accepted_68": [
+       0.03746620238295238,
+       3.3676727324539684
+      ],
+      "clean_yield": 0.0006785007229710698,
+      "f_clean": 0.0008274399060622803,
+      "f_clean_68": [
+       2.284524535545877e-05,
+       0.0020534589832036394
+      ],
+      "logL_gain": 0.5388969340803698,
+      "readout_factor": 0.82,
+      "estimator": "maximum likelihood in P(s|accepted) = w p_ideal(s) + (1-w)/dim, profile-likelihood 68 % interval at Delta log L = 0.5"
+     },
+     "distance_histogram": [
+      2,
+      0,
+      13,
+      5,
+      1,
+      6,
+      0,
+      5,
+      0
+     ]
+    },
+    {
+     "job": "H0_diag_J2",
+     "options": {
+      "default_shots": 2000,
+      "dynamical_decoupling": {
+       "enable": true,
+       "sequence_type": "XY4"
+      },
+      "twirling": {
+       "enable_gates": false,
+       "enable_measure": false
+      },
+      "error_mitigation": "none: SamplerV2 returns raw bit strings; no resilience level, no readout mitigation of expectation values (prompts/07 step 2)"
+     },
+     "shots": 2000,
+     "accepted": 27,
+     "garbage_floor": 18.5546875,
+     "excess_accepted": 8.4453125,
+     "reference_hits": 1,
+     "expected_reference_hits_if_the_excess_were_clean": 7.947823503954463,
+     "P_le_seen": 0.0031624343464575796,
+     "reference_string_test": {
+      "n_reference": 1,
+      "shots": 2000,
+      "p_reference": 0.8832760485718513,
+      "garbage_acceptance": 0.00927734375,
+      "dim": 38,
+      "expected_from_garbage": 0.48828125,
+      "sigma": 0.6987712429686843,
+      "excess": 0.51171875,
+      "z": 0.7323122626311811,
+      "P_ge": 0.38631974880164155,
+      "n_reference_68": [
+       0.17274753435968151,
+       3.299569711568256
+      ],
+      "confidence": 0.6827,
+      "clean_yield": 0.00028967090799495034,
+      "clean_yield_68": [
+       -0.00017861557332529154,
+       0.0015913985588728256
+      ],
+      "f_clean": 0.00035325720487189066,
+      "f_clean_68": [
+       -0.00021782386990889212,
+       0.0019407299498449093
+      ],
+      "n_reference_68_sqrt_n": [
+       0.0,
+       2.0
+      ],
+      "f_clean_68_sqrt_n": [
+       -0.00033707748556478117,
+       0.0010435918953085625
+      ],
+      "readout_factor": 0.82,
+      "estimator": "(n_ref - n_shots a / dim) / (n_shots p_ref readout_factor); Poisson (Garwood) interval on n_ref at the stated confidence"
+     },
+     "mixture": {
+      "w": 0.013005349958782718,
+      "w_68": [
+       0.0,
+       0.06942800588867419
+      ],
+      "accepted": 27.0,
+      "shots": 2000.0,
+      "dim": 38,
+      "circuits": 1,
+      "clean_accepted": 0.35114444888713336,
+      "clean_accepted_68": [
+       0.0,
+       1.8745561589942032
+      ],
+      "clean_yield": 0.00017557222444356668,
+      "f_clean": 0.00021411246883361792,
+      "f_clean_68": [
+       0.0,
+       0.0011430220481671973
+      ],
+      "logL_gain": 0.057547927091803786,
+      "readout_factor": 0.82,
+      "estimator": "maximum likelihood in P(s|accepted) = w p_ideal(s) + (1-w)/dim, profile-likelihood 68 % interval at Delta log L = 0.5"
+     },
+     "distance_histogram": [
+      1,
+      0,
+      9,
+      3,
+      0,
+      4,
+      1,
+      3,
+      1
+     ]
+    },
+    {
+     "job": "H0_diag_J3",
+     "options": {
+      "default_shots": 2000,
+      "dynamical_decoupling": {
+       "enable": false
+      },
+      "twirling": {
+       "enable_gates": true,
+       "enable_measure": true,
+       "strategy": "active-accum"
+      },
+      "error_mitigation": "none: SamplerV2 returns raw bit strings; no resilience level, no readout mitigation of expectation values (prompts/07 step 2)"
+     },
+     "shots": 2000,
+     "accepted": 25,
+     "garbage_floor": 18.5546875,
+     "excess_accepted": 6.4453125,
+     "reference_hits": 1,
+     "expected_reference_hits_if_the_excess_were_clean": 6.18127140681076,
+     "P_le_seen": 0.014849412701006507,
+     "reference_string_test": {
+      "n_reference": 1,
+      "shots": 2000,
+      "p_reference": 0.8832760485718513,
+      "garbage_acceptance": 0.00927734375,
+      "dim": 38,
+      "expected_from_garbage": 0.48828125,
+      "sigma": 0.6987712429686843,
+      "excess": 0.51171875,
+      "z": 0.7323122626311811,
+      "P_ge": 0.38631974880164155,
+      "n_reference_68": [
+       0.17274753435968151,
+       3.299569711568256
+      ],
+      "confidence": 0.6827,
+      "clean_yield": 0.00028967090799495034,
+      "clean_yield_68": [
+       -0.00017861557332529154,
+       0.0015913985588728256
+      ],
+      "f_clean": 0.00035325720487189066,
+      "f_clean_68": [
+       -0.00021782386990889212,
+       0.0019407299498449093
+      ],
+      "n_reference_68_sqrt_n": [
+       0.0,
+       2.0
+      ],
+      "f_clean_68_sqrt_n": [
+       -0.00033707748556478117,
+       0.0010435918953085625
+      ],
+      "readout_factor": 0.82,
+      "estimator": "(n_ref - n_shots a / dim) / (n_shots p_ref readout_factor); Poisson (Garwood) interval on n_ref at the stated confidence"
+     },
+     "mixture": {
+      "w": 0.01905319074270406,
+      "w_68": [
+       0.0,
+       0.08279470803967585
+      ],
+      "accepted": 25.0,
+      "shots": 2000.0,
+      "dim": 38,
+      "circuits": 1,
+      "clean_accepted": 0.47632976856760145,
+      "clean_accepted_68": [
+       0.0,
+       2.0698677009918964
+      ],
+      "clean_yield": 0.00023816488428380072,
+      "f_clean": 0.00029044498083390335,
+      "f_clean_68": [
+       0.0,
+       0.0012621144518243272
+      ],
+      "logL_gain": 0.10350179006255189,
+      "readout_factor": 0.82,
+      "estimator": "maximum likelihood in P(s|accepted) = w p_ideal(s) + (1-w)/dim, profile-likelihood 68 % interval at Delta log L = 0.5"
+     },
+     "distance_histogram": [
+      1,
+      0,
+      4,
+      4,
+      2,
+      6,
+      1,
+      2,
+      0
+     ]
+    },
+    {
+     "job": "H0_diag_J4",
+     "options": {
+      "default_shots": 2000,
+      "dynamical_decoupling": {
+       "enable": true,
+       "sequence_type": "XY4"
+      },
+      "twirling": {
+       "enable_gates": true,
+       "enable_measure": true,
+       "strategy": "active-accum"
+      },
+      "error_mitigation": "none: SamplerV2 returns raw bit strings; no resilience level, no readout mitigation of expectation values (prompts/07 step 2)"
+     },
+     "shots": 2000,
+     "accepted": 17,
+     "garbage_floor": 18.5546875,
+     "excess_accepted": -1.5546875,
+     "reference_hits": 0,
+     "expected_reference_hits_if_the_excess_were_clean": -0.88493698176405,
+     "P_le_seen": null,
+     "reference_string_test": {
+      "n_reference": 0,
+      "shots": 2000,
+      "p_reference": 0.8832760485718513,
+      "garbage_acceptance": 0.00927734375,
+      "dim": 38,
+      "expected_from_garbage": 0.48828125,
+      "sigma": 0.6987712429686843,
+      "excess": -0.48828125,
+      "z": -0.6987712429686842,
+      "P_ge": 1.0,
+      "n_reference_68": [
+       0.0,
+       1.8410547609529326
+      ],
+      "confidence": 0.6827,
+      "clean_yield": -0.00027640353816312056,
+      "clean_yield_68": [
+       -0.00027640353816312056,
+       0.0007657705159899904
+      ],
+      "f_clean": -0.00033707748556478117,
+      "f_clean_68": [
+       -0.00033707748556478117,
+       0.0009338664829146225
+      ],
+      "n_reference_68_sqrt_n": [
+       0.0,
+       0.0
+      ],
+      "f_clean_68_sqrt_n": [
+       -0.00033707748556478117,
+       -0.00033707748556478117
+      ],
+      "readout_factor": 0.82,
+      "estimator": "(n_ref - n_shots a / dim) / (n_shots p_ref readout_factor); Poisson (Garwood) interval on n_ref at the stated confidence"
+     },
+     "mixture": {
+      "w": 0.0,
+      "w_68": [
+       0.0,
+       0.030976441235777342
+      ],
+      "accepted": 17.0,
+      "shots": 2000.0,
+      "dim": 38,
+      "circuits": 1,
+      "clean_accepted": 0.0,
+      "clean_accepted_68": [
+       0.0,
+       0.5265995010082148
+      ],
+      "clean_yield": 0.0,
+      "f_clean": 0.0,
+      "f_clean_68": [
+       0.0,
+       0.00032109725671232615
+      ],
+      "logL_gain": 0.0,
+      "readout_factor": 0.82,
+      "estimator": "maximum likelihood in P(s|accepted) = w p_ideal(s) + (1-w)/dim, profile-likelihood 68 % interval at Delta log L = 0.5"
+     },
+     "distance_histogram": [
+      0,
+      0,
+      1,
+      1,
+      3,
+      6,
+      1,
+      2,
+      0
+     ]
+    }
+   ],
+   "pooled_reference_test": {
+    "n_reference": 6,
+    "shots": 8267,
+    "circuits": 5,
+    "expected_from_garbage": 2.018310546875,
+    "sigma": 1.4206725684952883,
+    "excess": 3.981689453125,
+    "z": 2.8026791967569444,
+    "P_ge": 0.017233536987271172,
+    "clean_denominator_shots_x_p_ref": 7302.043093543494,
+    "clean_yield": 0.0005452842994922381,
+    "f_clean": 0.0006649808530393149,
+    "f_clean_68": [
+     0.00026750284823176047,
+     0.0012634956794704457
+    ],
+    "f_clean_68_sqrt_n": [
+     0.0002558922493591339,
+     0.001074069456719496
+    ],
+    "readout_factor": 0.82,
+    "confidence": 0.6827,
+    "estimator": "(sum n_ref - sum N a / dim) / (sum N p_ref readout_factor); Poisson (Garwood) interval on the pooled count"
+   },
+   "pooled_mixture": {
+    "w": 0.03467656531345259,
+    "w_68": [
+     0.011971089487055487,
+     0.0636968240557754
+    ],
+    "accepted": 112.0,
+    "shots": 8267.0,
+    "dim": 38,
+    "circuits": 5,
+    "clean_accepted": 3.88377531510669,
+    "clean_accepted_68": [
+     1.3407620225502146,
+     7.134044294246845
+    ],
+    "clean_yield": 0.00046979258680376077,
+    "f_clean": 0.0005729177887850741,
+    "f_clean_68": [
+     0.00019778343259421307,
+     0.0010523834543817831
+    ],
+    "logL_gain": 1.4082502580673122,
+    "readout_factor": 0.82,
+    "estimator": "maximum likelihood in P(s|accepted) = w p_ideal(s) + (1-w)/dim, profile-likelihood 68 % interval at Delta log L = 0.5"
+   }
+  },
+  "C3_bracket_postdiction": {
+   "echo": {
+    "shots": 8000,
+    "chunks": [
+     {
+      "chunk": 0,
+      "seed_simulator": 11,
+      "shots": 2000,
+      "accepted": 115,
+      "reference_hits": 53,
+      "seconds": 105.53928327560425
+     },
+     {
+      "chunk": 1,
+      "seed_simulator": 2011,
+      "shots": 2000,
+      "accepted": 133,
+      "reference_hits": 45,
+      "seconds": 106.51225543022156
+     },
+     {
+      "chunk": 2,
+      "seed_simulator": 4011,
+      "shots": 2000,
+      "accepted": 128,
+      "reference_hits": 48,
+      "seconds": 111.71271800994873
+     },
+     {
+      "chunk": 3,
+      "seed_simulator": 6011,
+      "shots": 2000,
+      "accepted": 128,
+      "reference_hits": 47,
+      "seconds": 91.71108055114746
+     }
+    ],
+    "accepted": 504,
+    "reference_hits": 193,
+    "expected_reference_hits_from_garbage": 1.953125,
+    "clean_reference_hits": 191.046875,
+    "clean_reference_hits_scaled_to_hardware": 197.423064453125,
+    "hardware_shots": 8267,
+    "measured_clean_reference_hits": 3.981689453125,
+    "ratio_predicted_over_measured": 49.58273787479306,
+    "reference_string_test": {
+     "n_reference": 193,
+     "shots": 8000,
+     "p_reference": 0.8832760485718513,
+     "garbage_acceptance": 0.00927734375,
+     "dim": 38,
+     "expected_from_garbage": 1.953125,
+     "sigma": 1.3975424859373686,
+     "excess": 191.046875,
+     "z": 136.70201580444964,
+     "P_ge": 2.699470822633661e-304,
+     "n_reference_68": [
+      179.11930596029174,
+      207.91677567047762
+     ],
+     "confidence": 0.6827,
+     "clean_yield": 0.0270366884889638,
+     "clean_yield_68": [
+      0.025072311941259428,
+      0.029147689870496252
+     ],
+     "f_clean": 0.032971571328004635,
+     "f_clean_68": [
+      0.030575990172267597,
+      0.03554596325670275
+     ],
+     "n_reference_68_sqrt_n": [
+      179.10755601055018,
+      206.89244398944982
+     ],
+     "f_clean_68_sqrt_n": [
+      0.030573962322788226,
+      0.03536918033322105
+     ],
+     "readout_factor": 0.82,
+     "estimator": "(n_ref - n_shots a / dim) / (n_shots p_ref readout_factor); Poisson (Garwood) interval on n_ref at the stated confidence"
+    },
+    "mixture": {
+     "w": 0.4314158035149022,
+     "w_68": [
+      0.40675457003838317,
+      0.4562514374428066
+     ],
+     "accepted": 504.0,
+     "shots": 8000.0,
+     "dim": 38,
+     "circuits": 4,
+     "clean_accepted": 217.43356497151072,
+     "clean_accepted_68": [
+      205.0043032993451,
+      229.95072447117454
+     ],
+     "clean_yield": 0.02717919562143884,
+     "f_clean": 0.033145360513949805,
+     "f_clean_68": [
+      0.03125065599075383,
+      0.03505346409621563
+     ],
+     "logL_gain": 388.96659507180857,
+     "readout_factor": 0.82,
+     "estimator": "maximum likelihood in P(s|accepted) = w p_ideal(s) + (1-w)/dim, profile-likelihood 68 % interval at Delta log L = 0.5"
+    },
+    "f_clean_reference": 0.032971571328004635,
+    "f_clean_mixture": 0.033145360513949805,
+    "accepted_per_2000_shots": 126.0,
+    "ratio_accepted_over_J1": 3.6,
+    "distance_histogram": [
+     193,
+     0,
+     163,
+     68,
+     16,
+     29,
+     2,
+     12,
+     7
+    ],
+    "distance_histogram_J1": [
+     2,
+     0,
+     13,
+     5,
+     1,
+     6,
+     0,
+     5,
+     0
+    ],
+    "distance_chi_square_vs_J1": 939.9705331705333,
+    "distance_chi_square_note": "J1's histogram normalised to this sample's accepted count; information only, no criterion"
+   },
+   "t2star": {
+    "shots": 8000,
+    "chunks": [
+     {
+      "chunk": 0,
+      "seed_simulator": 11,
+      "shots": 2000,
+      "accepted": 33,
+      "reference_hits": 4,
+      "seconds": 91.09493017196655
+     },
+     {
+      "chunk": 1,
+      "seed_simulator": 2011,
+      "shots": 2000,
+      "accepted": 34,
+      "reference_hits": 1,
+      "seconds": 105.70103931427002
+     },
+     {
+      "chunk": 2,
+      "seed_simulator": 4011,
+      "shots": 2000,
+      "accepted": 28,
+      "reference_hits": 1,
+      "seconds": 106.9851336479187
+     },
+     {
+      "chunk": 3,
+      "seed_simulator": 6011,
+      "shots": 2000,
+      "accepted": 26,
+      "reference_hits": 0,
+      "seconds": 120.19729351997375
+     }
+    ],
+    "accepted": 121,
+    "reference_hits": 6,
+    "expected_reference_hits_from_garbage": 1.953125,
+    "clean_reference_hits": 4.046875,
+    "clean_reference_hits_scaled_to_hardware": 4.181939453125,
+    "hardware_shots": 8267,
+    "measured_clean_reference_hits": 3.981689453125,
+    "ratio_predicted_over_measured": 1.0502927218100435,
+    "reference_string_test": {
+     "n_reference": 6,
+     "shots": 8000,
+     "p_reference": 0.8832760485718513,
+     "garbage_acceptance": 0.00927734375,
+     "dim": 38,
+     "expected_from_garbage": 1.953125,
+     "sigma": 1.3975424859373686,
+     "excess": 4.046875,
+     "z": 2.8957080308622274,
+     "P_ge": 0.014930764281137208,
+     "n_reference_68": [
+      3.620030753730831,
+      9.583712464874354
+     ],
+     "confidence": 0.6827,
+     "clean_yield": 0.0005727081310739858,
+     "clean_yield_68": [
+      0.00023589818783522045,
+      0.001079870143259867
+     ],
+     "f_clean": 0.0006984245500902266,
+     "f_clean_68": [
+      0.00028768071687222007,
+      0.0013169148088534963
+     ],
+     "n_reference_68_sqrt_n": [
+      3.550510257216822,
+      8.449489742783179
+     ],
+     "f_clean_68_sqrt_n": [
+      0.00027568261426221956,
+      0.0011211664859182339
+     ],
+     "readout_factor": 0.82,
+     "estimator": "(n_ref - n_shots a / dim) / (n_shots p_ref readout_factor); Poisson (Garwood) interval on n_ref at the stated confidence"
+    },
+    "mixture": {
+     "w": 0.033599595377071904,
+     "w_68": [
+      0.011260030114424288,
+      0.062165177086217896
+     ],
+     "accepted": 121.0,
+     "shots": 8000.0,
+     "dim": 38,
+     "circuits": 4,
+     "clean_accepted": 4.0655510406257,
+     "clean_accepted_68": [
+      1.3624636438453388,
+      7.521986427432365
+     ],
+     "clean_yield": 0.0005081938800782126,
+     "f_clean": 0.0006197486342417227,
+     "f_clean_68": [
+      0.00020769262863496018,
+      0.001146644272474446
+     ],
+     "logL_gain": 1.3532369133840803,
+     "readout_factor": 0.82,
+     "estimator": "maximum likelihood in P(s|accepted) = w p_ideal(s) + (1-w)/dim, profile-likelihood 68 % interval at Delta log L = 0.5"
+    },
+    "f_clean_reference": 0.0006984245500902266,
+    "f_clean_mixture": 0.0006197486342417227,
+    "accepted_per_2000_shots": 30.25,
+    "ratio_accepted_over_J1": 0.8642857142857143,
+    "distance_histogram": [
+     6,
+     0,
+     23,
+     23,
+     4,
+     26,
+     6,
+     14,
+     4
+    ],
+    "distance_histogram_J1": [
+     2,
+     0,
+     13,
+     5,
+     1,
+     6,
+     0,
+     5,
+     0
+    ],
+    "distance_chi_square_vs_J1": 16.896588260224625,
+    "distance_chi_square_note": "J1's histogram normalised to this sample's accepted count; information only, no criterion"
+   }
+  },
+  "criteria_inputs": {
+   "C1_tolerance": 0.25,
+   "C2_P_max": 0.05,
+   "C3_factor": 3.0,
+   "C3_window": [
+    1.3272298177083333,
+    11.945068359375
+   ],
+   "C4_factor": 2.0,
+   "J1_accepted": 35,
+   "readout_factor": 0.82,
+   "measured_clean_reference_hits": 3.981689453125
+  },
+  "runtimes": {
+   "analysis_s": 2.4553017616271973
+  }
+ },
+ "runtime_s": 2.45530366897583,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.2",
+  "scipy": "1.18.0",
+  "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+  "cpu_count": 12,
+  "git_commit": "6180c6a",
+  "timestamp": "2026-09-30 15:31:18 MDT"
+ }
+}

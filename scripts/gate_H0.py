@@ -49,11 +49,13 @@ from skqd.report import GateResult, env_block, md_table, write_report  # noqa: E
 from skqd.skqd import clean_fraction_from_yield  # noqa: E402
 
 from gate_H0P import (DIAG_MIN, E0_TOL, RANDOM_ACCEPT_MAX, YIELD_FACTOR,  # noqa: E402
-                      YIELD_MODEL_NAME, analyse_records, shot_plan, support_block)
+                      YIELD_MODEL_NAME, analyse_records, clean_statistics,
+                      random_acceptance, shot_plan, support_block)
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 F_TOLERANCE = 0.30          # prompts/07 step 4: measured f within 30 % of the prediction
 RO_FACTOR = 3.0             # measured readout error within this factor of the frozen snapshot
+SIGMA_C3PRIME = 3.0         # decision C3': the bit-order test's significance threshold
 
 
 def calibration_reference(path):
@@ -136,6 +138,67 @@ def support_plan_of(args):
     return None
 
 
+def clean_statistics_from_cache(cache_dir, prep, model, g2):
+    """`clean_statistics` on a gate_H0P sampling cache (`<sector>_r<r>.json`).
+
+    This is what makes the prediction side of decision C2' available for an H0P JSON written
+    BEFORE prompts/20 B3 -- `validation/H0P_ibm_fez.json` among them -- without re-running
+    twenty minutes of Aer: the seeded counts the prediction was made from are on disk."""
+    import glob as _glob
+    from gate_H0P import load_manifests
+    from skqd.reference_sim import qiskit_key_to_bits
+    d = cache_dir if os.path.isabs(cache_dir) else os.path.join(ROOT, cache_dir)
+    files = sorted(_glob.glob(os.path.join(d, "B=*_r*.json")))
+    if not files:
+        raise SystemExit(f"no gate_H0P sampling cache in {cache_dir}")
+    mans, _ = load_manifests(prep)
+    by_id = {m["id"]: m for m in mans}
+    records, settings = [], None
+    for f in files:
+        with open(f) as fh:
+            rec = json.load(fh)
+        settings = settings or {k: rec.get(k) for k in
+                                ("backend", "seed", "schedule", "t2_override_file",
+                                 "calibration_fingerprint", "calibration_fingerprint_source")}
+        for cid, counts in rec["counts"].items():
+            if cid in by_id:
+                records.append((by_id[cid], {qiskit_key_to_bits(k): int(v)
+                                             for k, v in counts.items()}))
+    codec = Codec(model.basis)
+    acc = {m["sector"]: random_acceptance(codec, m["twoB"])["fraction"] for m, _ in records}
+    cs = clean_statistics(records, model, g2, acc)
+    cs["settings"] = settings
+    cs["cache"] = cache_dir
+    return cs
+
+
+def predicted_clean_statistic(args, model, g2):
+    """The clean statistic of the PREDICTION side of criterion 2 (decision C2'), or None.
+
+    Two routes, in order: `--predict-from`'s `data.analysis.clean_statistics`, which gate_H0P
+    writes since prompts/20 B3; else `--predict-cache <dir>`, a gate_H0P sampling cache
+    re-analysed here.  Neither is a criterion -- `--clean-statistic mixture` adds tables, and
+    signing C2' into criterion 2 of this gate is the owner's, not this prompt's (D1)."""
+    p = os.path.join(ROOT, args.predict_from)
+    if os.path.exists(p):
+        with open(p) as fh:
+            d = json.load(fh)
+        cs = ((d.get("data") or {}).get("analysis") or {}).get("clean_statistics")
+        if cs:
+            return {"source": f"{args.predict_from}: data.analysis.clean_statistics",
+                    "by_sector_repetition": cs["by_sector_repetition"],
+                    "reference_string_tests": cs.get("reference_string_tests")}
+    if args.predict_cache:
+        prep = args.prep if os.path.isabs(args.prep) else os.path.join(ROOT, args.prep)
+        cs = clean_statistics_from_cache(args.predict_cache, prep, model, g2)
+        return {"source": (f"{args.predict_cache}: the gate_H0P sampling cache the prediction "
+                           f"was drawn from, re-analysed here"),
+                "settings": cs["settings"],
+                "by_sector_repetition": cs["by_sector_repetition"],
+                "reference_string_tests": cs.get("reference_string_tests")}
+    return None
+
+
 def prediction(args, analysis, records):
     """Preregistered predicted yield per 'sector r=..' key, and where it came from."""
     if args.predict == "model":
@@ -160,6 +223,19 @@ def main():
     ap.add_argument("--out", default="H0", help="validation/<out>.json and reports/<out>_hardware_2x2.md")
     ap.add_argument("--predict", default="simulated", choices=("simulated", "model"))
     ap.add_argument("--predict-from", default=os.path.join("validation", "H0P.json"))
+    ap.add_argument("--clean-statistic", default="yield", choices=("yield", "mixture"),
+                    help="decision C2': with 'mixture' the clean-shot fraction is ALSO reported "
+                         "through the maximum-likelihood mixture estimator and the "
+                         "reference-string test, in data.f_comparison_mixture, next to the "
+                         "yield inversion.  The default 'yield' is the statistic every "
+                         "committed H0 output was computed with; the criteria block is the "
+                         "same under both settings (prompts/20 D1) -- signing C2' into "
+                         "criterion 2 is the owner's step, not this prompt's.")
+    ap.add_argument("--predict-cache", default=None, metavar="DIR",
+                    help="a gate_H0P sampling cache to take the PREDICTION's clean statistic "
+                         "from, when --predict-from was written before prompts/20 B3")
+    ap.add_argument("--prep", default=os.path.join("data", "hardware", "H0_prep"),
+                    help="the frozen set --predict-cache's circuit ids belong to")
     ap.add_argument("--calibration", default=None,
                     help="calibration_<stamp>.json of the session day (prompts/15 D7): its per-qubit "
                          "measure errors become the reference of the readout-drift criterion")
@@ -189,6 +265,48 @@ def main():
     rt = codeword_roundtrip(coarse, codec)
     pred, pred_src = prediction(args, A, coarse)
     plan = shot_plan(A, args.p, args.k, args.conf)
+
+    # ---------------------------------------------------- prompts/20 D1: the clean statistic
+    # Decisions C2', C3', M4.4 as INFORMATION.  The criteria block below is not edited: it
+    # still reads `f_comparison`, the yield inversion, so `validation/H0_dryrun.json` and
+    # `validation/H0_canary.json` keep every criterion value they were committed with.  What
+    # is added is the statistic that measures what criterion 2 names -- the clean-shot
+    # fraction -- computed identically on the prediction and on the hardware counts.
+    acc_by_sector = {sec: A["random_acceptance"][sec]["fraction"] for sec in A["random_acceptance"]}
+    measured_clean = clean_statistics(coarse, M, g2, acc_by_sector)
+    pred_clean = predicted_clean_statistic(args, M, g2)
+    fcmp_mix, c3prime = {}, {}
+    for key, v in measured_clean["by_sector_repetition"].items():
+        fm = v["mixture"]["f_clean"]
+        f_inv = clean_fraction_from_yield(A["by_sector_repetition"][key]["yield"],
+                                          A["by_sector_repetition"][key]["garbage_acceptance"])
+        row = {"sector": v["sector"], "repetitions": v["repetitions"],
+               "circuits": v["circuits"], "shots": v["shots"], "accepted": v["accepted"],
+               "measured_f_clean_mixture": fm,
+               "measured_f_clean_mixture_68": v["mixture"]["f_clean_68"],
+               "measured_w": v["mixture"]["w"], "measured_w_68": v["mixture"]["w_68"],
+               "measured_f_clean_reference_pooled": v["reference_pooled"]["f_clean"],
+               "near_clean_accepted": v["near_clean_accepted"],
+               "expected_garbage_accepted": v["expected_garbage_accepted"],
+               "measured_f_yield_inversion": f_inv,
+               "bias_of_the_yield_inversion": (f_inv / fm) if fm else None}
+        pv = ((pred_clean or {}).get("by_sector_repetition") or {}).get(key)
+        if pv:
+            fp = pv["mixture"]["f_clean"]
+            row["predicted_f_clean_mixture"] = fp
+            row["predicted_f_clean_mixture_68"] = pv["mixture"]["f_clean_68"]
+            row["predicted_w"] = pv["mixture"]["w"]
+            row["predicted_shots"] = pv["shots"]
+            row["predicted_accepted"] = pv["accepted"]
+            row["predicted_near_clean_accepted"] = pv["near_clean_accepted"]
+            # the same arithmetic criterion 2 uses on the yield-inverted f
+            row["relative_deviation"] = (abs(fm - fp) / fp) if fp else None
+            row["within_tolerance"] = (None if not fp else bool(abs(fm - fp) / fp <= F_TOLERANCE))
+        fcmp_mix[key] = row
+    for cid, t in measured_clean["reference_string_tests"].items():
+        c3prime[cid] = dict(t)
+        c3prime[cid]["passes_3_sigma"] = bool(t["z"] is not None and t["z"] >= SIGMA_C3PRIME)
+    n_c3 = sum(1 for v in c3prime.values() if v["passes_3_sigma"])
 
     # measured f versus the preregistered prediction, r = 1.  The criterion is on f, and f is
     # recovered from a yield by inverting the FULL model y = 0.82 f + (1 - f) a (manual Step 4.4):
@@ -268,6 +386,26 @@ def main():
                      "since garbage acceptances add no support"),
         },
         "f_comparison": fcmp, "codeword_roundtrip": rt,
+        # ------------------------------------------------- prompts/20 D1 (information only)
+        "clean_statistic": {
+            "setting": args.clean_statistic,
+            "statistic": measured_clean["statistic"],
+            "decisions": ("C2' (the mixture estimator replaces the yield inversion), C3' (the "
+                          "reference-string count is the bit-order test), M4.4 (the yield "
+                          "model gains the near-clean acceptance term) -- "
+                          "data/H0_replan_owner_decisions.md, signed 2026-09-30"),
+            "criteria_note": ("no criterion of this gate reads these tables; criterion 2 is "
+                              "still the 30 % test on the yield-inverted f of "
+                              "`f_comparison`, so every committed value is reproduced"),
+            "prediction_source": (pred_clean or {}).get("source"),
+            "prediction_settings": (pred_clean or {}).get("settings"),
+            "sigma_threshold_C3prime": SIGMA_C3PRIME,
+            "k1_circuits_at_3_sigma": f"{n_c3} of {len(c3prime)}",
+        },
+        "f_comparison_mixture": fcmp_mix,
+        "reference_string_tests": c3prime,
+        "clean_statistic_per_circuit": measured_clean["per_circuit"],
+        "clean_statistic_by_sector": measured_clean["by_sector"],
         "support_shot_plan": support_plan,
         "readout_vs_snapshot": ro, "shot_plan": plan, "analysis": A,
         "criteria_inputs": {"f_tolerance": F_TOLERANCE, "random_acceptance_max": RANDOM_ACCEPT_MAX,
@@ -328,6 +466,68 @@ def main():
     write_report(f"{args.out}_hardware_2x2.md", report_text(args, R, data))
     print(R.criteria_table())
     return 0 if R.passed else 1
+
+
+def clean_block(D):
+    """Section 2b: what criterion 2 would read under decision C2', and the C3' bit-order test.
+
+    The yield inversion of section 2 counts three kinds of accepted shot as one -- clean,
+    uniformly random garbage that decodes, and strings with a few structured errors that
+    decode -- so it is not a clean-shot measurement.  On the 2026-09-22 device counts it
+    overstated the clean fraction 15x.  The tables below are the statistic that does measure
+    it; no criterion of this gate reads them (prompts/20 D1)."""
+    cs = D.get("clean_statistic") or {}
+    mx = D.get("f_comparison_mixture") or {}
+    rt = D.get("reference_string_tests") or {}
+    rows = []
+    for key in sorted(mx):
+        v = mx[key]
+        rows.append([v["sector"], v["repetitions"], v["circuits"], v["shots"], v["accepted"],
+                     f"{v['measured_w']:.4f}",
+                     f"{v['measured_f_clean_mixture']:.4e}",
+                     f"{v['measured_f_clean_mixture_68'][0]:.2e} – {v['measured_f_clean_mixture_68'][1]:.2e}",
+                     ("-" if v["measured_f_clean_reference_pooled"] is None
+                      else f"{v['measured_f_clean_reference_pooled']:.4e}"),
+                     f"{v['measured_f_yield_inversion']:.4e}",
+                     ("-" if v["bias_of_the_yield_inversion"] is None
+                      else f"{v['bias_of_the_yield_inversion']:.2f}"),
+                     f"{v['near_clean_accepted']:.1f}",
+                     f"{v['expected_garbage_accepted']:.1f}",
+                     ("-" if v.get("predicted_f_clean_mixture") is None
+                      else f"{v['predicted_f_clean_mixture']:.4e}"),
+                     ("-" if v.get("relative_deviation") is None
+                      else f"{v['relative_deviation']:.3f}")])
+    crows = []
+    for cid in sorted(rt):
+        v = rt[cid]
+        crows.append([cid, v["shots"], v["n_reference"], f"{v['p_reference']:.4f}",
+                      f"{v['expected_from_garbage']:.2f}", f"{v['excess']:.2f}",
+                      ("-" if v["z"] is None else f"{v['z']:.2f}"),
+                      ("-" if v["P_ge"] is None else f"{v['P_ge']:.3g}"),
+                      ("-" if v["f_clean"] is None else f"{v['f_clean']:.3e}"),
+                      "yes" if v["passes_3_sigma"] else "no"])
+    return f"""The statistic: {cs.get('statistic')}
+Decisions: {cs.get('decisions')}.
+Setting of this run: `--clean-statistic {cs.get('setting')}`.  {cs.get('criteria_note')}.
+Prediction side: {cs.get('prediction_source') or 'not available -- the prediction JSON was written before prompts/20 B3 and no --predict-cache was given'}.
+
+{md_table(["sector", "r", "circuits", "shots", "accepted", "w", "measured f_clean (mixture)",
+           "68 % interval", "f_clean (reference pooled)", "f_clean (yield inversion)",
+           "inversion / mixture", "near-clean shots", "garbage shots",
+           "predicted f_clean (mixture)", "relative deviation"], rows)}
+
+**Decision C3' — the bit-order test.**  A bit-order error does not show in the energy (the
+sector saturates from accidentally-valid noise at every planned budget, which is the decoder's
+exhaustive property established by gate E2), but it does show as clean shots landing on the
+wrong strings.  The shortest-depth circuits concentrate {mx and 'most'} of their output on one
+codeword, so its count against the accidental expectation is the test.  At this device's clean
+fractions the test is statistically thin: a miss can mean a poor patch rather than a wiring
+fault, which is a true statement about the device.  **{cs.get('k1_circuits_at_3_sigma')}** k = 1
+circuits reach {cs.get('sigma_threshold_C3prime')} sigma.
+
+{md_table(["circuit", "shots", "reference hits", "p(reference)", "expected from garbage",
+           "excess", "z", "P(>= n \\| garbage)", "f_clean", ">= 3 sigma"], crows)}
+"""
 
 
 def report_text(args, R, D):
@@ -411,6 +611,10 @@ two f values** (r = 1 circuits only: at r = 2, 3 the inversion is ill-conditione
 {md_table(["sector", "r", "circuits", "CZ", "shots", "accepted", "measured yield", "a (garbage)",
             "model 0.82 f (old)", "model 0.82 f + (1−f) a", "predicted yield", "measured f",
             "predicted f", "measured f (0.82 f model)", "relative deviation of f", "rejections"], yrows)}
+
+## 2b. The clean-shot statistic (information; decisions C2', C3', M4.4)
+
+{clean_block(D)}
 
 ## 3. Ritz consistency
 

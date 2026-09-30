@@ -2,7 +2,7 @@
 
 **Status: PASS** — `scripts/gate_H0.py --counts data/hardware/H0_dryrun/counts --out H0_dryrun`,
 126 counts files (84 coarse-step + 42 readout-calibration circuits),
-dry run: **True**.  Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44, 12 CPUs, commit 9cfe3ec, 2026-09-22 14:03:26 MDT.  Runtime 1 s.
+dry run: **True**.  Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44, 12 CPUs, commit 6180c6a, 2026-09-30 15:41:37 MDT.  Runtime 10 s.
 
 Sampler options of the session: `{"default_shots": 40, "dynamical_decoupling": {"enable": true, "sequence_type": "XY4"}, "twirling": {"enable_gates": true, "enable_measure": true, "strategy": "active-accum"}, "error_mitigation": "none: SamplerV2 returns raw bit strings; no resilience level, no readout mitigation of expectation values (prompts/07 step 2)"}`.
 
@@ -35,6 +35,56 @@ two f values** (r = 1 circuits only: at r = 2, 3 the inversion is ill-conditione
 | B=1 | 1 | 8 | 663 | 2136 | 284 | 0.1330 | 0.00488 | 0.0995 | 0.1038 | 0.1353 | 0.1571 | 0.1600 | 0.1621 | 0.018 | {'flag': 1163, 'link': 506, 'sector': 183, 'unknown': 0} |
 | B=1 | 2 | 8 | 1296 | 1040 | 28 | 0.0269 | 0.00488 | 0.0139 | 0.0187 | 0.0288 | 0.0270 | 0.0294 | 0.0328 | 0.080 | {'flag': 674, 'link': 293, 'sector': 45, 'unknown': 0} |
 | B=1 | 3 | 8 | 1944 | 736 | 7 | 0.0095 | 0.00488 | 0.0020 | 0.0068 | 0.0109 | 0.0057 | 0.0073 | 0.0116 | 0.227 | {'flag': 494, 'link': 211, 'sector': 24, 'unknown': 0} |
+
+## 2b. The clean-shot statistic (information; decisions C2', C3', M4.4)
+
+The statistic: clean_fraction_mixture (decision C2') and reference_string_test (decision C3'); the near-clean term is the residual of the amended Step-4.4 model (decision M4.4)
+Decisions: C2' (the mixture estimator replaces the yield inversion), C3' (the reference-string count is the bit-order test), M4.4 (the yield model gains the near-clean acceptance term) -- data/H0_replan_owner_decisions.md, signed 2026-09-30.
+Setting of this run: `--clean-statistic yield`.  no criterion of this gate reads these tables; criterion 2 is still the 30 % test on the yield-inverted f of `f_comparison`, so every committed value is reproduced.
+Prediction side: not available -- the prediction JSON was written before prompts/20 B3 and no --predict-cache was given.
+
+| sector | r | circuits | shots | accepted | w | measured f_clean (mixture) | 68 % interval | f_clean (reference pooled) | f_clean (yield inversion) | inversion / mixture | near-clean shots | garbage shots | predicted f_clean (mixture) | relative deviation |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| B=0 | 1 | 20 | 5340 | 790 | 0.8076 | 1.4571e-01 | 1.42e-01 – 1.49e-01 | 1.4139e-01 | 1.7104e-01 | 1.17 | 109.6 | 42.3 | - | - |
+| B=0 | 2 | 20 | 2600 | 100 | 0.3742 | 1.7550e-02 | 1.43e-02 – 2.09e-02 | 1.7054e-02 | 3.5998e-02 | 2.05 | 38.9 | 23.7 | - | - |
+| B=0 | 3 | 20 | 1840 | 28 | 0.2098 | 3.8936e-03 | 1.52e-03 – 6.68e-03 | 6.5715e-03 | 7.3269e-03 | 1.88 | 5.1 | 17.0 | - | - |
+| B=1 | 1 | 8 | 2136 | 284 | 0.8693 | 1.4096e-01 | 1.36e-01 – 1.46e-01 | 1.2886e-01 | 1.5713e-01 | 1.11 | 28.2 | 9.0 | - | - |
+| B=1 | 2 | 8 | 1040 | 28 | 0.3983 | 1.3076e-02 | 8.46e-03 – 1.80e-02 | 1.3772e-02 | 2.7039e-02 | 2.07 | 11.8 | 5.0 | - | - |
+| B=1 | 3 | 8 | 736 | 7 | 0.0000 | 0.0000e+00 | 0.00e+00 – 2.96e-03 | -6.2501e-04 | 5.6778e-03 | - | 3.4 | 3.6 | - | - |
+
+**Decision C3' — the bit-order test.**  A bit-order error does not show in the energy (the
+sector saturates from accidentally-valid noise at every planned budget, which is the decoder's
+exhaustive property established by gate E2), but it does show as clean shots landing on the
+wrong strings.  The shortest-depth circuits concentrate most of their output on one
+codeword, so its count against the accidental expectation is the test.  At this device's clean
+fractions the test is statistically thin: a miss can mean a poor patch rather than a wiring
+fault, which is a true statement about the device.  **11 of 21** k = 1
+circuits reach 3.0 sigma.
+
+| circuit | shots | reference hits | p(reference) | expected from garbage | excess | z | P(>= n \| garbage) | f_clean | >= 3 sigma |
+|---|---|---|---|---|---|---|---|---|---|
+| B0_ref06_k1_rep1 | 267 | 28 | 0.8833 | 0.07 | 27.93 | 109.41 | 1.93e-63 | 1.445e-01 | yes |
+| B0_ref06_k1_rep2 | 130 | 1 | 0.6504 | 0.03 | 0.97 | 5.44 | 0.0312 | 1.396e-02 | yes |
+| B0_ref06_k1_rep3 | 92 | 0 | 0.4875 | 0.02 | -0.02 | -0.15 | 1 | -6.108e-04 | no |
+| B0_ref17_k1_rep1 | 267 | 29 | 0.8854 | 0.07 | 28.93 | 113.33 | 4.33e-66 | 1.493e-01 | yes |
+| B0_ref17_k1_rep2 | 130 | 0 | 0.6381 | 0.03 | -0.03 | -0.18 | 1 | -4.666e-04 | no |
+| B0_ref17_k1_rep3 | 92 | 0 | 0.4212 | 0.02 | -0.02 | -0.15 | 1 | -7.068e-04 | no |
+| B0_ref21_k1_rep1 | 267 | 27 | 0.8854 | 0.07 | 26.93 | 105.50 | 8.28e-61 | 1.390e-01 | yes |
+| B0_ref21_k1_rep2 | 130 | 0 | 0.6382 | 0.03 | -0.03 | -0.18 | 1 | -4.665e-04 | no |
+| B0_ref21_k1_rep3 | 92 | 0 | 0.4214 | 0.02 | -0.02 | -0.15 | 1 | -7.066e-04 | no |
+| B0_ref30_k1_rep1 | 267 | 25 | 0.8854 | 0.07 | 24.93 | 97.66 | 1.37e-55 | 1.286e-01 | yes |
+| B0_ref30_k1_rep2 | 130 | 3 | 0.6382 | 0.03 | 2.97 | 16.66 | 5.2e-06 | 4.363e-02 | yes |
+| B0_ref30_k1_rep3 | 92 | 1 | 0.4214 | 0.02 | 0.98 | 6.52 | 0.0222 | 3.075e-02 | yes |
+| B0_ref43_k1_rep1 | 267 | 28 | 0.8854 | 0.07 | 27.93 | 109.41 | 1.93e-63 | 1.441e-01 | yes |
+| B0_ref43_k1_rep2 | 130 | 0 | 0.6382 | 0.03 | -0.03 | -0.18 | 1 | -4.665e-04 | no |
+| B0_ref43_k1_rep3 | 92 | 0 | 0.4214 | 0.02 | -0.02 | -0.15 | 1 | -7.066e-04 | no |
+| B1_ref07_k1_rep1 | 267 | 24 | 0.8891 | 0.07 | 23.93 | 93.75 | 5.25e-53 | 1.230e-01 | yes |
+| B1_ref07_k1_rep2 | 130 | 2 | 0.7087 | 0.03 | 1.97 | 11.05 | 0.000493 | 2.605e-02 | yes |
+| B1_ref07_k1_rep3 | 92 | 0 | 0.6465 | 0.02 | -0.02 | -0.15 | 1 | -4.605e-04 | no |
+| B1_ref14_k1_rep1 | 267 | 21 | 0.8891 | 0.07 | 20.93 | 82.00 | 2.3e-45 | 1.076e-01 | yes |
+| B1_ref14_k1_rep2 | 130 | 0 | 0.7087 | 0.03 | -0.03 | -0.18 | 1 | -4.201e-04 | no |
+| B1_ref14_k1_rep3 | 92 | 0 | 0.6465 | 0.02 | -0.02 | -0.15 | 1 | -4.605e-04 | no |
+
 
 ## 3. Ritz consistency
 

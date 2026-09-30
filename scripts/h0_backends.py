@@ -41,6 +41,10 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 FAKE_BACKENDS = ("FakeFez", "FakeTorino")
+# prompts/20 E1: the survey needs FakeMarrakesh and FakeKingston too, and there is no reason
+# to keep a hand-written list -- any `Fake*` class the installed fake_provider exposes is an
+# OFFLINE snapshot and needs no account.  The two names above stay spelled out because the
+# frozen circuit set and every committed H0 output name one of them.
 
 # prompts/17 F1: the blocks of a calibration record that the prediction reads.  Everything
 # else in the record is device metadata (timestamps, status, basis gates, max_circuits) and
@@ -48,8 +52,23 @@ FAKE_BACKENDS = ("FakeFez", "FakeTorino")
 FINGERPRINT_FIELDS = ("dt_s", "default_rep_delay_s", "qubits", "edges")
 
 
+def fake_backend_names():
+    """Every `Fake*` class of the installed qiskit_ibm_runtime.fake_provider."""
+    try:
+        import qiskit_ibm_runtime.fake_provider as fp
+    except Exception:
+        return set(FAKE_BACKENDS)
+    return {n for n in dir(fp) if n.startswith("Fake") and isinstance(getattr(fp, n), type)}
+
+
 def is_fake(name: str) -> bool:
-    return name in FAKE_BACKENDS
+    """True for an offline fake-provider snapshot, False for a live device name.
+
+    `FakeFez` and `FakeTorino` are answered without importing anything, so the behaviour of
+    every committed H0 path is unchanged even if the fake provider is unavailable."""
+    if name in FAKE_BACKENDS:
+        return True
+    return bool(name) and name.startswith("Fake") and name in fake_backend_names()
 
 
 def resolve_backend(name: str):
@@ -60,6 +79,9 @@ def resolve_backend(name: str):
     if name == "FakeTorino":
         from qiskit_ibm_runtime.fake_provider import FakeTorino
         return FakeTorino()
+    if is_fake(name):                     # any other offline snapshot (prompts/20 E1)
+        import qiskit_ibm_runtime.fake_provider as fp
+        return getattr(fp, name)()
     from ibm_account import open_service
     service = open_service()
     try:
@@ -311,3 +333,94 @@ def frozen_qubits_and_edges(prep_dir):
     from ibm_account import frozen_requirements
     req = frozen_requirements(prep_dir)
     return req["qubits"], req["edges"]
+
+
+# --------------------------------------------------------------------------- prompts/20 C3
+def backend_from_record(record: dict, base=None, strict: bool = True):
+    """A backend object whose target carries the numbers of a committed calibration record.
+
+    The post-diction of gate `H0_model` must run Aer against the calibration the device
+    actually ran under -- `data/hardware/H0_ibm_fez/calibration_20260922T1400Z.json`,
+    fingerprint 7fd6d65e... -- and that record is a JSON, not a backend.  This function takes
+    a base backend of the same family (default `FakeFez()`, the same 156-qubit Heron r2
+    coupling map) and overwrites, for exactly the qubits and edges the record covers, the
+    four blocks the prediction reads: the measure / sx / x errors and durations, the rz
+    duration, the T1 and T2 of `target.qubit_properties`, and the cz error and duration of
+    every target key.  Everything else of the base target is untouched, which is sound
+    because the frozen circuits never leave the record's patch.
+
+    `target.qubit_properties` is ASSIGNED as a new list: prompts/17 PC 3 established that
+    editing the QubitProperties objects in place does not reach the target and therefore does
+    not reach `AerSimulator.from_backend`'s relaxation pass.
+
+    With `strict` (the default) the round trip is asserted: `calibration_record` of the
+    returned backend over the record's own qubits and edges must carry the record's
+    fingerprint.  That is the check that no leaf was missed.
+    """
+    from qiskit.providers.backend import QubitProperties
+    from qiskit.transpiler.target import InstructionProperties
+
+    if base is None:
+        from qiskit_ibm_runtime.fake_provider import FakeFez
+        base = FakeFez()
+    t = base.target
+    if record.get("dt_s") is not None and base.dt is not None:
+        if abs(float(base.dt) - float(record["dt_s"])) > 1e-18:
+            raise SystemExit(f"the base backend's dt {base.dt} is not the record's "
+                             f"{record['dt_s']}: pick a base of the same family")
+    rd = getattr(base, "default_rep_delay", None)
+    if record.get("default_rep_delay_s") is not None and rd is not None:
+        if abs(float(rd) - float(record["default_rep_delay_s"])) > 1e-18:
+            raise SystemExit(f"the base backend's default rep delay {rd} is not the record's "
+                             f"{record['default_rep_delay_s']}")
+
+    def put(name, qargs, duration, error):
+        pr = _prop(t, name, qargs)
+        if pr is None:
+            raise SystemExit(f"the base backend has no {name} on {tuple(qargs)}: the record "
+                             f"does not fit this base target")
+        t.update_instruction_properties(
+            name, tuple(qargs),
+            InstructionProperties(duration=pr.duration if duration is None else float(duration),
+                                  error=pr.error if error is None else float(error)))
+
+    qubits = sorted(int(q) for q in record["qubits"])
+    qp = list(t.qubit_properties)
+    for q in qubits:
+        v = record["qubits"][str(q)]
+        put("measure", (q,), v.get("measure_duration_s"), v.get("measure_error"))
+        put("sx", (q,), v.get("sx_duration_s"), v.get("sx_error"))
+        put("x", (q,), v.get("x_duration_s"), v.get("x_error"))
+        if v.get("rz_duration_s") is not None and "rz" in t.operation_names:
+            put("rz", (q,), v.get("rz_duration_s"), None)
+        old = qp[q]
+        qp[q] = QubitProperties(
+            t1=(old.t1 if v.get("T1_s") is None else float(v["T1_s"])),
+            t2=(old.t2 if v.get("T2_s") is None else float(v["T2_s"])),
+            frequency=None if old is None else old.frequency)
+    t.qubit_properties = qp                      # ASSIGNED, never mutated in place
+
+    edges = set()
+    for e in record["edges"].values():
+        key = tuple(int(x) for x in e["target_key"])
+        put("cz", key, e.get("cz_duration_s"), e.get("cz_error"))
+        for pr in e.get("directed_pairs_of_the_frozen_set") or [list(key)]:
+            edges.add(tuple(int(x) for x in pr))
+    edges = sorted(edges)
+
+    if strict:
+        back = calibration_record(base, qubits, edges)
+        if record.get("fingerprint") and back["fingerprint"] != record["fingerprint"]:
+            d = calibration_diff(record, back)
+            raise SystemExit(
+                f"backend_from_record did not reproduce the record: fingerprint "
+                f"{back['fingerprint'][:16]} against {record['fingerprint'][:16]}, "
+                f"{d['n_leaves']} leaf/leaves differ ({', '.join(d['families'])})")
+    return base, {"qubits": qubits, "edges": [list(e) for e in edges],
+                  "base": type(base).__name__,
+                  "fingerprint": record.get("fingerprint"),
+                  "stamp": record.get("stamp"),
+                  "last_update_date": record.get("last_update_date"),
+                  "note": ("measure/sx/x error+duration, rz duration, T1/T2 and every cz "
+                           "error+duration of the record's patch written into the base "
+                           "target; qubit_properties assigned as a new list")}

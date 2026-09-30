@@ -104,6 +104,247 @@
    "mismatches": 0,
    "examples": []
   },
+  "clean_statistic": {
+   "setting": "mixture",
+   "statistic": "clean_fraction_mixture (decision C2') and reference_string_test (decision C3'); the near-clean term is the residual of the amended Step-4.4 model (decision M4.4)",
+   "decisions": "C2' (the mixture estimator replaces the yield inversion), C3' (the reference-string count is the bit-order test), M4.4 (the yield model gains the near-clean acceptance term) -- data/H0_replan_owner_decisions.md, signed 2026-09-30",
+   "criteria_note": "no criterion of this gate reads these tables; criterion 2 is still the 30 % test on the yield-inverted f of `f_comparison`, so every committed value is reproduced",
+   "prediction_source": "data/hardware/H0_ibm_fez/sim_cache: the gate_H0P sampling cache the prediction was drawn from, re-analysed here",
+   "prediction_settings": {
+    "backend": "ibm_fez",
+    "seed": 11,
+    "schedule": null,
+    "t2_override_file": null,
+    "calibration_fingerprint": "7fd6d65eaa1a1b4f7b8cd2202a6a30991f6df4e23c9c98f0cbf5982afaf7bd38",
+    "calibration_fingerprint_source": "../../../../tmp/h0cal_b0r1/calibration_20260922T1400Z.json"
+   },
+   "sigma_threshold_C3prime": 3.0,
+   "k1_circuits_at_3_sigma": "1 of 1"
+  },
+  "f_comparison_mixture": {
+   "B=0 r=1": {
+    "sector": "B=0",
+    "repetitions": 1,
+    "circuits": 1,
+    "shots": 267,
+    "accepted": 8,
+    "measured_f_clean_mixture": 0.014887536758035384,
+    "measured_f_clean_mixture_68": [
+     0.007083092277871935,
+     0.023563404859947106
+    ],
+    "measured_w": 0.4074346622255334,
+    "measured_w_68": [
+     0.19384652791466017,
+     0.6448714825046025
+    ],
+    "measured_f_clean_reference_pooled": 0.010005015255059516,
+    "near_clean_accepted": 2.3003491055031127,
+    "expected_garbage_accepted": 2.4401735966926204,
+    "measured_f_yield_inversion": 0.02551452448875534,
+    "bias_of_the_yield_inversion": 1.7138177324723751,
+    "predicted_f_clean_mixture": 0.19340855604881127,
+    "predicted_f_clean_mixture_68": [
+     0.19160690905694786,
+     0.19517763970512111
+    ],
+    "predicted_w": 0.8469765727518408,
+    "predicted_shots": 38505,
+    "predicted_accepted": 7210,
+    "predicted_near_clean_accepted": 815.1649908120258,
+    "relative_deviation": 0.923025449017477,
+    "within_tolerance": false
+   }
+  },
+  "reference_string_tests": {
+   "B0_ref06_k1_rep1": {
+    "n_reference": 2,
+    "shots": 267,
+    "p_reference": 0.8832760485718513,
+    "garbage_acceptance": 0.00927734375,
+    "dim": 38,
+    "expected_from_garbage": 0.065185546875,
+    "sigma": 0.255314603724503,
+    "excess": 1.934814453125,
+    "z": 7.578158181710435,
+    "P_ge": 0.0020344681292308047,
+    "n_reference_68": [
+     0.7081703772244352,
+     4.637910099146559
+    ],
+    "confidence": 0.6827,
+    "clean_yield": 0.008204112509148802,
+    "clean_yield_68": [
+     0.00272642158597826,
+     0.019389531972738093
+    ],
+    "f_clean": 0.010005015255059516,
+    "f_clean_68": [
+     0.0033249043731442196,
+     0.02364577069846109
+    ],
+    "n_reference_68_sqrt_n": [
+     0.5857864376269049,
+     3.414213562373095
+    ],
+    "f_clean_68_sqrt_n": [
+     0.002692051346503909,
+     0.017317979163615122
+    ],
+    "readout_factor": 0.82,
+    "estimator": "(n_ref - n_shots a / dim) / (n_shots p_ref readout_factor); Poisson (Garwood) interval on n_ref at the stated confidence",
+    "passes_3_sigma": true
+   }
+  },
+  "clean_statistic_per_circuit": {
+   "B0_ref06_k1_rep1": {
+    "id": "B0_ref06_k1_rep1",
+    "sector": "B=0",
+    "twoB": 0,
+    "reference": 6,
+    "k": 1,
+    "repetitions": 1,
+    "cz": 663,
+    "shots": 267,
+    "accepted": 8,
+    "dim": 38,
+    "p_reference": 0.8832760485718513,
+    "reference_hits": 2,
+    "garbage_acceptance": 0.00927734375,
+    "mixture": {
+     "w": 0.4074346622255334,
+     "w_68": [
+      0.19384652791466017,
+      0.6448714825046025
+     ],
+     "accepted": 8.0,
+     "shots": 267.0,
+     "dim": 38,
+     "circuits": 1,
+     "clean_accepted": 3.259477297804267,
+     "clean_accepted_68": [
+      1.5507722233172814,
+      5.15897186003682
+     ],
+     "clean_yield": 0.012207780141589014,
+     "f_clean": 0.014887536758035384,
+     "f_clean_68": [
+      0.007083092277871935,
+      0.023563404859947106
+     ],
+     "logL_gain": 3.8903706804787532,
+     "readout_factor": 0.82,
+     "estimator": "maximum likelihood in P(s|accepted) = w p_ideal(s) + (1-w)/dim, profile-likelihood 68 % interval at Delta log L = 0.5"
+    },
+    "reference_string_test": {
+     "n_reference": 2,
+     "shots": 267,
+     "p_reference": 0.8832760485718513,
+     "garbage_acceptance": 0.00927734375,
+     "dim": 38,
+     "expected_from_garbage": 0.065185546875,
+     "sigma": 0.255314603724503,
+     "excess": 1.934814453125,
+     "z": 7.578158181710435,
+     "P_ge": 0.0020344681292308047,
+     "n_reference_68": [
+      0.7081703772244352,
+      4.637910099146559
+     ],
+     "confidence": 0.6827,
+     "clean_yield": 0.008204112509148802,
+     "clean_yield_68": [
+      0.00272642158597826,
+      0.019389531972738093
+     ],
+     "f_clean": 0.010005015255059516,
+     "f_clean_68": [
+      0.0033249043731442196,
+      0.02364577069846109
+     ],
+     "n_reference_68_sqrt_n": [
+      0.5857864376269049,
+      3.414213562373095
+     ],
+     "f_clean_68_sqrt_n": [
+      0.002692051346503909,
+      0.017317979163615122
+     ],
+     "readout_factor": 0.82,
+     "estimator": "(n_ref - n_shots a / dim) / (n_shots p_ref readout_factor); Poisson (Garwood) interval on n_ref at the stated confidence"
+    },
+    "expected_garbage_accepted": 2.4401735966926204,
+    "near_clean_accepted": 2.3003491055031127,
+    "distance_histogram": [
+     2,
+     0,
+     2,
+     3,
+     0,
+     0,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  "clean_statistic_by_sector": {
+   "B=0": {
+    "reference_pooled": {
+     "n_reference": 2,
+     "shots": 267,
+     "circuits": 1,
+     "expected_from_garbage": 0.065185546875,
+     "sigma": 0.255314603724503,
+     "excess": 1.934814453125,
+     "z": 7.578158181710435,
+     "P_ge": 0.0020344681292308047,
+     "clean_denominator_shots_x_p_ref": 235.8347049686843,
+     "clean_yield": 0.008204112509148802,
+     "f_clean": 0.010005015255059516,
+     "f_clean_68": [
+      0.0033249043731442196,
+      0.02364577069846109
+     ],
+     "f_clean_68_sqrt_n": [
+      0.002692051346503909,
+      0.017317979163615122
+     ],
+     "readout_factor": 0.82,
+     "confidence": 0.6827,
+     "estimator": "(sum n_ref - sum N a / dim) / (sum N p_ref readout_factor); Poisson (Garwood) interval on the pooled count"
+    },
+    "reference_pooled_k1": {
+     "n_reference": 2,
+     "shots": 267,
+     "circuits": 1,
+     "expected_from_garbage": 0.065185546875,
+     "sigma": 0.255314603724503,
+     "excess": 1.934814453125,
+     "z": 7.578158181710435,
+     "P_ge": 0.0020344681292308047,
+     "clean_denominator_shots_x_p_ref": 235.8347049686843,
+     "clean_yield": 0.008204112509148802,
+     "f_clean": 0.010005015255059516,
+     "f_clean_68": [
+      0.0033249043731442196,
+      0.02364577069846109
+     ],
+     "f_clean_68_sqrt_n": [
+      0.002692051346503909,
+      0.017317979163615122
+     ],
+     "readout_factor": 0.82,
+     "confidence": 0.6827,
+     "estimator": "(sum n_ref - sum N a / dim) / (sum N p_ref readout_factor); Poisson (Garwood) interval on the pooled count"
+    },
+    "shots": 267
+   }
+  },
   "support_shot_plan": {
    "rule": "D3' (prompts/16): r=2 and r=3 keep their shots, every r=1 circuit keeps the floor, and the k=4 circuits of each sector get N4 = the smallest multiple of `round_to` such that every sector state has expected clean count >= lambda* from the r=1 circuits alone at the clean yield readout_factor * margin * f_c",
    "lambda_star": 6.295793621871989,
@@ -3459,14 +3700,14 @@
    "criterion": "the calibration of the session day (prompts/15 D7); the comparison with the frozen snapshot of the manifests is reported without a criterion"
   }
  },
- "runtime_s": 1.188361644744873,
+ "runtime_s": 11.490758419036865,
  "environment": {
   "python": "3.12.14",
   "numpy": "2.5.2",
   "scipy": "1.18.0",
   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
   "cpu_count": 12,
-  "git_commit": "390c325",
-  "timestamp": "2026-09-22 11:49:01 MDT"
+  "git_commit": "6180c6a",
+  "timestamp": "2026-09-30 15:41:49 MDT"
  }
 }
