@@ -44,6 +44,14 @@ Two controls are reported next to the winner: the patch the transpiler actually 
 (the identity embedding) and the best patch under the **gate-error-only** objective
 `f_gates` -- what a T2-blind, calibration-aware layout optimises.
 
+**An incumbent the record does not cover is a device fact, not an enumeration error**
+(prompts/23 A1).  If the identity embedding is in the enumeration but `record_covers`
+skipped it (e.g. live ibm_kingston qubit 146: T1, T2 None, an uncalibrated qubit), the
+search completes with `incumbent = None`, `incumbent_unscorable = {physical_qubits, reason}`,
+no `h0_idle_model` consistency check (recorded as `{"ok": None, "reason": ...}`) and every
+incumbent-relative `gain` entry None.  Only an incumbent that is in NEITHER the scored nor the
+skipped list still raises: that is the enumeration bug the message names.
+
 Sources are offline.  `--calibration` scores on a committed calibration record; the
 candidate space is then whatever the record covers (the H0 records cover the 30 qubits
 and 29 undirected coupling edges the frozen set touches -- 54 directed target keys --
@@ -320,32 +328,45 @@ def search(prep, rec, circuit_id, top, limit=None, family=True):
 
     incumbent_set = tuple(sorted(man["physical_qubits"]))
     incumbent = by_set.get(incumbent_set)
+    incumbent_unscorable = None
     if incumbent is None:
-        raise SystemExit(f"the identity embedding (the transpiler's own patch "
-                         f"{list(incumbent_set)}) is not among the candidates -- the "
-                         f"enumeration is wrong")
+        hit = next((sk for sk in skipped if tuple(sk["physical_qubits"]) == incumbent_set), None)
+        if hit is None:
+            raise SystemExit(f"the identity embedding (the transpiler's own patch "
+                             f"{list(incumbent_set)}) is not among the candidates -- the "
+                             f"enumeration is wrong")
+        # prompts/23 A1: the incumbent IS enumerated but the record does not cover it -- a
+        # device fact (an uncalibrated qubit), never a defaulted T1/T2
+        incumbent_unscorable = {"physical_qubits": list(incumbent_set), "reason": hit["reason"]}
 
-    # the identity embedding must reproduce h0_idle_model.py exactly
-    sch0 = im.schedule(qc, rec)
-    _pq0, tot0 = im.budgets(sch0, rec)
-    with np.errstate(divide="ignore", invalid="ignore"):
-        fg0 = im.f_on_record(qc, rec)[0]
-    f0 = im.predictions(fg0, tot0, a)["dd_off"]["f"]
-    consistency = {
-        "f_gates_delta": abs(incumbent["f_gates"] - fg0),
-        "S_T1_delta": abs(incumbent["S_T1"] - tot0["S_T1"]),
-        "S_T2_delta": abs(incumbent["S_T2"] - tot0["S_T2"]),
-        "f_dd_off_delta": abs(incumbent["f_dd_off"] - f0),
-        "tolerance": CONSISTENCY_TOL,
-    }
-    consistency["ok"] = all(consistency[k] <= CONSISTENCY_TOL for k in
-                            ("f_gates_delta", "S_T1_delta", "S_T2_delta", "f_dd_off_delta"))
-    if not consistency["ok"]:
-        raise SystemExit(f"the identity embedding does not reproduce h0_idle_model.py: "
-                         f"{consistency}")
+    if incumbent is not None:
+        # the identity embedding must reproduce h0_idle_model.py exactly
+        sch0 = im.schedule(qc, rec)
+        _pq0, tot0 = im.budgets(sch0, rec)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            fg0 = im.f_on_record(qc, rec)[0]
+        f0 = im.predictions(fg0, tot0, a)["dd_off"]["f"]
+        consistency = {
+            "f_gates_delta": abs(incumbent["f_gates"] - fg0),
+            "S_T1_delta": abs(incumbent["S_T1"] - tot0["S_T1"]),
+            "S_T2_delta": abs(incumbent["S_T2"] - tot0["S_T2"]),
+            "f_dd_off_delta": abs(incumbent["f_dd_off"] - f0),
+            "tolerance": CONSISTENCY_TOL,
+        }
+        consistency["ok"] = all(consistency[k] <= CONSISTENCY_TOL for k in
+                                ("f_gates_delta", "S_T1_delta", "S_T2_delta", "f_dd_off_delta"))
+        if not consistency["ok"]:
+            raise SystemExit(f"the identity embedding does not reproduce h0_idle_model.py: "
+                             f"{consistency}")
+    else:
+        consistency = {"ok": None, "tolerance": CONSISTENCY_TOL,
+                       "reason": ("the incumbent is not scorable on this record ("
+                                  f"{incumbent_unscorable['reason']}); the identity-embedding "
+                                  "check against h0_idle_model.py cannot run")}
 
     best = scored[0]
     gate_only = sorted(scored, key=gate_only_key)[0]
+    inc = incumbent
 
     out = {
         "circuit": circuit_id,
@@ -365,34 +386,38 @@ def search(prep, rec, circuit_id, top, limit=None, family=True):
         "skipped": skipped[:20],
         "garbage_acceptance": a,
         "incumbent": incumbent,
+        "incumbent_unscorable": incumbent_unscorable,
         "best": best,
         "best_by_gate_error_only": gate_only,
         "consistency_with_h0_idle_model": consistency,
         "gain": {
-            "f_dd_off_best_over_incumbent": best["f_dd_off"] / incumbent["f_dd_off"],
-            "f_dd_off_gate_only_over_incumbent": gate_only["f_dd_off"] / incumbent["f_dd_off"],
+            # every entry that needs the incumbent is None when it is not scorable (A1)
+            "f_dd_off_best_over_incumbent": (None if inc is None
+                                             else best["f_dd_off"] / inc["f_dd_off"]),
+            "f_dd_off_gate_only_over_incumbent": (None if inc is None
+                                                  else gate_only["f_dd_off"] / inc["f_dd_off"]),
             "f_dd_off_best_over_gate_only": best["f_dd_off"] / gate_only["f_dd_off"],
-            "yield_best_over_incumbent": (None if incumbent["yield_dd_off"] in (None, 0)
-                                          else best["yield_dd_off"] / incumbent["yield_dd_off"]),
-            "incumbent_rank": incumbent["rank"],
+            "yield_best_over_incumbent": (None if inc is None or inc["yield_dd_off"] in (None, 0)
+                                          else best["yield_dd_off"] / inc["yield_dd_off"]),
+            "incumbent_rank": None if inc is None else inc["rank"],
             "gate_only_rank": gate_only["rank"],
-            "S_T2_incumbent": incumbent["S_T2"],
+            "S_T2_incumbent": None if inc is None else inc["S_T2"],
             "S_T2_best": best["S_T2"],
-            "delta_S_T2": incumbent["S_T2"] - best["S_T2"],
-            "qubits_changed": sorted(set(incumbent["physical_qubits"])
-                                     ^ set(best["physical_qubits"])),
-            "n_qubits_changed": len(set(incumbent["physical_qubits"])
-                                    - set(best["physical_qubits"])),
+            "delta_S_T2": None if inc is None else inc["S_T2"] - best["S_T2"],
+            "qubits_changed": (None if inc is None else
+                               sorted(set(inc["physical_qubits"]) ^ set(best["physical_qubits"]))),
+            "n_qubits_changed": (None if inc is None else
+                                 len(set(inc["physical_qubits"]) - set(best["physical_qubits"]))),
             "shots_reference": SHOTS_REFERENCE,
-            "accepted_of_reference_incumbent": (None if incumbent["yield_dd_off"] is None else
-                                                SHOTS_REFERENCE * incumbent["yield_dd_off"]),
+            "accepted_of_reference_incumbent": (None if inc is None or inc["yield_dd_off"] is None
+                                                else SHOTS_REFERENCE * inc["yield_dd_off"]),
             "accepted_of_reference_best": (None if best["yield_dd_off"] is None else
                                            SHOTS_REFERENCE * best["yield_dd_off"]),
             "garbage_floor_of_reference": (None if a is None else SHOTS_REFERENCE * a),
             # y - a = f (READOUT_FACTOR - a), so the excess over the garbage floor scales
             # exactly with f: the yield ratio is diluted by the floor, the excess is not
-            "excess_over_floor_incumbent": (None if a is None else
-                                            SHOTS_REFERENCE * (incumbent["yield_dd_off"] - a)),
+            "excess_over_floor_incumbent": (None if a is None or inc is None else
+                                            SHOTS_REFERENCE * (inc["yield_dd_off"] - a)),
             "excess_over_floor_best": (None if a is None else
                                        SHOTS_REFERENCE * (best["yield_dd_off"] - a)),
         },
@@ -411,7 +436,8 @@ def family_check(prep, rec, mans, pat_edges, incumbent, best, a, codec):
     the pattern's nodes, so it applies to all of them unchanged."""
     target = set(tuple(e) for e in pat_edges)
     mapping = {int(k): int(v) for k, v in best["mapping"].items()}
-    ident = {int(k): int(v) for k, v in incumbent["mapping"].items()}
+    ident = (None if incumbent is None
+             else {int(k): int(v) for k, v in incumbent["mapping"].items()})
     rows = []
     for m in mans:
         qc = load_circuit(prep, m)
@@ -421,22 +447,28 @@ def family_check(prep, rec, mans, pat_edges, incumbent, best, a, codec):
         ops = circuit_ops(qc)
         aa = (random_acceptance(codec, m["twoB"])["fraction"] if m.get("twoB") is not None
               else a)
-        ei = score_patch(ops, qc.num_qubits, qc.num_clbits, ident, rec, aa)
+        ei = (None if ident is None
+              else score_patch(ops, qc.num_qubits, qc.num_clbits, ident, rec, aa))
         eb = score_patch(ops, qc.num_qubits, qc.num_clbits, mapping, rec, aa)
         rows.append({"id": m["id"], "sector": m.get("sector"), "k": m.get("k"),
-                     "repetitions": m.get("repetitions"), "n_cz": ei["n_cz"],
-                     "f_incumbent": ei["f_dd_off"], "f_best": eb["f_dd_off"],
-                     "gain": eb["f_dd_off"] / ei["f_dd_off"],
-                     "yield_incumbent": ei["yield_dd_off"], "yield_best": eb["yield_dd_off"]})
+                     "repetitions": m.get("repetitions"), "n_cz": eb["n_cz"],
+                     "f_incumbent": None if ei is None else ei["f_dd_off"],
+                     "f_best": eb["f_dd_off"],
+                     "gain": None if ei is None else eb["f_dd_off"] / ei["f_dd_off"],
+                     "yield_incumbent": None if ei is None else ei["yield_dd_off"],
+                     "yield_best": eb["yield_dd_off"]})
     if not rows:
         return {"n_circuits": 0}
-    g = [r["gain"] for r in rows]
+    g = [r["gain"] for r in rows if r["gain"] is not None]
+    fi = [r["f_incumbent"] for r in rows if r["f_incumbent"] is not None]
     return {
         "n_circuits": len(rows),
-        "gain_mean": float(np.mean(g)), "gain_min": float(np.min(g)), "gain_max": float(np.max(g)),
-        "f_incumbent_mean": float(np.mean([r["f_incumbent"] for r in rows])),
+        "gain_mean": float(np.mean(g)) if g else None,
+        "gain_min": float(np.min(g)) if g else None,
+        "gain_max": float(np.max(g)) if g else None,
+        "f_incumbent_mean": float(np.mean(fi)) if fi else None,
         "f_best_mean": float(np.mean([r["f_best"] for r in rows])),
-        "f_incumbent_min": float(np.min([r["f_incumbent"] for r in rows])),
+        "f_incumbent_min": float(np.min(fi)) if fi else None,
         "f_best_min": float(np.min([r["f_best"] for r in rows])),
         "circuits": rows,
     }
@@ -469,11 +501,41 @@ def _f(x, spec="{:.2f}"):
     return "n/a" if x is None else spec.format(x)
 
 
+def unscorable_text(r):
+    """The sentence that replaces every incumbent comparison when the record cannot score it."""
+    u = r.get("incumbent_unscorable") or {}
+    return f"incumbent not scorable on this record: {u.get('reason')}"
+
+
+def finding_text_unscorable(res):
+    """Section 3 when the primary record cannot score the incumbent (prompts/23 A2)."""
+    prim = res["sources"][0]
+    pr, pg = prim["result"], prim["result"]["gain"]
+    b, go = pr["best"], pr["best_by_gate_error_only"]
+    out = [
+        f"On `{prim['source']['path']}` (fingerprint `{prim['fingerprint'][:16]}`) the idle-aware "
+        f"rule selects **{b['physical_qubits']}** with f (DD off) **{b['f_dd_off']:.3e}** "
+        f"(f_gates {b['f_gates']:.4f}, S_T1 {b['S_T1']:.3f}, S_T2 {b['S_T2']:.3f}) out of "
+        f"{pr['n_scored']} scored candidates.  The {unscorable_text(pr)}, so no gain over the "
+        f"transpiler's patch is defined and the identity-embedding check against "
+        f"`h0_idle_model.py` did not run.",
+        f"The gate-error-only objective picks {go['physical_qubits']} (rank {pg['gate_only_rank']}, "
+        f"f {go['f_dd_off']:.3e}); the idle-aware objective is {pg['f_dd_off_best_over_gate_only']:.2f}x "
+        f"on top of it.",
+        f"What it does not do: at {b['f_dd_off']:.3e} the 2x2 r = 1 circuit is "
+        f"{'above' if b['f_dd_off'] >= 0.1 else 'below'} the f >= 0.1 of the amended budget "
+        f"criterion at the record's echo T2.",
+    ]
+    return "\n\n".join(out)
+
+
 def finding_text(res):
     """Section 3, built from the JSON's own fields (the primary record and the device)."""
     st = res["stability"]
     prim = res["sources"][0]
     pr, pg = prim["result"], prim["result"]["gain"]
+    if pr.get("incumbent") is None:
+        return finding_text_unscorable(res)
     dev = next((s for s in res["sources"]
                 if not s["source"]["kind"].startswith("committed")), None)
     removed = sorted(set(pr["incumbent"]["physical_qubits"]) - set(pr["best"]["physical_qubits"]))
@@ -497,9 +559,11 @@ def finding_text(res):
         f"mis-solving its problem; the problem was the wrong one.",
         f"The rule is stable: over the {st['n_committed_records']} committed ibm_fez records of "
         f"2026-09-21/22 it returns {st['n_distinct_winners']} distinct winner(s), with a gain "
-        f"between {st['gain_min']:.2f}x and {st['gain_max']:.2f}x.",
+        f"between {_f(st['gain_min'])}x and {_f(st['gain_max'])}x.",
     ]
-    if dev is not None:
+    if dev is not None and dev["result"].get("incumbent") is None:
+        out.append(f"With the whole device in view ({dev['label']}) the {unscorable_text(dev['result'])}.")
+    elif dev is not None:
         dr, dg = dev["result"], dev["result"]["gain"]
         out.append(
             f"The committed records cover only {pr['host']['n_qubits']} of the device's qubits -- "
@@ -519,17 +583,69 @@ def finding_text(res):
     return "\n\n".join(out)
 
 
+def gain_paragraph(r, g):
+    """The incumbent comparison of one source (only when the incumbent is scorable)."""
+    return f"""**Gain of the best available patch over the one the transpiler chose:
+{g['f_dd_off_best_over_incumbent']:.2f}x in f, {_f(g['yield_best_over_incumbent'])}x in yield**
+(at {g['shots_reference']} shots, the H0_diag cell size: {_f(g['accepted_of_reference_incumbent'], "{:.1f}")}
+accepted -> {_f(g['accepted_of_reference_best'], "{:.1f}")}, over a garbage floor of
+{_f(g['garbage_floor_of_reference'], "{:.1f}")}; the clean excess over that floor,
+{_f(g['excess_over_floor_incumbent'], "{:.1f}")} -> {_f(g['excess_over_floor_best'], "{:.1f}")},
+scales exactly with f because y - a = f x ({READOUT_FACTOR} - a)).
+The transpiler's patch ranks {g['incumbent_rank']} of {r['n_scored']}.  The T2-blind objective
+(gate + readout error only) picks rank {g['gate_only_rank']}, worth
+{g['f_dd_off_gate_only_over_incumbent']:.2f}x -- the idle-aware objective is a further
+{g['f_dd_off_best_over_gate_only']:.2f}x on top of it.  S_T2 falls from {g['S_T2_incumbent']:.3f}
+to {g['S_T2_best']:.3f} ({g['delta_S_T2']:.3f} units) by changing {g['n_qubits_changed']} of
+{r['n_logical_qubits']} qubits ({', '.join(str(q) for q in g['qubits_changed'])})."""
+
+
+def stability_sentence(res):
+    st = res["stability"]
+    if st["gain_min"] is None:
+        return (f"Stability: {st['n_committed_records']} committed record(s), "
+                f"{st['n_distinct_winners']} distinct winner(s); no gain is defined (the "
+                f"incumbent is not scorable).")
+    return (f"Stability over the {st['n_committed_records']} committed ibm_fez records:\n"
+            f"{st['n_distinct_winners']} distinct winner(s), gain\n"
+            f"{st['gain_min']:.2f}x to {st['gain_max']:.2f}x, same winner on every\n"
+            f"record: **{st['same_winner_everywhere']}**.")
+
+
+def consistency_sentence(res):
+    deltas = [s["result"]["consistency_with_h0_idle_model"].get("f_dd_off_delta")
+              for s in res["sources"]]
+    have = [d for d in deltas if d is not None]
+    if len(have) == len(deltas):              # the text of every run before prompts/23
+        return (f"The identity embedding reproduces `scripts/h0_idle_model.py` to\n"
+                f"{max(have):.1e}\n"
+                f"(tolerance {CONSISTENCY_TOL:.0e}) on every source, so the incumbent row is the "
+                f"same number that\nscript already writes.")
+    out = []
+    if have:
+        out.append(f"The identity embedding reproduces `scripts/h0_idle_model.py` to "
+                   f"{max(have):.1e} (tolerance {CONSISTENCY_TOL:.0e}) on every source where it "
+                   f"is scorable, so the incumbent row is the same number that script already "
+                   f"writes.")
+    for s in res["sources"]:
+        if s["result"].get("incumbent") is None:
+            out.append(f"On {s['label']}: {unscorable_text(s['result'])}.")
+    return "\n".join(out)
+
+
 def report_text(res):
     from skqd.report import md_table
     lines = []
     for s in res["sources"]:
         r = s["result"]
         g = r["gain"]
+        inc = r.get("incumbent")
         lines.append([s["label"], s["fingerprint"][:16],
                       r["host"]["n_qubits"], r["n_scored"],
-                      f"{r['incumbent']['f_dd_off']:.3e}", f"{r['best']['f_dd_off']:.3e}",
-                      f"{g['f_dd_off_best_over_incumbent']:.2f}x",
-                      f"{g['incumbent_rank']} of {r['n_scored']}",
+                      (f"{inc['f_dd_off']:.3e}" if inc is not None else "not scorable"),
+                      f"{r['best']['f_dd_off']:.3e}",
+                      _f(g['f_dd_off_best_over_incumbent'], "{:.2f}x"),
+                      (f"{g['incumbent_rank']} of {r['n_scored']}" if inc is not None else "n/a"),
                       str(r["best"]["physical_qubits"])])
     head = res["sources"][0]["result"]
     blocks = []
@@ -540,6 +656,10 @@ def report_text(res):
         for name, e in (("transpiler's choice (incumbent)", r["incumbent"]),
                         ("best by gate error alone (T2-blind)", r["best_by_gate_error_only"]),
                         ("best by the idle-aware objective", r["best"])):
+            if e is None:
+                rows.append([name, str((r.get("incumbent_unscorable") or {}).get("physical_qubits")),
+                             "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", unscorable_text(r)])
+                continue
             rows.append([name, str(e["physical_qubits"]), e["rank"], f"{e['f_gates']:.4f}",
                          f"{e['S_T1']:.3f}", f"{e['S_T2']:.3f}", f"{e['f_dd_off']:.3e}",
                          f"{e['yield_dd_off']:.4f}" if e["yield_dd_off"] is not None else "n/a",
@@ -554,13 +674,25 @@ def report_text(res):
                             "min T2 (us)"], top))
         fam = r.get("family") or {}
         famtxt = ""
-        if fam.get("n_circuits"):
+        if fam.get("n_circuits") and fam.get("f_incumbent_mean") is None:
+            famtxt = (
+                f"\nThe winning relabelling applied to every frozen circuit with this routed edge "
+                f"set ({fam['n_circuits']} circuits): mean f {fam['f_best_mean']:.3e}, worst "
+                f"{fam['f_best_min']:.3e} ({unscorable_text(r)}).\n")
+        elif fam.get("n_circuits"):
             famtxt = (
                 f"\nThe same relabelling applied to every frozen circuit with this routed edge set "
                 f"({fam['n_circuits']} circuits): mean f {fam['f_incumbent_mean']:.3e} -> "
                 f"{fam['f_best_mean']:.3e}, worst {fam['f_incumbent_min']:.3e} -> "
                 f"{fam['f_best_min']:.3e}, gain {fam['gain_min']:.2f}x to {fam['gain_max']:.2f}x "
                 f"(mean {fam['gain_mean']:.2f}x).\n")
+        if r.get("incumbent") is None:
+            gaintxt = (f"**{unscorable_text(r)}.**  No gain over the transpiler's patch is "
+                       f"defined on this record.  The T2-blind objective (gate + readout error "
+                       f"only) picks rank {g['gate_only_rank']}; the idle-aware objective is "
+                       f"{g['f_dd_off_best_over_gate_only']:.2f}x on top of it.")
+        else:
+            gaintxt = gain_paragraph(r, g)
         blocks.append(f"""### {s['label']}
 
 Source: {s['source']['kind']}, `{s['source']['path']}` (backend `{s['backend']}`,
@@ -573,19 +705,7 @@ edges of the record,
 {md_table(["patch", "physical qubits", "rank", "f_gates", "S_T1", "S_T2", "f (DD off)",
            "yield", "worst qubit (T2, S_T2)"], rows)}
 
-**Gain of the best available patch over the one the transpiler chose:
-{g['f_dd_off_best_over_incumbent']:.2f}x in f, {_f(g['yield_best_over_incumbent'])}x in yield**
-(at {g['shots_reference']} shots, the H0_diag cell size: {_f(g['accepted_of_reference_incumbent'], "{:.1f}")}
-accepted -> {_f(g['accepted_of_reference_best'], "{:.1f}")}, over a garbage floor of
-{_f(g['garbage_floor_of_reference'], "{:.1f}")}; the clean excess over that floor,
-{_f(g['excess_over_floor_incumbent'], "{:.1f}")} -> {_f(g['excess_over_floor_best'], "{:.1f}")},
-scales exactly with f because y - a = f x ({READOUT_FACTOR} - a)).
-The transpiler's patch ranks {g['incumbent_rank']} of {r['n_scored']}.  The T2-blind objective
-(gate + readout error only) picks rank {g['gate_only_rank']}, worth
-{g['f_dd_off_gate_only_over_incumbent']:.2f}x -- the idle-aware objective is a further
-{g['f_dd_off_best_over_gate_only']:.2f}x on top of it.  S_T2 falls from {g['S_T2_incumbent']:.3f}
-to {g['S_T2_best']:.3f} ({g['delta_S_T2']:.3f} units) by changing {g['n_qubits_changed']} of
-{r['n_logical_qubits']} qubits ({', '.join(str(q) for q in g['qubits_changed'])}).
+{gaintxt}
 {famtxt}
 {toptxt}
 """)
@@ -596,16 +716,13 @@ Generated by `scripts/h0_patch_select.py` from `{res['json']}` at commit `{res['
 account were used; the runtime was {res['runtime_s']:.1f} s.
 
 Circuit: `{head['circuit']}` ({head['lattice']}, {head['n_logical_qubits']} logical qubits,
-{head['incumbent']['n_cz']} CZ, critical path {head['incumbent']['T_s'] * 1e6:.2f} us before readout).
+{head['best']['n_cz']} CZ, critical path {(head['incumbent'] or head['best'])['T_s'] * 1e6:.2f} us before readout{'' if head['incumbent'] else ' on the selected patch'}).
 Interaction graph: {head['pattern']['n_nodes']} nodes, {head['pattern']['n_edges']} edges,
 degree sequence {head['pattern']['degree_sequence']}.
 
 Objective: **{res['objective']}**.
 Tie-break: {res['tie_break']}.
-The identity embedding reproduces `scripts/h0_idle_model.py` to
-{max(s['result']['consistency_with_h0_idle_model']['f_dd_off_delta'] for s in res['sources']):.1e}
-(tolerance {CONSISTENCY_TOL:.0e}) on every source, so the incumbent row is the same number that
-script already writes.
+{consistency_sentence(res)}
 
 ## 1. Summary
 
@@ -613,10 +730,7 @@ script already writes.
            "f (transpiler's patch)", "f (best patch)", "gain", "rank of the transpiler's patch",
            "patch the rule selects"], lines)}
 
-Stability over the {res['stability']['n_committed_records']} committed ibm_fez records:
-{res['stability']['n_distinct_winners']} distinct winner(s), gain
-{res['stability']['gain_min']:.2f}x to {res['stability']['gain_max']:.2f}x, same winner on every
-record: **{res['stability']['same_winner_everywhere']}**.
+{stability_sentence(res)}
 
 ## 2. Per source
 
@@ -692,9 +806,13 @@ def main():
             "result": r,
         })
         g = r["gain"]
-        print(f"    {r['n_scored']} candidates; incumbent f {r['incumbent']['f_dd_off']:.4e} "
-              f"(rank {g['incumbent_rank']}), best {r['best']['f_dd_off']:.4e} "
-              f"-> {g['f_dd_off_best_over_incumbent']:.2f}x on {r['best']['physical_qubits']}")
+        if r["incumbent"] is None:
+            print(f"    {r['n_scored']} candidates; {unscorable_text(r)}; best "
+                  f"{r['best']['f_dd_off']:.4e} on {r['best']['physical_qubits']}")
+        else:
+            print(f"    {r['n_scored']} candidates; incumbent f {r['incumbent']['f_dd_off']:.4e} "
+                  f"(rank {g['incumbent_rank']}), best {r['best']['f_dd_off']:.4e} "
+                  f"-> {g['f_dd_off_best_over_incumbent']:.2f}x on {r['best']['physical_qubits']}")
 
     fps = sorted({s["fingerprint"] for s in out_sources if s["source"]["kind"].startswith("committed")})
     identical = len(fps) == 1 and sum(1 for s in out_sources
@@ -753,21 +871,24 @@ def build_stability(out_sources):
         if not s["source"]["kind"].startswith("committed"):
             continue
         r = s["result"]
+        inc = r.get("incumbent")
         rows.append({"label": s["label"], "stamp": s.get("stamp"),
                      "fingerprint": s.get("fingerprint", "")[:16],
                      "best": r["best"]["physical_qubits"],
                      "best_f": r["best"]["f_dd_off"],
-                     "incumbent_f": r["incumbent"]["f_dd_off"],
-                     "incumbent_rank": r["incumbent"]["rank"],
+                     "incumbent_f": None if inc is None else inc["f_dd_off"],
+                     "incumbent_rank": None if inc is None else inc["rank"],
+                     "incumbent_unscorable": r.get("incumbent_unscorable"),
                      "gain": r["gain"]["f_dd_off_best_over_incumbent"]})
     winners = sorted({tuple(x["best"]) for x in rows})
+    gains = [x["gain"] for x in rows if x["gain"] is not None]
     return {
         "n_committed_records": len(rows),
         "n_distinct_winners": len(winners),
         "winners": [list(w) for w in winners],
         "same_winner_everywhere": len(winners) == 1 and len(rows) > 1,
-        "gain_min": min((x["gain"] for x in rows), default=None),
-        "gain_max": max((x["gain"] for x in rows), default=None),
+        "gain_min": min(gains, default=None),
+        "gain_max": max(gains, default=None),
         "records": rows,
     }
 
@@ -780,6 +901,13 @@ def build_finding(out_sources, identical, stability=None):
     for s in out_sources:
         r = s["result"]
         g = r["gain"]
+        if r.get("incumbent") is None:
+            parts.append(
+                f"On {s['label']} ({r['n_scored']} candidate patches over {r['host']['n_qubits']} "
+                f"qubits) the best patch is {r['best']['physical_qubits']} with f (DD off) "
+                f"{r['best']['f_dd_off']:.3e}; {unscorable_text(r)}, so no gain over the "
+                f"transpiler's patch is defined.")
+            continue
         parts.append(
             f"On {s['label']} ({r['n_scored']} candidate patches over {r['host']['n_qubits']} "
             f"qubits) the best patch is {g['f_dd_off_best_over_incumbent']:.2f}x the transpiler's "
@@ -794,8 +922,8 @@ def build_finding(out_sources, identical, stability=None):
         parts.append(
             f"Over the {stability['n_committed_records']} committed ibm_fez records of "
             f"2026-09-21/22 the rule returns {stability['n_distinct_winners']} distinct "
-            f"winner(s) and a gain between {stability['gain_min']:.2f}x and "
-            f"{stability['gain_max']:.2f}x.")
+            f"winner(s) and a gain between {_f(stability['gain_min'])}x and "
+            f"{_f(stability['gain_max'])}x.")
     parts.append("The H0 calibration records cover only the qubits and edges the frozen set "
                  "already uses, so the committed-record search is a lower bound on what a "
                  "full-device read would find; the selection rule therefore has to be run on a "

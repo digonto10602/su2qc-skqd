@@ -181,3 +181,50 @@ def test_the_committed_json_matches_a_fresh_search(result):
         result["gain"]["f_dd_off_best_over_incumbent"]
     assert saved["objective"] == ps.OBJECTIVE
     assert saved["consistency_tolerance"] == ps.CONSISTENCY_TOL
+
+
+# ---------------------------------------------------------------- prompts/23 A1-A3
+KINGSTON_RECORD = os.path.join(ROOT, "data", "hardware", "device_survey_20260922",
+                               "ibm_kingston_20260930T2255Z.json")
+KINGSTON_WINNER = [82, 83, 96, 102, 103, 104, 105, 106, 107, 117, 125, 126]
+KINGSTON_WINNER_F = 0.05622012608266227      # data/H0_device_survey_live_20260930.json
+
+
+@pytest.mark.skipif(not os.path.isfile(KINGSTON_RECORD), reason="kingston record not committed")
+def test_an_uncalibrated_incumbent_is_a_device_fact_not_an_enumeration_error():
+    """Live kingston qubit 146 has no T1/T2: the search completes with incumbent None and
+    finds the survey's fallback winner number for number (the same computation)."""
+    with open(KINGSTON_RECORD) as fh:
+        rec = json.load(fh)
+    r = ps.search(PREP, rec, CIRCUIT, top=5, family=False)
+    assert r["incumbent"] is None
+    u = r["incumbent_unscorable"]
+    assert u["physical_qubits"] == INCUMBENT
+    assert "146" in u["reason"] and "T1_s" in u["reason"]
+    assert r["consistency_with_h0_idle_model"]["ok"] is None
+    assert r["best"]["physical_qubits"] == KINGSTON_WINNER
+    assert abs(r["best"]["f_dd_off"] - KINGSTON_WINNER_F) <= 1e-12
+    g = r["gain"]
+    for k in ("f_dd_off_best_over_incumbent", "f_dd_off_gate_only_over_incumbent",
+              "yield_best_over_incumbent", "incumbent_rank", "delta_S_T2"):
+        assert g[k] is None
+    assert g["f_dd_off_best_over_gate_only"] >= 1.0
+    # the report renders without an incumbent
+    res = {"json": "x", "commit": "x", "created": "x", "runtime_s": 0.0,
+           "objective": ps.OBJECTIVE, "tie_break": ps.TIE_BREAK, "method": "m",
+           "stability": ps.build_stability([{"label": "k", "source": {"kind": "committed", "path": "p"},
+                                             "fingerprint": "f" * 16, "result": r}]),
+           "sources": [{"label": "k", "source": {"kind": "committed", "path": "p"},
+                        "backend": "ibm_kingston", "last_update_date": None,
+                        "fingerprint": "f" * 16, "result": r}]}
+    txt = ps.report_text(res)
+    assert "incumbent not scorable on this record: qubit 146 has no T1_s" in txt
+
+
+def test_an_incumbent_missing_from_the_enumeration_still_raises(record):
+    """A patch that is in neither the scored nor the skipped list is the real bug: keep raising."""
+    rec = json.loads(json.dumps(record))
+    del rec["qubits"]["146"]                                   # 146 leaves the host graph
+    rec["edges"] = {k: v for k, v in rec["edges"].items() if 146 not in v["target_key"]}
+    with pytest.raises(SystemExit, match="the enumeration is wrong"):
+        ps.search(PREP, rec, CIRCUIT, top=5, family=False)
