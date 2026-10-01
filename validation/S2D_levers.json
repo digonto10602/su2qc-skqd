@@ -53,7 +53,7 @@
   },
   {
    "name": "C9 pytest -q tests and scripts/check_package.py",
-   "value": "pytest: 221 passed, 2 skipped, 10 warnings in 325.51s (0:05:25); check_package rc 0",
+   "value": "pytest: 221 passed, 2 skipped, 10 warnings in 398.15s (0:06:38); check_package rc 0",
    "threshold": "all pass",
    "passed": true
   }
@@ -7370,10 +7370,10 @@
   },
   "C9": {
    "pytest_returncode": 0,
-   "pytest_summary": "221 passed, 2 skipped, 10 warnings in 325.51s (0:05:25)",
+   "pytest_summary": "221 passed, 2 skipped, 10 warnings in 398.15s (0:06:38)",
    "check_package_returncode": 0,
    "check_package_tail": "gate S1: PASS (12 criteria, 0 failing), computed 2026-09-14 16:48:20 MDT\nreport/data consistency: E0(2x3, g2=4, B=0) = -5.6026 appears in reports/E3_exact_references.md\nPACKAGE OK",
-   "seconds": 326.89421486854553,
+   "seconds": 399.6630699634552,
    "ok": true
   },
   "family": {
@@ -8943,7 +8943,11 @@
      "D3prime_execution_s": 88.87001205600001,
      "D3prime_total_coarse_shots": 261107,
      "D3pp_H0_shots_per_k1": 577,
-     "D3pp_H0_execution_s": 16.888342895999997
+     "D3pp_H0_execution_s": 16.888342895999997,
+     "D3prime_N4_default_order_same_f": {
+      "B=0": 6000,
+      "B=1": 14500
+     }
     },
     "transfer_r0.174": {
      "f": 0.027807787957435787,
@@ -8954,7 +8958,29 @@
      "D3prime_execution_s": 654.860716056,
      "D3prime_total_coarse_shots": 2238307,
      "D3pp_H0_shots_per_k1": 5035,
-     "D3pp_H0_execution_s": 25.839043968
+     "D3pp_H0_execution_s": 25.839043968,
+     "D3prime_N4_default_order_same_f": {
+      "B=0": 53900,
+      "B=1": 128300
+     }
+    },
+    "weakest_state_k4": {
+     "row_order|B=0": {
+      "min_summed_p_over_k4": 0.0010562348746339214,
+      "sector_position": 32
+     },
+     "row_order|B=1": {
+      "min_summed_p_over_k4": 0.002154538465975838,
+      "sector_position": 18
+     },
+     "default_order|B=0": {
+      "min_summed_p_over_k4": 0.007280502154736538,
+      "sector_position": 28
+     },
+     "default_order|B=1": {
+      "min_summed_p_over_k4": 0.0030689209608503964,
+      "sector_position": 12
+     }
     }
    }
   },
@@ -9014,14 +9040,14 @@
    "C6 first attempt: at the 4000 shots E4 prescribes, B1_ref07_k4 at r = 0.174 (25 reference hits at p_ref 0.132: reference-string f_clean 0.0553 [68 %: 0.044, 0.069] against the mixture's 0.0376 [0.033, 0.042], relative deviation 0.321 > 0.25) failed C6.  The escalation re-check found the chunk seeds strided, the chunks' raw samples distinct and the T2 override on every qubit of the patch at exactly the cell's ratio with no clipping.  The second attempt -- decided AFTER seeing the failure, and applied to all E4 cells, not only the failing one -- extends every E4 cell to 8000 shots with the same strided seed sequence (the E2 top-up mechanism).  The 4000-shot values are kept in data.C6_first_attempt_E4_4000_shots and in data.e4.aer[*][*].first_attempt_4000_shots."
   ]
  },
- "runtime_s": 373.62000823020935,
+ "runtime_s": 476.38668394088745,
  "environment": {
   "python": "3.12.14",
   "numpy": "2.5.2",
   "scipy": "1.18.0",
   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
   "cpu_count": 12,
-  "git_commit": "5775dfa",
-  "timestamp": "2026-10-01 15:31:42 MDT"
+  "git_commit": "d7e69cc",
+  "timestamp": "2026-10-01 15:42:58 MDT"
  }
 }

@@ -2351,6 +2351,21 @@ def family_budgets(rid, rows, rec, verdict):
                       "D3prime_total_coarse_shots": d3["total_coarse_shots"],
                       "D3pp_H0_shots_per_k1": dpp["shots_per_k1_circuit"],
                       "D3pp_H0_execution_s": dpp["execution_s"]}
+        if m["order"] != list(DEFAULT_ORDER):
+            # N4 depends only on the ideal distributions and f: the same f in the default order
+            P0 = {c["id"]: ideal_distribution(list(DEFAULT_ORDER), fam[c["id"]]["twoB"], fam[c["id"]]["reference"],
+                                              fam[c["id"]]["theta"])["p_unnormalised"] for c in e4["circuits"]}
+            d30 = ds.d3_budget(P0, T, mans, cal_entries, f, rep)
+            out[label]["D3prime_N4_default_order_same_f"] = d30["N4"]
+    if m["order"] != list(DEFAULT_ORDER):
+        mins = {}
+        for lab_o, o in (("row_order", m["order"]), ("default_order", list(DEFAULT_ORDER))):
+            for sec in ("B=0", "B=1"):
+                k4 = [c["id"] for c in e4["circuits"] if c["sector"] == sec and c["k"] == 4]
+                s_ = np.sum([ideal_distribution(o, fam[c]["twoB"], fam[c]["reference"], fam[c]["theta"])
+                             ["p_unnormalised"] for c in k4], axis=0)
+                mins[f"{lab_o}|{sec}"] = {"min_summed_p_over_k4": float(s_.min()), "sector_position": int(s_.argmin())}
+        out["weakest_state_k4"] = mins
     return out
 
 
@@ -2464,7 +2479,15 @@ def render_report(saved, R):
         budtxt = "\n".join(f"- {lab}: f = {b.get('f'):.4f}: D3' N4 {b.get('D3prime_N4')}, execution "
                            f"{b.get('D3prime_execution_s', float('nan')):.1f} s; D3''-H0 {b.get('D3pp_H0_shots_per_k1')} "
                            f"shots per k = 1 circuit, execution {b.get('D3pp_H0_execution_s', float('nan')):.1f} s"
+                           + (f"; **the default-order family at the same f needs D3' N4 "
+                              f"{b['D3prime_N4_default_order_same_f']}**" if "D3prime_N4_default_order_same_f" in b else "")
                            for lab, b in bud.items() if isinstance(b, dict) and "D3prime_N4" in b)
+        wk = bud.get("weakest_state_k4")
+        if wk:
+            budtxt += ("\n- Why: rule D3' sizes N4 on the sector state with the least probability summed over the "
+                       "k = 4 circuits; " + "; ".join(f"{k}: {x['min_summed_p_over_k4']:.2e} (position "
+                                                      f"{x['sector_position']})" for k, x in wk.items()) +
+                       ".  A family change therefore also moves the D3' shot cost, not only f.")
         budtxt = f"{bud['note']}.\n\n{budtxt}"
     fsum = fr.get("fractional_summary") or {}
     psum = fr.get("plain_control_summary") or {}
