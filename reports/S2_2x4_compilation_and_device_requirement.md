@@ -1,7 +1,7 @@
 # Gate S2_2x4 — the 2x4 coarse step compiled, verified, and its device requirement
 
-**Status: FAIL** — `scripts/gate_S2_2x4.py`, optimization level 3,
-basis {rz, sx, x, cz}, seed 7, g2 = 4.0.  Environment: Python 3.12.14, numpy 2.5.2, scipy 1.18.0, Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44, 12 CPUs, commit fb58a82, 2026-09-30 18:33:37 MDT.  Assemble runtime 198 s.
+**Status: PASS** — `scripts/gate_S2_2x4.py`, optimization level 3,
+basis {rz, sx, x, cz}, seed 7, g2 = 4.0.  Environment: Python 3.12.14, numpy 2.5.3, scipy 1.18.1, Linux-6.4.0-150600.23.125_15.0.29-cray_shasta_c-x86_64-with-glibc2.38, 128 CPUs, commit n/a, 2026-10-01 09:15:29 PDT.  Assemble runtime 0 s.
 **0 QPU seconds.**  Every number below comes from `validation/S2_2x4.json`, which this script wrote
 from the stage fragments in `data/S2_2x4/`.
 
@@ -740,13 +740,13 @@ of order 100 hours on this CPU whichever representation is used.
 **This is what part F (the Perlmutter Aer-GPU cross-check) exists for**: on one A100 the same
 28-qubit statevector is 4.3 GB and Aer's fused kernels run it in minutes.  The branch is
 written and tested on the laptop at 2x2 (`--stage gpu --lattice 2 --device CPU`:
-`{"gpu_2_CPU": {}, "gpu_3_CPU": {"leakage": 3.8413716652030416e-14, "max_abs_difference_vs_sparse": 1.0551208236468243e-14, "max_abs_difference_vs_coarse_states": 1.854371588885293e-14}, "gpu_estimate": {}}`);
+`{"gpu_2_CPU": {}, "gpu_3_CPU": {"leakage": 3.8413716652030416e-14, "max_abs_difference_vs_sparse": 1.0551208236468243e-14, "max_abs_difference_vs_coarse_states": 1.854371588885293e-14}, "gpu_4_GPU": {}, "gpu_estimate": {}}`);
 the proposed allowlist line is `S2_2x4 01:00:00 1`.  Walltime estimate (`--stage gpu_estimate`):
 `{"n_instructions": 279083, "laptop_aer_cpu_s_per_instruction": 0.0699444590806961, "laptop_full_circuit_s_projected": 19520.309473617912, "gpu_speedup_bracket": {"conservative_assumed": 20.0, "optimistic_measured_S3": 160.99588652418254, "source_optimistic": "validation/S3.json data.cost: reference_S2D.seconds_per_shot / seconds_per_shot_used_for_projection (noisy sampling at 20 qubits, a different workload)"}, "gpu_job_s_projected": {"conservative": 1109.036986189288, "optimistic": 187.75801228695104}, "gpu_memory_statevector_gb": 4.294967296}`.
 
 **Perlmutter result** (`validation/S2_2x4_gpu.json`, written by `--stage gpu` from the QPY
 version-13 copy of the transpiled circuit, never re-transpiled):
-not yet run (the CI token `S2_2x4` is not on the allowlist).
+`{"B0_ref0_k1|all_to_all": {"complete": true, "phases": {"qpy_load_s": 2.6469826698303223, "build_s": 0.023897647857666016, "aer_run_s": 64.87597250938416, "coarse_states_s": 0.10615682601928711}, "leakage": 1.1005640843109177e-12, "n_2q": 69688, "n_instructions": 279083, "s_per_instruction": 0.00023246121228947717, "max_abs_difference_vs_coarse_states": 5.801491342307989e-09}}` on GPU, telemetry `{"wall_s": 88.13080620765686, "gpus": 1, "peak_gpu_memory_mib": 4557.0, "mean_gpu_utilization_pct": 60.0, "s_per_instruction": 0.00023246121228947717}`
 
 What IS measured here instead -- a reported number, not criterion C6 -- is the leakage of the
 level-3 transpiled **term gates**, each on its own support (k <= 16 qubits), through the same
@@ -819,8 +819,8 @@ All tests pass.
 | C4 sparse simulator vs run_ir (2x2, 2x3) and vs the dense 2^28 cross-check | 2x2_vs_run_ir 1.49e-15 (20 circuits), 2x3_vs_run_ir 9.71e-15 (2 circuits); dense 2^28 hop1 1.11e-16 | < 1e-13 each | PASS |
 | C5 the 4 2x4 coarse-step circuits vs krylov.coarse_states (max |delta| on the codewords) | 3.238e-13 | < 1e-10 | PASS |
 | C5 leakage of the 2x4 coarse-step circuits | 5.922e-13 | < 1e-12 | PASS |
-| C6 leakage of the level-3 all-to-all transpiled 2x4 k = 1 B = 0 circuit (sparse statevector) | not computable on this machine: the sparse support of the level-3 transpiled circuit reaches 33554432 (512 MB of amplitudes) after 11163 of 279084 instructions in 711 s | < 1e-9 | FAIL |
+| C6 leakage of the level-3 all-to-all transpiled 2x4 k = 1 B = 0 circuit (sparse statevector) | 1.101e-12 | < 1e-9 | PASS |
 | C7 the frozen 2x2 canary on the real ibm_fez record reproduces T_s, S_T1, S_T2 of data/S2_duration_compare.json | 0 | <= 1e-9 relative | PASS |
 | C8 serial_bound on the committed counts reproduces 667.1, 1727.6, 9372.1, 23786.3, 7035.6 | 0.0293932 | <= 0.1 | PASS |
 | C9 validation/S2.json and S2_fixed.json counts reproduced identically after the circuits_ir change | CZ/per-term counts identical: True; HEAD circuits_ir identical to the modified one: True; 1 difference(s) against the committed JSON over all A3 keys (coarse_step.all_to_all.depth 5840 -> 5841) | every CZ / per-term count identical and HEAD's circuits_ir bit-for-bit identical to the modified one | PASS |
-| C10 pytest -q tests | 211 passed, 2 skipped, 11 warnings in 197.22s (0:03:17) | all pass | PASS |
+| C10 pytest -q tests | 211 passed, 2 skipped, 11 warnings in 197.22s (0:03:17) (carried over from the committed laptop record of 2026-09-30 18:33:37 MDT at commit fb58a82; pytest is not re-run on the CI GPU node) | all pass | PASS |

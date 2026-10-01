@@ -1,0 +1,26 @@
+CI run (CI_GATE=S2_2x4, SLURM_JOB_ID=59162991, SLURM_JOB_NODELIST=nid002368): stage gpu, device GPU, jobs transpiled, then assemble True
+  Model(4) built in 5.5 s (dim 37165)
+/global/homes/d/digonto/.conda/envs/skqd/lib/python3.12/site-packages/qiskit/qpy/interface.py:346: UserWarning: The qiskit version used to generate the provided QPY file, 2.5.2, is newer than the current qiskit version 1.4.3. This may result in an error if the QPY file uses instructions not present in this current qiskit version
+  warnings.warn(
+  transpiled 2x4 k=1 B=0 on GPU: 279083 instructions, 69688 CZ, leakage 1.10e-12, vs coarse_states 5.80e-09, Aer 64.9 s
+wrote validation/S2_2x4_gpu.json
+wrote data/S2_2x4/gpu_4_GPU.json
+stage gpu done in 88 s
+| check | value | criterion | result |
+|---|---|---|---|
+| C1 2x4 dt equals validation/E3.json (2B = 0 and 2) | 2.498e-16 | <= 1e-12 | PASS |
+| C1 2x4 sector dimensions and reference counts | dims 12843 / 8934, refs 11 + 4 | 12843 / 8934, 11 + 4 | PASS |
+| C2 max |exact term circuit - exp(-i theta h)| on the local codeword space (13 terms, theta = dt, 2dt, 4dt) | 3.404e-14 | < 1e-10 | PASS |
+| C3 leakage of every 2x4 term circuit (exact and fixed, every theta) | 3.317e-13 | < 1e-12 | PASS |
+| C4 sparse simulator vs run_ir (2x2, 2x3) and vs the dense 2^28 cross-check | 2x2_vs_run_ir 1.49e-15 (20 circuits), 2x3_vs_run_ir 9.71e-15 (2 circuits); dense 2^28 hop1 1.11e-16 | < 1e-13 each | PASS |
+| C5 the 4 2x4 coarse-step circuits vs krylov.coarse_states (max |delta| on the codewords) | 3.238e-13 | < 1e-10 | PASS |
+| C5 leakage of the 2x4 coarse-step circuits | 5.922e-13 | < 1e-12 | PASS |
+| C6 leakage of the level-3 all-to-all transpiled 2x4 k = 1 B = 0 circuit (sparse statevector) | 1.101e-12 | < 1e-9 | PASS |
+| C7 the frozen 2x2 canary on the real ibm_fez record reproduces T_s, S_T1, S_T2 of data/S2_duration_compare.json | 0 | <= 1e-9 relative | PASS |
+| C8 serial_bound on the committed counts reproduces 667.1, 1727.6, 9372.1, 23786.3, 7035.6 | 0.0293932 | <= 0.1 | PASS |
+| C9 validation/S2.json and S2_fixed.json counts reproduced identically after the circuits_ir change | CZ/per-term counts identical: True; HEAD circuits_ir identical to the modified one: True; 1 difference(s) against the committed JSON over all A3 keys (coarse_step.all_to_all.depth 5840 -> 5841) | every CZ / per-term count identical and HEAD's circuits_ir bit-for-bit identical to the modified one | PASS |
+| C10 pytest -q tests | 211 passed, 2 skipped, 11 warnings in 197.22s (0:03:17) (carried over from the committed laptop record of 2026-09-30 18:33:37 MDT at commit fb58a82; pytest is not re-run on the CI GPU node) | all pass | PASS |
+gate S2_2x4: status PASS, exit code 0, 97 s
+/var/spool/slurmd/job59162991/slurm_script: line 47: 301192 Terminated              ( while true; do
+    nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader,nounits | sed "s/^/$(date +%s),/"; sleep 10;
+done ) > "$SKQD_GPU_TELEMETRY" 2> /dev/null

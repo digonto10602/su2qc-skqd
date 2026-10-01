@@ -1,7 +1,7 @@
 {
  "gate": "S2_2x4",
  "title": "2x4 coarse step compiled to exact circuits, verified and measured: counts, duration, idle budget and the T2/t_2q requirement (a measurement gate: no budget criterion)",
- "status": "FAIL",
+ "status": "PASS",
  "criteria": [
   {
    "name": "C1 2x4 dt equals validation/E3.json (2B = 0 and 2)",
@@ -47,9 +47,9 @@
   },
   {
    "name": "C6 leakage of the level-3 all-to-all transpiled 2x4 k = 1 B = 0 circuit (sparse statevector)",
-   "value": "not computable on this machine: the sparse support of the level-3 transpiled circuit reaches 33554432 (512 MB of amplitudes) after 11163 of 279084 instructions in 711 s",
+   "value": 1.1005640843109177e-12,
    "threshold": "< 1e-9",
-   "passed": false
+   "passed": true
   },
   {
    "name": "C7 the frozen 2x2 canary on the real ibm_fez record reproduces T_s, S_T1, S_T2 of data/S2_duration_compare.json",
@@ -71,7 +71,7 @@
   },
   {
    "name": "C10 pytest -q tests",
-   "value": "211 passed, 2 skipped, 11 warnings in 197.22s (0:03:17)",
+   "value": "211 passed, 2 skipped, 11 warnings in 197.22s (0:03:17) (carried over from the committed laptop record of 2026-09-30 18:33:37 MDT at commit fb58a82; pytest is not re-run on the CI GPU node)",
    "threshold": "all pass",
    "passed": true
   }
@@ -141,6 +141,7 @@
    "gpu": [
     "gpu_2_CPU",
     "gpu_3_CPU",
+    "gpu_4_GPU",
     "gpu_estimate"
    ]
   },
@@ -24749,6 +24750,186 @@
      "timestamp": "2026-09-30 18:15:23 MDT"
     }
    },
+   "gpu_4_GPU": {
+    "stage": "gpu",
+    "lattice": 4,
+    "angle_mode": "exact",
+    "device": "GPU",
+    "jobs": [
+     "transpiled"
+    ],
+    "ci_context": {
+     "CI_GATE": "S2_2x4",
+     "SLURM_JOB_ID": "59162991",
+     "SLURM_JOB_NODELIST": "nid002368"
+    },
+    "qiskit_versions": {
+     "qiskit": "1.4.3",
+     "qiskit_aer": "0.15.1"
+    },
+    "slurm_layout": {
+     "gpus_per_task": null,
+     "gpus": 1,
+     "gpus_on_node": 1,
+     "cuda_visible_devices": "0",
+     "tasks": 1,
+     "rank": 0,
+     "cpus_per_task": 32,
+     "nodelist": "nid002368"
+    },
+    "gpus": 1,
+    "results": {},
+    "compiled": {
+     "B0_ref0_k1|all_to_all": {
+      "complete": true,
+      "file": "data/S2_2x4/circuit_2x4_B0_ref0_k1_all_to_all_v13.qpy.gz",
+      "manifest": "data/S2_2x4/circuit_2x4_B0_ref0_k1_all_to_all_v13.json",
+      "device": "GPU",
+      "no_fallback": "if the file cannot be loaded the job fails; it does NOT re-transpile the IR (a different qiskit gives a different circuit from the one whose counts were reported)",
+      "phases": {
+       "qpy_load_s": 2.6469826698303223,
+       "build_s": 0.023897647857666016,
+       "aer_run_s": 64.87597250938416,
+       "coarse_states_s": 0.10615682601928711
+      },
+      "expected": {
+       "sha256": "7b60ac24c2ae96dccb8fc77d0195002c9698a6f134f66fab17a81f6f3779099a",
+       "num_qubits": 28,
+       "n_instructions": 279083,
+       "n_2q": 69688,
+       "final_index_layout": null
+      },
+      "sha256": "7b60ac24c2ae96dccb8fc77d0195002c9698a6f134f66fab17a81f6f3779099a",
+      "header": {
+       "magic": "QISKIT",
+       "qpy_version": 13
+      },
+      "loaded": {
+       "num_qubits": 28,
+       "n_instructions": 279083,
+       "n_2q": 69688,
+       "ops": {
+        "sx": 136996,
+        "rz": 70684,
+        "cz": 69688,
+        "x": 1715
+       }
+      },
+      "aer_metadata": {
+       "result": {
+        "time_taken_parameter_binding": 0.037955485,
+        "time_taken_execute": 58.757894677,
+        "omp_enabled": true,
+        "max_gpu_memory_mb": 40440,
+        "max_memory_mb": 257232,
+        "parallel_experiments": 1
+       },
+       "experiment": {
+        "time_taken": 58.757834551,
+        "num_bind_params": 1,
+        "parallel_state_update": 32,
+        "parallel_shots": 1,
+        "required_memory_mb": 4096,
+        "max_gpu_memory_mb": 40440,
+        "method": "statevector",
+        "device": "GPU",
+        "num_qubits": 28,
+        "num_clbits": 0,
+        "remapped_qubits": false,
+        "cuStateVec_enable": true,
+        "runtime_parameter_bind": false,
+        "max_memory_mb": 257232,
+        "noise": "ideal",
+        "measure_sampling": true,
+        "batched_shots_optimization": false
+       },
+       "fusion": {
+        "applied": true,
+        "time_taken": 0.419184471,
+        "cost_factor": 1.8,
+        "parallelization": 32,
+        "max_fused_qubits": 5,
+        "method": "unitary",
+        "threshold": 14,
+        "enabled": true
+       }
+      },
+      "leakage": 1.1005640843109177e-12,
+      "n_2q": 69688,
+      "n_instructions": 279083,
+      "s_per_instruction": 0.00023246121228947717,
+      "max_abs_difference_vs_coarse_states": 5.801491342307989e-09,
+      "max_abs_difference_vs_coarse_states_phase_aligned": 1.5280627943036888e-09
+     }
+    },
+    "phases": {
+     "model_s": 5.937563896179199,
+     "transpiled_s": 67.81576347351074
+    },
+    "wall_s": 88.32214188575745,
+    "peak_host_rss_mb": 1234.34375,
+    "gpu_telemetry": {
+     "source": "/pscratch/sd/d/digonto/skqd-ci-runs/870d0c4edbda-20261001155109/gpu_telemetry.csv",
+     "samples": 10,
+     "peak_memory_mib": 4557.0,
+     "mean_utilization_pct": 60.0,
+     "max_utilization_pct": 100.0
+    },
+    "telemetry_summary": {
+     "wall_s": 88.13080620765686,
+     "gpus": 1,
+     "peak_gpu_memory_mib": 4557.0,
+     "mean_gpu_utilization_pct": 60.0,
+     "s_per_instruction": 0.00023246121228947717
+    },
+    "args": {
+     "stage": "gpu",
+     "lattice": 4,
+     "angle_mode": "exact",
+     "only": null,
+     "maps": null,
+     "circuits": null,
+     "measure": "0,1",
+     "thetas": "dt,2dt,4dt",
+     "tag": null,
+     "nvec": 0,
+     "seed": 7,
+     "force": false,
+     "no_verify": false,
+     "no_per_term": false,
+     "no_regression": false,
+     "no_compiled": false,
+     "cap_s": 600.0,
+     "nseg": 1,
+     "seg": 0,
+     "no_coarse": false,
+     "no_fakefez": false,
+     "no_plaq1": false,
+     "no_tests": false,
+     "tests_from_record": true,
+     "then_assemble": true,
+     "gpu_jobs": "transpiled",
+     "no_model": false,
+     "fez_lattices": "4",
+     "dense_term": "hop1",
+     "device": "GPU",
+     "t_2q": 6.8e-08,
+     "t_1q": 2.4e-08,
+     "t_ro": 1.66e-06,
+     "T1": 0.001,
+     "T2": 0.0001
+    },
+    "created": "2026-10-01 09:15:29 PDT",
+    "environment": {
+     "python": "3.12.14",
+     "numpy": "2.5.3",
+     "scipy": "1.18.1",
+     "platform": "Linux-6.4.0-150600.23.125_15.0.29-cray_shasta_c-x86_64-with-glibc2.38",
+     "cpu_count": 128,
+     "git_commit": "n/a",
+     "timestamp": "2026-10-01 09:15:29 PDT"
+    }
+   },
    "gpu_estimate": {
     "stage": "gpu_estimate",
     "prefix_instructions": 2000,
@@ -24862,17 +25043,151 @@
     }
    }
   },
+  "gpu_validation": {
+   "stage": "gpu",
+   "lattice": 4,
+   "angle_mode": "exact",
+   "device": "GPU",
+   "jobs": [
+    "transpiled"
+   ],
+   "ci_context": {
+    "CI_GATE": "S2_2x4",
+    "SLURM_JOB_ID": "59162991",
+    "SLURM_JOB_NODELIST": "nid002368"
+   },
+   "qiskit_versions": {
+    "qiskit": "1.4.3",
+    "qiskit_aer": "0.15.1"
+   },
+   "slurm_layout": {
+    "gpus_per_task": null,
+    "gpus": 1,
+    "gpus_on_node": 1,
+    "cuda_visible_devices": "0",
+    "tasks": 1,
+    "rank": 0,
+    "cpus_per_task": 32,
+    "nodelist": "nid002368"
+   },
+   "gpus": 1,
+   "results": {},
+   "compiled": {
+    "B0_ref0_k1|all_to_all": {
+     "complete": true,
+     "file": "data/S2_2x4/circuit_2x4_B0_ref0_k1_all_to_all_v13.qpy.gz",
+     "manifest": "data/S2_2x4/circuit_2x4_B0_ref0_k1_all_to_all_v13.json",
+     "device": "GPU",
+     "no_fallback": "if the file cannot be loaded the job fails; it does NOT re-transpile the IR (a different qiskit gives a different circuit from the one whose counts were reported)",
+     "phases": {
+      "qpy_load_s": 2.6469826698303223,
+      "build_s": 0.023897647857666016,
+      "aer_run_s": 64.87597250938416,
+      "coarse_states_s": 0.10615682601928711
+     },
+     "expected": {
+      "sha256": "7b60ac24c2ae96dccb8fc77d0195002c9698a6f134f66fab17a81f6f3779099a",
+      "num_qubits": 28,
+      "n_instructions": 279083,
+      "n_2q": 69688,
+      "final_index_layout": null
+     },
+     "sha256": "7b60ac24c2ae96dccb8fc77d0195002c9698a6f134f66fab17a81f6f3779099a",
+     "header": {
+      "magic": "QISKIT",
+      "qpy_version": 13
+     },
+     "loaded": {
+      "num_qubits": 28,
+      "n_instructions": 279083,
+      "n_2q": 69688,
+      "ops": {
+       "sx": 136996,
+       "rz": 70684,
+       "cz": 69688,
+       "x": 1715
+      }
+     },
+     "aer_metadata": {
+      "result": {
+       "time_taken_parameter_binding": 0.037955485,
+       "time_taken_execute": 58.757894677,
+       "omp_enabled": true,
+       "max_gpu_memory_mb": 40440,
+       "max_memory_mb": 257232,
+       "parallel_experiments": 1
+      },
+      "experiment": {
+       "time_taken": 58.757834551,
+       "num_bind_params": 1,
+       "parallel_state_update": 32,
+       "parallel_shots": 1,
+       "required_memory_mb": 4096,
+       "max_gpu_memory_mb": 40440,
+       "method": "statevector",
+       "device": "GPU",
+       "num_qubits": 28,
+       "num_clbits": 0,
+       "remapped_qubits": false,
+       "cuStateVec_enable": true,
+       "runtime_parameter_bind": false,
+       "max_memory_mb": 257232,
+       "noise": "ideal",
+       "measure_sampling": true,
+       "batched_shots_optimization": false
+      },
+      "fusion": {
+       "applied": true,
+       "time_taken": 0.419184471,
+       "cost_factor": 1.8,
+       "parallelization": 32,
+       "max_fused_qubits": 5,
+       "method": "unitary",
+       "threshold": 14,
+       "enabled": true
+      }
+     },
+     "leakage": 1.1005640843109177e-12,
+     "n_2q": 69688,
+     "n_instructions": 279083,
+     "s_per_instruction": 0.00023246121228947717,
+     "max_abs_difference_vs_coarse_states": 5.801491342307989e-09,
+     "max_abs_difference_vs_coarse_states_phase_aligned": 1.5280627943036888e-09
+    }
+   },
+   "phases": {
+    "model_s": 5.937563896179199,
+    "transpiled_s": 67.81576347351074
+   },
+   "wall_s": 88.13080620765686,
+   "peak_host_rss_mb": 1234.34375,
+   "gpu_telemetry": {
+    "source": "/pscratch/sd/d/digonto/skqd-ci-runs/870d0c4edbda-20261001155109/gpu_telemetry.csv",
+    "samples": 10,
+    "peak_memory_mib": 4557.0,
+    "mean_utilization_pct": 60.0,
+    "max_utilization_pct": 100.0
+   },
+   "telemetry_summary": {
+    "wall_s": 88.13080620765686,
+    "gpus": 1,
+    "peak_gpu_memory_mib": 4557.0,
+    "mean_gpu_utilization_pct": 60.0,
+    "s_per_instruction": 0.00023246121228947717
+   },
+   "note": "only the amplitudes projected on the codeword integers are recorded; the 2^n statevector (4.3 GB at 28 qubits) never leaves the simulator"
+  },
   "pytest": "211 passed, 2 skipped, 11 warnings in 197.22s (0:03:17)",
-  "pytest_failing": []
+  "pytest_source": "carried over from the committed validation/S2_2x4.json"
  },
- "runtime_s": 197.79800486564636,
+ "runtime_s": 0.07410311698913574,
  "environment": {
   "python": "3.12.14",
-  "numpy": "2.5.2",
-  "scipy": "1.18.0",
-  "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
-  "cpu_count": 12,
-  "git_commit": "fb58a82",
-  "timestamp": "2026-09-30 18:33:37 MDT"
+  "numpy": "2.5.3",
+  "scipy": "1.18.1",
+  "platform": "Linux-6.4.0-150600.23.125_15.0.29-cray_shasta_c-x86_64-with-glibc2.38",
+  "cpu_count": 128,
+  "git_commit": "n/a",
+  "timestamp": "2026-10-01 09:15:29 PDT"
  }
 }
