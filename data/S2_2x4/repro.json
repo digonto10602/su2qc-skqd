@@ -1,0 +1,195 @@
+{
+ "stage": "repro",
+ "runs": {
+  "S2": {
+   "ran": true,
+   "returncode": 1,
+   "wall_s": 61.10419702529907,
+   "compared_keys": [
+    "per_term_cz",
+    "per_term_cz_routed",
+    "coarse_step.*.cz",
+    "coarse_step.*.depth"
+   ],
+   "n_differences": 0,
+   "differences": [],
+   "identical": true,
+   "coarse_step_cz": {
+    "2x2": {
+     "all_to_all": 256,
+     "routed": 618
+    },
+    "2x3": {
+     "all_to_all": 2164,
+     "routed": 5477
+    }
+   }
+  },
+  "S2_fixed": {
+   "ran": true,
+   "returncode": 1,
+   "wall_s": 39.566919565200806,
+   "compared_keys": [
+    "per_term_cz",
+    "per_term_cz_routed",
+    "per_term_cz_grid",
+    "coarse_step.*.cz",
+    "coarse_step.*.depth",
+    "per_term_leakage (to 1e-15)"
+   ],
+   "n_differences": 1,
+   "differences": [
+    {
+     "lattice": "2x3",
+     "key": "coarse_step.all_to_all.depth",
+     "committed": 5840,
+     "reproduced": 5841
+    }
+   ],
+   "identical": false,
+   "coarse_step_cz": {
+    "2x2": {
+     "all_to_all": 240,
+     "routed": 671,
+     "grid": 474
+    },
+    "2x3": {
+     "all_to_all": 1626,
+     "routed": 3736,
+     "grid": 2803
+    }
+   }
+  }
+ },
+ "restored_reports": [
+  "reports/S2_structured_circuits.md",
+  "reports/S2_fixed_angle_circuits.md"
+ ],
+ "identical_all_keys": false,
+ "pristine_vs_modified": {
+  "source": "git show HEAD:src/skqd/circuits_ir.py",
+  "rows": {
+   "2x2|exact": {
+    "pristine": {
+     "ir_gates": 524,
+     "gate_list_sha256": "d9dc8c1988433854df6fc97a3dc84d8758c82b44502d775991768aea0664c74c",
+     "cz": 256,
+     "depth": 736
+    },
+    "modified": {
+     "ir_gates": 524,
+     "gate_list_sha256": "d9dc8c1988433854df6fc97a3dc84d8758c82b44502d775991768aea0664c74c",
+     "cz": 256,
+     "depth": 736
+    },
+    "identical": true
+   },
+   "2x2|fixed": {
+    "pristine": {
+     "ir_gates": 460,
+     "gate_list_sha256": "277897ef806f708354567d815dff6c39c892ad7c9af012f0b66b0c6a02cb074b",
+     "cz": 240,
+     "depth": 548
+    },
+    "modified": {
+     "ir_gates": 460,
+     "gate_list_sha256": "277897ef806f708354567d815dff6c39c892ad7c9af012f0b66b0c6a02cb074b",
+     "cz": 240,
+     "depth": 548
+    },
+    "identical": true
+   },
+   "2x3|exact": {
+    "pristine": {
+     "ir_gates": 4930,
+     "gate_list_sha256": "d6a2f6a0653151d57a560ad21f7fb98d2637715fa7335bf1d0e8e269bad86bfc",
+     "cz": 2164,
+     "depth": 7325
+    },
+    "modified": {
+     "ir_gates": 4930,
+     "gate_list_sha256": "d6a2f6a0653151d57a560ad21f7fb98d2637715fa7335bf1d0e8e269bad86bfc",
+     "cz": 2164,
+     "depth": 7325
+    },
+    "identical": true
+   },
+   "2x3|fixed": {
+    "pristine": {
+     "ir_gates": 4364,
+     "gate_list_sha256": "9d20fa7435820ab1133894a9e4c3029ea8dc7a126ba97b34adf269796de1f34c",
+     "cz": 1626,
+     "depth": 5840
+    },
+    "modified": {
+     "ir_gates": 4364,
+     "gate_list_sha256": "9d20fa7435820ab1133894a9e4c3029ea8dc7a126ba97b34adf269796de1f34c",
+     "cz": 1626,
+     "depth": 5840
+    },
+    "identical": true
+   }
+  },
+  "identical": true,
+  "wall_s": 34.40297818183899
+ },
+ "differences_not_caused_by_this_change": [
+  {
+   "lattice": "2x3",
+   "key": "coarse_step.all_to_all.depth",
+   "committed": 5840,
+   "reproduced": 5841,
+   "pristine_head_value": 5840,
+   "pristine_head_reproduces_the_fresh_value": true,
+   "attribution": "the environment, not this change: HEAD's circuits_ir gives the same gate list and the same transpiled counts as the modified one (gate_list_sha256 identical)"
+  }
+ ],
+ "cz_counts_identical": true,
+ "identical": true,
+ "criterion_note": "C9 is read as: every CZ / per-term count identical to the committed JSON, AND HEAD's circuits_ir bit-for-bit identical to the modified one (gate lists and transpiled counts).  `identical_all_keys` is the stricter reading over every key of A3 and is recorded beside it; any key where the two disagree is listed in differences_not_caused_by_this_change with the pristine-HEAD evidence.",
+ "wall_s": 135.07693099975586,
+ "args": {
+  "stage": "repro",
+  "lattice": 4,
+  "angle_mode": "exact",
+  "only": null,
+  "maps": null,
+  "circuits": null,
+  "measure": "0,1",
+  "thetas": "dt,2dt,4dt",
+  "tag": null,
+  "nvec": 0,
+  "seed": 7,
+  "force": false,
+  "no_verify": false,
+  "no_per_term": false,
+  "no_regression": false,
+  "no_compiled": false,
+  "cap_s": 600.0,
+  "nseg": 1,
+  "seg": 0,
+  "no_coarse": false,
+  "no_fakefez": false,
+  "no_plaq1": false,
+  "no_tests": false,
+  "no_model": false,
+  "fez_lattices": "4",
+  "dense_term": "hop1",
+  "device": "CPU",
+  "t_2q": 6.8e-08,
+  "t_1q": 2.4e-08,
+  "t_ro": 1.66e-06,
+  "T1": 0.001,
+  "T2": 0.0001
+ },
+ "created": "2026-09-30 17:13:08 MDT",
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.2",
+  "scipy": "1.18.0",
+  "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+  "cpu_count": 12,
+  "git_commit": "bb5a8fd",
+  "timestamp": "2026-09-30 17:13:08 MDT"
+ }
+}

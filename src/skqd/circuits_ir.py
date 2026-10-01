@@ -54,6 +54,49 @@ def gray(j: int) -> int:
     return j ^ (j >> 1)
 
 
+# Above this many controls `ucr_gray` builds the Gray-code angle transform with an
+# O(N log N) Walsh-Hadamard butterfly instead of the O(N^2) Python double loop that
+# materialises M.  The two forms are the same linear map (see `_wht`); the switch exists
+# only because the double loop is 4.2e6 Python operations at 11 controls and 1e9 at 15.
+# It is deliberately set ABOVE every control count that occurs at 2x2 and 2x3 (max 7,
+# validation/S2.json per_term_structure), so those gate lists are bit for bit unchanged.
+UCR_FAST_MIN_CONTROLS = 11
+
+
+def _wht(v) -> np.ndarray:
+    """Walsh-Hadamard transform  w[g] = sum_c (-1)^{popcount(g & c)} v[c]  (no normalisation),
+    by the standard in-place butterfly: O(N log N) numpy operations instead of O(N^2)."""
+    a = np.array(v, dtype=float)
+    n = a.size
+    assert n & (n - 1) == 0 and n > 0, "the Walsh-Hadamard butterfly needs a power-of-two length"
+    h = 1
+    while h < n:
+        a = a.reshape(-1, 2, h)
+        x = a[:, 0, :].copy()
+        y = a[:, 1, :]
+        a[:, 0, :] = x + y
+        a[:, 1, :] = x - y
+        a = a.reshape(-1)
+        h <<= 1
+    return a
+
+
+def ucr_angles(theta_list, k: int) -> np.ndarray:
+    """The Gray-code angle table alpha = M^T theta / N with M[c, j] = (-1)^{popcount(c & gray(j))}.
+
+    Exactly `alpha_j = (1/2^k) (WHT theta)[gray(j)]`; the fast form is used only for
+    k >= UCR_FAST_MIN_CONTROLS so that every smaller gate list is unchanged."""
+    N = 1 << k
+    theta = np.asarray(theta_list, dtype=float)
+    assert len(theta) == N
+    if k >= UCR_FAST_MIN_CONTROLS:
+        w = _wht(theta)
+        j = np.arange(N, dtype=np.int64)
+        return w[j ^ (j >> 1)] / N
+    M = np.array([[(-1) ** bin(c & gray(j)).count("1") for j in range(N)] for c in range(N)], dtype=float)
+    return M.T @ theta / N
+
+
 def ucr_gray(theta_list: list, controls: list, target: int, axis: str = "z") -> list:
     """Gray-code decomposition of  sum_c |c><c| (x) R_axis(theta_c)  (c = sum_j c_j 2^j over
     `controls` in order) into 2^k rotations on the target and 2^k CNOTs (controls -> target).
@@ -69,8 +112,7 @@ def ucr_gray(theta_list: list, controls: list, target: int, axis: str = "z") -> 
     assert len(theta) == N
     if k == 0:
         return [(f"r{axis}", [target], float(theta[0]))]
-    M = np.array([[(-1) ** bin(c & gray(j)).count("1") for j in range(N)] for c in range(N)], dtype=float)
-    alpha = M.T @ theta / N
+    alpha = ucr_angles(theta, k)
     gates = []
     for j in range(N):
         gates.append((f"r{axis}", [target], float(alpha[j])))
@@ -271,7 +313,7 @@ def _gauge_gates(f, k):
     return cn + [("p", [t], np.pi / 2)] + cn[::-1], cn + [("p", [t], -np.pi / 2)] + cn[::-1]
 
 
-def _block_rounds(A, theta):
+def _block_rounds(A, theta, fallback: list | None = None):
     """exp(theta A) (A real antisymmetric = -i h) as a list of ROUNDS of two-level ops; ops
     inside a round act on disjoint pairs and commute.  Every block of the SU(2) Hamiltonian
     is bipartite with a zero diagonal -- a hopping term changes n_x by one, a plaquette flips
@@ -293,7 +335,11 @@ def _block_rounds(A, theta):
     np.fill_diagonal(Adj, False)
     col = _bipartition(Adj)
     if col is None or np.abs(np.diag(A)).max() > 1e-12:
+        if fallback is not None:
+            fallback.append(True)
         return [[op] for op in _generic_two_level(sla.expm(theta * A).astype(complex))]
+    if fallback is not None:
+        fallback.append(False)
     ia = [i for i in range(n) if col[i] == 0]
     ib = [i for i in range(n) if col[i] == 1]
     K = A[np.ix_(ia, ib)]
@@ -599,8 +645,14 @@ def structured_term_gates(model: Model, O, support: list, theta: float, stats: l
     uses one angle per flip pattern (see _fixed_angle_rotations) -- a cheaper generator, not
     the exponential.  Both map codewords to codewords exactly.
     `stats`, if a list, receives one entry per multiplexed rotation (flip pattern, target,
-    number of controls after the minimisation, number of two-level rotations it merges)."""
+    number of controls after the minimisation, number of two-level rotations it merges), plus
+    the two per-TERM diagnostics `real_gauge_found` (the diagonal gauge of `_real_gauge` made
+    the block generator real, so every rotation is an Ry) and `block_rounds_fallback`
+    (`_block_rounds` had to fall back to a generic Givens elimination of expm for at least one
+    block, because that block was not bipartite or had a nonzero diagonal).  Both keys are
+    additive: nothing that read `stats` before reads them."""
     assert angle_mode in ("exact", "fixed"), angle_mode
+    n_stats0 = len(stats) if stats is not None else 0
     states, h, pos = localize(model, O, support)
     k = len(support)
     A = np.abs(h) > 1e-12
@@ -608,15 +660,26 @@ def structured_term_gates(model: Model, O, support: list, theta: float, stats: l
     ncomp, lab = csgraph.connected_components(sp.csr_matrix(A), directed=False)
     valid = np.array(sorted(int(s) for s in states), dtype=np.int64)
     f, Aop = _real_gauge(states, h)
+    real_gauge = bool(np.abs(np.imag(np.asarray(Aop))).max() <= 1e-11)
     pre, post = _gauge_gates(f, k)
+
+    def _annotate(fb):
+        if stats is None:
+            return
+        for e in stats[n_stats0:]:
+            e["real_gauge_found"] = real_gauge
+            e["block_rounds_fallback"] = bool(fb)
+
     if angle_mode == "fixed":
         out = _fixed_angle_rotations(states, Aop, theta, valid, k, stats)
+        _annotate(False)                         # the fixed-angle mode does not use _block_rounds
         out = post + out + pre
         return [(nm, [support[q] for q in qs], par) for nm, qs, par in out]
     blocks = []
+    fb = []
     for c in range(ncomp):
         idx = np.where(lab == c)[0]
-        rounds = _block_rounds(Aop[np.ix_(idx, idx)], theta)
+        rounds = _block_rounds(Aop[np.ix_(idx, idx)], theta, fallback=fb)
         if rounds:
             blocks.append([[(int(states[idx[i]]), int(states[idx[j]]), V) for (i, j, V) in rd]
                            for rd in rounds])
@@ -629,8 +692,40 @@ def structured_term_gates(model: Model, O, support: list, theta: float, stats: l
                     by_diff.setdefault(a ^ bb, []).append((a, bb, V))
         for d in sorted(by_diff):
             out += _multiplexed_two_level(d, by_diff[d], valid, k, stats=stats)
+    _annotate(any(fb))
     out = post + out + pre                       # exp(-i theta h) = D exp(theta A) D^dag
     return [(nm, [support[q] for q in qs], par) for nm, qs, par in out]
+
+
+def term_structure(model: Model, O, support: list) -> dict:
+    """The block structure of one Hamiltonian term on its support -- no synthesis.
+
+    Everything the cost of `structured_term_gates` is driven by: the support width, the number
+    of local codewords, the connected blocks of the generator and their sizes and degrees, the
+    number of distinct |matrix elements| (which is what the angle table depends on) and the
+    number of qubit-flip patterns, plus `diag_nonzero`, the premise of the bipartite
+    singular-value construction of `_block_rounds`."""
+    states, h, _pos = localize(model, O, support)
+    A = np.abs(h) > 1e-12
+    np.fill_diagonal(A, False)
+    ncomp, lab = csgraph.connected_components(sp.csr_matrix(A), directed=False)
+    sizes = np.bincount(lab, minlength=ncomp)
+    hist = {}
+    for s in sizes.tolist():
+        hist[int(s)] = hist.get(int(s), 0) + 1
+    off = [(int(i), int(j)) for i, j in np.argwhere(np.abs(h) > 1e-12) if i != j]
+    elements = sorted({round(float(abs(h[i, j])), 12) for i, j in off})
+    flips = sorted({int(states[i]) ^ int(states[j]) for i, j in off})
+    return {
+        "support": int(len(support)), "support_qubits": [int(q) for q in support],
+        "local_states": int(len(states)), "blocks": int(ncomp),
+        "largest_block": int(sizes.max()) if ncomp else 0,
+        "block_size_histogram": {str(s): int(hist[s]) for s in sorted(hist)},
+        "max_degree": int(A.sum(axis=1).max()) if len(states) else 0,
+        "distinct_abs_elements": len(elements), "abs_elements": elements,
+        "flip_patterns": len(flips), "flip_pattern_values": flips,
+        "diag_nonzero": bool(np.abs(np.diag(h)).max() > 1e-12) if len(states) else False,
+    }
 
 # ---------------------------------------------------------------------- term gates
 class CircuitFactory:

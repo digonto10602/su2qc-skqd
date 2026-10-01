@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pytest
 
@@ -347,3 +348,134 @@ def test_run_ir_fast_paths_match_apply_local():
                                  ("rz", [a], th, np.diag([np.exp(-1j * th / 2), np.exp(1j * th / 2)])),
                                  ("cp", [a, b], th, np.diag([1.0, 1.0, 1.0, np.exp(1j * th)]))):
             assert abs(run_ir([(name, qs, par)], n, psi) - apply_local(psi, U, qs, n)).max() < 1e-13
+
+
+# ------------------------------------- the fast Gray-code angle transform (prompts/22 A1)
+def test_ucr_angles_fast_form_equals_the_matrix_form():
+    """`ucr_angles` switches to the O(N log N) Walsh-Hadamard butterfly above
+    UCR_FAST_MIN_CONTROLS controls.  Below the switch it must BE the old O(N^2) construction
+    (so every 2x2 and 2x3 gate list -- max 7 controls -- is bit for bit unchanged), and at
+    the switch the two must agree to machine precision."""
+    from skqd.circuits_ir import (UCR_FAST_MIN_CONTROLS, _wht, gray, ucr_angles, ucr_gray)
+
+    assert UCR_FAST_MIN_CONTROLS == 11
+    rng = np.random.default_rng(0)
+    for k in range(0, 9):
+        N = 1 << k
+        th = rng.uniform(-3, 3, size=N)
+        M = np.array([[(-1) ** bin(c & gray(j)).count("1") for j in range(N)]
+                      for c in range(N)], dtype=float)
+        slow = M.T @ th / N
+        # below the switch: bit-for-bit the old construction
+        assert np.array_equal(ucr_angles(th, k), slow)
+        j = np.arange(N)
+        fast = _wht(th)[j ^ (j >> 1)] / N
+        assert abs(fast - slow).max() <= 1e-15
+        # the gate list built from either angle table has the same names and qubits, and the
+        # two angle sequences differ only by that rounding
+        g = ucr_gray(list(th), list(range(k)), k, axis="y")
+        assert [(nm, qs) for nm, qs, _p in g] == \
+               [("ry", [k]) if i % 2 == 0 else ("cx", g[i][1]) for i in range(len(g))]
+        got = np.array([p for nm, _q, p in g if nm == "ry"], dtype=float)
+        assert np.array_equal(got, slow)
+        assert abs(got - fast).max() <= 1e-15
+    k = 11                                  # the fast path: one random table, the old O(N^2)
+    N = 1 << k                               # construction runs here only (about 3 s)
+    th = rng.uniform(-3, 3, size=N)
+    M = np.array([[(-1) ** bin(c & gray(j)).count("1") for j in range(N)]
+                  for c in range(N)], dtype=float)
+    assert abs(ucr_angles(th, k) - M.T @ th / N).max() < 1e-12
+
+
+def test_ucr_gray_is_still_the_right_unitary_at_11_controls():
+    """The fast angle transform has to give the same GATE, not only the same angles."""
+    from skqd.circuits_ir import ucr_gray
+
+    rng = np.random.default_rng(4)
+    k = 11
+    th = rng.uniform(-1, 1, size=1 << k)
+    gates = ucr_gray(list(th), list(range(k)), k, axis="y")
+    n = k + 1
+    # test the action on a few random control states rather than the full 2^12 unitary
+    for c in rng.choice(1 << k, size=6, replace=False):
+        c = int(c)
+        psi = np.zeros(2 ** n, dtype=complex)
+        psi[c] = 1.0
+        out = run_ir(gates, n, psi)
+        a, b = np.cos(th[c] / 2), np.sin(th[c] / 2)
+        want = np.zeros(2 ** n, dtype=complex)
+        want[c] = a
+        want[c + (1 << k)] = b
+        assert abs(out - want).max() < 1e-11, c
+
+
+# --------------------------------------------- 2x4 term gates (prompts/22 B3, gate S2_2x4)
+def _term_check(M, name, g2, thetas, rng, nvec):
+    from skqd.reference_sim import term_support
+    if name.startswith("hop"):
+        O, sup = M.terms.hop[int(name[3:])], term_support(M, "hop", int(name[3:]))
+    else:
+        P = int(name[4:])
+        O, sup = -M.terms.plaq[P] / (2 * g2), term_support(M, "plaq", P)
+    return _local_deviation(M, O, sup, thetas, rng, nvec=nvec), len(sup)
+
+
+def test_structured_terms_2x4_cheap():
+    """The structured engine at 2x4 on the terms that are affordable in the default run:
+    an x-link at the end of the ladder, the other end, and a plaquette with two interior
+    corners.  `plaq1` (16 qubits, 132554 gates) is the `slow` test below."""
+    M = Model(4)
+    g2 = 4.0
+    dt = M.reference(g2, 0).dt
+    rng = np.random.default_rng(41)
+    worst = 0.0
+    for name, want_sup in (("hop1", 6), ("hop9", 6), ("plaq0", 14)):
+        dev, sup = _term_check(M, name, g2, (dt, 2 * dt), rng, 3)
+        assert sup == want_sup, (name, sup)
+        worst = max(worst, dev)
+    assert worst < 1e-10, worst
+
+
+def test_term_structure_reproduces_the_2x4_table():
+    """`term_structure` (the additive instrumentation of prompts/22 A2) on the two 2x4 terms
+    that do not exist at 2x3: the interior-to-interior x-link and the middle plaquette."""
+    from skqd.circuits_ir import term_structure
+    from skqd.reference_sim import term_support
+
+    M = Model(4)
+    r = term_structure(M, M.terms.hop[3], term_support(M, "hop", 3))
+    assert (r["support"], r["local_states"], r["blocks"], r["largest_block"]) == (11, 340, 160, 6)
+    assert r["diag_nonzero"] is False
+    p = term_structure(M, -M.terms.plaq[1] / 8.0, term_support(M, "plaq", 1))
+    assert (p["support"], p["local_states"], p["blocks"], p["largest_block"]) == (16, 1831, 811, 9)
+    assert p["max_degree"] == 8 and p["flip_patterns"] == 8
+    assert p["block_size_histogram"] == {"1": 163, "2": 375, "3": 225, "4": 9, "5": 36, "9": 3}
+    assert p["diag_nonzero"] is False
+
+
+def test_structured_term_stats_carry_the_new_diagnostics():
+    """Every stats entry gains `real_gauge_found` and `block_rounds_fallback` (A2)."""
+    from skqd.circuits_ir import structured_term_gates
+    from skqd.reference_sim import term_support
+
+    M = Model(2)
+    dt = M.reference(4.0, 0).dt
+    for mode in ("exact", "fixed"):
+        st = []
+        structured_term_gates(M, M.terms.hop[0], term_support(M, "hop", 0), dt, stats=st,
+                              angle_mode=mode)
+        assert st
+        assert all(e["real_gauge_found"] is True for e in st), mode
+        assert all(e["block_rounds_fallback"] is False for e in st), mode
+
+
+@pytest.mark.skipif(not os.environ.get("SKQD_SLOW"),
+                    reason="slow: 16-qubit plaq1 synthesis is about 200 s; set SKQD_SLOW=1")
+def test_structured_plaq1_2x4_slow():
+    M = Model(4)
+    g2 = 4.0
+    dt = M.reference(g2, 0).dt
+    rng = np.random.default_rng(42)
+    dev, sup = _term_check(M, "plaq1", g2, (dt,), rng, 1)
+    assert sup == 16
+    assert dev < 1e-10, dev

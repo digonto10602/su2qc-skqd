@@ -1,0 +1,112 @@
+{
+ "stage": "gpu_estimate",
+ "prefix_instructions": 2000,
+ "n_instructions": 279083,
+ "laptop_aer_cpu_s_per_instruction": 0.0699444590806961,
+ "laptop_prefix_s": 139.8889181613922,
+ "laptop_full_circuit_s_projected": 19520.309473617912,
+ "aer_metadata": {
+  "result": {
+   "time_taken_parameter_binding": 0.000282439,
+   "time_taken_execute": 139.857634992,
+   "omp_enabled": true,
+   "max_gpu_memory_mb": 0,
+   "max_memory_mb": 63979,
+   "parallel_experiments": 1
+  },
+  "experiment": {
+   "time_taken": 139.857614286,
+   "num_bind_params": 1,
+   "parallel_state_update": 12,
+   "required_memory_mb": 4096,
+   "method": "statevector",
+   "device": "CPU",
+   "num_qubits": 28,
+   "num_clbits": 0,
+   "remapped_qubits": false,
+   "parallel_shots": 1,
+   "runtime_parameter_bind": false,
+   "max_memory_mb": 63979,
+   "noise": "ideal",
+   "measure_sampling": true,
+   "batched_shots_optimization": false
+  },
+  "fusion": {
+   "applied": true,
+   "time_taken": 0.017046612,
+   "cost_factor": 1.8,
+   "parallelization": 1,
+   "max_fused_qubits": 5,
+   "method": "unitary",
+   "threshold": 14,
+   "enabled": true
+  }
+ },
+ "overheads_measured_on_laptop_s": {
+  "model_build": 6.399858474731445,
+  "qpy_load_v13": 0.11089777946472168
+ },
+ "gpu_speedup_bracket": {
+  "conservative_assumed": 20.0,
+  "optimistic_measured_S3": 160.99588652418254,
+  "source_optimistic": "validation/S3.json data.cost: reference_S2D.seconds_per_shot / seconds_per_shot_used_for_projection (noisy sampling at 20 qubits, a different workload)"
+ },
+ "gpu_aer_s_projected": {
+  "conservative": 976.0154736808956,
+  "optimistic": 121.24725603275489
+ },
+ "gpu_job_s_projected": {
+  "conservative": 1109.036986189288,
+  "optimistic": 187.75801228695104
+ },
+ "fixed_allowance_note": "2 x the measured overheads + 120 s (Aer circuit conversion, coarse_states, the in-job assemble) on the conservative side; 1 x + 60 s on the optimistic side",
+ "gpu_memory_statevector_gb": 4.294967296,
+ "wall_s": 146.68753576278687,
+ "args": {
+  "stage": "gpu_estimate",
+  "lattice": 4,
+  "angle_mode": "exact",
+  "only": null,
+  "maps": null,
+  "circuits": null,
+  "measure": "0,1",
+  "thetas": "dt,2dt,4dt",
+  "tag": null,
+  "nvec": 0,
+  "seed": 7,
+  "force": false,
+  "no_verify": false,
+  "no_per_term": false,
+  "no_regression": false,
+  "no_compiled": false,
+  "cap_s": 600.0,
+  "nseg": 1,
+  "seg": 0,
+  "no_coarse": false,
+  "no_fakefez": false,
+  "no_plaq1": false,
+  "no_tests": false,
+  "tests_from_record": false,
+  "then_assemble": false,
+  "gpu_jobs": "transpiled,coarse_step_k1",
+  "no_model": false,
+  "fez_lattices": "4",
+  "dense_term": "hop1",
+  "device": "CPU",
+  "t_2q": 6.8e-08,
+  "t_1q": 2.4e-08,
+  "t_ro": 1.66e-06,
+  "T1": 0.001,
+  "T2": 0.0001
+ },
+ "created": "2026-09-30 18:30:11 MDT",
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.2",
+  "scipy": "1.18.0",
+  "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+  "cpu_count": 12,
+  "git_commit": "fb58a82",
+  "timestamp": "2026-09-30 18:30:11 MDT"
+ }
+}
