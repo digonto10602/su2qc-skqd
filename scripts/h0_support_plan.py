@@ -150,20 +150,28 @@ def load_calibration(path):
     return cal, cz, meas
 
 
-def f_from_calibration(tq, cz_error, measure_error):
+def f_from_calibration(tq, cz_error, measure_error, two_qubit_errors=None):
     """The f of `gate_S2D.analyse_on_backend`, evaluated on a calibration RECORD.
 
     Identical formula: f = prod over the circuit's cz instructions of (1 - eps_edge)
     times prod over its measure instructions of (1 - eps_readout).  A missing or None
-    error is a hard stop, never a default (prompts/15 A1)."""
+    error is a hard stop, never a default (prompts/15 A1).
+
+    `two_qubit_errors` (prompts/23 D2, additive) maps a two-qubit instruction name to its
+    {(a, b): error} table; the default `{"cz": cz_error}` is today's behaviour bit for bit.
+    A fractional circuit passes `{"cz": cz_error, "rzz": rzz_error}` so that its f_gates
+    multiplies the rzz edge errors as well; the middle return value then counts every
+    two-qubit instruction multiplied.  One-qubit errors stay out of f, as in gate S2D."""
+    tables = {"cz": cz_error} if two_qubit_errors is None else dict(two_qubit_errors)
     log_f, n_cz, n_meas = 0.0, 0, 0
     for inst in tq.data:
         nm = inst.operation.name
         qs = tuple(tq.find_bit(q).index for q in inst.qubits)
-        if nm == "cz":
-            e = cz_error.get(qs, cz_error.get(qs[::-1]))
+        if nm in tables:
+            tab = tables[nm]
+            e = tab.get(qs, tab.get(qs[::-1]))
             if e is None:
-                raise SystemExit(f"the calibration record has no cz error for the edge {qs}: "
+                raise SystemExit(f"the calibration record has no {nm} error for the edge {qs}: "
                                  f"the clean-shot fraction f cannot be computed offline")
             log_f += np.log1p(-float(e))
             n_cz += 1

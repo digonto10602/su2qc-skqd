@@ -217,3 +217,48 @@ def test_target_with_idle_shifts_the_half_space():
         dr.target_with_idle(0.1, 3.0)          # the idle term alone exhausts the budget
     with pytest.raises(ValueError):
         dr.target_with_idle(0.1, -1.0)
+
+
+# ------------------------------------------------------------------ prompts/23 D2
+def test_fractional_durations_leave_the_canary_anchor_unchanged(canary):
+    """The rx / rzz durations are additive: the C7 anchor of gate S2_2x4 is bit-for-bit."""
+    _qc, sch, _per_q, tot = canary
+    assert abs(sch["T_s"] - 4.3708e-05) <= 1e-12
+    assert abs(tot["S_T1"] - 0.7552952713856562) <= 1e-12
+    assert abs(tot["S_T2"] - 2.5675961961706695) <= 1e-12
+
+
+def test_rx_and_rzz_schedule_to_their_recorded_durations(record):
+    from qiskit import QuantumCircuit
+    rec = json.loads(json.dumps(record))
+    q0, q1 = 117, 125
+    rec["qubits"][str(q0)]["rx_duration_s"] = 40e-9
+    rec["qubits"][str(q1)]["rx_duration_s"] = 40e-9
+    for e in rec["edges"].values():       # the H0 records keep both directed target keys
+        if sorted(e["target_key"]) == [q0, q1]:
+            e["rzz_duration_s"] = 90e-9
+    qc = QuantumCircuit(156)
+    qc.rx(0.3, q0)
+    qc.rzz(0.5, q0, q1)
+    sch = idle.schedule_asap(qc, rec)
+    assert sch["T_s"] == pytest.approx(130e-9, abs=1e-18)
+    assert sch["per_qubit"][q1]["windows_s"] == [pytest.approx(40e-9, abs=1e-18)]
+    assert idle.instruction_duration_s(rec, "rx", [q0]) == 40e-9
+    assert idle.instruction_duration_s(rec, "rzz", [q1, q0]) == 90e-9
+    # a plain record has no fractional leaves: a hard KeyError, never a default
+    with pytest.raises(KeyError):
+        idle.instruction_duration_s(record, "rx", [q0])
+    with pytest.raises(KeyError):
+        idle.instruction_duration_s(record, "rzz", [q0, q1])
+    # f_from_calibration: the default is today's product; the keyword adds rzz edge errors
+    import h0_support_plan as sp
+    cz = {(q0, q1): 0.01}
+    meas = {q0: 0.0, q1: 0.0}
+    qc2 = QuantumCircuit(156)
+    qc2.cz(q0, q1)
+    qc2.rzz(0.5, q0, q1)
+    f0, n0, _ = sp.f_from_calibration(qc2, cz, meas)
+    assert (f0, n0) == (0.99, 1)
+    f1, n1, _ = sp.f_from_calibration(qc2, cz, meas,
+                                      two_qubit_errors={"cz": cz, "rzz": {(q1, q0): 0.02}})
+    assert n1 == 2 and f1 == pytest.approx(0.99 * 0.98, abs=1e-15)

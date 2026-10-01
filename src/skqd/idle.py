@@ -63,6 +63,9 @@ def instruction_duration_s(record: dict, name: str, qubits) -> float:
 
     The record is the one `scripts/h0_backends.calibration_record` writes: per qubit
     `sx_duration_s`, `x_duration_s`, `measure_duration_s`, per edge `cz_duration_s`.
+    A FRACTIONAL record (prompts/23 D1, `gate_S2D_levers.fractional_record`) carries in
+    addition `rx_duration_s` per qubit and `rzz_duration_s` per edge; a plain record does
+    not, and an `rx` / `rzz` instruction on it raises the same KeyError as any other gap.
     """
     if name in ZERO_DURATION:
         return 0.0
@@ -79,6 +82,19 @@ def instruction_duration_s(record: dict, name: str, qubits) -> float:
         if e is None:
             raise KeyError(f"the calibration record has no cz entry for the edge ({a}, {b})")
         return float(e["cz_duration_s"])
+    if name == "rx":                # prompts/23 D2: fractional records only
+        qq = Q[str(qubits[0])]
+        if qq.get("rx_duration_s") is None:
+            raise KeyError(f"no duration for instruction 'rx' on qubit {qubits[0]} in the "
+                           f"calibration record (not a fractional record)")
+        return float(qq["rx_duration_s"])
+    if name == "rzz":
+        a, b = qubits
+        e = E.get(f"{a}-{b}") or E.get(f"{b}-{a}")
+        if e is None or e.get("rzz_duration_s") is None:
+            raise KeyError(f"no duration for instruction 'rzz' on the edge ({a}, {b}) in the "
+                           f"calibration record (not a fractional record)")
+        return float(e["rzz_duration_s"])
     raise KeyError(f"no duration for instruction '{name}' in the calibration record")
 
 
