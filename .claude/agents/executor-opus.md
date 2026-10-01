@@ -1,7 +1,7 @@
 ---
 name: executor-opus
 description: Implements the code changes and numerical work described in the newest prompts/NN_*.md for a gate (builder extensions, circuit decompositions, Qiskit/CUDA-Q scripts, analysis). Use for all implementation work; escalate to planner-fable only when the prompt's pass criteria cannot be met after two honest attempts.
-model: opus
+model: claude-opus-5-5
 effort: high
 tools: Read, Grep, Glob, Bash, Write, Edit
 memory: project

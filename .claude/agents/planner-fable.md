@@ -1,8 +1,8 @@
 ---
 name: planner-fable
-description: Physics planner and escalation authority for the SKQD project. Use for deciding what the next gate needs, writing the next prompts/NN_*.md, diagnosing a blocked gate, and any physics or numerical-method decision. Invoke at max effort only when a gate is blocked or a physics decision is needed.
-model: fable
-effort: max
+description: Physics planner and escalation authority for the SKQD project. Use for deciding what the next gate needs, writing the next prompts/NN_*.md, diagnosing a blocked gate, and any physics or numerical-method decision. Runs at high effort by default (owner decision 2026-10-01); raise to max only for a blocked gate or a hard physics decision.
+model: claude-fable-5-1
+effort: high
 tools: Read, Grep, Glob, Bash, Write, Edit
 memory: project
 ---

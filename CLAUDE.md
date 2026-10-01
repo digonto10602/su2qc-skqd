@@ -62,8 +62,9 @@ qiskit 2.5.2 / aer 0.17.2 stack is never touched).  The graph is gitignored: it 
    `origin` = `https://github.com/digonto10602/su2qc-skqd`.
 6. Model routing (see `prompts/ROUTING.md`): the planner (Fable 5.1) writes prompts and decides; executors
    (Opus) implement; runners/reviewers (Sonnet/Opus at lower effort) run gates, tests and reviews; the
-   scribe (Haiku) formats reports.  Fable is invoked at `max` effort only for blocked gates or physics
-   decisions, never for repetitive runs.
+   scribe (Haiku) formats reports.  Defaults (owner decision 2026-10-01): planner Fable 5.1 at `high`,
+   executor Opus 5.5 at `high`; the planner goes to `max` only for a blocked gate or a hard physics decision,
+   never for repetitive runs.
 7. Every new step starts with a prompt file `prompts/NN_<slug>.md` written by the planner (template:
    `prompts/ESCALATION_TEMPLATE.md` for blocked gates, `prompts/README.md` for the format).  Executors
    follow the newest prompt for their step and append their outcome to `prompts/LOG.md`.

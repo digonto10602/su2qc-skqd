@@ -9,7 +9,7 @@ with `/effort` / `CLAUDE_CODE_EFFORT_LEVEL`).
 ## The loop
 
 ```
-planner-fable (max)  --writes-->  prompts/NN_step.md
+planner-fable (high)  --writes-->  prompts/NN_step.md
         ^                                |
         |                                v
    BLOCKED.md  <--FAIL--  runner-sonnet (low) runs scripts/run_gate.py GATE
@@ -27,10 +27,11 @@ planner-fable (max)  --writes-->  prompts/NN_step.md
 
 ## Rules
 
-1. **Fable is invoked at `max` only** (a) to write the next step's prompt when the step involves a physics or
-   method decision, (b) when `validation/BLOCKED.md` exists and the executor failed twice, (c) for the weekly
-   plan revision.  Everything else runs without Fable.
-2. **Opus at `high`** implements; **Opus at `medium`** reviews.  A review never re-derives the physics from
+1. **Fable 5.1 (`claude-fable-5-1`) runs at `high` by default** (owner decision 2026-10-01) and is invoked
+   (a) to write the next step's prompt when the step involves a physics or method decision, (b) when
+   `validation/BLOCKED.md` exists and the executor failed twice, (c) for the weekly plan revision.  Raise it to
+   `max` only for a blocked gate or a hard physics decision.  Everything else runs without Fable.
+2. **Opus 5.5 (`claude-opus-5-5`) at `high`** implements; **Opus at `medium`** reviews.  A review never re-derives the physics from
    scratch; it checks computed-versus-quoted numbers and conventions.
 3. **Sonnet at `low`** runs.  It never edits source.  It reports tracebacks verbatim.
 4. **Haiku at `low`** formats.  It never changes numbers.
