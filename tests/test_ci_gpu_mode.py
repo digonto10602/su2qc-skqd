@@ -309,7 +309,12 @@ def test_sample_many_chunked_by_shots_gives_the_full_shot_count():
     assert len(counts) == len(gs)
     assert all(sum(c.values()) == 60 for c in counts), "shots lost or duplicated across chunks"
     assert info["run_calls"] == 4, info            # 16 + 16 + 16 + 12
-    assert info["seeds"] == [11, 12, 13, 14], "each chunk needs its own seed, base + index"
+    # Assert the PROPERTY, not a seed list.  This line used to read
+    # `info["seeds"] == [11, 12, 13, 14]` -- it pinned consecutive seeds, which is exactly the
+    # bug: Aer seeds shot j with seed + j, so consecutive seeds re-draw almost the same
+    # trajectories.  A test that pins an implementation detail can enshrine a defect as the spec.
+    drawn = [s + j for s in info["seeds"] for j in range(info["max_shots_per_run"])]
+    assert len(set(drawn)) == len(drawn), "two chunks re-drew the same noise trajectory"
     assert info["oom_retries"] == []
 
 

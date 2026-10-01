@@ -140,7 +140,11 @@ def test_chunking_splits_the_run_calls_and_conserves_the_shots():
     assert info1["run_calls"] == 1 and info2["run_calls"] == 5   # ceil(24/5)
     assert all(sum(c.values()) == 24 for c in many)
     assert one == many, "deterministic circuits: chunking changes nothing but the seeds used"
-    assert info2["seeds"] == [11, 12, 13, 14, 15], "base_seed + chunk index (HPC policy)"
+    # The property, not a seed list: no two chunks may draw the same noise trajectory.  This
+    # line used to pin [11, 12, 13, 14, 15], i.e. consecutive seeds, which Aer does not treat as
+    # independent (it seeds shot j with seed + j) -- see test_ci_gpu_mode.py.
+    drawn = [s + j for s in info2["seeds"] for j in range(info2["max_shots_per_run"])]
+    assert len(set(drawn)) == len(drawn), "two chunks re-drew the same noise trajectory"
 
 
 # ---------------------------------------------------------------------------------------------
