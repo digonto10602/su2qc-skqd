@@ -1,0 +1,244 @@
+{
+ "script": "scripts/ionq_2x3_feasibility.py",
+ "read_on": "2026-10-01",
+ "criterion": {
+  "mean_f_min": 0.1,
+  "worst_f_min": 0.05,
+  "source": "proposal/amendment_01_devices_and_budgets.md item 2 (signed)"
+ },
+ "specs": {
+  "ionq_aria": {
+   "source": "https://learn.microsoft.com/en-us/azure/quantum/provider-ionq",
+   "source_updated": "2026-08-29 (page metadata)",
+   "read_on": "2026-10-01",
+   "verbatim": {
+    "two_qubit_gate_fidelity": "99.6% (not SPAM corrected)",
+    "single_qubit_gate_fidelity": "99.95% (SPAM corrected)",
+    "SPAM": "99.61%",
+    "T1": "10-100 s",
+    "T2": "1 s",
+    "single_qubit_gate_time": "135 us",
+    "two_qubit_gate_time": "600 us",
+    "qubits": 25,
+    "connectivity": "all-to-all"
+   },
+   "eps2": 0.0040000000000000036,
+   "eps1": 0.0004999999999999449,
+   "eps_ro": 0.0039000000000000146,
+   "t_2q_s": 0.0006,
+   "t_1q_s": 0.000135,
+   "T2_s": 1.0,
+   "T1_s": 10.0,
+   "qubits": 25
+  },
+  "ionq_forte": {
+   "source": "https://www.ionq.com/quantum-systems/forte",
+   "read_on": "2026-10-01",
+   "verbatim": {
+    "two_qubit_gate_error": "0.4%",
+    "one_qubit_gate_error": "0.02%",
+    "SPAM_error": "0.5%",
+    "T1_and_T2": "10-100s, ~1s",
+    "gate_times": "NOT STATED on the page",
+    "qubits": 36,
+    "connectivity": "all-to-all"
+   },
+   "eps2": 0.004,
+   "eps1": 0.0002,
+   "eps_ro": 0.005,
+   "t_2q_s": null,
+   "t_1q_s": null,
+   "T2_s": 1.0,
+   "T1_s": 10.0,
+   "qubits": 36
+  }
+ },
+ "tempo": {
+  "source": "https://www.ionq.com/quantum-systems/tempo",
+  "read_on": "2026-10-01",
+  "verbatim": {
+   "target_fidelity": "99.9%",
+   "target_qubits": 100,
+   "AQ": 64
+  },
+  "status": "targets, not achieved specifications; no gate times, coherence times, SPAM or one-qubit figures are published, so Tempo cannot be evaluated as a device"
+ },
+ "counts": {
+  "2x3": {
+   "n_qubits": 20,
+   "n_2q": 2158,
+   "n_1q": 7310,
+   "n_1q_virtual_rz": 3053,
+   "n_meas": 20,
+   "source": "data/S2D_2x3_device_requirements.json counts.coarse_step (RZZ basis, all-to-all: the natural basis of an ion trap)"
+  },
+  "2x2": {
+   "n_qubits": 12,
+   "n_2q": 256,
+   "n_1q": 920,
+   "n_1q_virtual_rz": 541,
+   "n_meas": 12,
+   "source": "validation/S2.json data.2x2.coarse_step.all_to_all.ops"
+  }
+ },
+ "results": {
+  "2x3|ionq_aria|physical_rz": {
+   "gate_only": {
+    "n_1q_used": 7310,
+    "f_gates": 4.1876253488544305e-06,
+    "budget_used_nats": 12.383376727206315,
+    "budget_nats": 2.302585092994046,
+    "meets_mean_0.1": false,
+    "meets_worst_0.05": false,
+    "eps2_required_at_published_eps1_eps_ro": null,
+    "eps2_published": 0.0040000000000000036,
+    "f_with_idle_estimate": 3.0867682434830763e-15
+   },
+   "idle": {
+    "computable": true,
+    "assumption": "ESTIMATE: fully serial execution, linear small-window PTA, T1 >> duration.",
+    "duration_s": 2.28165,
+    "idle_per_qubit_s": 2.1028275,
+    "S_idle_estimate": 21.028275,
+    "gates_per_coherence_time": 1666.6666666666667,
+    "idle_factor_exp_minus_S": 7.37116620121591e-10
+   }
+  },
+  "2x3|ionq_aria|virtual_rz": {
+   "gate_only": {
+    "n_1q_used": 3053,
+    "f_gates": 3.520422603461551e-05,
+    "budget_used_nats": 10.254344424765007,
+    "budget_nats": 2.302585092994046,
+    "meets_mean_0.1": false,
+    "meets_worst_0.05": false,
+    "eps2_required_at_published_eps1_eps_ro": 0.00032318726518554275,
+    "eps2_published": 0.0040000000000000036,
+    "f_with_idle_estimate": 6.098264308887299e-12
+   },
+   "idle": {
+    "computable": true,
+    "assumption": "ESTIMATE: fully serial execution, linear small-window PTA, T1 >> duration.",
+    "duration_s": 1.706955,
+    "idle_per_qubit_s": 1.55686725,
+    "S_idle_estimate": 15.5686725,
+    "gates_per_coherence_time": 1666.6666666666667,
+    "idle_factor_exp_minus_S": 1.7322534808437532e-07
+   }
+  },
+  "2x3|ionq_forte|physical_rz": {
+   "gate_only": {
+    "n_1q_used": 7310,
+    "f_gates": 3.6737694502187494e-05,
+    "budget_used_nats": 10.211707231855915,
+    "budget_nats": 2.302585092994046,
+    "meets_mean_0.1": false,
+    "meets_worst_0.05": false,
+    "eps2_required_at_published_eps1_eps_ro": 0.00034293841997845576,
+    "eps2_published": 0.004
+   },
+   "idle": {
+    "computable": false,
+    "reason": "the vendor publishes no gate durations for this device"
+   }
+  },
+  "2x3|ionq_forte|virtual_rz": {
+   "gate_only": {
+    "n_1q_used": 3053,
+    "f_gates": 8.608097968623741e-05,
+    "budget_used_nats": 9.360222080502211,
+    "budget_nats": 2.302585092994046,
+    "meets_mean_0.1": false,
+    "meets_worst_0.05": false,
+    "eps2_required_at_published_eps1_eps_ro": 0.0007372967324049684,
+    "eps2_published": 0.004
+   },
+   "idle": {
+    "computable": false,
+    "reason": "the vendor publishes no gate durations for this device"
+   }
+  },
+  "2x2|ionq_aria|physical_rz": {
+   "gate_only": {
+    "n_1q_used": 920,
+    "f_gates": 0.21587407787582166,
+    "budget_used_nats": 1.5330600140898065,
+    "budget_nats": 2.302585092994046,
+    "meets_mean_0.1": true,
+    "meets_worst_0.05": true,
+    "eps2_required_at_published_eps1_eps_ro": 0.006989438197275155,
+    "eps2_published": 0.0040000000000000036,
+    "f_with_idle_estimate": 0.050581973854756136
+   },
+   "idle": {
+    "computable": true,
+    "assumption": "ESTIMATE: fully serial execution, linear small-window PTA, T1 >> duration.",
+    "duration_s": 0.2778,
+    "idle_per_qubit_s": 0.24184999999999998,
+    "S_idle_estimate": 1.4510999999999998,
+    "gates_per_coherence_time": 1666.6666666666667,
+    "idle_factor_exp_minus_S": 0.2343124026398976
+   }
+  },
+  "2x2|ionq_aria|virtual_rz": {
+   "gate_only": {
+    "n_1q_used": 541,
+    "f_gates": 0.26092751689045807,
+    "budget_used_nats": 1.3435126232922365,
+    "budget_nats": 2.302585092994046,
+    "meets_mean_0.1": true,
+    "meets_worst_0.05": true,
+    "eps2_required_at_published_eps1_eps_ro": 0.007724410448806562,
+    "eps2_published": 0.0040000000000000036,
+    "f_with_idle_estimate": 0.08100818149557716
+   },
+   "idle": {
+    "computable": true,
+    "assumption": "ESTIMATE: fully serial execution, linear small-window PTA, T1 >> duration.",
+    "duration_s": 0.22663499999999998,
+    "idle_per_qubit_s": 0.19494874999999998,
+    "S_idle_estimate": 1.1696924999999998,
+    "gates_per_coherence_time": 1666.6666666666667,
+    "idle_factor_exp_minus_S": 0.3104623937749954
+   }
+  },
+  "2x2|ionq_forte|physical_rz": {
+   "gate_only": {
+    "n_1q_used": 920,
+    "f_gates": 0.2807691767944303,
+    "budget_used_nats": 1.2702223821061704,
+    "budget_nats": 2.302585092994046,
+    "meets_mean_0.1": true,
+    "meets_worst_0.05": true,
+    "eps2_required_at_published_eps1_eps_ro": 0.008008448371387367,
+    "eps2_published": 0.004
+   },
+   "idle": {
+    "computable": false,
+    "reason": "the vendor publishes no gate durations for this device"
+   }
+  },
+  "2x2|ionq_forte|virtual_rz": {
+   "gate_only": {
+    "n_1q_used": 541,
+    "f_gates": 0.30288114804633365,
+    "budget_used_nats": 1.1944148010953521,
+    "budget_nats": 2.302585092994046,
+    "meets_mean_0.1": true,
+    "meets_worst_0.05": true,
+    "eps2_required_at_published_eps1_eps_ro": 0.00830215675694046,
+    "eps2_published": 0.004
+   },
+   "idle": {
+    "computable": false,
+    "reason": "the vendor publishes no gate durations for this device"
+   }
+  }
+ },
+ "scenario_eps2_for_2x3": {
+  "0.004": 8.608097968623741e-05,
+  "0.001": 0.056699401464448955,
+  "0.0005": 0.1669298283210969,
+  "0.0001": 0.39584890430133085
+ }
+}
