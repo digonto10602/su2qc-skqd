@@ -1,0 +1,775 @@
+{
+ "created": "2026-10-02 19:52:57 UTC",
+ "script": "scripts/h0_ddtest_circuits.py",
+ "stage": "build",
+ "purpose": "prompts/24 Stage T: the four-cell DD A/B test (T0 none, T1 context-aware, T2 XY4, T3 XY4 long windows) on the pilot's two k = 1 circuits, plus the patch's readout pubs",
+ "common": {
+  "lattice": "2x2",
+  "n_logical_qubits": 12,
+  "g2": 4.0,
+  "circuit_family": "exact structured circuits, signed default term order, transpiled at seed 2 (gate S2D_levers L1_seed / family diag-hop0-hop1-hop2-hop3-plaq0_s2), relabelled onto the day's patch and scheduled ALAP with explicit delays; client-side DD (prompts/24 P4) inserted into the explicit delays where the cell says so",
+  "backend": "FakeKingston",
+  "backend_qubits": 156,
+  "transpiler": {
+   "note": "per circuit (see its manifest)"
+  },
+  "bit_order_convention": "classical bit i of a counts key = logical qubit i = bit i of the codeword (skqd.reference_sim.qiskit_key_to_bits, skqd.codec.Codec)",
+  "codeword_bit_order": [
+   {
+    "qubit": 0,
+    "site": 0,
+    "role": "flux",
+    "link": 0,
+    "end": "out"
+   },
+   {
+    "qubit": 1,
+    "site": 0,
+    "role": "flux",
+    "link": 1,
+    "end": "out"
+   },
+   {
+    "qubit": 2,
+    "site": 0,
+    "role": "n/iota",
+    "link": null,
+    "end": null,
+    "static": false,
+    "n_ends": 2
+   },
+   {
+    "qubit": 3,
+    "site": 1,
+    "role": "flux",
+    "link": 1,
+    "end": "in"
+   },
+   {
+    "qubit": 4,
+    "site": 1,
+    "role": "flux",
+    "link": 2,
+    "end": "out"
+   },
+   {
+    "qubit": 5,
+    "site": 1,
+    "role": "n/iota",
+    "link": null,
+    "end": null,
+    "static": false,
+    "n_ends": 2
+   },
+   {
+    "qubit": 6,
+    "site": 2,
+    "role": "flux",
+    "link": 0,
+    "end": "in"
+   },
+   {
+    "qubit": 7,
+    "site": 2,
+    "role": "flux",
+    "link": 3,
+    "end": "out"
+   },
+   {
+    "qubit": 8,
+    "site": 2,
+    "role": "n/iota",
+    "link": null,
+    "end": null,
+    "static": false,
+    "n_ends": 2
+   },
+   {
+    "qubit": 9,
+    "site": 3,
+    "role": "flux",
+    "link": 2,
+    "end": "in"
+   },
+   {
+    "qubit": 10,
+    "site": 3,
+    "role": "flux",
+    "link": 3,
+    "end": "in"
+   },
+   {
+    "qubit": 11,
+    "site": 3,
+    "role": "n/iota",
+    "link": null,
+    "end": null,
+    "static": false,
+    "n_ends": 2
+   }
+  ],
+  "link_consistency_checks": [
+   {
+    "link": 0,
+    "qubits": [
+     0,
+     6
+    ]
+   },
+   {
+    "link": 1,
+    "qubits": [
+     1,
+     3
+    ]
+   },
+   {
+    "link": 2,
+    "qubits": [
+     4,
+     9
+    ]
+   },
+   {
+    "link": 3,
+    "qubits": [
+     7,
+     10
+    ]
+   }
+  ],
+  "backend_calibration_last_update": "2026-10-02T13:06:57-06:00"
+ },
+ "record": {
+  "path": "data/hardware/H0_ddtest_prep/ibm_kingston_full_20261002T1906Z.json",
+  "stamp": "20261002T1906Z",
+  "last_update_date": "2026-10-02T13:06:57-06:00",
+  "fingerprint": "e4ecac386f4a73277113ce72a82cdf04fe18d97349b04fa751338fea34f6c73e",
+  "n_qubits": 156,
+  "n_edges": 352,
+  "missing_errors": [],
+  "status": {
+   "operational": true,
+   "pending_jobs": 7,
+   "status_msg": "active"
+  },
+  "dt_s": 4e-09,
+  "default_rep_delay_s": 0.00025
+ },
+ "base_backend": {
+  "base": "FakeKingston",
+  "fingerprint": "e4ecac386f4a73277113ce72a82cdf04fe18d97349b04fa751338fea34f6c73e",
+  "stamp": "20261002T1906Z",
+  "last_update_date": "2026-10-02T13:06:57-06:00",
+  "note": "measure/sx/x error+duration, rz duration, T1/T2 and every cz error+duration of the record's patch written into the base target; qubit_properties assigned as a new list"
+ },
+ "patch": [
+  59,
+  71,
+  72,
+  73,
+  74,
+  75,
+  79,
+  91,
+  92,
+  93,
+  94,
+  95
+ ],
+ "winner_mapping": {
+  "0": 59,
+  "1": 75,
+  "2": 74,
+  "3": 73,
+  "4": 72,
+  "5": 71,
+  "16": 79,
+  "21": 91,
+  "22": 92,
+  "23": 93,
+  "24": 94,
+  "25": 95
+ },
+ "mapping_reproduced": true,
+ "pilot_mapping_reproduced": true,
+ "cells": {
+  "T0": "baseline: no DD (the pilot's configuration)",
+  "T1": "context-aware staggered X-DD (qiskit ContextAwareDynamicalDecoupling, min_duration 128 dt)",
+  "T2": "XY4 in every window >= 2 x the sequence (qiskit_ibm_runtime PadDynamicalDecoupling, ratio 2.0)",
+  "T3": "XY4 in windows >= 8 x the sequence only (ratio 8.0, >= 1.024 us)"
+ },
+ "base_ids": [
+  "B0_ref06_k1",
+  "B1_ref07_k1"
+ ],
+ "runtime_s": 38.91961312294006,
+ "frozen_set": {
+  "qubits": [
+   59,
+   71,
+   72,
+   73,
+   74,
+   75,
+   79,
+   91,
+   92,
+   93,
+   94,
+   95
+  ],
+  "edges": [
+   [
+    59,
+    75
+   ],
+   [
+    71,
+    72
+   ],
+   [
+    72,
+    71
+   ],
+   [
+    72,
+    73
+   ],
+   [
+    73,
+    72
+   ],
+   [
+    73,
+    74
+   ],
+   [
+    73,
+    79
+   ],
+   [
+    74,
+    73
+   ],
+   [
+    74,
+    75
+   ],
+   [
+    75,
+    59
+   ],
+   [
+    75,
+    74
+   ],
+   [
+    79,
+    73
+   ],
+   [
+    79,
+    93
+   ],
+   [
+    91,
+    92
+   ],
+   [
+    92,
+    91
+   ],
+   [
+    92,
+    93
+   ],
+   [
+    93,
+    79
+   ],
+   [
+    93,
+    92
+   ],
+   [
+    93,
+    94
+   ],
+   [
+    94,
+    93
+   ],
+   [
+    94,
+    95
+   ]
+  ],
+  "n_edges": 21
+ },
+ "n_circuits": 8,
+ "n_calibration_circuits": 2,
+ "circuits": [
+  {
+   "id": "B0_ref06_k1_T0",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 1,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1214,
+    "rz": 702,
+    "cz": 588,
+    "delay": 349,
+    "x": 67,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref06_k1_T0.qpy.gz",
+   "qpy_gz_sha256": "c72b1a7b5e8b79ae2829858f1f7407130f8803da05f96c23ea89e52de00c72ea",
+   "T_s": 4.424000000000029e-05,
+   "dd_cell": "T0"
+  },
+  {
+   "id": "B0_ref06_k1_T1",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 1,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "delay": 1234,
+    "sx": 1214,
+    "x": 929,
+    "rz": 702,
+    "cz": 588,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref06_k1_T1.qpy.gz",
+   "qpy_gz_sha256": "10eeea87423513809ac9a01e5dacff8cfa1bffbe71f06f8acbcf662d4b473bbf",
+   "T_s": 4.424000000000029e-05,
+   "dd_cell": "T1"
+  },
+  {
+   "id": "B0_ref06_k1_T2",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 1,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "rz": 1478,
+    "sx": 1214,
+    "delay": 1125,
+    "x": 843,
+    "cz": 588,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref06_k1_T2.qpy.gz",
+   "qpy_gz_sha256": "66e943da9d1b0e28f364bc3bb10e6f99dee2dd3d687568c78aa693e899b358a6",
+   "T_s": 4.424000000000029e-05,
+   "dd_cell": "T2"
+  },
+  {
+   "id": "B0_ref06_k1_T3",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 1,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1214,
+    "rz": 946,
+    "delay": 593,
+    "cz": 588,
+    "x": 311,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref06_k1_T3.qpy.gz",
+   "qpy_gz_sha256": "1fc357184b38264c96cd7bf05904711a7328fb38f3b67faeede5ae778d62ccd1",
+   "T_s": 4.424000000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B1_ref07_k1_T0",
+   "kind": "coarse_step",
+   "sector": "B=1",
+   "k": 1,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1216,
+    "rz": 710,
+    "cz": 588,
+    "delay": 349,
+    "x": 68,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B1_ref07_k1_T0.qpy.gz",
+   "qpy_gz_sha256": "2f25adc6aea182a4341365348bfaecb5dd96e150d64e9d9bd1f3eea123ee109d",
+   "T_s": 4.43680000000003e-05,
+   "dd_cell": "T0"
+  },
+  {
+   "id": "B1_ref07_k1_T1",
+   "kind": "coarse_step",
+   "sector": "B=1",
+   "k": 1,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "delay": 1240,
+    "sx": 1216,
+    "x": 930,
+    "rz": 710,
+    "cz": 588,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B1_ref07_k1_T1.qpy.gz",
+   "qpy_gz_sha256": "f8c920f58d1c399fc09d03524208b6a5b5e72585a290272559fd60294ed0791a",
+   "T_s": 4.43680000000003e-05,
+   "dd_cell": "T1"
+  },
+  {
+   "id": "B1_ref07_k1_T2",
+   "kind": "coarse_step",
+   "sector": "B=1",
+   "k": 1,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "rz": 1490,
+    "sx": 1216,
+    "delay": 1129,
+    "x": 848,
+    "cz": 588,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B1_ref07_k1_T2.qpy.gz",
+   "qpy_gz_sha256": "b19b118301b148c6144fdab6b9c6f4aecd519a238039e5eb1315b5017243fe90",
+   "T_s": 4.43680000000003e-05,
+   "dd_cell": "T2"
+  },
+  {
+   "id": "B1_ref07_k1_T3",
+   "kind": "coarse_step",
+   "sector": "B=1",
+   "k": 1,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1216,
+    "rz": 954,
+    "delay": 593,
+    "cz": 588,
+    "x": 312,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B1_ref07_k1_T3.qpy.gz",
+   "qpy_gz_sha256": "0b1656d9c7403a52b48a2bec84cbb85f65d56cfd10b23b519bec544420eb3ba1",
+   "T_s": 4.43680000000003e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "cal_patch_all0",
+   "kind": "readout_calibration",
+   "sector": null,
+   "k": null,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "ops": {
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "cal_patch_all0.qpy.gz",
+   "qpy_gz_sha256": "de893b3473eb81873eead792d84ecd87910f7460ef1afa055b9a0ef80956587d",
+   "T_s": null,
+   "dd_cell": null
+  },
+  {
+   "id": "cal_patch_all1",
+   "kind": "readout_calibration",
+   "sector": null,
+   "k": null,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "ops": {
+    "x": 12,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "cal_patch_all1.qpy.gz",
+   "qpy_gz_sha256": "41e35b0aa70a335276e677ac6b1a59ef40299fb1b3fbca6c6b1a6f686b9a6bcc",
+   "T_s": null,
+   "dd_cell": null
+  }
+ ]
+}

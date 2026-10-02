@@ -1,0 +1,769 @@
+{
+ "gate": "H0_ddtest",
+ "script": "scripts/gate_H0_ddtest.py --stage predict",
+ "created": "2026-10-02 19:53:23 UTC",
+ "commit": "e447bd0",
+ "versions": {
+  "qiskit": "2.5.2",
+  "qiskit_aer": "0.17.2",
+  "qiskit_ibm_runtime": "0.49.0"
+ },
+ "qpu_seconds": 0,
+ "prep": "data/hardware/H0_ddtest_prep",
+ "prep_created": "2026-10-02 19:52:57 UTC",
+ "calibration": {
+  "backend": "ibm_kingston",
+  "fingerprint": "84d59cbf9b5973d11d2c4be496f8d55da0d6f06d3dd8a33265fb47832dd432c9",
+  "path": "data/hardware/H0_ddtest_prep/calibration_20261002T1906Z.json",
+  "last_update_date": "2026-10-02T13:06:57-06:00",
+  "stamp": "20261002T1906Z",
+  "full_record_path": "data/hardware/H0_ddtest_prep/ibm_kingston_full_20261002T1906Z.json",
+  "full_record_fingerprint": "e4ecac386f4a73277113ce72a82cdf04fe18d97349b04fa751338fea34f6c73e",
+  "live_fingerprint_at_predict": "84d59cbf9b5973d11d2c4be496f8d55da0d6f06d3dd8a33265fb47832dd432c9",
+  "live_match_at_predict": true
+ },
+ "patch": [
+  59,
+  71,
+  72,
+  73,
+  74,
+  75,
+  79,
+  91,
+  92,
+  93,
+  94,
+  95
+ ],
+ "selection": {
+  "rule": "R1'-pilot (prompts/21, unchanged by prompts/24 P3): exhaustive embedding search of the L1_seed candidate on the day's full record, run once; the winner is the patch",
+  "winner_mapping": {
+   "0": 59,
+   "1": 75,
+   "2": 74,
+   "3": 73,
+   "4": 72,
+   "5": 71,
+   "16": 79,
+   "21": 91,
+   "22": 92,
+   "23": 93,
+   "24": 94,
+   "25": 95
+  },
+  "mapping_reproduced": true,
+  "pilot_mapping_reproduced": true,
+  "n_embeddings": 768,
+  "n_scored": 750,
+  "winner_f_dd_off": 0.07182598839256858
+ },
+ "pubs": [
+  {
+   "id": "B0_ref06_k1_T0",
+   "kind": "coarse_step",
+   "cell": "T0",
+   "shots": 6000
+  },
+  {
+   "id": "B0_ref06_k1_T1",
+   "kind": "coarse_step",
+   "cell": "T1",
+   "shots": 6000
+  },
+  {
+   "id": "B0_ref06_k1_T2",
+   "kind": "coarse_step",
+   "cell": "T2",
+   "shots": 6000
+  },
+  {
+   "id": "B0_ref06_k1_T3",
+   "kind": "coarse_step",
+   "cell": "T3",
+   "shots": 6000
+  },
+  {
+   "id": "B1_ref07_k1_T0",
+   "kind": "coarse_step",
+   "cell": "T0",
+   "shots": 6000
+  },
+  {
+   "id": "B1_ref07_k1_T1",
+   "kind": "coarse_step",
+   "cell": "T1",
+   "shots": 6000
+  },
+  {
+   "id": "B1_ref07_k1_T2",
+   "kind": "coarse_step",
+   "cell": "T2",
+   "shots": 6000
+  },
+  {
+   "id": "B1_ref07_k1_T3",
+   "kind": "coarse_step",
+   "cell": "T3",
+   "shots": 6000
+  },
+  {
+   "id": "cal_patch_all0",
+   "kind": "readout_calibration",
+   "cell": null,
+   "shots": 6000
+  },
+  {
+   "id": "cal_patch_all1",
+   "kind": "readout_calibration",
+   "cell": null,
+   "shots": 6000
+  }
+ ],
+ "shots_per_pub": 6000,
+ "total_shots": 60000,
+ "sampler_options": "--dd off --twirling off (runtime DD off: the pulses are in the circuits); raw bit strings",
+ "execution_estimate": {
+  "total_execution_s": 17.257584000000023,
+  "total_shots": 60000,
+  "rep_delay_s": 0.00025,
+  "groups": [
+   {
+    "group": "r=1",
+    "circuits": 8,
+    "shots_per_circuit": 6000,
+    "total_shots": 48000,
+    "execution_s": 14.231232000000022,
+    "duration_mean_s": 4.648400000000045e-05,
+    "duration_min_s": 4.642000000000043e-05,
+    "duration_max_s": 4.65480000000005e-05
+   },
+   {
+    "group": "readout calibration",
+    "circuits": 2,
+    "shots_per_circuit": 6000,
+    "total_shots": 12000,
+    "execution_s": 3.026352,
+    "duration_mean_s": 2.196e-06,
+    "duration_min_s": 2.18e-06,
+    "duration_max_s": 2.2119999999999997e-06
+   }
+  ],
+  "per_circuit": [
+   {
+    "id": "B0_ref06_k1_T0",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 4.642000000000044e-05,
+    "shots": 6000,
+    "execution_s": 1.7785200000000028
+   },
+   {
+    "id": "B0_ref06_k1_T1",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 4.642000000000043e-05,
+    "shots": 6000,
+    "execution_s": 1.7785200000000025
+   },
+   {
+    "id": "B0_ref06_k1_T2",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 4.64200000000005e-05,
+    "shots": 6000,
+    "execution_s": 1.7785200000000032
+   },
+   {
+    "id": "B0_ref06_k1_T3",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 4.642000000000043e-05,
+    "shots": 6000,
+    "execution_s": 1.7785200000000025
+   },
+   {
+    "id": "B1_ref07_k1_T0",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 4.654800000000044e-05,
+    "shots": 6000,
+    "execution_s": 1.7792880000000026
+   },
+   {
+    "id": "B1_ref07_k1_T1",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 4.6548000000000436e-05,
+    "shots": 6000,
+    "execution_s": 1.7792880000000026
+   },
+   {
+    "id": "B1_ref07_k1_T2",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 4.65480000000005e-05,
+    "shots": 6000,
+    "execution_s": 1.7792880000000029
+   },
+   {
+    "id": "B1_ref07_k1_T3",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 4.6548000000000436e-05,
+    "shots": 6000,
+    "execution_s": 1.7792880000000026
+   },
+   {
+    "id": "cal_patch_all0",
+    "kind": "readout_calibration",
+    "group": "readout calibration",
+    "duration_s": 2.18e-06,
+    "shots": 6000,
+    "execution_s": 1.51308
+   },
+   {
+    "id": "cal_patch_all1",
+    "kind": "readout_calibration",
+    "group": "readout calibration",
+    "duration_s": 2.2119999999999997e-06,
+    "shots": 6000,
+    "execution_s": 1.5132720000000002
+   }
+  ],
+  "last_update_date": "2026-10-02T13:06:57-06:00",
+  "cap_s": 30.0,
+  "within_cap": true,
+  "billed_cap_s": 40.0
+ },
+ "cells": {
+  "T0": {
+   "description": "baseline: no DD (the pilot's configuration)",
+   "pass": null,
+   "parameters": {},
+   "per_circuit": {
+    "B0_ref06_k1": {
+     "id": "B0_ref06_k1_T0",
+     "n_pulses": 0,
+     "pulse_cost_nats": 0.0,
+     "null_ratio": 1.0,
+     "pulses_per_physical_qubit": {},
+     "qpy_gz_sha256": "c72b1a7b5e8b79ae2829858f1f7407130f8803da05f96c23ea89e52de00c72ea",
+     "scheduled_duration_s": 4.642000000000044e-05,
+     "p_reference": 0.8832760485718513,
+     "garbage_acceptance": 0.00927734375,
+     "dim": 38,
+     "expected_reference_hits_at_f_pilot": 179.44760514234474,
+     "expected_reference_hits_from_garbage": 1.46484375,
+     "expected_reference_hits_at_f_pilot_x_null": 179.44760514234474
+    },
+    "B1_ref07_k1": {
+     "id": "B1_ref07_k1_T0",
+     "n_pulses": 0,
+     "pulse_cost_nats": 0.0,
+     "null_ratio": 1.0,
+     "pulses_per_physical_qubit": {},
+     "qpy_gz_sha256": "2f25adc6aea182a4341365348bfaecb5dd96e150d64e9d9bd1f3eea123ee109d",
+     "scheduled_duration_s": 4.654800000000044e-05,
+     "p_reference": 0.8890601304523768,
+     "garbage_acceptance": 0.0048828125,
+     "dim": 20,
+     "expected_reference_hits_at_f_pilot": 180.6227073576553,
+     "expected_reference_hits_from_garbage": 1.46484375,
+     "expected_reference_hits_at_f_pilot_x_null": 180.6227073576553
+    }
+   },
+   "null_ratio_pooled": 1.0,
+   "expected_excess_hits_at_f_pilot_x_null": 360.0703125
+  },
+  "T1": {
+   "description": "context-aware staggered X-DD (qiskit ContextAwareDynamicalDecoupling, min_duration 128 dt)",
+   "pass": "qiskit.transpiler.passes.ALAPScheduleAnalysis(target) + ContextAwareDynamicalDecoupling(target, ...)",
+   "parameters": {
+    "min_duration_dt": 128,
+    "skip_reset_qubits": true,
+    "pulse_alignment": 1
+   },
+   "per_circuit": {
+    "B0_ref06_k1": {
+     "id": "B0_ref06_k1_T1",
+     "n_pulses": 862,
+     "pulse_cost_nats": 0.2030620601373947,
+     "null_ratio": 0.816227584657694,
+     "pulses_per_physical_qubit": {
+      "59": 70,
+      "71": 48,
+      "72": 24,
+      "73": 42,
+      "74": 90,
+      "75": 72,
+      "79": 30,
+      "91": 118,
+      "92": 90,
+      "93": 52,
+      "94": 96,
+      "95": 130
+     },
+     "qpy_gz_sha256": "10eeea87423513809ac9a01e5dacff8cfa1bffbe71f06f8acbcf662d4b473bbf",
+     "scheduled_duration_s": 4.642000000000043e-05,
+     "p_reference": 0.8832760485718513,
+     "garbage_acceptance": 0.00927734375,
+     "dim": 38,
+     "expected_reference_hits_at_f_pilot": 179.44760514234474,
+     "expected_reference_hits_from_garbage": 1.46484375,
+     "expected_reference_hits_at_f_pilot_x_null": 146.47008531794364
+    },
+    "B1_ref07_k1": {
+     "id": "B1_ref07_k1_T1",
+     "n_pulses": 862,
+     "pulse_cost_nats": 0.2030620601373947,
+     "null_ratio": 0.816227584657694,
+     "pulses_per_physical_qubit": {
+      "59": 70,
+      "71": 48,
+      "72": 24,
+      "73": 42,
+      "74": 90,
+      "75": 72,
+      "79": 30,
+      "91": 118,
+      "92": 90,
+      "93": 52,
+      "94": 96,
+      "95": 130
+     },
+     "qpy_gz_sha256": "f8c920f58d1c399fc09d03524208b6a5b5e72585a290272559fd60294ed0791a",
+     "scheduled_duration_s": 4.6548000000000436e-05,
+     "p_reference": 0.8890601304523768,
+     "garbage_acceptance": 0.0048828125,
+     "dim": 20,
+     "expected_reference_hits_at_f_pilot": 180.6227073576553,
+     "expected_reference_hits_from_garbage": 1.46484375,
+     "expected_reference_hits_at_f_pilot_x_null": 147.42923616087245
+    }
+   },
+   "null_ratio_pooled": 0.8162275846576941,
+   "expected_excess_hits_at_f_pilot_x_null": 293.8993214788161
+  },
+  "T2": {
+   "description": "XY4 in every window >= 2 x the sequence (qiskit_ibm_runtime PadDynamicalDecoupling, ratio 2.0)",
+   "pass": "qiskit_ibm_runtime.transpiler.passes.scheduling.ALAPScheduleAnalysis(durations) + PadDynamicalDecoupling(durations, [X, Y, X, Y], ...); Y -> rz(-pi/2) x rz(pi/2)",
+   "parameters": {
+    "sequence": "XY4",
+    "sequence_min_length_ratios": [
+     2.0
+    ],
+    "pulse_alignment": 1,
+    "skip_reset_qubits": true,
+    "durations_from": "20261002T1906Z"
+   },
+   "per_circuit": {
+    "B0_ref06_k1": {
+     "id": "B0_ref06_k1_T2",
+     "n_pulses": 776,
+     "pulse_cost_nats": 0.1726263606372147,
+     "null_ratio": 0.8414519556884478,
+     "pulses_per_physical_qubit": {
+      "59": 28,
+      "71": 40,
+      "72": 56,
+      "73": 96,
+      "74": 84,
+      "75": 52,
+      "79": 108,
+      "91": 48,
+      "92": 72,
+      "93": 76,
+      "94": 100,
+      "95": 16
+     },
+     "qpy_gz_sha256": "66e943da9d1b0e28f364bc3bb10e6f99dee2dd3d687568c78aa693e899b358a6",
+     "scheduled_duration_s": 4.64200000000005e-05,
+     "p_reference": 0.8832760485718513,
+     "garbage_acceptance": 0.00927734375,
+     "dim": 38,
+     "expected_reference_hits_at_f_pilot": 179.44760514234474,
+     "expected_reference_hits_from_garbage": 1.46484375,
+     "expected_reference_hits_at_f_pilot_x_null": 150.99653829063433
+    },
+    "B1_ref07_k1": {
+     "id": "B1_ref07_k1_T2",
+     "n_pulses": 780,
+     "pulse_cost_nats": 0.17356001988335154,
+     "null_ratio": 0.8406666929308005,
+     "pulses_per_physical_qubit": {
+      "59": 28,
+      "71": 40,
+      "72": 56,
+      "73": 96,
+      "74": 84,
+      "75": 52,
+      "79": 112,
+      "91": 48,
+      "92": 72,
+      "93": 76,
+      "94": 100,
+      "95": 16
+     },
+     "qpy_gz_sha256": "b19b118301b148c6144fdab6b9c6f4aecd519a238039e5eb1315b5017243fe90",
+     "scheduled_duration_s": 4.65480000000005e-05,
+     "p_reference": 0.8890601304523768,
+     "garbage_acceptance": 0.0048828125,
+     "dim": 20,
+     "expected_reference_hits_at_f_pilot": 180.6227073576553,
+     "expected_reference_hits_from_garbage": 1.46484375,
+     "expected_reference_hits_at_f_pilot_x_null": 151.84349406256786
+    }
+   },
+   "null_ratio_pooled": 0.8410580429432161,
+   "expected_excess_hits_at_f_pilot_x_null": 302.8400323532022
+  },
+  "T3": {
+   "description": "XY4 in windows >= 8 x the sequence only (ratio 8.0, >= 1.024 us)",
+   "pass": "qiskit_ibm_runtime.transpiler.passes.scheduling.ALAPScheduleAnalysis(durations) + PadDynamicalDecoupling(durations, [X, Y, X, Y], ...); Y -> rz(-pi/2) x rz(pi/2)",
+   "parameters": {
+    "sequence": "XY4",
+    "sequence_min_length_ratios": [
+     8.0
+    ],
+    "pulse_alignment": 1,
+    "skip_reset_qubits": true,
+    "durations_from": "20261002T1906Z"
+   },
+   "per_circuit": {
+    "B0_ref06_k1": {
+     "id": "B0_ref06_k1_T3",
+     "n_pulses": 244,
+     "pulse_cost_nats": 0.05721777415270082,
+     "null_ratio": 0.9443883835907565,
+     "pulses_per_physical_qubit": {
+      "59": 12,
+      "71": 28,
+      "72": 20,
+      "73": 20,
+      "74": 24,
+      "75": 24,
+      "79": 8,
+      "91": 32,
+      "92": 16,
+      "93": 24,
+      "94": 20,
+      "95": 16
+     },
+     "qpy_gz_sha256": "1fc357184b38264c96cd7bf05904711a7328fb38f3b67faeede5ae778d62ccd1",
+     "scheduled_duration_s": 4.642000000000043e-05,
+     "p_reference": 0.8832760485718513,
+     "garbage_acceptance": 0.00927734375,
+     "dim": 38,
+     "expected_reference_hits_at_f_pilot": 179.44760514234474,
+     "expected_reference_hits_from_garbage": 1.46484375,
+     "expected_reference_hits_at_f_pilot_x_null": 169.46823375961128
+    },
+    "B1_ref07_k1": {
+     "id": "B1_ref07_k1_T3",
+     "n_pulses": 244,
+     "pulse_cost_nats": 0.05721777415270082,
+     "null_ratio": 0.9443883835907565,
+     "pulses_per_physical_qubit": {
+      "59": 12,
+      "71": 28,
+      "72": 20,
+      "73": 20,
+      "74": 24,
+      "75": 24,
+      "79": 8,
+      "91": 32,
+      "92": 16,
+      "93": 24,
+      "94": 20,
+      "95": 16
+     },
+     "qpy_gz_sha256": "0b1656d9c7403a52b48a2bec84cbb85f65d56cfd10b23b519bec544420eb3ba1",
+     "scheduled_duration_s": 4.6548000000000436e-05,
+     "p_reference": 0.8890601304523768,
+     "garbage_acceptance": 0.0048828125,
+     "dim": 20,
+     "expected_reference_hits_at_f_pilot": 180.6227073576553,
+     "expected_reference_hits_from_garbage": 1.46484375,
+     "expected_reference_hits_at_f_pilot_x_null": 170.5779866412823
+    }
+   },
+   "null_ratio_pooled": 0.9443883835907566,
+   "expected_excess_hits_at_f_pilot_x_null": 340.0462204008936
+  }
+ },
+ "f_pilot": 0.041292968981847554,
+ "f_pilot_95": [
+  0.03611475190519078,
+  0.046998193545383316
+ ],
+ "f_pilot_source": "validation/H0_kpilot.json data.decision",
+ "power": {
+  "X_per_cell_at_f_pilot": 360.0703125,
+  "sigma_lnR": 0.07452832144894553,
+  "factor_95": [
+   0.8640947724412044,
+   1.1572804649365507
+  ],
+  "lower_bound_of_a_true_1.25": 1.0801184655515055,
+  "decidable_at_1.25": true,
+  "note": "P5 arithmetic reproduced: X = sum_c 6000 x 0.82 x f_pilot x p_ref,c; sigma_lnR = sqrt(1/X + 1/X)"
+ },
+ "baseline_prediction_of_record": {
+  "source": "validation/H0_kpilot.json data.aer_at (the pilot's Aer grid)",
+  "aer_at": {
+   "B0_ref06_k1": {
+    "r=1": 0.21139711517502713,
+    "r=0.174": 0.04132190916321944,
+    "r_eff": 0.012359134790785676,
+    "r_eff_status": "extrapolated below the grid"
+   },
+   "B1_ref07_k1": {
+    "r=1": 0.22675502158041372,
+    "r=0.174": 0.04576174487703739,
+    "r_eff": 0.02691263860255716,
+    "r_eff_status": "extrapolated below the grid"
+   },
+   "B0_ref06_k4": {
+    "r=1": 0.23788101966562125,
+    "r=0.174": 0.055460205057226916,
+    "r_eff": 0.034215628261240146,
+    "r_eff_status": "extrapolated below the grid"
+   }
+  },
+  "note": "no new Aer prediction cells (P10): Aer cannot show a DD gain"
+ },
+ "decision_rule": {
+  "adoption": "A cell i in {T1, T2, T3} qualifies iff R_i,lo95 > 1 and R_i >= 1.25.  Among qualifying cells the one with the largest point R_i is adopted for Stage R; if none qualifies, Stage R runs the baseline (T0).  Signed bar on the adopted cell: GO iff f_adopted,lo95 >= 0.1, NO-GO iff f_adopted,hi95 < 0.1, AMBIGUOUS otherwise (information for the owner; Stage R proceeds in every case under the owner's decision).",
+  "ratio": "R_i = f_i / f_0 = X_i / X_0 (pooled excess reference counts over the two k = 1 circuits: same shots, same p_ref, same readout factor); 95 % interval exp(ln R_i +- 1.96 sqrt(1/X_i + 1/X_0)) (Poisson on the excess counts, the garbage expectation subtracted as in the pilot); a parametric bootstrap (10 000 draws, seed 11) beside it as a cross-check, never as the verdict.",
+  "thresholds": {
+   "R_lo95_greater_than": 1.0,
+   "R_at_least": 1.25,
+   "signed_bar": 0.1
+  },
+  "statistic": "pooled_reference_string_test over each cell's two k = 1 circuits, Garwood 68 % / 95 %",
+  "family_wise_false_positive": "three candidates at 2.5 % one-sided each: at most 7.5 % before the 1.25 floor (planner arithmetic)"
+ },
+ "reserve": {
+  "path": "data/hardware/H0_ddtest_prep/reserve.json",
+  "reserve_s": 210.80703932600022,
+  "stage_R_total_execution_s": 108.50608262000011,
+  "remaining_s_at_check": 571.0,
+  "committed_before_stage_T_s": 250.80703932600022,
+  "fits": true,
+  "p8_ruling": "Coordinator ruling (2026-10-02) on planner decision P8: the D3''-H0 lift of the seven k = 1 circuits is STRUCK; Stage R is pure rule D3' at the adopted cell's f_pool, which is what the owner named (\"121 s\").  The planner's prompt file is not edited; the strike enters here (reserve, plan, tests)."
+ },
+ "coarse_circuits": {
+  "B0_ref06_k1_T0": {
+   "sector": "B=0",
+   "reference": 6,
+   "k": 1,
+   "theta": 0.24501194722475933,
+   "cz": 588,
+   "n_delays": 349,
+   "T_s": 4.424000000000029e-05,
+   "T_total_s": 4.642000000000029e-05,
+   "scheduled_duration_s": 4.642000000000044e-05,
+   "p_reference": 0.8832760485718513,
+   "exactness": {
+    "max_abs_delta": 5.724285152375378e-13,
+    "leakage": 5.773159728050814e-15,
+    "measurement_consistent": true,
+    "ok": true,
+    "global_phase_source": 2.4065568119161282,
+    "global_phase_submitted": 0.0
+   },
+   "placement": "the winner's mapping (identical pattern)",
+   "qpy_gz_sha256": "c72b1a7b5e8b79ae2829858f1f7407130f8803da05f96c23ea89e52de00c72ea",
+   "reuse": {
+    "source": "data/hardware/H0_kpilot_prep/circuits/B0_ref06_k1.qpy.gz",
+    "byte_for_byte": true
+   }
+  },
+  "B0_ref06_k1_T1": {
+   "sector": "B=0",
+   "reference": 6,
+   "k": 1,
+   "theta": 0.24501194722475933,
+   "cz": 588,
+   "n_delays": 1234,
+   "T_s": 4.424000000000029e-05,
+   "T_total_s": 4.642000000000029e-05,
+   "scheduled_duration_s": 4.642000000000043e-05,
+   "p_reference": 0.8832760485718513,
+   "exactness": {
+    "max_abs_delta": 1.8586893976936342e-14,
+    "leakage": 5.551115123125783e-15,
+    "measurement_consistent": true,
+    "ok": true,
+    "global_phase_source": 2.4065568119161282,
+    "global_phase_submitted": 0.0
+   },
+   "placement": "the winner's mapping (identical pattern)",
+   "qpy_gz_sha256": "10eeea87423513809ac9a01e5dacff8cfa1bffbe71f06f8acbcf662d4b473bbf",
+   "reuse": null
+  },
+  "B0_ref06_k1_T2": {
+   "sector": "B=0",
+   "reference": 6,
+   "k": 1,
+   "theta": 0.24501194722475933,
+   "cz": 588,
+   "n_delays": 1125,
+   "T_s": 4.424000000000029e-05,
+   "T_total_s": 4.642000000000029e-05,
+   "scheduled_duration_s": 4.64200000000005e-05,
+   "p_reference": 0.8832760485718513,
+   "exactness": {
+    "max_abs_delta": 1.831485297106628e-14,
+    "leakage": 1.7763568394002505e-14,
+    "measurement_consistent": true,
+    "ok": true,
+    "global_phase_source": 2.4065568119161282,
+    "global_phase_submitted": 0.0
+   },
+   "placement": "the winner's mapping (identical pattern)",
+   "qpy_gz_sha256": "66e943da9d1b0e28f364bc3bb10e6f99dee2dd3d687568c78aa693e899b358a6",
+   "reuse": null
+  },
+  "B0_ref06_k1_T3": {
+   "sector": "B=0",
+   "reference": 6,
+   "k": 1,
+   "theta": 0.24501194722475933,
+   "cz": 588,
+   "n_delays": 593,
+   "T_s": 4.424000000000029e-05,
+   "T_total_s": 4.642000000000029e-05,
+   "scheduled_duration_s": 4.642000000000043e-05,
+   "p_reference": 0.8832760485718513,
+   "exactness": {
+    "max_abs_delta": 1.853877807951934e-14,
+    "leakage": 8.992806499463768e-15,
+    "measurement_consistent": true,
+    "ok": true,
+    "global_phase_source": 2.4065568119161282,
+    "global_phase_submitted": 3.141592653589793
+   },
+   "placement": "the winner's mapping (identical pattern)",
+   "qpy_gz_sha256": "1fc357184b38264c96cd7bf05904711a7328fb38f3b67faeede5ae778d62ccd1",
+   "reuse": null
+  },
+  "B1_ref07_k1_T0": {
+   "sector": "B=1",
+   "reference": 7,
+   "k": 1,
+   "theta": 0.33194310785049674,
+   "cz": 588,
+   "n_delays": 349,
+   "T_s": 4.43680000000003e-05,
+   "T_total_s": 4.65480000000003e-05,
+   "scheduled_duration_s": 4.654800000000044e-05,
+   "p_reference": 0.8890601304523768,
+   "exactness": {
+    "max_abs_delta": 3.976689663782325e-13,
+    "leakage": 5.662137425588298e-15,
+    "measurement_consistent": true,
+    "ok": true,
+    "global_phase_source": 2.1457633300387204,
+    "global_phase_submitted": 0.0
+   },
+   "placement": "the winner's mapping (identical pattern)",
+   "qpy_gz_sha256": "2f25adc6aea182a4341365348bfaecb5dd96e150d64e9d9bd1f3eea123ee109d",
+   "reuse": {
+    "source": "data/hardware/H0_kpilot_prep/circuits/B1_ref07_k1.qpy.gz",
+    "byte_for_byte": true
+   }
+  },
+  "B1_ref07_k1_T1": {
+   "sector": "B=1",
+   "reference": 7,
+   "k": 1,
+   "theta": 0.33194310785049674,
+   "cz": 588,
+   "n_delays": 1240,
+   "T_s": 4.43680000000003e-05,
+   "T_total_s": 4.65480000000003e-05,
+   "scheduled_duration_s": 4.6548000000000436e-05,
+   "p_reference": 0.8890601304523768,
+   "exactness": {
+    "max_abs_delta": 1.8250451809943732e-14,
+    "leakage": 5.995204332975845e-15,
+    "measurement_consistent": true,
+    "ok": true,
+    "global_phase_source": 2.1457633300387204,
+    "global_phase_submitted": 0.0
+   },
+   "placement": "the winner's mapping (identical pattern)",
+   "qpy_gz_sha256": "f8c920f58d1c399fc09d03524208b6a5b5e72585a290272559fd60294ed0791a",
+   "reuse": null
+  },
+  "B1_ref07_k1_T2": {
+   "sector": "B=1",
+   "reference": 7,
+   "k": 1,
+   "theta": 0.33194310785049674,
+   "cz": 588,
+   "n_delays": 1129,
+   "T_s": 4.43680000000003e-05,
+   "T_total_s": 4.65480000000003e-05,
+   "scheduled_duration_s": 4.65480000000005e-05,
+   "p_reference": 0.8890601304523768,
+   "exactness": {
+    "max_abs_delta": 1.8069970223716167e-14,
+    "leakage": 1.6542323066914832e-14,
+    "measurement_consistent": true,
+    "ok": true,
+    "global_phase_source": 2.1457633300387204,
+    "global_phase_submitted": 3.141592653589793
+   },
+   "placement": "the winner's mapping (identical pattern)",
+   "qpy_gz_sha256": "b19b118301b148c6144fdab6b9c6f4aecd519a238039e5eb1315b5017243fe90",
+   "reuse": null
+  },
+  "B1_ref07_k1_T3": {
+   "sector": "B=1",
+   "reference": 7,
+   "k": 1,
+   "theta": 0.33194310785049674,
+   "cz": 588,
+   "n_delays": 593,
+   "T_s": 4.43680000000003e-05,
+   "T_total_s": 4.65480000000003e-05,
+   "scheduled_duration_s": 4.6548000000000436e-05,
+   "p_reference": 0.8890601304523768,
+   "exactness": {
+    "max_abs_delta": 1.8079675221073067e-14,
+    "leakage": 7.993605777301127e-15,
+    "measurement_consistent": true,
+    "ok": true,
+    "global_phase_source": 2.1457633300387204,
+    "global_phase_submitted": 3.141592653589793
+   },
+   "placement": "the winner's mapping (identical pattern)",
+   "qpy_gz_sha256": "0b1656d9c7403a52b48a2bec84cbb85f65d56cfd10b23b519bec544420eb3ba1",
+   "reuse": null
+  }
+ },
+ "planner_expectation": "Planner expectation (prompts/24 P7, written before data): the signed bar will not be reached (it needs R >~ 2.4); whether any cell qualifies is genuinely open -- the Aer null is R = 0.82-0.94 and the ceiling is x4.3 (reports/ibm_decoherence_literature_20261002.md section 4).",
+ "runtime_s": 8.773086071014404,
+ "readout_expected_live": {
+  "per_qubit": {
+   "59": 0.995849609375,
+   "71": 0.9952392578125,
+   "72": 0.9525146484375,
+   "73": 0.985595703125,
+   "74": 0.990478515625,
+   "75": 0.9893798828125,
+   "79": 0.9942626953125,
+   "91": 0.9932861328125,
+   "92": 0.969482421875,
+   "93": 0.9970703125,
+   "94": 0.9881591796875,
+   "95": 0.9873046875
+  },
+  "min": 0.9525146484375,
+  "min_qubit": 72,
+  "source": "1 - measure_error of the preregistered patch record (prompts/21a item 2)"
+ }
+}
