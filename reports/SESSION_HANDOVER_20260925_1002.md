@@ -4,7 +4,10 @@ Written at the end of the session so that the next one (human or agent) can pick
 re-reading the log.  Follows `reports/SESSION_HANDOVER_20260921_24.md`.  Every number below is
 copied from the file named next to it (Rule 1); if a number and its file disagree, the file wins.
 
-**One-sentence summary:** the 2x2 lattice was given its best shot on IBM Heron (shorter
+> **Superseded in part — read section 7 ("Update, 2 October 2026 evening") first.**  Client-side XY4
+> dynamical decoupling turned the 2x2 NO-GO below into a GO, and the full 2x2 SKQD hardware run is done.
+
+**One-sentence summary (as of the morning of 2 October):** the 2x2 lattice was given its best shot on IBM Heron (shorter
 schedules, better patch, one preregistered pilot on ibm_kingston) and measured a clean-shot
 fraction of 0.041 against the signed budget of 0.1, so **2x2 on IBM is NO-GO on today's
 devices**; 2x4 is compiled and verified; 2x3 is infeasible on IonQ.
@@ -93,3 +96,75 @@ No QPU spend without the owner's go; IBM key never printed or on a command line;
 login (CI by `scripts/ci_request.sh`, at most 6 jobs per UTC day, BLOCKED file after 3 failures in
 a row); never edit `ci/status.json`, `ci/poll.sh`, `reports/ci-*.out`, `validation/ci_*.json`;
 preregistered records are never rewritten — corrections are new gates; 30-minute laptop rule.
+
+---
+
+## 7. Update, 2 October 2026 evening (prompts/24 and 25)
+
+**One-sentence summary:** client-side XY4 dynamical decoupling (DD) raised the 2x2 clean fraction on
+ibm_kingston about 2.8x, past the signed budget, and the full 2x2 SKQD hardware run passed; 2x3 and
+2x4 are not runnable on ibm_kingston or on any IonQ device that exists today.
+
+**IBM time: 102 s of 600 s used, 498 s left**
+(`data/hardware/H0_2x2_ibm_kingston/account_check_after_20261002T2157Z.json`).  All work is
+committed; everything up to 8ec5db8 is pushed, the three commits after it (aa6d883, 918e01d and this
+update) are local until pushed.
+
+### 7.1 What ran (all on ibm_kingston, calibration fingerprint `84d59cbf9b5973d1` throughout)
+
+| step | gate / file | QPU | result |
+|---|---|---|---|
+| literature search + plan | `reports/ibm_decoherence_literature_20261002.md`, `prompts/24` | 0 s | XY4 / context-aware DD ranked first |
+| Stage T, DD A/B test | `validation/H0_ddtest.json` PASS 8/8 | 20.0 s | no DD f 0.0400 [0.0358, 0.0446]; XY4 in windows >= 1.024 us (T3, adopted) f 0.1129 [0.1058, 0.1203], ratio 2.819 [2.495, 3.185]; XY4 everywhere 2.793; context-aware DD **collapsed** (ratio 0.012, unexplained) |
+| Stage R, full 2x2 SKQD | `validation/H0_2x2.json` PASS 8/8, `reports/H0_2x2_ibm_kingston.md` | 53.0 s | 5 jobs, 133 907 coarse shots; f (7 k = 1 circuits) 0.1271 [0.1084, 0.1479]; E_R on the above-noise support within 5.5e-4 (B=0) / 5.7e-6 (B=1) of exact E0, certificates contain E0 |
+
+Owner decision recorded: `data/owner_decision_20261002_run_below_signed_budget.md` (with XY4 the run
+turned out to be inside the budget for the k = 1 circuits).
+
+### 7.2 How to read it
+
+- At 2x2 random noise fills both sectors (about 16-17 noise hits per state), so the exact energy from
+  all decoded states is **not** a device result: uniformly random strings reproduce it in 100/100 seeds.
+- The device-dependent reading is the above-noise support B_sig: 5th percentile of random equal-size
+  bases in B=0 (a modest signal), 28.5th in B=1 (no evidence).
+- Full plan-versus-evidence report and publishability verdict:
+  `reports/H0_2x2_full_hardware_report_20261002.md` (51 plan rows: 31 fulfilled, 12 with deviation,
+  8 not done; the neural/ML step was not applied to hardware data).  Verdict: not publishable as an
+  SKQD physics result; publishable as a methods note (honest sampling at a noise-saturated size); the
+  XY4 finding could become a short technical note after replication and a test of the context-aware
+  DD collapse.
+
+### 7.3 2x3 and 2x4 (prompts/25, `reports/ionq_devices_2x3_2x4_planner_analysis_20261002.md`)
+
+- **ibm_kingston: NO-GO for both, and DD cannot change it.**  DD removes only idle error.  2x3 has
+  5477 routed CZ (`validation/S2.json`); even at the device's best edge error 8.164e-4 on every CZ the
+  ceiling is f <= 1.14e-2, below the worst-case bar 0.05.  2x4 has 148 726 routed CZ
+  (`validation/S2_2x4.json`), ceiling about 1e-53.
+- **IonQ: infeasible on every device available today** (vendor pages read 2026-10-02): Forte /
+  Forte Enterprise give 2x3 f about 8.6e-5 on published specs; Aria is retired; Tempo is a late-2026
+  projection whose 99.9 % target gives 2x3 f about 0.077, still under 0.1.  2x4 is far out of reach.
+  2x2 on Forte Enterprise is feasible (a cross-platform check).
+- What 2x3 needs: two-qubit error <= 7.4e-4 AND the 2158-gate circuit run well inside T2.
+- prompts/25 has the executor build (0 QPU s): gate K0_2x3_2x4 (the kingston verdict on the day's
+  record), IonQ native-gate compilation verified exactly, `ionq_account.py` / `ionq_submit.py`
+  (key never printed), a device/cost table, gates I0P_2x3 / I0P_2x4.  **Status at this writing:
+  see `prompts/LOG.md` and `git log` for how far the executor got.**
+
+### 7.4 Open decisions for the owner
+
+1. 2x2 campaign: close it (methods note + release bundle, 0 s), or spend about 32 s on a DD
+   replication plus three cells testing why context-aware DD collapsed.
+2. IonQ: whether to run 2x2 on Forte Enterprise as a cross-platform check (about $5-20k on Braket);
+   what to ask IonQ (measured Tempo two-qubit error, gate time, T2, parallelism; raw bit strings with
+   debiasing off).
+3. Whether any cheaper, unsigned 2x3 circuit variant may be considered for a future device (needs a
+   signature; none reaches 0.1 on Forte).
+4. A Perlmutter CI token for the 2x4 native-gate verification.
+5. Amendment items 4 and 5; the 400 IBM minutes still pending.
+
+### 7.5 Resume
+
+`git pull && python scripts/check_package.py && pytest -q tests`, then read this section,
+`prompts/LOG.md` (newest rows) and the newest prompt (`prompts/25_*`).  The `coding` environment was
+repaired on 2026-10-02; the pinned stack (qiskit 2.5.2, aer 0.17.2, runtime 0.49.0) was verified
+afterwards and reproduced every Stage T number exactly.
