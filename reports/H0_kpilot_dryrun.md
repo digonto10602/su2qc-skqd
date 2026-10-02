@@ -1,7 +1,7 @@
 # Gate H0_kpilot_dryrun -- the kingston T2* pilot, dry run (local Aer on the FakeKingston snapshot; a path check, not a prediction)
 
-**Status: FAIL** -- `scripts/gate_H0_kpilot.py --stage assemble --counts data/hardware/H0_kpilot_dryrun/counts --dry-run --out H0_kpilot_dryrun`.
-Runtime 41 s.  Every number below is computed by the script from the raw counts and from
+**Status: PASS** -- `scripts/gate_H0_kpilot.py --stage assemble --counts data/hardware/H0_kpilot_dryrun/counts --dry-run --out H0_kpilot_dryrun`.
+Runtime 49 s.  Every number below is computed by the script from the raw counts and from
 `data/hardware/H0_kpilot_prep/prereg_ec74eb8bf15dde41.json` and is stored in `validation/H0_kpilot_dryrun.json`.
 
 ## 0. What PASS means
@@ -58,7 +58,9 @@ matched to T_s 44.24 us; 8 pubs x 4000 shots; execution estimate
 ## 4. Readout
 
 Smallest confusion diagonal 0.8512; measured readout survival of the patch prod_q (1 - e_q)
-= 0.7094 (the analysis applies the manual's factor 0.82).
+= 0.7094 (the analysis applies the manual's factor 0.82).  Preregistered live expectation
+(1 - measure_error of the patch record): min 0.9552 on qubit 72.
+Dry-run K3 (prompts/21a, option (a)): the measured diagonals are compared with the readout model of the simulator (NoiseModel.from_backend(FakeKingston) local readout errors) within 3 binomial sigma at 4000 shots.  The first assembly of this dry run failed the device form (>= 0.9) because qubit 92 carries a snapshot readout error of 0.1492 against the live record's 0.0243; the device criterion is unchanged and is evaluated only on device counts.
 
 ## 5. Windowed Ramsey (readout-corrected; T2* by rule S3)
 
@@ -135,7 +137,7 @@ information: the signed family's 28 r = 1 circuits relabelled onto the pilot's p
 |---|---|---|---|
 | K1 preregistration before data | n/a (dry run) | device run only | PASS |
 | K2 one job DONE, usage <= 60 s, estimate <= 30 s, 8 x 4000 counts, DD/twirling off | n/a (dry run) | device run only | PASS |
-| K3 readout confusion of the patch (all-0 / all-1 pubs): smallest diagonal | 0.8512 | >= 0.9 | FAIL |
+| K3 readout confusion of the patch (all-0 / all-1 pubs) (dry run: agreement with the snapshot's readout model; the device criterion >= 0.9 is evaluated only on device counts) | 12/12 qubits with |z| <= 3 on both diagonals (max |z| 2.43); min diagonal 0.8512 (information); live expectation min 0.9552 (qubit 72) | all 12 within 3 binomial sigma; live expectation >= 0.9 | PASS |
 | K4 decoder round trip over every accepted string of the three coarse pubs | 0 mismatches over 53 strings | 0 | PASS |
 | K5 idle tests (reference record: the FakeKingston snapshot) | T2* measured 12/12; P0 <= echo bound + 3 sigma at both windows 12/12; 1/T1 in [0.5, 2.0] x record 12/12; r_eff 0.9775 68 % [0.9573, 0.9939] 95 % [0.9396, 1.0112]; dry run: T2* within 3 sigma of the snapshot's echo T2 12/12 | >= 10 of 12 each; r_eff finite with both intervals | PASS |
 | K6 circuits: exactness of the three coarse circuits at build, ALAP scheduling asserted, idle-pub op multisets as intended | exact True (max |d| 5.7e-13), alap True, ops True | all hold | PASS |

@@ -435,6 +435,50 @@ def check_mixing(dry_run_flag, session, records):
         raise SystemExit(f"counts files {bad[:3]} disagree with the session's dry_run flag: refusing")
 
 
+
+# --------------------------------------------------------------------------- K3 (prompts/21a)
+def readout_expected_live(rec, patch):
+    """The preregistered device-K3 expectation: per qubit 1 - measure_error of the patch record."""
+    per = {str(q): 1.0 - float(rec["qubits"][str(q)]["measure_error"]) for q in patch}
+    qmin = min(per, key=lambda q: per[q])
+    return {"per_qubit": per, "min": per[qmin], "min_qubit": int(qmin),
+            "source": "1 - measure_error of the preregistered patch record (prompts/21a item 2)"}
+
+
+def device_k3(min_diagonal):
+    """Device-mode K3, unchanged: the smallest confusion diagonal >= DIAG_MIN."""
+    from gate_H0P import DIAG_MIN
+    return min_diagonal is not None and float(min_diagonal) >= DIAG_MIN
+
+
+def dry_k3(measured, expected, shots, k=3.0):
+    """Dry-run K3 (prompts/21a item 1): every measured diagonal within k binomial sigma of the
+    simulator's own readout model.  `measured` / `expected` = {qubit: (d00, d11)}."""
+    rows, ok = {}, True
+    for q, (m00, m11) in measured.items():
+        e00, e11 = expected[q]
+        r = {}
+        for lab, m, e in (("d00", m00, e00), ("d11", m11, e11)):
+            sig = math.sqrt(max(e * (1.0 - e), 0.0) / float(shots))
+            z = (m - e) / sig if sig > 0 else (0.0 if m == e else float("inf"))
+            r[lab] = {"expected": e, "measured": m, "sigma": sig, "z": z}
+            ok = ok and abs(z) <= k
+        rows[str(q)] = r
+    return ok, rows
+
+
+def snapshot_readout_model(backend_name, patch):
+    """{qubit: (P[0][0], P[1][1])} of the readout errors NoiseModel.from_backend attaches."""
+    from h0_backends import resolve_backend
+    from qiskit_aer.noise import NoiseModel
+    nm = NoiseModel.from_backend(resolve_backend(backend_name))
+    out = {}
+    for q in patch:
+        P = nm._local_readout_errors[(int(q),)].probabilities
+        out[int(q)] = (float(P[0][0]), float(P[1][1]))
+    return out
+
+
 # --------------------------------------------------------------------------- decoding
 def decode_counts(counts_list, man):
     """Both clean-yield statistics (68 % and 95 %), the distance histogram and the garbage
@@ -635,9 +679,16 @@ def stage_predict(args):
     }
     path = p(prep, f"prereg_{fp16}.json")
     if os.path.exists(path):
-        old = load_json(path)
-        if old.get("commit_of_record"):
+        tracked = subprocess.run(["git", "ls-files", "--error-unmatch", rel(path)], cwd=ROOT,
+                                 capture_output=True).returncode == 0
+        if tracked:
             raise SystemExit(f"{rel(path)} is committed as the preregistration: refusing to overwrite")
+    from gate_H0P import DIAG_MIN
+    pre["readout_expected_live"] = readout_expected_live(rec, patch)
+    if pre["readout_expected_live"]["min"] < DIAG_MIN:
+        print(f"STOP (prompts/21a): the live readout expectation {pre['readout_expected_live']['min']:.4f} "
+              f"(qubit {pre['readout_expected_live']['min_qubit']}) < DIAG_MIN {DIAG_MIN}: nothing is submitted")
+        return 3
     dump_json(pre, path)
     print(f"wrote {rel(path)}: estimate {est['total_execution_s']:.2f} s over {est['total_shots']} shots "
           f"(cap {MAX_ESTIMATE_S:.0f}); Aer B0_ref06_k1 grid {json.dumps({k: (None if v is None else round(v, 4)) for k, v in grid_mix.items()})}; "
@@ -900,6 +951,22 @@ def stage_assemble(args):
     # ---- readout (K3)
     ro = readout_reference({"records": records}, n)
     ro_survival = float(np.prod([1.0 - e for e in ro["measured_error"]])) if ro else None
+    ro_live = readout_expected_live(prereg_rec, patch)
+    cal_phys = mans["cal_patch_all0"]["logical_to_physical"]
+    dry_k3_block = None
+    if dry and ro:
+        exp_model = snapshot_readout_model(index["common"]["backend"], cal_phys)
+        meas = {int(q): (ro["P_measure_0_given_0"][i], ro["P_measure_1_given_1"][i]) for i, q in enumerate(cal_phys)}
+        shots_cal = int(sum(by_id["cal_patch_all0"][1].values()))
+        k3_ok, k3_rows = dry_k3(meas, exp_model, shots_cal)
+        qmin = cal_phys[min(range(len(cal_phys)), key=lambda i: min(ro["P_measure_0_given_0"][i],
+                                                                      ro["P_measure_1_given_1"][i]))]
+        dry_k3_block = {"ok": k3_ok, "per_qubit": k3_rows, "shots": shots_cal, "sigma_k": 3.0,
+                        "model": f"NoiseModel.from_backend({index['common']['backend']}) local readout errors",
+                        "min_diagonal_qubit": int(qmin),
+                        "min_diagonal_qubit_snapshot_error": 1.0 - 0.5 * sum(exp_model[int(qmin)]),
+                        "min_diagonal_qubit_live_error": float(prereg_rec["qubits"][str(qmin)]["measure_error"]),
+                        "ruling": "prompts/21a_H0_kpilot_dryrun_K3_ruling_20261002.md option (a)"}
 
     # ---- S3: the idle pubs
     idle = {}
@@ -1069,8 +1136,22 @@ def stage_assemble(args):
         R.add("K2 one job DONE, usage_s recorded <= 60, preflight estimate <= 30 s, 8 counts files x 4000 shots, "
               "DD off and twirling off", f"jobs {job_ids} {statuses}, usage {usage_s} s, estimate "
               f"{_f(est, '{:.2f}')} s, counts ok {shots_ok}, options off {opts_ok}", "all hold", k2)
-    R.add("K3 readout confusion of the patch (all-0 / all-1 pubs): smallest diagonal",
-          None if not ro else round(ro["min_diagonal"], 4), f">= {DIAG_MIN}", bool(ro) and ro["min_diagonal"] >= DIAG_MIN)
+    if dry:
+        nz = sum(1 for v in (dry_k3_block or {}).get("per_qubit", {}).values()
+                 if abs(v["d00"]["z"]) <= 3 and abs(v["d11"]["z"]) <= 3)
+        maxz = max((max(abs(v["d00"]["z"]), abs(v["d11"]["z"])) for v in (dry_k3_block or {}).get("per_qubit", {}).values()),
+                   default=None)
+        R.add("K3 readout confusion of the patch (all-0 / all-1 pubs) (dry run: agreement with the snapshot's "
+              "readout model; the device criterion >= 0.9 is evaluated only on device counts)",
+              f"{nz}/12 qubits with |z| <= 3 on both diagonals (max |z| {_f(maxz, '{:.2f}')}); min diagonal "
+              f"{_f(None if not ro else ro['min_diagonal'])} (information); live expectation min "
+              f"{ro_live['min']:.4f} (qubit {ro_live['min_qubit']})",
+              f"all 12 within 3 binomial sigma; live expectation >= {DIAG_MIN}",
+              bool(dry_k3_block and dry_k3_block["ok"]) and nz == len(patch) and ro_live["min"] >= DIAG_MIN)
+    else:
+        R.add("K3 readout confusion of the patch (all-0 / all-1 pubs): smallest diagonal",
+              None if not ro else round(ro["min_diagonal"], 4), f">= {DIAG_MIN}",
+              bool(ro) and device_k3(ro["min_diagonal"]))
     R.add("K4 decoder round trip over every accepted string of the three coarse pubs",
           f"{rt['mismatches']} mismatches over {rt['distinct_accepted_strings']} strings", "0", rt["mismatches"] == 0)
     n_meas = sum(1 for q in patch if ramsey[str(q)]["provenance"] == "measured")
@@ -1143,6 +1224,10 @@ def stage_assemble(args):
                  "preflight_estimate_s": (((session or {}).get("preflight") or {}).get("qpu_time_estimate") or {}).get("total_execution_s"),
                  "sampler_options": (session or {}).get("sampler_options"), "account": acct, "K1": k1_info},
         "readout": ro, "readout_survival_product": ro_survival,
+        "readout_expected_live": ro_live, "dry_run_K3": dry_k3_block,
+        "analysis_change_21a": {"commit": _commit_with_subject("H0_kpilot: dry-run K3 reads the snapshot"),
+                                 "text": ("dry-run K3 form changed (prompts/21a option (a)); device K3 >= 0.9 "
+                                          "unchanged; no prereg number edited")},
         "ramsey": ramsey, "t1": {str(q): v for q, v in t1rows.items()},
         "r_eff_block": {"r_eff": r_eff, "bootstrap": boot, "S_T2_measured_T2star": s_star, "S_T2_echo": s_echo,
                         "idle_weighted_harmonic_ratio": harm, "windows": "ALAP B0_ref06_k1 explicit delays, leading excluded",
@@ -1166,6 +1251,27 @@ def stage_assemble(args):
     print(f"status {saved['status']}; decision {decision}: f_pool {pool68['f_clean']:.4f} 95 % {_iv(pool95['f_clean_68'])}; "
           f"r_eff {_f(r_eff)} 68 % {_iv(boot.get('r_eff_68'))} vs r_crit {R_CRIT_PREREG}; model_consistent {mc}")
     return 0 if saved["status"] == "PASS" else 1
+
+
+def _commit_with_subject(prefix):
+    try:
+        out = subprocess.check_output(["git", "log", "--format=%h %s"], cwd=ROOT,
+                                      stderr=subprocess.DEVNULL).decode().splitlines()
+    except Exception:
+        return None
+    return next((l.split()[0] for l in out if l.split(" ", 1)[1].startswith(prefix)), None)
+
+
+def dry_k3_sentence(D):
+    b = D.get("dry_run_K3")
+    if not b:
+        return ""
+    return (f"Dry-run K3 (prompts/21a, option (a)): the measured diagonals are compared with the readout model of "
+            f"the simulator ({b['model']}) within {b['sigma_k']:.0f} binomial sigma at {b['shots']} shots.  The first "
+            f"assembly of this dry run failed the device form (>= 0.9) because qubit {b['min_diagonal_qubit']} carries "
+            f"a snapshot readout error of {b['min_diagonal_qubit_snapshot_error']:.4f} against the live record's "
+            f"{b['min_diagonal_qubit_live_error']:.4f}; the device criterion is unchanged and is evaluated only on "
+            f"device counts.")
 
 
 def report_text(saved, R):
@@ -1244,7 +1350,8 @@ model finding.
 {D['windows']['window_dt']} dt = {D['windows']['window_s'] * 1e9:.0f} ns, N_long {D['windows']['N_long']}
 ({D['windows']['total_delay_long_s'] * 1e6:.2f} us), N_half {D['windows']['N_half']} ({D['windows']['total_delay_half_s'] * 1e6:.2f} us)
 matched to T_s {D['windows']['T_s_matched'] * 1e6:.2f} us; 8 pubs x 4000 shots; execution estimate
-{D['execution_estimate_prereg_s']:.2f} s.
+{D['execution_estimate_prereg_s']:.2f} s.  Analysis change after the preregistration:
+{D['analysis_change_21a']['text']} (commit `{D['analysis_change_21a']['commit']}`).
 
 ## 3. Live block
 
@@ -1263,7 +1370,9 @@ matched to T_s {D['windows']['T_s_matched'] * 1e6:.2f} us; 8 pubs x 4000 shots; 
 ## 4. Readout
 
 Smallest confusion diagonal {_f(ro.get('min_diagonal'))}; measured readout survival of the patch prod_q (1 - e_q)
-= {_f(D['readout_survival_product'])} (the analysis applies the manual's factor 0.82).
+= {_f(D['readout_survival_product'])} (the analysis applies the manual's factor 0.82).  Preregistered live expectation
+(1 - measure_error of the patch record): min {D['readout_expected_live']['min']:.4f} on qubit {D['readout_expected_live']['min_qubit']}.
+{dry_k3_sentence(D)}
 
 ## 5. Windowed Ramsey (readout-corrected; T2* by rule S3)
 

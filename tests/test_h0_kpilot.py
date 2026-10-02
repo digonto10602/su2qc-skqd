@@ -109,3 +109,28 @@ def test_decision_completeness():
     assert K.decision_complete(dec) == []
     dec["decision"] = "AMBIGUOUS"
     assert K.decision_complete(dec) == ["ambiguous_topup_shots"]
+
+
+# ---- prompts/21a: the dry-run K3 form and the unchanged device K3
+
+def test_dry_run_k3_agrees_within_3_sigma_and_fails_at_5_sigma():
+    shots = 4000
+    expected = {92: (0.851, 0.851), 59: (0.994, 0.994)}
+    sig = {q: (e[0] * (1 - e[0]) / shots) ** 0.5 for q, e in expected.items()}
+    inside = {q: (e[0] + 1.0 * sig[q], e[1] - 2.0 * sig[q]) for q, e in expected.items()}
+    ok, rows = K.dry_k3(inside, expected, shots)
+    assert ok and abs(rows["92"]["d11"]["z"] + 2.0) < 1e-9
+    off = dict(inside)
+    off[92] = (expected[92][0] - 5.0 * sig[92], expected[92][1])
+    ok2, rows2 = K.dry_k3(off, expected, shots)
+    assert not ok2 and abs(rows2["92"]["d00"]["z"] + 5.0) < 1e-9
+
+
+def test_device_k3_uses_diag_min_unchanged():
+    from gate_H0P import DIAG_MIN
+    assert DIAG_MIN == 0.9
+    assert not K.device_k3(0.89)
+    assert K.device_k3(0.91)
+    rec = {"qubits": {"1": {"measure_error": 0.0448}, "2": {"measure_error": 0.0243}}}
+    e = K.readout_expected_live(rec, [1, 2])
+    assert e["min_qubit"] == 1 and abs(e["min"] - 0.9552) < 1e-12
