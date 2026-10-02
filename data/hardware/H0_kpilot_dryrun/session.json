@@ -1,0 +1,147 @@
+{
+ "created": "2026-10-02 17:41:52 UTC",
+ "script": "scripts/h0_submit.py",
+ "arguments": {
+  "prep": "data/hardware/H0_kpilot_prep",
+  "out": "data/hardware/H0_kpilot_dryrun",
+  "shots": 4000,
+  "shots_by_rep": null,
+  "shots_plan": null,
+  "cal_shots": 4000,
+  "dd": "off",
+  "twirling": "off",
+  "job_tags": null,
+  "prereg": null,
+  "dry_run": true,
+  "backend": null,
+  "submit": false,
+  "retrieve": false,
+  "status": false,
+  "record_calibration": false,
+  "resume": false,
+  "wait": 0.0,
+  "reps": null,
+  "only": null,
+  "no_calibration": false,
+  "max_pubs_per_job": 8,
+  "max_qpu_seconds": 120.0,
+  "predict_from": null,
+  "seed": 11
+ },
+ "commit": "148e873",
+ "dry_run": true,
+ "backend": "AerSimulator.from_backend(FakeKingston) [local testing mode]",
+ "calibration_last_update_date": null,
+ "prediction": null,
+ "prep": "data/hardware/H0_kpilot_prep",
+ "prep_created": "2026-10-02 17:14:39 UTC",
+ "sampler": "qiskit_ibm_runtime.SamplerV2",
+ "sampler_options": {
+  "default_shots": 4000,
+  "dynamical_decoupling": {
+   "enable": false
+  },
+  "twirling": {
+   "enable_gates": false,
+   "enable_measure": false
+  },
+  "error_mitigation": "none: SamplerV2 returns raw bit strings; no resilience level, no readout mitigation of expectation values (prompts/07 step 2)"
+ },
+ "job_tags": null,
+ "prereg": null,
+ "prereg_calibration_fingerprint": null,
+ "prereg_fingerprint_match": null,
+ "sampler_options_effective": false,
+ "sampler_options_note": "qiskit-ibm-runtime local testing mode ignores dynamical decoupling and twirling ('Options ... have no effect in local testing mode'): the dry run exercises the submission path and the data format, not the pulse-level options, which apply only on the real backend",
+ "shots_by_repetition": {
+  "all": 4000
+ },
+ "shots_plan": null,
+ "shots_plan_calibration_last_update_date": null,
+ "shots_plan_stamp": null,
+ "calibration_fingerprint": null,
+ "prediction_calibration_fingerprint": null,
+ "shots_plan_calibration_fingerprint": null,
+ "fingerprint_match": null,
+ "stamp_match": null,
+ "f_live_vs_plan_max_abs_diff": null,
+ "f_live_vs_prediction_max_abs_diff": null,
+ "calibration_at_submission_file": null,
+ "shots_by_circuit": null,
+ "calibration_shots": 4000,
+ "n_circuits": 8,
+ "circuits": [
+  {
+   "id": "B0_ref06_k1",
+   "kind": "coarse_step",
+   "shots": 4000
+  },
+  {
+   "id": "B0_ref06_k4",
+   "kind": "coarse_step",
+   "shots": 4000
+  },
+  {
+   "id": "B1_ref07_k1",
+   "kind": "coarse_step",
+   "shots": 4000
+  },
+  {
+   "id": "kpilot_ramw_half",
+   "kind": "idle_test",
+   "shots": 4000
+  },
+  {
+   "id": "kpilot_ramw_long",
+   "kind": "idle_test",
+   "shots": 4000
+  },
+  {
+   "id": "kpilot_t1w_long",
+   "kind": "idle_test",
+   "shots": 4000
+  },
+  {
+   "id": "cal_patch_all0",
+   "kind": "readout_calibration",
+   "shots": 4000
+  },
+  {
+   "id": "cal_patch_all1",
+   "kind": "readout_calibration",
+   "shots": 4000
+  }
+ ],
+ "preflight": null,
+ "jobs": [
+  {
+   "group_shots": 4000,
+   "chunk_index": 0,
+   "n_pubs": 8,
+   "circuit_ids": [
+    "B0_ref06_k1",
+    "B0_ref06_k4",
+    "B1_ref07_k1",
+    "kpilot_ramw_half",
+    "kpilot_ramw_long",
+    "kpilot_t1w_long",
+    "cal_patch_all0",
+    "cal_patch_all1"
+   ],
+   "job_id": "769e80e7-3e8f-48f8-9b84-d36d00ee3915",
+   "submitted": "2026-10-02 17:41:52 UTC",
+   "status": "DONE",
+   "usage_s": 0.0,
+   "usage_raw": 0,
+   "metrics": {
+    "repr": "{'bss': {'seconds': 0}, 'usage': {'quantum_seconds': 0, 'seconds': 0}, 'timestamps': {'created': datetime.datetime(2026, 10, 2, 11, 41, 55, 605000), 'running': datetime.datetime(2026, 10, 2, 11, 41, 55, 605015), 'finished': datetime.datetime(2026, 10, 2, 11, 41, 55, 605016)}}"
+   },
+   "retrieved": "2026-10-02 17:50:02 UTC",
+   "counts_written": true,
+   "counts_files_written": 8,
+   "counts_files_skipped_existing": 0
+  }
+ ],
+ "total_usage_s": 0.0,
+ "runtime_s": 500.353657245636
+}
