@@ -913,6 +913,20 @@ def budgets_at(f, prep, full_rec, mp):
             "D3pp_H0_shots_per_k1": dpp["shots_per_k1_circuit"], "D3pp_H0_execution_s": dpp["execution_s"]}
 
 
+def inverse_loglog(grid, f):
+    """The r at which the log-log interpolated Aer grid equals f (information), with a status."""
+    pts = sorted((float(k), float(v)) for k, v in grid.items() if v is not None and v > 0)
+    if f is None or f <= 0 or len(pts) < 2:
+        return {"value": None, "status": "no data"}
+    for (r0, f0), (r1, f1) in zip(pts, pts[1:]):
+        if f0 <= f <= f1:
+            x = math.log(r0) + (math.log(f) - math.log(f0)) * (math.log(r1) - math.log(r0)) / (math.log(f1) - math.log(f0))
+            return {"value": math.exp(x), "status": "interpolated"}
+    (r0, f0), (r1, f1) = (pts[0], pts[1]) if f < pts[0][1] else (pts[-2], pts[-1])
+    x = math.log(r0) + (math.log(f) - math.log(f0)) * (math.log(r1) - math.log(r0)) / (math.log(f1) - math.log(f0))
+    return {"value": math.exp(x), "status": "extrapolated"}
+
+
 def stage_assemble(args):
     import gate_S2D_levers as G
     from gate_H0 import codeword_roundtrip, read_counts_dir
@@ -1025,6 +1039,15 @@ def stage_assemble(args):
     s_star = s_t2(windows_by_q, {q: t2s[q][0] for q in windows_by_q}) if ok_t2 else None
     s_echo = s_t2(windows_by_q, t2echo)
 
+    # information (not a criterion): a free-induction decay with no detuning has P0 >= 1/2; a
+    # readout-corrected P0 below 1/2 by more than 3 sigma is a coherent phase (detuning / static ZZ),
+    # under which -T / ln(2 P0 - 1) is not T2* (rule S3 then reads a shorter time than the decay).
+    detune = {str(q): [w for w in ("long", "half")
+                       if ramsey[str(q)][w]["P0"] is not None
+                       and ramsey[str(q)][w]["P0"] < 0.5 - SIGMA * ramsey[str(q)][w]["sigma"]]
+              for q in patch}
+    detune = {q: v for q, v in detune.items() if v}
+
     # ---- S1 / S2: the coarse circuits
     circ = {}
     for cid in AER_GRID:
@@ -1046,6 +1069,7 @@ def stage_assemble(args):
     ratio_mc, mc = model_consistent(circ[DECIDING]["f_clean_reference"], f_aer_r)
     f_aer_ref, _ = loglog_interp(pre["aer_grid_B0_ref06_k1_reference"], r_eff)
     ratio_mc_ref, mc_ref = model_consistent(circ[DECIDING]["f_clean_reference"], f_aer_ref)
+    r_equiv = inverse_loglog(grid_mix, circ[DECIDING]["f_clean_reference"])
     aer_at = {}
     for cid in AER_GRID:
         g = {r: (None if d is None else d["f_clean_mixture"]) for r, d in pre["aer"][cid].items()}
@@ -1091,6 +1115,8 @@ def stage_assemble(args):
            "model_ratio_measured_over_aer": ratio_mc, "model_consistent": mc,
            "model_ratio_reference_statistic_both_sides": ratio_mc_ref, "model_consistent_reference_statistic": mc_ref,
            "f_and_r_verdicts_agree": None,
+           "r_aer_equivalent_information": r_equiv,
+           "ramsey_detuning_signature_information": detune,
            "shape_ratio_median": float(np.median(shape)) if shape else None,
            "n_qubits_resolved_long": n_res["long"], "n_qubits_resolved_half": n_res["half"],
            "usage_s": usage_s}
@@ -1335,6 +1361,8 @@ Runtime {saved['runtime_s']:.0f} s.  Every number below is computed by the scrip
 | measured / Aer, model_consistent (factor 3) | {_f(dec['model_ratio_measured_over_aer'], '{:.3f}')}, {dec['model_consistent']} |
 | same with the reference statistic on both sides | {_f(dec['model_ratio_reference_statistic_both_sides'], '{:.3f}')}, {dec['model_consistent_reference_statistic']} |
 | f and r verdicts agree | {dec['f_and_r_verdicts_agree']} |
+| Aer-equivalent uniform r of the measured B0_ref06_k1 f (information) | {_f(dec['r_aer_equivalent_information']['value'])} ({dec['r_aer_equivalent_information']['status']}) |
+| qubits with P0 < 1/2 - 3 sigma (coherent phase, information) | {dec['ramsey_detuning_signature_information']} |
 | shape ratio median (2 = exponential, 4 = Gaussian) | {_f(dec['shape_ratio_median'], '{:.2f}')} |
 | qubits resolved long / half | {dec['n_qubits_resolved_long']} / {dec['n_qubits_resolved_half']} |
 | usage (s) | {dec['usage_s']} |
@@ -1415,6 +1443,11 @@ B0_ref06_k4 is information only (C6 ruling: the estimators are not tolerance-cal
 - The readout factor 0.82 of manual Step 4.4 is applied to both statistics and to the Aer predictions; the patch's measured
   readout survival is {_f(D['readout_survival_product'])}.
 - One job on one calibration content; a drift between submission and retrieval is reported (retrieval diff above), not corrected.
+- The Ramsey inversion assumes no detuning (P0 = (1 + e^(-T/T2*))/2 >= 1/2).  {len(dec['ramsey_detuning_signature_information'])} of the
+  12 qubits read P0 below 1/2 by more than 3 sigma at a window ({', '.join(f"{q}: {w}" for q, w in dec['ramsey_detuning_signature_information'].items()) or 'none'}): a coherent
+  phase (frequency offset, or static ZZ with neighbours that are also in superposition) that the inversion reads as decay.  Where it
+  applies, the T2* of rule S3 understates the dephasing time and r_eff is biased low; the Aer-equivalent ratio of the measured f
+  ({_f(dec['r_aer_equivalent_information']['value'])}) is the model's reading of the circuit itself.  This is why f, not r_eff, is the decision statistic.
 
 ## 11. Criteria
 

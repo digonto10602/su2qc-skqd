@@ -35,6 +35,7 @@ GATES = [  # gate, description (manual Step 10), where it runs
     ("S2_2x4", "2x4 coarse step compiled to exact circuits and verified (measurement gate: counts, duration, idle budget, T2/t_2q requirement; no budget criterion)", "laptop"),
     ("H0_model", "post-diction of the H0 hardware counts by the scheduled-Aer model at both ends of the T2 bracket; the clean-yield statistic", "laptop"),
     ("S2D_levers", "2x2 duration levers on ibm_kingston: compile/schedule levers measured, f predicted at both T2 ends, r_crit (measurement gate; no budget criterion)", "laptop"),
+    ("H0_kpilot", "ibm_kingston pilot on the selected patch: windowed Ramsey at two lengths (T2*/T2_echo ratio r_eff vs r_crit), T1, the signed k = 1 circuits' direct f_clean; GO/NO-GO on f >= 0.1 (measurement gate)", "QPU"),
 ]
 
 
