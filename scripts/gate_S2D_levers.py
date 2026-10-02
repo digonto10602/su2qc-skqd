@@ -83,6 +83,8 @@ CHUNKS = 2                                # 4000 shots per cell
 EXTRA_CHUNKS = 2                          # when the clean reference hits are below MIN_REF_HITS
 MIN_REF_HITS = 20
 C6_TOL = 0.25                             # the H0_model C1 tolerance
+C6_P_REF_MIN = 0.5                        # C6 scope: the planner ruling reports/S2D_levers_C6_ruling_20261002.md
+                                          # (the tolerance was calibrated on p_ref ~0.88 k = 1 cells only)
 AMP_TOL = 1e-10
 LEAK_TOL = 1e-9
 ANCHOR_REL = 1e-9                         # C3(i)
@@ -2119,13 +2121,13 @@ def stage_assemble(args):
     # C6
     tab = aer_table(rows)
     c6 = []
+    c6_low = []
     for rid, cells in tab.items():
         for r, d in cells.items():
             if d is None:
                 continue
-            if d["reference_hits"] >= MIN_REF_HITS:
-                c6.append({"row": rid, "ratio": r, "dev": d["c6_relative_deviation"],
-                           "strided": d["strided_seeds"], "ok": d["c6_relative_deviation"] <= C6_TOL and d["strided_seeds"]})
+            kind, entry = c6_classify(rid, r, d)
+            (c6 if kind == "checked" else c6_low if kind == "information" else []).append(entry)
     e4 = None
     rec_row = None
     n_cells = sum(1 for cells in tab.values() for d in cells.values() if d is not None)
@@ -2147,10 +2149,10 @@ def stage_assemble(args):
     if e4 is not None:
         for cid, cells in e4["aer"].items():
             for r, d in cells.items():
-                if d is not None and d["reference_hits"] >= MIN_REF_HITS:
-                    c6.append({"row": f"E4:{cid}", "ratio": r, "dev": d["c6_relative_deviation"],
-                               "strided": d["strided_seeds"],
-                               "ok": d["c6_relative_deviation"] <= C6_TOL and d["strided_seeds"]})
+                if d is None:
+                    continue
+                kind, entry = c6_classify(f"E4:{cid}", r, d)
+                (c6 if kind == "checked" else c6_low if kind == "information" else []).append(entry)
     c6_first = []
     if e4 is not None:
         for cid, cells in e4["aer"].items():
@@ -2164,9 +2166,15 @@ def stage_assemble(args):
                                      "f_clean_mixture": fa["f_clean_mixture"],
                                      "f_clean_mixture_68": fa["f_clean_mixture_68"],
                                      "ok": fa["c6_relative_deviation"] <= C6_TOL})
-    c6_ok = all(x["ok"] for x in c6) and n_cells == n_expected
-    R.add("C6 estimator consistency on every Aer cell with >= 20 reference hits (mixture vs reference f_clean), chunks strided",
-          f"{len(c6)} cells checked, worst {max((x['dev'] for x in c6), default=0):.3f}; {n_cells}/{n_expected} row cells present",
+    c6_ok = c6_verdict(c6) and n_cells == n_expected
+    c6_low_block = {"p_ref_min": C6_P_REF_MIN, "ruling": C6_RULING, "cells": c6_low,
+                    "summary": c6_low_summary(c6_low)}
+    R.add("C6 estimator consistency on every Aer cell with >= 20 reference hits and p_ref >= 0.5 (the k = 1 "
+          "cells H0_model C1 calibrated the 0.25 tolerance on; ruling reports/S2D_levers_C6_ruling_20261002.md); "
+          "low-p_ref cells recorded as information",
+          f"{len(c6)} cells checked, worst {max((x['dev'] for x in c6), default=0):.3f}; {n_cells}/{n_expected} row "
+          f"cells present; {len(c6_low)} low-p_ref cells recorded (max |z| "
+          f"{_fmt(c6_low_block['summary']['max_abs_z'], '{:.2f}')})",
           f"<= {C6_TOL} and every row x ratio cell present", c6_ok)
     # C7
     c7 = {rid: rv["c7"] for rid, rv in rows.items()}
@@ -2220,7 +2228,8 @@ def stage_assemble(args):
              "selected_f_plain": frac["plain_control"]["selected"]["best"]["f_dd_off"]} if frac.get("measured") else {}),
         "rows": {rid: {k: v for k, v in rv.items()} for rid, rv in rows.items()},
         "dd_ceiling": rowsj["dd_ceiling"],
-        "aer": tab, "C6": c6, "C6_first_attempt_E4_4000_shots": c6_first, "C7": c7, "C8": c8, "C9": checks,
+        "aer": tab, "C6": c6, "C6_information_low_p_ref": c6_low_block,
+        "C6_first_attempt_E4_4000_shots": c6_first, "C7": c7, "C8": c8, "C9": checks,
         "family": {t: {k: v for k, v in f.items() if k != "circuits"} for t, f in fam["families"].items()},
         "family_reach_default_order": dr, "family_p_ref_default_order_k1": fam["p_ref_default_order_k1"],
         "e4": e4, "information": info_lines, "verdict": verdict,
@@ -2238,6 +2247,93 @@ def stage_assemble(args):
           f"transfer {_fmt(verdict['f_aer_transfer_0.174_best'], '{:.4f}')}, r_crit "
           f"{verdict['r_crit_0.1']}")
     return 0 if saved["status"] == "PASS" else 1
+
+
+C6_RULING = "reports/S2D_levers_C6_ruling_20261002.md"
+
+
+def c6_low_p_ref_entry(row, ratio, d):
+    """A low-p_ref cell as information (the planner ruling, section 4): the deviation, the sigma of each
+    estimator (half-width of its recorded 68 % interval), z of the difference, the clean accepted shots by
+    either statistic against the physical ceiling (accepted - N a), and the shots a 3-sigma test of the
+    0.25 tolerance would need."""
+    N, acc, n = d["shots"], d["accepted"], d["reference_hits"]
+    pr, a, dim = d["p_reference"], d["garbage_acceptance"], d["dim"]
+    fr, fm = d["f_clean_reference"], d["f_clean_mixture"]
+    s_ref = (d["f_clean_reference_68"][1] - d["f_clean_reference_68"][0]) / 2
+    s_mix = (d["f_clean_mixture_68"][1] - d["f_clean_mixture_68"][0]) / 2
+    s_d = math.hypot(s_ref, s_mix)
+    z = (fm - fr) / s_d if s_d > 0 else None
+    rel_s = s_d / fr if fr else None
+    cr = (n - N * a / dim) / pr
+    cm = d["w"] * acc
+    ceil = acc - N * a
+    return {"row": row, "ratio": ratio, "shots": N, "accepted": acc, "reference_hits": n, "p_reference": pr,
+            "dev": d["c6_relative_deviation"], "sigma_ref": s_ref, "sigma_mix": s_mix, "z": z,
+            "clean_accepted_reference": cr, "clean_accepted_mixture": cm, "clean_accepted_ceiling": ceil,
+            "reference_exceeds_ceiling": bool(cr > ceil),
+            "shots_for_tolerance_at_3_sigma": (None if rel_s is None else N * (3 * rel_s / C6_TOL) ** 2)}
+
+
+def c6_low_summary(cells):
+    from scipy.stats import chi2
+    zs = [c["z"] for c in cells if c["z"] is not None]
+    if not zs:
+        return {"n_cells": len(cells), "max_abs_z": None, "sum_z2": None, "chi2_p": None}
+    s2 = float(sum(z * z for z in zs))
+    return {"n_cells": len(cells), "max_abs_z": float(max(abs(z) for z in zs)), "sum_z2": s2,
+            "chi2_p": float(chi2.sf(s2, len(zs)))}
+
+
+def c6_classify(row, ratio, d):
+    """("checked", C6 entry) for a cell in the ruling's scope (>= MIN_REF_HITS hits and p_ref >=
+    C6_P_REF_MIN), ("information", low-p_ref entry) below the p_ref threshold, (None, None) below the hit floor."""
+    if d["reference_hits"] < MIN_REF_HITS:
+        return None, None
+    if d["p_reference"] >= C6_P_REF_MIN:
+        return "checked", {"row": row, "ratio": ratio, "dev": d["c6_relative_deviation"],
+                           "strided": d["strided_seeds"],
+                           "ok": d["c6_relative_deviation"] <= C6_TOL and d["strided_seeds"]}
+    return "information", c6_low_p_ref_entry(row, ratio, d)
+
+
+def c6_verdict(c6):
+    """C6 pass/fail over the in-scope (p_ref >= C6_P_REF_MIN) cells only."""
+    return all(x["ok"] for x in c6)
+
+
+def c6_ruling_section(D):
+    """The report's "C6 ruling" section, generated from data.C6_information_low_p_ref."""
+    from skqd.report import md_table
+    blk = D.get("C6_information_low_p_ref")
+    if not blk:
+        return ""
+    rows = []
+    for c in blk["cells"]:
+        rows.append([c["row"], c["ratio"], c["shots"], c["reference_hits"], f"{c['p_reference']:.3f}",
+                     f"{c['dev']:.3f}", f"{c['sigma_ref']:.4f}", f"{c['sigma_mix']:.4f}", _fmt(c["z"], "{:+.2f}"),
+                     f"{c['clean_accepted_reference']:.1f}", f"{c['clean_accepted_mixture']:.1f}",
+                     f"{c['clean_accepted_ceiling']:.1f}", str(c["reference_exceeds_ceiling"]),
+                     _fmt(c["shots_for_tolerance_at_3_sigma"], "{:.0f}")])
+    sm = blk["summary"]
+    over = [c for c in blk["cells"] if c["reference_exceeds_ceiling"]]
+    ceil_txt = ("; ".join(f"{c['row']} at r = {c['ratio']}: the reference statistic's clean accepted shots "
+                          f"{c['clean_accepted_reference']:.1f} exceed the physical ceiling "
+                          f"{c['clean_accepted_ceiling']:.1f} (accepted - N a), the mixture's "
+                          f"{c['clean_accepted_mixture']:.1f} is inside it" for c in over)
+                or "no low-p_ref cell's reference estimate exceeds the physical ceiling")
+    worst = max((x["dev"] for x in D["C6"]), default=0)
+    return f"""
+## C6 ruling (planner, `{blk['ruling']}`)
+
+C6 is scoped to the cells the 0.25 tolerance was calibrated on (gate H0_model C1): p_ref >= {blk['p_ref_min']}.
+{len(D['C6'])} cells are checked, worst deviation {worst:.4f}.  The {sm['n_cells']} cells with p_ref below the threshold
+(the k = 4 circuits) are recorded as information, not deleted: max |z| {_fmt(sm['max_abs_z'], '{:.2f}')}, sum z^2
+{_fmt(sm['sum_z2'], '{:.2f}')} over {sm['n_cells']} d.o.f., chi-square p {_fmt(sm['chi2_p'], '{:.3f}')}.  Ceiling check: {ceil_txt}.
+
+{md_table(["cell", "r", "shots", "ref hits", "p_ref", "dev", "sigma_ref", "sigma_mix", "z",
+           "clean acc (ref)", "clean acc (mix)", "ceiling", "ref > ceiling", "shots for a 3-sigma test"], rows)}
+"""
 
 
 PROMPT_B1_PREF = 0.8894      # the value prompts/23 F1 quotes for the default family's B = 1 p_ref
@@ -2651,6 +2747,7 @@ prompt specifies; the mean carries the uncalibrated 1.0 edges), and (1 - {x23['c
 ## 10. Notes
 
 {chr(10).join('- ' + n for n in D['notes'])}
+{c6_ruling_section(D)}
 
 ## 11. Criteria
 

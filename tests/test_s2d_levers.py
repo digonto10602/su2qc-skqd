@@ -159,3 +159,41 @@ def test_post_optimization_fold_keeps_rzz_in_the_calibrated_range():
     want = Statevector(qc.remove_final_measurements(inplace=False)).data
     got = logical_statevector(tq, 3)
     assert abs(abs(sum(w.conjugate() * g for w, g in zip(want, got))) - 1.0) < 1e-9
+
+
+# ---- the C6 ruling of 2026-10-02 (reports/S2D_levers_C6_ruling_20261002.md; prompts/21 part 0)
+
+def test_c6_low_p_ref_cell_from_the_committed_json():
+    with open(os.path.join(ROOT, "validation", "S2D_levers.json")) as fh:
+        D = json.load(fh)["data"]
+    d = D["e4"]["aer"]["B1_ref07_k4"]["0.174"]
+    kind, e = G.c6_classify("E4:B1_ref07_k4", "0.174", d)
+    assert kind == "information"
+    assert abs(e["z"] - (-1.65)) <= 0.02
+    assert round(e["clean_accepted_ceiling"], 1) == 324.9
+    assert round(e["clean_accepted_reference"], 1) == 347.9
+    assert e["clean_accepted_ceiling"] < e["clean_accepted_reference"] and e["reference_exceeds_ceiling"]
+
+
+def _synthetic_cell(p_ref, dev):
+    fr = 0.10
+    return {"shots": 8000, "accepted": 1000, "reference_hits": 100, "p_reference": p_ref,
+            "garbage_acceptance": 0.01, "dim": 38, "f_clean_reference": fr,
+            "f_clean_reference_68": [0.09, 0.11], "f_clean_mixture": fr * (1 + dev),
+            "f_clean_mixture_68": [fr * (1 + dev) - 0.005, fr * (1 + dev) + 0.005], "w": 0.5,
+            "c6_relative_deviation": dev, "strided_seeds": True}
+
+
+def test_c6_high_p_ref_cell_at_0p30_still_fails():
+    kind, e = G.c6_classify("X", "1.0", _synthetic_cell(0.9, 0.30))
+    assert kind == "checked" and not e["ok"]
+    assert not G.c6_verdict([e])
+
+
+def test_c6_low_p_ref_cell_at_0p30_is_information_not_a_failure():
+    kind, e = G.c6_classify("X", "1.0", _synthetic_cell(0.13, 0.30))
+    assert kind == "information"
+    assert G.c6_verdict([])          # nothing in scope -> no failure
+    assert e["dev"] == 0.30 and e["z"] is not None
+    s = G.c6_low_summary([e])
+    assert s["n_cells"] == 1 and s["max_abs_z"] == abs(e["z"])
