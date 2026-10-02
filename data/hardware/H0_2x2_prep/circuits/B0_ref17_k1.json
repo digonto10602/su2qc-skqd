@@ -1,0 +1,378 @@
+{
+ "lattice": "2x2",
+ "n_logical_qubits": 12,
+ "g2": 4.0,
+ "circuit_family": "exact structured circuits, signed default term order, transpiled at seed 2 (gate S2D_levers L1_seed / family diag-hop0-hop1-hop2-hop3-plaq0_s2), relabelled onto the day's patch and scheduled ALAP with explicit delays; client-side DD (prompts/24 P4) inserted into the explicit delays where the cell says so; Stage T adopted cell T3 (XY4 in windows >= 8 x the sequence only (ratio 8.0, >= 1.024 us))",
+ "backend": "FakeKingston",
+ "backend_qubits": 156,
+ "transpiler": {
+  "note": "per circuit (see its manifest)"
+ },
+ "bit_order_convention": "classical bit i of a counts key = logical qubit i = bit i of the codeword (skqd.reference_sim.qiskit_key_to_bits, skqd.codec.Codec)",
+ "codeword_bit_order": [
+  {
+   "qubit": 0,
+   "site": 0,
+   "role": "flux",
+   "link": 0,
+   "end": "out"
+  },
+  {
+   "qubit": 1,
+   "site": 0,
+   "role": "flux",
+   "link": 1,
+   "end": "out"
+  },
+  {
+   "qubit": 2,
+   "site": 0,
+   "role": "n/iota",
+   "link": null,
+   "end": null,
+   "static": false,
+   "n_ends": 2
+  },
+  {
+   "qubit": 3,
+   "site": 1,
+   "role": "flux",
+   "link": 1,
+   "end": "in"
+  },
+  {
+   "qubit": 4,
+   "site": 1,
+   "role": "flux",
+   "link": 2,
+   "end": "out"
+  },
+  {
+   "qubit": 5,
+   "site": 1,
+   "role": "n/iota",
+   "link": null,
+   "end": null,
+   "static": false,
+   "n_ends": 2
+  },
+  {
+   "qubit": 6,
+   "site": 2,
+   "role": "flux",
+   "link": 0,
+   "end": "in"
+  },
+  {
+   "qubit": 7,
+   "site": 2,
+   "role": "flux",
+   "link": 3,
+   "end": "out"
+  },
+  {
+   "qubit": 8,
+   "site": 2,
+   "role": "n/iota",
+   "link": null,
+   "end": null,
+   "static": false,
+   "n_ends": 2
+  },
+  {
+   "qubit": 9,
+   "site": 3,
+   "role": "flux",
+   "link": 2,
+   "end": "in"
+  },
+  {
+   "qubit": 10,
+   "site": 3,
+   "role": "flux",
+   "link": 3,
+   "end": "in"
+  },
+  {
+   "qubit": 11,
+   "site": 3,
+   "role": "n/iota",
+   "link": null,
+   "end": null,
+   "static": false,
+   "n_ends": 2
+  }
+ ],
+ "link_consistency_checks": [
+  {
+   "link": 0,
+   "qubits": [
+    0,
+    6
+   ]
+  },
+  {
+   "link": 1,
+   "qubits": [
+    1,
+    3
+   ]
+  },
+  {
+   "link": 2,
+   "qubits": [
+    4,
+    9
+   ]
+  },
+  {
+   "link": 3,
+   "qubits": [
+    7,
+    10
+   ]
+  }
+ ],
+ "backend_calibration_last_update": "2026-10-02T13:49:04-06:00",
+ "owner_decision": "data/owner_decision_20261002_run_below_signed_budget.md",
+ "kind": "coarse_step",
+ "test": null,
+ "sector": "B=0",
+ "twoB": 0,
+ "reference": 17,
+ "k": 1,
+ "repetitions": 1,
+ "dt": 0.24501194722475933,
+ "theta": 0.24501194722475933,
+ "order": [
+  "diag",
+  "hop0",
+  "hop1",
+  "hop2",
+  "hop3",
+  "plaq0"
+ ],
+ "seed": 2,
+ "placement": "the winner's mapping (identical pattern)",
+ "mapping_transpiled_to_kingston": {
+  "0": 59,
+  "1": 75,
+  "2": 74,
+  "3": 73,
+  "4": 72,
+  "5": 71,
+  "16": 79,
+  "21": 91,
+  "22": 92,
+  "23": 93,
+  "24": 94,
+  "25": 95
+ },
+ "readout_patch": [
+  59,
+  71,
+  72,
+  73,
+  74,
+  75,
+  79,
+  91,
+  92,
+  93,
+  94,
+  95
+ ],
+ "logical_to_physical": [
+  93,
+  79,
+  91,
+  72,
+  71,
+  95,
+  73,
+  74,
+  75,
+  92,
+  94,
+  59
+ ],
+ "measurement_map_clbit_to_physical": {
+  "0": 93,
+  "1": 79,
+  "2": 91,
+  "3": 72,
+  "4": 71,
+  "5": 95,
+  "6": 73,
+  "7": 74,
+  "8": 75,
+  "9": 92,
+  "10": 94,
+  "11": 59
+ },
+ "schedule": "alap",
+ "schedule_info": {
+  "method": "alap",
+  "n_delays": 493,
+  "ops_non_delay": {
+   "barrier": 1,
+   "cz": 588,
+   "measure": 12,
+   "rz": 701,
+   "sx": 1214,
+   "x": 65
+  },
+  "seed_transpiler": 7,
+  "idle_register_delays_removed": 144
+ },
+ "T_s": 4.424000000000029e-05,
+ "T_total_s": 4.642000000000029e-05,
+ "base_scheduled_duration_s": 4.642000000000044e-05,
+ "leading_delay_s": {
+  "59": 2.0028000000000002e-05,
+  "71": 1.8928000000000002e-05,
+  "72": 1.8896e-05,
+  "73": 4.32e-07,
+  "74": 4.32e-07,
+  "75": 1.1324e-05,
+  "79": 2.32e-07,
+  "91": 1.364e-06,
+  "92": 5.32e-07,
+  "93": 3.2e-08,
+  "95": 1.096e-06
+ },
+ "f_gates_record": 0.36832236274225133,
+ "f_including_1q_errors_record": 0.27856293155858086,
+ "p_reference": 0.8853599388588221,
+ "dim": 38,
+ "sector_mass": 1.0000000000000002,
+ "record_fingerprint_full": "e4ecac386f4a73277113ce72a82cdf04fe18d97349b04fa751338fea34f6c73e",
+ "source_qpy": "data/S2D_levers/family/diag-hop0-hop1-hop2-hop3-plaq0_s2/B0_ref17_k1.qpy.gz",
+ "source_qpy_sha256": "cec0eb3b664a5b08027b396f8ee49fa4b89ab76e10d0307d94c2d239543c6ab5",
+ "family_member": "B0_ref17_k1",
+ "id": "B0_ref17_k1",
+ "physical_qubits": [
+  59,
+  71,
+  72,
+  73,
+  74,
+  75,
+  79,
+  91,
+  92,
+  93,
+  94,
+  95
+ ],
+ "ops": {
+  "sx": 1214,
+  "rz": 945,
+  "delay": 593,
+  "cz": 588,
+  "x": 309,
+  "measure": 12,
+  "barrier": 1
+ },
+ "cz": 588,
+ "depth": 1313,
+ "n_delays": 593,
+ "scheduled_duration_s": 4.642000000000043e-05,
+ "measurement_consistent": true,
+ "exactness": {
+  "max_abs_delta": 1.400885368269726e-14,
+  "leakage": 8.992806499463768e-15,
+  "measurement_consistent": true,
+  "ok": true,
+  "global_phase_source": 3.977353138711016,
+  "global_phase_submitted": 3.141592653589793
+ },
+ "exactness_phase_aligned": true,
+ "qpy": "B0_ref17_k1.qpy.gz",
+ "qpy_bytes_uncompressed": 190925,
+ "qpy_gz_sha256": "309b6c6fe79eb1fadc22b1d99d93e56d08a8205290405aeefb7a524b31a5eb4c",
+ "reuse": null,
+ "dd": {
+  "cell": "T3",
+  "description": "XY4 in windows >= 8 x the sequence only (ratio 8.0, >= 1.024 us)",
+  "pass": "qiskit_ibm_runtime.transpiler.passes.scheduling.ALAPScheduleAnalysis(durations) + PadDynamicalDecoupling(durations, [X, Y, X, Y], ...); Y -> rz(-pi/2) x rz(pi/2)",
+  "parameters": {
+   "sequence": "XY4",
+   "sequence_min_length_ratios": [
+    8.0
+   ],
+   "pulse_alignment": 1,
+   "skip_reset_qubits": true,
+   "durations_from": "20261002T1949Z"
+  },
+  "pulses_per_physical_qubit": {
+   "59": 12,
+   "71": 28,
+   "72": 20,
+   "73": 20,
+   "74": 24,
+   "75": 24,
+   "79": 8,
+   "91": 32,
+   "92": 16,
+   "93": 24,
+   "94": 20,
+   "95": 16
+  },
+  "n_pulses": 244,
+  "pulse_cost_nats": 0.05721777415270082,
+  "null_ratio": 0.9443883835907565,
+  "base_circuit_sha256": null,
+  "y_translated": 122,
+  "idle_register_delays_removed_after_pass": 0,
+  "checks": {
+   "statevector_max_abs_delta_up_to_phase": 1.336885555457667e-15,
+   "statevector_overlap_abs": 0.9999999999999926,
+   "statevector_ok": true,
+   "duration_base_s": 4.642000000000044e-05,
+   "duration_s": 4.642000000000043e-05,
+   "duration_delta_dt": 1.6940658945086005e-12,
+   "duration_ok": true,
+   "base_ops_moved_or_missing": 0,
+   "unaligned_multiqubit_gates": [
+    0,
+    0
+   ],
+   "inserted_non_pulse_ops": {},
+   "pulses_in_leading_window": {},
+   "pulses_after_measure": {},
+   "windows_ok": true,
+   "ops": {
+    "sx": 1214,
+    "rz": 945,
+    "delay": 593,
+    "cz": 588,
+    "x": 309,
+    "measure": 12,
+    "barrier": 1
+   },
+   "basis_ok": true,
+   "active_qubits_unchanged": true,
+   "pulses_per_physical_qubit": {
+    "59": 12,
+    "71": 28,
+    "72": 20,
+    "73": 20,
+    "74": 24,
+    "75": 24,
+    "79": 8,
+    "91": 32,
+    "92": 16,
+    "93": 24,
+    "94": 20,
+    "95": 16
+   },
+   "n_pulses": 244,
+   "n_rz_inserted": 244,
+   "pulse_cost_nats": 0.05721777415270082,
+   "null_ratio": 0.9443883835907565,
+   "pulse_cost_rule": "sum over inserted x pulses (a translated y is one x pulse) of the qubit's x_error on the day's record",
+   "ok": true
+  }
+ }
+}

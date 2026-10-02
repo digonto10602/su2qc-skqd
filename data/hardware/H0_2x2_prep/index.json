@@ -1,0 +1,1710 @@
+{
+ "created": "2026-10-02 20:43:11 UTC",
+ "script": "scripts/h0_2x2_circuits.py",
+ "stage": "build",
+ "purpose": "prompts/24 Stage R: the signed family's 28 coarse-step circuits on the patch with Stage T's adopted DD configuration, plus the patch's readout pubs; the full 2x2 SKQD run below the signed budget by the owner's decision",
+ "owner_decision": "data/owner_decision_20261002_run_below_signed_budget.md",
+ "adopted_cell": "T3",
+ "adopted_cell_description": "XY4 in windows >= 8 x the sequence only (ratio 8.0, >= 1.024 us)",
+ "common": {
+  "lattice": "2x2",
+  "n_logical_qubits": 12,
+  "g2": 4.0,
+  "circuit_family": "exact structured circuits, signed default term order, transpiled at seed 2 (gate S2D_levers L1_seed / family diag-hop0-hop1-hop2-hop3-plaq0_s2), relabelled onto the day's patch and scheduled ALAP with explicit delays; client-side DD (prompts/24 P4) inserted into the explicit delays where the cell says so; Stage T adopted cell T3 (XY4 in windows >= 8 x the sequence only (ratio 8.0, >= 1.024 us))",
+  "backend": "FakeKingston",
+  "backend_qubits": 156,
+  "transpiler": {
+   "note": "per circuit (see its manifest)"
+  },
+  "bit_order_convention": "classical bit i of a counts key = logical qubit i = bit i of the codeword (skqd.reference_sim.qiskit_key_to_bits, skqd.codec.Codec)",
+  "codeword_bit_order": [
+   {
+    "qubit": 0,
+    "site": 0,
+    "role": "flux",
+    "link": 0,
+    "end": "out"
+   },
+   {
+    "qubit": 1,
+    "site": 0,
+    "role": "flux",
+    "link": 1,
+    "end": "out"
+   },
+   {
+    "qubit": 2,
+    "site": 0,
+    "role": "n/iota",
+    "link": null,
+    "end": null,
+    "static": false,
+    "n_ends": 2
+   },
+   {
+    "qubit": 3,
+    "site": 1,
+    "role": "flux",
+    "link": 1,
+    "end": "in"
+   },
+   {
+    "qubit": 4,
+    "site": 1,
+    "role": "flux",
+    "link": 2,
+    "end": "out"
+   },
+   {
+    "qubit": 5,
+    "site": 1,
+    "role": "n/iota",
+    "link": null,
+    "end": null,
+    "static": false,
+    "n_ends": 2
+   },
+   {
+    "qubit": 6,
+    "site": 2,
+    "role": "flux",
+    "link": 0,
+    "end": "in"
+   },
+   {
+    "qubit": 7,
+    "site": 2,
+    "role": "flux",
+    "link": 3,
+    "end": "out"
+   },
+   {
+    "qubit": 8,
+    "site": 2,
+    "role": "n/iota",
+    "link": null,
+    "end": null,
+    "static": false,
+    "n_ends": 2
+   },
+   {
+    "qubit": 9,
+    "site": 3,
+    "role": "flux",
+    "link": 2,
+    "end": "in"
+   },
+   {
+    "qubit": 10,
+    "site": 3,
+    "role": "flux",
+    "link": 3,
+    "end": "in"
+   },
+   {
+    "qubit": 11,
+    "site": 3,
+    "role": "n/iota",
+    "link": null,
+    "end": null,
+    "static": false,
+    "n_ends": 2
+   }
+  ],
+  "link_consistency_checks": [
+   {
+    "link": 0,
+    "qubits": [
+     0,
+     6
+    ]
+   },
+   {
+    "link": 1,
+    "qubits": [
+     1,
+     3
+    ]
+   },
+   {
+    "link": 2,
+    "qubits": [
+     4,
+     9
+    ]
+   },
+   {
+    "link": 3,
+    "qubits": [
+     7,
+     10
+    ]
+   }
+  ],
+  "backend_calibration_last_update": "2026-10-02T13:49:04-06:00",
+  "owner_decision": "data/owner_decision_20261002_run_below_signed_budget.md"
+ },
+ "record": {
+  "path": "data/hardware/H0_2x2_prep/ibm_kingston_full_20261002T1949Z.json",
+  "stamp": "20261002T1949Z",
+  "last_update_date": "2026-10-02T13:49:04-06:00",
+  "fingerprint": "e4ecac386f4a73277113ce72a82cdf04fe18d97349b04fa751338fea34f6c73e",
+  "n_qubits": 156,
+  "n_edges": 352,
+  "missing_errors": [],
+  "status": {
+   "operational": true,
+   "pending_jobs": 5,
+   "status_msg": "active"
+  },
+  "dt_s": 4e-09,
+  "default_rep_delay_s": 0.00025
+ },
+ "base_backend": {
+  "base": "FakeKingston",
+  "fingerprint": "e4ecac386f4a73277113ce72a82cdf04fe18d97349b04fa751338fea34f6c73e",
+  "stamp": "20261002T1949Z",
+  "last_update_date": "2026-10-02T13:49:04-06:00",
+  "note": "measure/sx/x error+duration, rz duration, T1/T2 and every cz error+duration of the record's patch written into the base target; qubit_properties assigned as a new list"
+ },
+ "patch": [
+  59,
+  71,
+  72,
+  73,
+  74,
+  75,
+  79,
+  91,
+  92,
+  93,
+  94,
+  95
+ ],
+ "winner_mapping": {
+  "0": 59,
+  "1": 75,
+  "2": 74,
+  "3": 73,
+  "4": 72,
+  "5": 71,
+  "16": 79,
+  "21": 91,
+  "22": 92,
+  "23": 93,
+  "24": 94,
+  "25": 95
+ },
+ "mapping_reproduced": true,
+ "pilot_mapping_reproduced": true,
+ "patch_inherited_from_stage_T": true,
+ "runtime_s": 233.1785843372345,
+ "frozen_set": {
+  "qubits": [
+   59,
+   71,
+   72,
+   73,
+   74,
+   75,
+   79,
+   91,
+   92,
+   93,
+   94,
+   95
+  ],
+  "edges": [
+   [
+    59,
+    75
+   ],
+   [
+    71,
+    72
+   ],
+   [
+    72,
+    71
+   ],
+   [
+    72,
+    73
+   ],
+   [
+    73,
+    72
+   ],
+   [
+    73,
+    74
+   ],
+   [
+    73,
+    79
+   ],
+   [
+    74,
+    73
+   ],
+   [
+    74,
+    75
+   ],
+   [
+    75,
+    59
+   ],
+   [
+    75,
+    74
+   ],
+   [
+    79,
+    73
+   ],
+   [
+    79,
+    93
+   ],
+   [
+    91,
+    92
+   ],
+   [
+    92,
+    91
+   ],
+   [
+    92,
+    93
+   ],
+   [
+    93,
+    79
+   ],
+   [
+    93,
+    92
+   ],
+   [
+    93,
+    94
+   ],
+   [
+    94,
+    93
+   ],
+   [
+    94,
+    95
+   ]
+  ],
+  "n_edges": 21
+ },
+ "n_circuits": 28,
+ "n_calibration_circuits": 2,
+ "circuits": [
+  {
+   "id": "B0_ref06_k1",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 1,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1214,
+    "rz": 946,
+    "delay": 593,
+    "cz": 588,
+    "x": 311,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref06_k1.qpy.gz",
+   "qpy_gz_sha256": "88b5526a1f65ab2038f6b2d9e10793fc8114702d795cd1394e1f9b6070ae3e7e",
+   "T_s": 4.424000000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B0_ref06_k2",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 2,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1214,
+    "rz": 948,
+    "delay": 593,
+    "cz": 588,
+    "x": 308,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref06_k2.qpy.gz",
+   "qpy_gz_sha256": "ee40817360032f99719d9313e980c7ba2847f7ad8b2e1af637d97bf078049db5",
+   "T_s": 4.427200000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B0_ref06_k3",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 3,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1214,
+    "rz": 941,
+    "delay": 593,
+    "cz": 588,
+    "x": 300,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref06_k3.qpy.gz",
+   "qpy_gz_sha256": "b54334731303ff6023d909324d47509d711af0780a939cda60ae1f64088edb0c",
+   "T_s": 4.427200000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B0_ref06_k4",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 4,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1214,
+    "rz": 954,
+    "delay": 593,
+    "cz": 588,
+    "x": 306,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref06_k4.qpy.gz",
+   "qpy_gz_sha256": "8e801deae187409e98e357b04b9800e83ebb54920d6ab0fbea1b19290b63324a",
+   "T_s": 4.424000000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B0_ref17_k1",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 1,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1214,
+    "rz": 945,
+    "delay": 593,
+    "cz": 588,
+    "x": 309,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref17_k1.qpy.gz",
+   "qpy_gz_sha256": "309b6c6fe79eb1fadc22b1d99d93e56d08a8205290405aeefb7a524b31a5eb4c",
+   "T_s": 4.424000000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B0_ref17_k2",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 2,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1214,
+    "rz": 948,
+    "delay": 593,
+    "cz": 588,
+    "x": 309,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref17_k2.qpy.gz",
+   "qpy_gz_sha256": "7ca93231b3e2a8539ae2ddd39b18e8e8fc30514e6e7a6d3a1ffdaa9824ef623f",
+   "T_s": 4.427200000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B0_ref17_k3",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 3,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1214,
+    "rz": 940,
+    "delay": 593,
+    "cz": 588,
+    "x": 300,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref17_k3.qpy.gz",
+   "qpy_gz_sha256": "7b923101d59968f75eab1517214b4f188cc17547dcd1915a109a2d5f04b301b1",
+   "T_s": 4.427200000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B0_ref17_k4",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 4,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1214,
+    "rz": 953,
+    "delay": 593,
+    "cz": 588,
+    "x": 308,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref17_k4.qpy.gz",
+   "qpy_gz_sha256": "4333402995e2f63588ca9d1077ec5853cd139468476b89110e6fbfa55e49ecf1",
+   "T_s": 4.424000000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B0_ref21_k1",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 1,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1214,
+    "rz": 946,
+    "delay": 593,
+    "cz": 588,
+    "x": 309,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref21_k1.qpy.gz",
+   "qpy_gz_sha256": "7ec089df6433beae24284b6b3d8aada28e55e9ab68134030bc749624b65e65df",
+   "T_s": 4.424000000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B0_ref21_k2",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 2,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1214,
+    "rz": 950,
+    "delay": 593,
+    "cz": 588,
+    "x": 309,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref21_k2.qpy.gz",
+   "qpy_gz_sha256": "3da4c61c0e0995c7889668bad8bad35a919929e20204ba0d72944ad96007a0c3",
+   "T_s": 4.427200000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B0_ref21_k3",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 3,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1214,
+    "rz": 940,
+    "delay": 593,
+    "cz": 588,
+    "x": 301,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref21_k3.qpy.gz",
+   "qpy_gz_sha256": "ac9c72ab8bf039db38d0e2f6b4a005a8a9d60e80a354246c844e9a7ba83bcde7",
+   "T_s": 4.427200000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B0_ref21_k4",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 4,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1214,
+    "rz": 954,
+    "delay": 593,
+    "cz": 588,
+    "x": 308,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref21_k4.qpy.gz",
+   "qpy_gz_sha256": "f6e247168ca217757816c946b7738a9ca67614b2fdc21c995709d8613e458fbc",
+   "T_s": 4.427200000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B0_ref30_k1",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 1,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1216,
+    "rz": 946,
+    "delay": 592,
+    "cz": 588,
+    "x": 311,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref30_k1.qpy.gz",
+   "qpy_gz_sha256": "ebf4c6ec26409046653ddcc972eb335ec628e48829ab4632635a5bfe2e53ffe5",
+   "T_s": 4.424000000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B0_ref30_k2",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 2,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1216,
+    "rz": 948,
+    "delay": 592,
+    "cz": 588,
+    "x": 308,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref30_k2.qpy.gz",
+   "qpy_gz_sha256": "9e1a81aef598e29956dd851735e82852b6113d7df49497980ad6ee46bcebefd6",
+   "T_s": 4.427200000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B0_ref30_k3",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 3,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1216,
+    "rz": 942,
+    "delay": 593,
+    "cz": 588,
+    "x": 301,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref30_k3.qpy.gz",
+   "qpy_gz_sha256": "5ef7401fbec2f4519baf5b83823245018420c96737fd019760cb10cb5cbc8698",
+   "T_s": 4.427200000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B0_ref30_k4",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 4,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1216,
+    "rz": 956,
+    "delay": 593,
+    "cz": 588,
+    "x": 306,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref30_k4.qpy.gz",
+   "qpy_gz_sha256": "53be6e02033ca0fd6b9e166ca523bf5e7176d1e2be116cc04fa805f5332c04b7",
+   "T_s": 4.424000000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B0_ref43_k1",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 1,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1214,
+    "rz": 946,
+    "delay": 593,
+    "cz": 588,
+    "x": 311,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref43_k1.qpy.gz",
+   "qpy_gz_sha256": "82f950874dda0deb20955d54b8cf799ad47171e26d3e359d0a9665bed731f994",
+   "T_s": 4.424000000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B0_ref43_k2",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 2,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1214,
+    "rz": 949,
+    "delay": 593,
+    "cz": 588,
+    "x": 307,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref43_k2.qpy.gz",
+   "qpy_gz_sha256": "ed30b435765d680b3696da0bc562e710cebf015d46a0d57833655bb6b5e5a240",
+   "T_s": 4.427200000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B0_ref43_k3",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 3,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1214,
+    "rz": 943,
+    "delay": 592,
+    "cz": 588,
+    "x": 302,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref43_k3.qpy.gz",
+   "qpy_gz_sha256": "36f96fbe025b6a1068b622740722d373ef4a2ca5f6f717c47b78b0c7cb18fa9a",
+   "T_s": 4.427200000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B0_ref43_k4",
+   "kind": "coarse_step",
+   "sector": "B=0",
+   "k": 4,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1214,
+    "rz": 955,
+    "delay": 592,
+    "cz": 588,
+    "x": 307,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B0_ref43_k4.qpy.gz",
+   "qpy_gz_sha256": "0c649a7e50ebd302e79586214a220d3290a96c67481d96489724d5cd689a0825",
+   "T_s": 4.424000000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B1_ref07_k1",
+   "kind": "coarse_step",
+   "sector": "B=1",
+   "k": 1,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1216,
+    "rz": 954,
+    "delay": 593,
+    "cz": 588,
+    "x": 312,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B1_ref07_k1.qpy.gz",
+   "qpy_gz_sha256": "599921678e46e509424c4a1dd0fdc521b29560e398c03d23b0dc4005d51187cd",
+   "T_s": 4.43680000000003e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B1_ref07_k2",
+   "kind": "coarse_step",
+   "sector": "B=1",
+   "k": 2,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1215,
+    "rz": 943,
+    "delay": 593,
+    "cz": 588,
+    "x": 310,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B1_ref07_k2.qpy.gz",
+   "qpy_gz_sha256": "129bec6f521f7e8c9d1281db9506b400d1f17824c912eb8db483cbf7990ea467",
+   "T_s": 4.430400000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B1_ref07_k3",
+   "kind": "coarse_step",
+   "sector": "B=1",
+   "k": 3,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1214,
+    "rz": 951,
+    "delay": 593,
+    "cz": 588,
+    "x": 307,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B1_ref07_k3.qpy.gz",
+   "qpy_gz_sha256": "cba34c477defc84886d9861b961d5ec2d2cbc50b1b8a95e6b61d4b0209266855",
+   "T_s": 4.420800000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B1_ref07_k4",
+   "kind": "coarse_step",
+   "sector": "B=1",
+   "k": 4,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1215,
+    "rz": 948,
+    "delay": 593,
+    "cz": 588,
+    "x": 305,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B1_ref07_k4.qpy.gz",
+   "qpy_gz_sha256": "376da471f0cc68e0267858ac181a8e9c22db430891d9eff4a47168b6e8a3cd31",
+   "T_s": 4.430400000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B1_ref14_k1",
+   "kind": "coarse_step",
+   "sector": "B=1",
+   "k": 1,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1216,
+    "rz": 954,
+    "delay": 593,
+    "cz": 588,
+    "x": 312,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B1_ref14_k1.qpy.gz",
+   "qpy_gz_sha256": "67e6e0c78d268e647ce729828f4178c53624d65c069338c1b1a58a3bf297e390",
+   "T_s": 4.43680000000003e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B1_ref14_k2",
+   "kind": "coarse_step",
+   "sector": "B=1",
+   "k": 2,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1215,
+    "rz": 943,
+    "delay": 593,
+    "cz": 588,
+    "x": 310,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B1_ref14_k2.qpy.gz",
+   "qpy_gz_sha256": "b96bade1b911811c05509bc1aab8b6fdff32ba0d0a5aede03d01d8e5d321d5e4",
+   "T_s": 4.430400000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B1_ref14_k3",
+   "kind": "coarse_step",
+   "sector": "B=1",
+   "k": 3,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1214,
+    "rz": 951,
+    "delay": 593,
+    "cz": 588,
+    "x": 307,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B1_ref14_k3.qpy.gz",
+   "qpy_gz_sha256": "f0bfc293ba2c4ea44ed4386153dfa3ca7c89de77f5804105506cc171dc6e9d8b",
+   "T_s": 4.420800000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "B1_ref14_k4",
+   "kind": "coarse_step",
+   "sector": "B=1",
+   "k": 4,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    93,
+    79,
+    91,
+    72,
+    71,
+    95,
+    73,
+    74,
+    75,
+    92,
+    94,
+    59
+   ],
+   "ops": {
+    "sx": 1215,
+    "rz": 948,
+    "delay": 593,
+    "cz": 588,
+    "x": 305,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "B1_ref14_k4.qpy.gz",
+   "qpy_gz_sha256": "2edbbaa950789aedcdbd41f51cbf6a4a15ec5a1b821697c9b6cb540c2aef6d7e",
+   "T_s": 4.430400000000029e-05,
+   "dd_cell": "T3"
+  },
+  {
+   "id": "cal_patch_all0",
+   "kind": "readout_calibration",
+   "sector": null,
+   "k": null,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "ops": {
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "cal_patch_all0.qpy.gz",
+   "qpy_gz_sha256": "efba08612468c16801c36056cb8d996c35965debd74de34fd5ada0d9db5e4c5e",
+   "T_s": null,
+   "dd_cell": null
+  },
+  {
+   "id": "cal_patch_all1",
+   "kind": "readout_calibration",
+   "sector": null,
+   "k": null,
+   "physical_qubits": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    59,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    91,
+    92,
+    93,
+    94,
+    95
+   ],
+   "ops": {
+    "x": 12,
+    "measure": 12,
+    "barrier": 1
+   },
+   "qpy": "cal_patch_all1.qpy.gz",
+   "qpy_gz_sha256": "f101daac31119ee2800ff1828a0b1f124eb50327b10ba1f5ba7bee8f2ec9372a",
+   "T_s": null,
+   "dd_cell": null
+  }
+ ]
+}
