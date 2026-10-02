@@ -315,6 +315,49 @@ def timeline(circ, rec):
     return ops, t, unaligned
 
 
+def in_basis(ops):
+    """The circuit's op names are within kingston's basis plus delay / measure / barrier."""
+    return set(ops) <= set(BASIS_ALLOWED)
+
+
+def window_violations(base, out, rec):
+    """Check (iii) of T.B2 as a pure function of two delay-padded circuits and a record.
+
+    Every non-delay operation of `base` must appear in `out` with the same start time; the
+    inserted operations must be single-qubit x / rz, none may start before the end of the
+    qubit's first base gate (its leading window, where it is still in |0>) and none may end
+    after the start of its measurement."""
+    ops0, _e0, un0 = timeline(base, rec)
+    ops1, _e1, un1 = timeline(out, rec)
+    c0 = Counter((nm, qs, st) for nm, qs, st, _d in ops0)
+    c1 = Counter((nm, qs, st) for nm, qs, st, _d in ops1)
+    missing = c0 - c1
+    inserted = c1 - c0
+    first_end, meas_start = {}, {}
+    for nm, qs, st, d in ops0:
+        for q in qs:
+            if nm != "measure" and q not in first_end:
+                first_end[q] = st + d
+            if nm == "measure":
+                meas_start[q] = st
+    durs = {(nm, qs, st): d for nm, qs, st, d in ops1}
+    lead, trail, bad_kind, pulses, kinds = Counter(), Counter(), Counter(), Counter(), Counter()
+    for (nm, qs, st), n in inserted.items():
+        kinds[nm] += n
+        q = qs[0]
+        if nm not in ("x", "rz") or len(qs) != 1:
+            bad_kind[nm] += n
+            continue
+        if nm == "x":
+            pulses[q] += n
+        if q not in first_end or st < first_end[q]:
+            lead[q] += n
+        if q in meas_start and st + durs[(nm, qs, st)] > meas_start[q]:
+            trail[q] += n
+    return {"lead": lead, "trail": trail, "bad_kind": bad_kind, "missing": int(sum(missing.values())),
+            "unaligned": (un0, un1), "pulses": pulses, "inserted": kinds}
+
+
 def dd_checks(base, out, rec, target, final):
     """Checks (i)-(v) of T.B2 on one DD circuit against its base (both in memory)."""
     from h0_qpu_time import circuit_duration_s
@@ -328,36 +371,14 @@ def dd_checks(base, out, rec, target, final):
     d0 = circuit_duration_s(base, target.durations(), target)
     d1 = circuit_duration_s(out, target.durations(), target)
     # (iii) timeline: base ops keep their starts; inserted pulses inside [first gate end, measure start]
-    ops0, end0, un0 = timeline(base, rec)
-    ops1, end1, un1 = timeline(out, rec)
-    c0 = Counter((nm, qs, st) for nm, qs, st, _d in ops0)
-    c1 = Counter((nm, qs, st) for nm, qs, st, _d in ops1)
-    missing = c0 - c1
-    inserted = c1 - c0
-    first_end, meas_start = {}, {}
-    for nm, qs, st, d in ops0:
-        for q in qs:
-            if nm != "measure" and q not in first_end:
-                first_end[q] = st + d
-            if nm == "measure":
-                meas_start[q] = st
-    durs = {(nm, qs, st): d for nm, qs, st, d in ops1}
-    lead, trail, bad_kind = Counter(), Counter(), Counter()
-    per_q_pulses = Counter()
-    for (nm, qs, st), n in inserted.items():
-        q = qs[0]
-        if nm not in ("x", "rz") or len(qs) != 1:
-            bad_kind[nm] += n
-            continue
-        if nm == "x":
-            per_q_pulses[q] += n
-        if q not in first_end or st < first_end[q]:
-            lead[q] += n
-        if q in meas_start and st + durs[(nm, qs, st)] > meas_start[q]:
-            trail[q] += n
+    win = window_violations(base, out, rec)
+    lead, trail, bad_kind, missing = win["lead"], win["trail"], win["bad_kind"], win["missing"]
+    un0, un1 = win["unaligned"]
+    per_q_pulses = win["pulses"]
+    inserted = win["inserted"]
     # (iv) op multiset / basis
     ops_after = {k: int(v) for k, v in out.count_ops().items()}
-    basis_ok = set(ops_after) <= set(BASIS_ALLOWED)
+    basis_ok = in_basis(ops_after)
     # (v) pulse cost on the record
     s_dd = float(sum(n * float(rec["qubits"][str(q)]["x_error"]) for q, n in per_q_pulses.items()))
     active0 = sorted({base.find_bit(q).index for i in base.data for q in i.qubits if i.operation.name != "barrier"})
@@ -367,7 +388,7 @@ def dd_checks(base, out, rec, target, final):
         "statevector_ok": dpsi < SV_TOL,
         "duration_base_s": d0, "duration_s": d1, "duration_delta_dt": abs(d1 - d0) / dt,
         "duration_ok": abs(d1 - d0) <= dt * (1 + 1e-9),
-        "base_ops_moved_or_missing": int(sum(missing.values())),
+        "base_ops_moved_or_missing": int(missing),
         "unaligned_multiqubit_gates": [un0, un1],
         "inserted_non_pulse_ops": dict(bad_kind),
         "pulses_in_leading_window": {str(k): v for k, v in sorted(lead.items())},
@@ -377,7 +398,7 @@ def dd_checks(base, out, rec, target, final):
         "active_qubits_unchanged": active0 == active1,
         "pulses_per_physical_qubit": {str(k): int(v) for k, v in sorted(per_q_pulses.items())},
         "n_pulses": int(sum(per_q_pulses.values())),
-        "n_rz_inserted": int(sum(n for (nm, _q, _s), n in inserted.items() if nm == "rz")),
+        "n_rz_inserted": int(inserted.get("rz", 0)),
         "pulse_cost_nats": s_dd, "null_ratio": math.exp(-s_dd),
         "pulse_cost_rule": "sum over inserted x pulses (a translated y is one x pulse) of the qubit's x_error on the day's record",
     }
