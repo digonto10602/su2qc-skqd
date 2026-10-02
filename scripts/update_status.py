@@ -36,6 +36,8 @@ GATES = [  # gate, description (manual Step 10), where it runs
     ("H0_model", "post-diction of the H0 hardware counts by the scheduled-Aer model at both ends of the T2 bracket; the clean-yield statistic", "laptop"),
     ("S2D_levers", "2x2 duration levers on ibm_kingston: compile/schedule levers measured, f predicted at both T2 ends, r_crit (measurement gate; no budget criterion)", "laptop"),
     ("H0_kpilot", "ibm_kingston pilot on the selected patch: windowed Ramsey at two lengths (T2*/T2_echo ratio r_eff vs r_crit), T1, the signed k = 1 circuits' direct f_clean; GO/NO-GO on f >= 0.1 (measurement gate)", "QPU"),
+    ("H0_ddtest", "one-job A/B test of client-side DD (context-aware, XY4, XY4-long) against the no-DD baseline on the pilot's two k = 1 circuits; adoption by the preregistered ratio rule (measurement gate)", "QPU"),
+    ("H0_2x2", "the full 2x2 SKQD run on ibm_kingston below the signed budget (owner decision 2026-10-02): both sectors, D3' at the measured f, decoding, Ritz energies vs exact E0, certificates, garbage and random baselines (measurement gate)", "QPU"),
 ]
 
 

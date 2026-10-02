@@ -820,6 +820,13 @@ def report_text(saved, R_):
     rp = dec.get("stage_R_reserve_at_adopted_f") or {}
     grows = [[g["n_pubs"], g["shots"], g["chunk"], f"{g['execution_s']:.2f}"] for g in rp.get("groups", [])]
     ad = dec["adopted"]
+    below_null = [f"{c} (R {v['R']:.3f}, 95 % {_iv(v['R_95'], '{:.3f}')}, null {v['null_ratio']:.3f})"
+                  for c, v in dec["cells"].items() if c != "T0" and v["R_95"] and v["R_95"][1] is not None
+                  and v["R_95"][1] < v["null_ratio"]] or ["none"]
+    above_null = [f"{c} (R {v['R']:.3f}, 95 % {_iv(v['R_95'], '{:.3f}')}, null {v['null_ratio']:.3f})"
+                  for c, v in dec["cells"].items() if c != "T0" and v["R_95"] and v["R_95"][0] is not None
+                  and v["R_95"][0] > v["null_ratio"]] or ["none"]
+    below_null, above_null = "; ".join(below_null), "; ".join(above_null)
     title = "dry run (local Aer on the FakeKingston snapshot; a path check, not a prediction)" if dry else "ibm_kingston"
     return f"""# Gate {saved['gate']} -- client-side DD A/B test, {title}
 
@@ -860,6 +867,10 @@ Per circuit:
 
 {md_table(["cell", "circuit", "accepted", "ref hits", "f reference [95 %]", "f mixture [68 %]", "C6 dev (info)",
            "pulses", "distance histogram"], crow)}
+
+Below-null cells (R's 95 % upper bound < the cell's null e^-S_DD): {below_null}.  Above-null cells (R's 95 % lower bound >
+the null): {above_null}.  A ratio below the null means the inserted pulses cost more than the record's x error says (or a
+mechanism the null does not contain); it is reported as measured, not averaged, and this test does not establish its cause.
 
 ## 4. Adoption (preregistered rule P7)
 
