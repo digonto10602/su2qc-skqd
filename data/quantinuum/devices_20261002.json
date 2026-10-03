@@ -1,0 +1,1872 @@
+{
+ "produced_by": "scripts/quantinuum_device_table.py",
+ "prompt": "prompts/26 A5",
+ "read_on": "2026-10-02",
+ "criterion": {
+  "mean_f_min": 0.1,
+  "worst_f_min": 0.05,
+  "source": "proposal/amendment_01_devices_and_budgets.md item 2 (signed)"
+ },
+ "specs": {
+  "quantinuum_h2_2": {
+   "device_name": "H2-2",
+   "source": [
+    "https://docs.quantinuum.com/systems/user_guide/hardware_user_guide/performance_validation.html",
+    "https://docs.quantinuum.com/systems/_static/assets/data_sheets/Quantinuum%20H2%20Product%20Data%20Sheet.pdf"
+   ],
+   "read_on": "2026-10-02",
+   "transcribed_from": "reports/qpu_survey_2x3_20261002.md section 2.1",
+   "verbatim": {
+    "two_qubit_gate_error": "8.3e-04",
+    "two_qubit_gate_error_uncertainty": "4.8e-05",
+    "one_qubit_gate_error": "2.8e-05",
+    "SPAM": "6.7e-04 (0), 1.2e-03 (1)",
+    "memory_error_per_depth1_circuit_time": "1.2e-04",
+    "parallel_two_qubit_operations": "4 (data sheet)",
+    "qubits": "56",
+    "connectivity": "all-to-all",
+    "native_gates": "Rxy (PhasedX), Rz (virtual), ZZMax, ZZPhase (RZZ), TK2"
+   },
+   "eps2": 0.00083,
+   "eps1": 2.8e-05,
+   "eps_ro_0": 0.00067,
+   "eps_ro_1": 0.0012,
+   "memory_error_per_depth1": 0.00012,
+   "zones": 4,
+   "qubits": 56
+  },
+  "quantinuum_helios_1": {
+   "device_name": "Helios-1",
+   "source": [
+    "https://docs.quantinuum.com/systems/user_guide/hardware_user_guide/performance_validation.html",
+    "https://arxiv.org/html/2511.05465",
+    "https://docs.quantinuum.com/systems/_static/assets/data_sheets/Quantinuum%20Helios%20Product%20Data%20Sheet.pdf",
+    "https://docs.quantinuum.com/systems/user_guide/hardware_user_guide/workflow.html"
+   ],
+   "read_on": "2026-10-02",
+   "transcribed_from": "reports/qpu_survey_2x3_20261002.md section 2.1",
+   "verbatim": {
+    "two_qubit_gate_error": "7.9e-04 (RB sweep); paper: 7.9(2)x10^-4",
+    "one_qubit_gate_error": "0.3e-04; paper 2.5(1)x10^-5",
+    "SPAM": "4.8e-04; paper 4.8(6)x10^-4",
+    "depth1_time": "average depth-1 time ... 55 ms per layer (98-qubit random layer incl. sort)",
+    "memory_error": "linear memory error rate of 5(1)x10^-4 per depth-1 time",
+    "parallel_two_qubit_operations": "2Q operations are executed in only four of the eight quantum logic zones",
+    "qubits": "98",
+    "connectivity": "all-to-all (ring + 2 linear regions)",
+    "programs": "Guppy/HUGR; Pytket can be submitted to Helios by loading the user circuit into Guppy source"
+   },
+   "eps2": 0.00079,
+   "eps1": 3e-05,
+   "eps_ro_0": 0.00048,
+   "eps_ro_1": 0.00048,
+   "memory_error_per_depth1": 0.0005,
+   "depth1_time_s": 0.055,
+   "zones": 4,
+   "qubits": 98
+  },
+  "quantinuum_h1_1": {
+   "device_name": "H1-1",
+   "source": [
+    "https://docs.quantinuum.com/systems/user_guide/hardware_user_guide/performance_validation.html",
+    "https://www.quantinuum.com/products-solutions/system-model-h1-series"
+   ],
+   "read_on": "2026-10-02",
+   "transcribed_from": "reports/qpu_survey_2x3_20261002.md section 2.1",
+   "verbatim": {
+    "two_qubit_gate_error": "9.7e-04",
+    "one_qubit_gate_error": "1.8e-05",
+    "SPAM": "1.2e-03 / 3.4e-03",
+    "memory_error_per_depth1_circuit_time": "2.2e-04",
+    "qubits": "20",
+    "connectivity": "all-to-all, 5 gate zones",
+    "data_sheet": "H1 data sheet URL returned 404 on 2026-10-02"
+   },
+   "eps2": 0.00097,
+   "eps1": 1.8e-05,
+   "eps_ro_0": 0.0012,
+   "eps_ro_1": 0.0034,
+   "memory_error_per_depth1": 0.00022,
+   "zones": 5,
+   "qubits": 20
+  },
+  "quantinuum_h2_1": {
+   "device_name": "H2-1",
+   "source": [
+    "https://docs.quantinuum.com/systems/user_guide/hardware_user_guide/performance_validation.html",
+    "https://docs.quantinuum.com/systems/_static/assets/data_sheets/Quantinuum%20H2%20Product%20Data%20Sheet.pdf",
+    "https://assets.website-files.com/62b9d45fb3f64842a96c9686/665f5f1f753da03b53be9da8_Quantinuum%20H2%20Emulator%20Product%20Data%20Sheet%20v1.2%204Jun24.pdf"
+   ],
+   "read_on": "2026-10-02",
+   "transcribed_from": "reports/qpu_survey_2x3_20261002.md section 2.1",
+   "verbatim": {
+    "two_qubit_gate_error": "1.1e-03",
+    "one_qubit_gate_error": "1.9e-05",
+    "SPAM": "6.0e-04 / 1.4e-03",
+    "memory_error_per_depth1_circuit_time": "2.0e-04",
+    "emulator_linear_dephasing_rate": "0.0028 /s (H2 emulator data sheet v1.2, H2-1 defaults, 2024)",
+    "parallel_two_qubit_operations": "4",
+    "qubits": "56",
+    "connectivity": "all-to-all"
+   },
+   "eps2": 0.0011,
+   "eps1": 1.9e-05,
+   "eps_ro_0": 0.0006,
+   "eps_ro_1": 0.0014,
+   "memory_error_per_depth1": 0.0002,
+   "zones": 4,
+   "qubits": 56
+  }
+ },
+ "memory_model": {
+  "flag": "ESTIMATE",
+  "t_round_scenarios_s": {
+   "low": 0.0005,
+   "mid": 0.0011,
+   "high": 0.0044
+  },
+  "t_round_reasons": {
+   "low": "70 us gate + ~300 us post-shift cooling + short transport (Helios paper Sec. II.3)",
+   "mid": "55 ms / 49 gates: the Helios full-register random layer per gate",
+   "high": "55 ms / (49/4) rounds: one round of a full random layer incl. the sort"
+  },
+  "memory_rate_per_qubit_per_s": {
+   "quantinuum_helios_1": 0.00909090909090909,
+   "quantinuum_h2_1": 0.0028,
+   "quantinuum_h2_2": 0.0016799999999999999,
+   "quantinuum_h1_1": 0.0030800000000000003
+  },
+  "memory_rate_inputs": "Helios 5e-4 per 55 ms layer (arXiv:2511.05465); H2-1 emulator linear dephasing 0.0028 /s; H2-2 and H1-1 scaled by the performance-validation memory errors 1.2e-4 / 2.0e-4 and 2.2e-4 / 2.0e-4",
+  "rounds_rule": "rounds = max(ceil(n_2q / parallel zones), two-qubit critical-path depth)",
+  "S_idle": "S_idle = n_qubits x rounds x t_round x rate;  f_with_memory = f_gate_only x exp(-S_idle)",
+  "source": "planner prototype scratch/planner/quantinuum_2x3_prototype_20261002.py (survey section 3)"
+ },
+ "billing": {
+  "formula": "HQC = 5 + C (N_1q + 10 N_2q + 5 N_m) / 5000 per job",
+  "N_1q": "PhasedX count (Rz excluded: 'Rz operations excluded')",
+  "N_2q": "ZZPhase + ZZMax count",
+  "N_m": "initialisations + measurements (= 2 x n_qubits for one measurement per qubit)",
+  "C": "shots",
+  "job_base_hqc": 5.0,
+  "divisor": 5000.0,
+  "limits": {
+   "max_shots_per_job": 10000,
+   "max_hqc_per_job": 500000.0,
+   "max_hqc_per_shot_H2": 50
+  },
+  "source": [
+   "https://learn.microsoft.com/en-us/azure/quantum/provider-quantinuum",
+   "https://docs.quantinuum.com/systems/trainings/helios/getting_started/costing.html"
+  ],
+  "read_on": "2026-10-02",
+  "syntax_checkers": "Syntax Checkers usage is offered free-of-charge (Azure provider page)",
+  "azure_plans": {
+   "source": "https://learn.microsoft.com/en-us/azure/quantum/pricing",
+   "read_on": "2026-10-02",
+   "standard": "USD 125,000/month = 10k HQC + 100k eHQC",
+   "premium": "USD 175,000/month = 17k HQC",
+   "pay_as_you_go": "per HQC usage, rate by contact"
+  },
+  "usd_per_hqc_ESTIMATE": {
+   "value": 12.5,
+   "flag": "ESTIMATE",
+   "label": "Azure-Standard-equivalent (USD 125,000 / 10,000 HQC); the pay-as-you-go and research rates are not public"
+  }
+ },
+ "access": {
+  "QCUP": {
+   "source": "https://docs.olcf.ornl.gov/quantum/quantum_access.html",
+   "read_on": "2026-10-02",
+   "verbatim": {
+    "form": "Project Application Form (year-round, myOLCF)",
+    "vendors": "IBM, Quantinuum, IonQ, IQM",
+    "emulator_default": "6000 seconds",
+    "hardware_default": "0 HQCs",
+    "allocation": "Requests for machine credits must be justified using results from an emulator",
+    "deadline": "monthly; request by the 25th of the preceding month",
+    "eligibility": "US national labs, universities, government, and industry; quantinuum.com: Researchers in the United States may apply"
+   }
+  },
+  "research_agreement": "Sales@Quantinuum.com (Nexus account / research agreement)",
+  "azure": "Azure Quantum workspace (plans above)"
+ },
+ "offline_machine_list_pytket_quantinuum": {
+  "source": "pytket.extensions.quantinuum.QuantinuumAPIOffline().get_machine_list()",
+  "pytket-quantinuum": "0.59.3",
+  "note": "embedded in the package, no network; the noise_specs dates are the package's",
+  "machines": [
+   {
+    "wasm": true,
+    "batching": true,
+    "supported_languages": [
+     "OPENQASM 2.0",
+     "QIR 1.0"
+    ],
+    "benchmarks": {
+     "qv": {
+      "date": "2024-04-04",
+      "value": 1048576.0
+     }
+    },
+    "max_classical_register_width": 63,
+    "gateset": [
+     "RZZ",
+     "Rxxyyzz",
+     "Rz",
+     "U1q",
+     "ZZ"
+    ],
+    "name": "H1-1",
+    "syntax_checker": "H1-1SC",
+    "n_gate_zones": "5",
+    "noise_specs": {
+     "date": "2025-05-02",
+     "spam_error": {
+      "p_meas_1_unc": 0.000176,
+      "p_meas_0": 0.00122,
+      "p_meas_1": 0.00343,
+      "p_meas_0_unc": 0.000105
+     },
+     "crosstalk_error": {
+      "p_crosstalk_meas_unc": 1.7e-06,
+      "p_crosstalk_meas": 4.1e-05
+     },
+     "memory_error": {
+      "memory_error_unc": 9.16e-05,
+      "memory_error": 0.000222
+     },
+     "1q_gate_error": {
+      "p1": 1.8e-05,
+      "p1_unc": 2.93e-06
+     },
+     "2q_gate_error": {
+      "p2_unc": 6.23e-05,
+      "p2": 0.000973
+     }
+    },
+    "max_n_shots": 10000,
+    "n_qubits": 20,
+    "n_classical_registers": 4000,
+    "system_type": "hardware",
+    "connectivity": "all-to-all",
+    "emulator": "H1-1E"
+   },
+   {
+    "wasm": true,
+    "batching": true,
+    "supported_languages": [
+     "OPENQASM 2.0",
+     "QIR 1.0"
+    ],
+    "benchmarks": {
+     "qv": {
+      "date": "2024-08-11",
+      "value": 2097152.0
+     }
+    },
+    "max_classical_register_width": 63,
+    "gateset": [
+     "RZZ",
+     "Rxxyyzz",
+     "Rz",
+     "U1q",
+     "ZZ"
+    ],
+    "name": "H2-1",
+    "syntax_checker": "H2-1SC",
+    "n_gate_zones": "4",
+    "noise_specs": {
+     "date": "2025-04-30",
+     "spam_error": {
+      "p_meas_1_unc": 0.000124,
+      "p_meas_0": 0.0006,
+      "p_meas_1": 0.00139,
+      "p_meas_0_unc": 8.16e-05
+     },
+     "crosstalk_error": {
+      "p_crosstalk_meas_unc": 8.98e-07,
+      "p_crosstalk_meas": 6.65e-06
+     },
+     "memory_error": {
+      "memory_error_unc": 2.34e-05,
+      "memory_error": 0.000203
+     },
+     "1q_gate_error": {
+      "p1": 1.89e-05,
+      "p1_unc": 4.23e-06
+     },
+     "2q_gate_error": {
+      "p2_unc": 8.08e-05,
+      "p2": 0.00105
+     }
+    },
+    "max_n_shots": 10000,
+    "n_qubits": 56,
+    "n_classical_registers": 4000,
+    "system_type": "hardware",
+    "connectivity": "all-to-all",
+    "emulator": "H2-1E"
+   },
+   {
+    "wasm": true,
+    "batching": true,
+    "supported_languages": [
+     "OPENQASM 2.0",
+     "QIR 1.0"
+    ],
+    "benchmarks": {
+     "qv": {
+      "date": "2025-09-08",
+      "value": 33554432.0
+     }
+    },
+    "max_classical_register_width": 63,
+    "gateset": [
+     "RZZ",
+     "Rxxyyzz",
+     "Rz",
+     "U1q",
+     "ZZ"
+    ],
+    "name": "H2-2",
+    "syntax_checker": "H2-2SC",
+    "n_gate_zones": "4",
+    "noise_specs": {
+     "date": "2025-08-28",
+     "spam_error": {
+      "p_meas_1_unc": 0.00011,
+      "p_meas_0": 0.00067,
+      "p_meas_1": 0.0012,
+      "p_meas_0_unc": 8.7e-05
+     },
+     "crosstalk_error": {
+      "p_crosstalk_meas_unc": 5.3e-07,
+      "p_crosstalk_meas": 2.2e-05
+     },
+     "memory_error": {
+      "memory_error_unc": 2e-05,
+      "memory_error": 0.00012
+     },
+     "1q_gate_error": {
+      "p1": 2.8e-05,
+      "p1_unc": 3.6e-06
+     },
+     "2q_gate_error": {
+      "p2_unc": 4.8e-05,
+      "p2": 0.00083
+     }
+    },
+    "max_n_shots": 10000,
+    "n_qubits": 56,
+    "n_classical_registers": 4000,
+    "system_type": "hardware",
+    "connectivity": "all-to-all",
+    "emulator": "H2-2E"
+   }
+  ]
+ },
+ "counts": {
+  "2x2": {
+   "n_qubits": 12,
+   "n_meas": 12,
+   "n_2q": 256,
+   "n_1q": 541,
+   "depth_2q": null,
+   "source": "validation/S2.json data.2x2.coarse_step.all_to_all.ops (CZ basis; n_1q = sx + x, rz virtual; no ZZPhase build of 2x2 exists -- at 2x3 the RZZ and CZ counts differ by 6 of 2164)"
+  },
+  "2x3": {
+   "per_circuit": [
+    {
+     "id": "B0_ref117_k1",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3089,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9738
+    },
+    {
+     "id": "B0_ref117_k2",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3027,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9614
+    },
+    {
+     "id": "B0_ref117_k3",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3070,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.97
+    },
+    {
+     "id": "B0_ref117_k4",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3066,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9692
+    },
+    {
+     "id": "B0_ref169_k1",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3091,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9742
+    },
+    {
+     "id": "B0_ref169_k2",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3024,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9608
+    },
+    {
+     "id": "B0_ref169_k3",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3068,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9696
+    },
+    {
+     "id": "B0_ref169_k4",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3062,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9684
+    },
+    {
+     "id": "B0_ref25_k1",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3091,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9742
+    },
+    {
+     "id": "B0_ref25_k2",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3026,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9612
+    },
+    {
+     "id": "B0_ref25_k3",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3067,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9694
+    },
+    {
+     "id": "B0_ref25_k4",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3063,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9686
+    },
+    {
+     "id": "B0_ref333_k1",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3086,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9732
+    },
+    {
+     "id": "B0_ref333_k2",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3023,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9606
+    },
+    {
+     "id": "B0_ref333_k3",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3065,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.969
+    },
+    {
+     "id": "B0_ref333_k4",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3062,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9684
+    },
+    {
+     "id": "B0_ref525_k1",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3087,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9734
+    },
+    {
+     "id": "B0_ref525_k2",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3024,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9608
+    },
+    {
+     "id": "B0_ref525_k3",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3070,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.97
+    },
+    {
+     "id": "B0_ref525_k4",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3065,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.969
+    },
+    {
+     "id": "B0_ref70_k1",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3090,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.974
+    },
+    {
+     "id": "B0_ref70_k2",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3026,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9612
+    },
+    {
+     "id": "B0_ref70_k3",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3068,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9696
+    },
+    {
+     "id": "B0_ref70_k4",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3064,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9688
+    },
+    {
+     "id": "B0_ref795_k1",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3085,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.973
+    },
+    {
+     "id": "B0_ref795_k2",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3026,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9612
+    },
+    {
+     "id": "B0_ref795_k3",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3069,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9698
+    },
+    {
+     "id": "B0_ref795_k4",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3065,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.969
+    },
+    {
+     "id": "B0_ref86_k1",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3090,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.974
+    },
+    {
+     "id": "B0_ref86_k2",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3025,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.961
+    },
+    {
+     "id": "B0_ref86_k3",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3070,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.97
+    },
+    {
+     "id": "B0_ref86_k4",
+     "sector": "B=0",
+     "n_2q": 2158,
+     "n_1q": 3064,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9688
+    },
+    {
+     "id": "B1_ref27_k1",
+     "sector": "B=1",
+     "n_2q": 2158,
+     "n_1q": 2991,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9542
+    },
+    {
+     "id": "B1_ref27_k2",
+     "sector": "B=1",
+     "n_2q": 2158,
+     "n_1q": 3067,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9694
+    },
+    {
+     "id": "B1_ref27_k3",
+     "sector": "B=1",
+     "n_2q": 2158,
+     "n_1q": 3000,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.956
+    },
+    {
+     "id": "B1_ref27_k4",
+     "sector": "B=1",
+     "n_2q": 2158,
+     "n_1q": 3066,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9692
+    },
+    {
+     "id": "B1_ref29_k1",
+     "sector": "B=1",
+     "n_2q": 2158,
+     "n_1q": 2990,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.954
+    },
+    {
+     "id": "B1_ref29_k2",
+     "sector": "B=1",
+     "n_2q": 2158,
+     "n_1q": 3066,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9692
+    },
+    {
+     "id": "B1_ref29_k3",
+     "sector": "B=1",
+     "n_2q": 2158,
+     "n_1q": 2999,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9558
+    },
+    {
+     "id": "B1_ref29_k4",
+     "sector": "B=1",
+     "n_2q": 2158,
+     "n_1q": 3066,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9692
+    },
+    {
+     "id": "B1_ref57_k1",
+     "sector": "B=1",
+     "n_2q": 2158,
+     "n_1q": 2989,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9538
+    },
+    {
+     "id": "B1_ref57_k2",
+     "sector": "B=1",
+     "n_2q": 2158,
+     "n_1q": 3065,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.969
+    },
+    {
+     "id": "B1_ref57_k3",
+     "sector": "B=1",
+     "n_2q": 2158,
+     "n_1q": 2998,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.9556
+    },
+    {
+     "id": "B1_ref57_k4",
+     "sector": "B=1",
+     "n_2q": 2158,
+     "n_1q": 3065,
+     "n_meas": 20,
+     "n_qubits": 20,
+     "depth_2q": 1925,
+     "hqc_per_shot": 4.969
+    }
+   ],
+   "n_qubits": 20,
+   "n_meas": 20,
+   "n_2q_mean": 2158.0,
+   "n_1q_mean": 3052.9545454545455,
+   "depth_2q_max": 1925,
+   "hqc_per_shot_mean": 4.966590909090908,
+   "source": "data/quantinuum/circuits_2x3/*.manifest.json counts (frozen native circuits; n_1q = PhasedX, Rz virtual)"
+  },
+  "2x4": {
+   "n_qubits": 28,
+   "n_meas": 28,
+   "n_2q": 69688,
+   "n_1q": 138711,
+   "depth_2q": 68653,
+   "source": "validation/S2_2x4.json data.compile.compile_4_exact_a2a_k1.circuits.B0_ref0_k1.maps.all_to_all (signed exact family, CZ basis; n_1q = sx + x)"
+  }
+ },
+ "rows": {
+  "2x3|quantinuum_h2_2": {
+   "device": "H2-2",
+   "lattice": "2x3",
+   "eps2": 0.00083,
+   "eps1": 2.8e-05,
+   "eps_ro": 0.000935,
+   "eps_ro_rule": "eps_ro = mean of the published 0 and 1 SPAM values (as the planner prototype)",
+   "qubits_fit": true,
+   "f_gate_only_mean": 0.15015667326456225,
+   "f_gate_only_worst": 0.14999674365931337,
+   "f_gate_only_worst_id": "B0_ref169_k1",
+   "f_2q_only": 0.166645957047838,
+   "eps2_for_mean_f_0.1": 0.001018198978420911,
+   "eps2_for_worst_f_0.05": 0.0013385261328099592,
+   "hqc_per_shot_mean": 4.966590909090908,
+   "meets_mean_0.1_gate_only": true,
+   "meets_worst_0.05_gate_only": true,
+   "memory_ESTIMATE": {
+    "flag": "ESTIMATE",
+    "rate_per_qubit_per_s": 0.0016799999999999999,
+    "rounds": 1925,
+    "rounds_gate_bound": 540,
+    "depth_2q": 1925,
+    "scenarios": {
+     "low": {
+      "t_round_s": 0.0005,
+      "shot_time_s": 0.9625,
+      "S_idle_nats": 0.032339999999999994,
+      "f_with_memory": 0.14537828937763808
+     },
+     "mid": {
+      "t_round_s": 0.0011,
+      "shot_time_s": 2.1175,
+      "S_idle_nats": 0.071148,
+      "f_with_memory": 0.1398445204739109
+     },
+     "high": {
+      "t_round_s": 0.0044,
+      "shot_time_s": 8.47,
+      "S_idle_nats": 0.284592,
+      "f_with_memory": 0.11296603941910116
+     }
+    }
+   },
+   "f_with_memory_mid_ESTIMATE": 0.1398445204739109,
+   "meets_mean_0.1_with_memory_mid_ESTIMATE": true,
+   "shots_rule": "data/S2D_recall_at_f.json results.<sector>|f=0.1.shot_rule_union_reading_N_sector x 0.1 / f, rounded up to 100",
+   "shots_per_sector": {
+    "B=0": 51200,
+    "B=1": 50900
+   },
+   "shots_base_at_f_0.1": {
+    "B=0": 71500,
+    "B=1": 71075
+   },
+   "f_used_for_shots": 0.1398445204739109,
+   "shots_total": 102100,
+   "jobs_lower_bound": 11,
+   "hqc_total_ESTIMATE": 507143.93181818177,
+   "usd_ESTIMATE_azure_standard_equivalent": 6339299.1477272725,
+   "machine_hours_mid_ESTIMATE": 60.05465277777778,
+   "hqc_per_job_at_max_shots": 49670.90909090908,
+   "job_limit_fit": true
+  },
+  "2x3|quantinuum_helios_1": {
+   "device": "Helios-1",
+   "lattice": "2x3",
+   "eps2": 0.00079,
+   "eps1": 3e-05,
+   "eps_ro": 0.00048,
+   "eps_ro_rule": "eps_ro = mean of the published 0 and 1 SPAM values (as the planner prototype)",
+   "qubits_fit": true,
+   "f_gate_only_mean": 0.16419744294849906,
+   "f_gate_only_worst": 0.16401006936346804,
+   "f_gate_only_worst_id": "B0_ref169_k1",
+   "f_2q_only": 0.18168265661981262,
+   "eps2_for_mean_f_0.1": 0.0010195879282317325,
+   "eps2_for_worst_f_0.05": 0.0013398793985654744,
+   "hqc_per_shot_mean": 4.966590909090908,
+   "meets_mean_0.1_gate_only": true,
+   "meets_worst_0.05_gate_only": true,
+   "memory_ESTIMATE": {
+    "flag": "ESTIMATE",
+    "rate_per_qubit_per_s": 0.00909090909090909,
+    "rounds": 1925,
+    "rounds_gate_bound": 540,
+    "depth_2q": 1925,
+    "scenarios": {
+     "low": {
+      "t_round_s": 0.0005,
+      "shot_time_s": 0.9625,
+      "S_idle_nats": 0.175,
+      "f_with_memory": 0.1378366962754689
+     },
+     "mid": {
+      "t_round_s": 0.0011,
+      "shot_time_s": 2.1175,
+      "S_idle_nats": 0.385,
+      "f_with_memory": 0.11172825451747267
+     },
+     "high": {
+      "t_round_s": 0.0044,
+      "shot_time_s": 8.47,
+      "S_idle_nats": 1.54,
+      "f_with_memory": 0.0352008286707926
+     }
+    }
+   },
+   "f_with_memory_mid_ESTIMATE": 0.11172825451747267,
+   "meets_mean_0.1_with_memory_mid_ESTIMATE": true,
+   "shots_rule": "data/S2D_recall_at_f.json results.<sector>|f=0.1.shot_rule_union_reading_N_sector x 0.1 / f, rounded up to 100",
+   "shots_per_sector": {
+    "B=0": 64000,
+    "B=1": 63700
+   },
+   "shots_base_at_f_0.1": {
+    "B=0": 71500,
+    "B=1": 71075
+   },
+   "f_used_for_shots": 0.11172825451747267,
+   "shots_total": 127700,
+   "jobs_lower_bound": 13,
+   "hqc_total_ESTIMATE": 634298.6590909091,
+   "usd_ESTIMATE_azure_standard_equivalent": 7928733.238636363,
+   "machine_hours_mid_ESTIMATE": 75.11243055555556,
+   "hqc_per_job_at_max_shots": 49670.90909090908,
+   "job_limit_fit": true
+  },
+  "2x3|quantinuum_h1_1": {
+   "device": "H1-1",
+   "lattice": "2x3",
+   "eps2": 0.00097,
+   "eps1": 1.8e-05,
+   "eps_ro": 0.0023,
+   "eps_ro_rule": "eps_ro = mean of the published 0 and 1 SPAM values (as the planner prototype)",
+   "qubits_fit": true,
+   "f_gate_only_mean": 0.11132711884620469,
+   "f_gate_only_worst": 0.11125088865076799,
+   "f_gate_only_worst_id": "B0_ref169_k1",
+   "f_2q_only": 0.12315939255565504,
+   "eps2_for_mean_f_0.1": 0.0010196737485232302,
+   "eps2_for_worst_f_0.05": 0.0013401765964938745,
+   "hqc_per_shot_mean": 4.966590909090908,
+   "meets_mean_0.1_gate_only": true,
+   "meets_worst_0.05_gate_only": true,
+   "memory_ESTIMATE": {
+    "flag": "ESTIMATE",
+    "rate_per_qubit_per_s": 0.0030800000000000003,
+    "rounds": 1925,
+    "rounds_gate_bound": 432,
+    "depth_2q": 1925,
+    "scenarios": {
+     "low": {
+      "t_round_s": 0.0005,
+      "shot_time_s": 0.9625,
+      "S_idle_nats": 0.05929,
+      "f_with_memory": 0.10491839777947291
+     },
+     "mid": {
+      "t_round_s": 0.0011,
+      "shot_time_s": 2.1175,
+      "S_idle_nats": 0.13043800000000003,
+      "f_with_memory": 0.09771302671650328
+     },
+     "high": {
+      "t_round_s": 0.0044,
+      "shot_time_s": 8.47,
+      "S_idle_nats": 0.5217520000000001,
+      "f_with_memory": 0.06607040289359148
+     }
+    }
+   },
+   "f_with_memory_mid_ESTIMATE": 0.09771302671650328,
+   "meets_mean_0.1_with_memory_mid_ESTIMATE": false,
+   "shots_rule": "data/S2D_recall_at_f.json results.<sector>|f=0.1.shot_rule_union_reading_N_sector x 0.1 / f, rounded up to 100",
+   "shots_per_sector": {
+    "B=0": 73200,
+    "B=1": 72800
+   },
+   "shots_base_at_f_0.1": {
+    "B=0": 71500,
+    "B=1": 71075
+   },
+   "f_used_for_shots": 0.09771302671650328,
+   "shots_total": 146000,
+   "jobs_lower_bound": 15,
+   "hqc_total_ESTIMATE": 725197.2727272726,
+   "usd_ESTIMATE_azure_standard_equivalent": 9064965.909090908,
+   "machine_hours_mid_ESTIMATE": 85.87638888888888,
+   "hqc_per_job_at_max_shots": 49670.90909090908,
+   "job_limit_fit": true
+  },
+  "2x3|quantinuum_h2_1": {
+   "device": "H2-1",
+   "lattice": "2x3",
+   "eps2": 0.0011,
+   "eps1": 1.9e-05,
+   "eps_ro": 0.001,
+   "eps_ro_rule": "eps_ro = mean of the published 0 and 1 SPAM values (as the planner prototype)",
+   "qubits_fit": true,
+   "f_gate_only_mean": 0.08602450561284725,
+   "f_gate_only_worst": 0.08596232906448659,
+   "f_gate_only_worst_id": "B0_ref169_k1",
+   "f_2q_only": 0.09300457921005797,
+   "eps2_for_mean_f_0.1": 0.0010303162027215595,
+   "eps2_for_worst_f_0.05": 0.0013507980218337668,
+   "hqc_per_shot_mean": 4.966590909090908,
+   "meets_mean_0.1_gate_only": false,
+   "meets_worst_0.05_gate_only": true,
+   "memory_ESTIMATE": {
+    "flag": "ESTIMATE",
+    "rate_per_qubit_per_s": 0.0028,
+    "rounds": 1925,
+    "rounds_gate_bound": 540,
+    "depth_2q": 1925,
+    "scenarios": {
+     "low": {
+      "t_round_s": 0.0005,
+      "shot_time_s": 0.9625,
+      "S_idle_nats": 0.053899999999999997,
+      "f_with_memory": 0.08151052920893748
+     },
+     "mid": {
+      "t_round_s": 0.0011,
+      "shot_time_s": 2.1175,
+      "S_idle_nats": 0.11858,
+      "f_with_memory": 0.07640531063223643
+     },
+     "high": {
+      "t_round_s": 0.0044,
+      "shot_time_s": 8.47,
+      "S_idle_nats": 0.47432,
+      "f_with_memory": 0.05353374510289403
+     }
+    }
+   },
+   "f_with_memory_mid_ESTIMATE": 0.07640531063223643,
+   "meets_mean_0.1_with_memory_mid_ESTIMATE": false,
+   "shots_rule": "data/S2D_recall_at_f.json results.<sector>|f=0.1.shot_rule_union_reading_N_sector x 0.1 / f, rounded up to 100",
+   "shots_per_sector": {
+    "B=0": 93600,
+    "B=1": 93100
+   },
+   "shots_base_at_f_0.1": {
+    "B=0": 71500,
+    "B=1": 71075
+   },
+   "f_used_for_shots": 0.07640531063223643,
+   "shots_total": 186700,
+   "jobs_lower_bound": 19,
+   "hqc_total_ESTIMATE": 927357.5227272726,
+   "usd_ESTIMATE_azure_standard_equivalent": 11591969.034090908,
+   "machine_hours_mid_ESTIMATE": 109.8159027777778,
+   "hqc_per_job_at_max_shots": 49670.90909090908,
+   "job_limit_fit": true
+  },
+  "2x2|quantinuum_h2_2": {
+   "device": "H2-2",
+   "lattice": "2x2",
+   "eps2": 0.00083,
+   "eps1": 2.8e-05,
+   "eps_ro": 0.000935,
+   "eps_ro_rule": "eps_ro = mean of the published 0 and 1 SPAM values (as the planner prototype)",
+   "qubits_fit": true,
+   "f_gate_only_mean": 0.7874607988805004,
+   "f_gate_only_worst": 0.7874607988805004,
+   "f_2q_only": 0.8085051517315941,
+   "eps2_for_mean_f_0.1": 0.008852039628733044,
+   "eps2_for_worst_f_0.05": 0.011532048124577643,
+   "hqc_per_shot_mean": 0.6442,
+   "meets_mean_0.1_gate_only": true,
+   "meets_worst_0.05_gate_only": true,
+   "memory_ESTIMATE": {
+    "flag": "ESTIMATE",
+    "rate_per_qubit_per_s": 0.0016799999999999999,
+    "rounds": 64,
+    "rounds_gate_bound": 64,
+    "depth_2q": null,
+    "scenarios": {
+     "low": {
+      "t_round_s": 0.0005,
+      "shot_time_s": 0.032,
+      "S_idle_nats": 0.00064512,
+      "f_with_memory": 0.7869529559973398
+     },
+     "mid": {
+      "t_round_s": 0.0011,
+      "shot_time_s": 0.0704,
+      "S_idle_nats": 0.001419264,
+      "f_with_memory": 0.7863439768373669
+     },
+     "high": {
+      "t_round_s": 0.0044,
+      "shot_time_s": 0.2816,
+      "S_idle_nats": 0.005677056,
+      "f_with_memory": 0.7830030053716436
+     }
+    },
+    "note": "no two-qubit depth recorded for this lattice: rounds = the gate bound only"
+   },
+   "f_with_memory_mid_ESTIMATE": 0.7863439768373669,
+   "meets_mean_0.1_with_memory_mid_ESTIMATE": true,
+   "shots_rule": "validation/H0_2x2.json data.shot_plan.total_coarse_shots x f_pool / f, rounded up to 100",
+   "shots_base": {
+    "total_coarse_shots": 133907,
+    "f_pool": 0.11285347188965912,
+    "path": "data/hardware/H0_2x2_prep/shot_plan.json"
+   },
+   "f_used_for_shots": 0.7863439768373669,
+   "shots_total": 19300,
+   "jobs_lower_bound": 2,
+   "hqc_total_ESTIMATE": 12443.06,
+   "usd_ESTIMATE_azure_standard_equivalent": 155538.25,
+   "machine_hours_mid_ESTIMATE": 0.3774222222222222,
+   "hqc_per_job_at_max_shots": 6447.0,
+   "job_limit_fit": true
+  },
+  "2x2|quantinuum_helios_1": {
+   "device": "Helios-1",
+   "lattice": "2x2",
+   "eps2": 0.00079,
+   "eps1": 3e-05,
+   "eps_ro": 0.00048,
+   "eps_ro_rule": "eps_ro = mean of the published 0 and 1 SPAM values (as the planner prototype)",
+   "qubits_fit": true,
+   "f_gate_only_mean": 0.7990661439743298,
+   "f_gate_only_worst": 0.7990661439743298,
+   "f_2q_only": 0.8168335591085806,
+   "eps2_for_mean_f_0.1": 0.008869004507873424,
+   "eps2_for_worst_f_0.05": 0.011548967131636334,
+   "hqc_per_shot_mean": 0.6442,
+   "meets_mean_0.1_gate_only": true,
+   "meets_worst_0.05_gate_only": true,
+   "memory_ESTIMATE": {
+    "flag": "ESTIMATE",
+    "rate_per_qubit_per_s": 0.00909090909090909,
+    "rounds": 64,
+    "rounds_gate_bound": 64,
+    "depth_2q": null,
+    "scenarios": {
+     "low": {
+      "t_round_s": 0.0005,
+      "shot_time_s": 0.032,
+      "S_idle_nats": 0.003490909090909091,
+      "f_with_memory": 0.796281539935737
+     },
+     "mid": {
+      "t_round_s": 0.0011,
+      "shot_time_s": 0.0704,
+      "S_idle_nats": 0.007679999999999999,
+      "f_with_memory": 0.7929528211962494
+     },
+     "high": {
+      "t_round_s": 0.0044,
+      "shot_time_s": 0.2816,
+      "S_idle_nats": 0.030719999999999997,
+      "f_with_memory": 0.7748920472554618
+     }
+    },
+    "note": "no two-qubit depth recorded for this lattice: rounds = the gate bound only"
+   },
+   "f_with_memory_mid_ESTIMATE": 0.7929528211962494,
+   "meets_mean_0.1_with_memory_mid_ESTIMATE": true,
+   "shots_rule": "validation/H0_2x2.json data.shot_plan.total_coarse_shots x f_pool / f, rounded up to 100",
+   "shots_base": {
+    "total_coarse_shots": 133907,
+    "f_pool": 0.11285347188965912,
+    "path": "data/hardware/H0_2x2_prep/shot_plan.json"
+   },
+   "f_used_for_shots": 0.7929528211962494,
+   "shots_total": 19100,
+   "jobs_lower_bound": 2,
+   "hqc_total_ESTIMATE": 12314.22,
+   "usd_ESTIMATE_azure_standard_equivalent": 153927.75,
+   "machine_hours_mid_ESTIMATE": 0.3735111111111111,
+   "hqc_per_job_at_max_shots": 6447.0,
+   "job_limit_fit": true
+  },
+  "2x2|quantinuum_h1_1": {
+   "device": "H1-1",
+   "lattice": "2x2",
+   "eps2": 0.00097,
+   "eps1": 1.8e-05,
+   "eps_ro": 0.0023,
+   "eps_ro_rule": "eps_ro = mean of the published 0 and 1 SPAM values (as the planner prototype)",
+   "qubits_fit": true,
+   "f_gate_only_mean": 0.7514050767077156,
+   "f_gate_only_worst": 0.7514050767077156,
+   "f_2q_only": 0.7800162601745672,
+   "eps2_for_mean_f_0.1": 0.008809464202652384,
+   "eps2_for_worst_f_0.05": 0.011489587820061264,
+   "hqc_per_shot_mean": 0.6442,
+   "meets_mean_0.1_gate_only": true,
+   "meets_worst_0.05_gate_only": true,
+   "memory_ESTIMATE": {
+    "flag": "ESTIMATE",
+    "rate_per_qubit_per_s": 0.0030800000000000003,
+    "rounds": 52,
+    "rounds_gate_bound": 52,
+    "depth_2q": null,
+    "scenarios": {
+     "low": {
+      "t_round_s": 0.0005,
+      "shot_time_s": 0.026000000000000002,
+      "S_idle_nats": 0.0009609600000000003,
+      "f_with_memory": 0.7506833533143978
+     },
+     "mid": {
+      "t_round_s": 0.0011,
+      "shot_time_s": 0.0572,
+      "S_idle_nats": 0.002114112,
+      "f_with_memory": 0.7498182002265339
+     },
+     "high": {
+      "t_round_s": 0.0044,
+      "shot_time_s": 0.2288,
+      "S_idle_nats": 0.008456448,
+      "f_with_memory": 0.745077650233021
+     }
+    },
+    "note": "no two-qubit depth recorded for this lattice: rounds = the gate bound only"
+   },
+   "f_with_memory_mid_ESTIMATE": 0.7498182002265339,
+   "meets_mean_0.1_with_memory_mid_ESTIMATE": true,
+   "shots_rule": "validation/H0_2x2.json data.shot_plan.total_coarse_shots x f_pool / f, rounded up to 100",
+   "shots_base": {
+    "total_coarse_shots": 133907,
+    "f_pool": 0.11285347188965912,
+    "path": "data/hardware/H0_2x2_prep/shot_plan.json"
+   },
+   "f_used_for_shots": 0.7498182002265339,
+   "shots_total": 20200,
+   "jobs_lower_bound": 3,
+   "hqc_total_ESTIMATE": 13027.84,
+   "usd_ESTIMATE_azure_standard_equivalent": 162848.0,
+   "machine_hours_mid_ESTIMATE": 0.32095555555555555,
+   "hqc_per_job_at_max_shots": 6447.0,
+   "job_limit_fit": true
+  },
+  "2x2|quantinuum_h2_1": {
+   "device": "H2-1",
+   "lattice": "2x2",
+   "eps2": 0.0011,
+   "eps1": 1.9e-05,
+   "eps_ro": 0.001,
+   "eps_ro_rule": "eps_ro = mean of the published 0 and 1 SPAM values (as the planner prototype)",
+   "qubits_fit": true,
+   "f_gate_only_mean": 0.7378312822708272,
+   "f_gate_only_worst": 0.7378312822708272,
+   "f_2q_only": 0.7544585089991601,
+   "eps2_for_mean_f_0.1": 0.008867868286428937,
+   "eps2_for_worst_f_0.05": 0.011547833982470834,
+   "hqc_per_shot_mean": 0.6442,
+   "meets_mean_0.1_gate_only": true,
+   "meets_worst_0.05_gate_only": true,
+   "memory_ESTIMATE": {
+    "flag": "ESTIMATE",
+    "rate_per_qubit_per_s": 0.0028,
+    "rounds": 64,
+    "rounds_gate_bound": 64,
+    "depth_2q": null,
+    "scenarios": {
+     "low": {
+      "t_round_s": 0.0005,
+      "shot_time_s": 0.032,
+      "S_idle_nats": 0.0010752000000000001,
+      "f_with_memory": 0.737038392410104
+     },
+     "mid": {
+      "t_round_s": 0.0011,
+      "shot_time_s": 0.0704,
+      "S_idle_nats": 0.00236544,
+      "f_with_memory": 0.7360880492119227
+     },
+     "high": {
+      "t_round_s": 0.0044,
+      "shot_time_s": 0.2816,
+      "S_idle_nats": 0.00946176,
+      "f_with_memory": 0.7308830229752004
+     }
+    },
+    "note": "no two-qubit depth recorded for this lattice: rounds = the gate bound only"
+   },
+   "f_with_memory_mid_ESTIMATE": 0.7360880492119227,
+   "meets_mean_0.1_with_memory_mid_ESTIMATE": true,
+   "shots_rule": "validation/H0_2x2.json data.shot_plan.total_coarse_shots x f_pool / f, rounded up to 100",
+   "shots_base": {
+    "total_coarse_shots": 133907,
+    "f_pool": 0.11285347188965912,
+    "path": "data/hardware/H0_2x2_prep/shot_plan.json"
+   },
+   "f_used_for_shots": 0.7360880492119227,
+   "shots_total": 20600,
+   "jobs_lower_bound": 3,
+   "hqc_total_ESTIMATE": 13285.52,
+   "usd_ESTIMATE_azure_standard_equivalent": 166069.0,
+   "machine_hours_mid_ESTIMATE": 0.40284444444444445,
+   "hqc_per_job_at_max_shots": 6447.0,
+   "job_limit_fit": true
+  },
+  "2x4|quantinuum_h2_2": {
+   "device": "H2-2",
+   "lattice": "2x4",
+   "eps2": 0.00083,
+   "eps1": 2.8e-05,
+   "eps_ro": 0.000935,
+   "eps_ro_rule": "eps_ro = mean of the published 0 and 1 SPAM values (as the planner prototype)",
+   "qubits_fit": true,
+   "f_gate_only_mean": 1.4837691394324464e-27,
+   "f_gate_only_worst": 1.4837691394324464e-27,
+   "f_2q_only": 7.404997393595429e-26,
+   "eps2_for_mean_f_0.1": null,
+   "eps2_for_worst_f_0.05": null,
+   "hqc_per_shot_mean": 167.1742,
+   "meets_mean_0.1_gate_only": false,
+   "meets_worst_0.05_gate_only": false,
+   "memory_ESTIMATE": {
+    "flag": "ESTIMATE",
+    "rate_per_qubit_per_s": 0.0016799999999999999,
+    "rounds": 68653,
+    "rounds_gate_bound": 17422,
+    "depth_2q": 68653,
+    "scenarios": {
+     "low": {
+      "t_round_s": 0.0005,
+      "shot_time_s": 34.3265,
+      "S_idle_nats": 1.61471856,
+      "f_with_memory": 2.9519090575992047e-28
+     },
+     "mid": {
+      "t_round_s": 0.0011,
+      "shot_time_s": 75.51830000000001,
+      "S_idle_nats": 3.5523808320000008,
+      "f_with_memory": 4.251938175228591e-29
+     },
+     "high": {
+      "t_round_s": 0.0044,
+      "shot_time_s": 302.07320000000004,
+      "S_idle_nats": 14.209523328000003,
+      "f_with_memory": 1.0005729602666275e-33
+     }
+    }
+   },
+   "f_with_memory_mid_ESTIMATE": 4.251938175228591e-29,
+   "meets_mean_0.1_with_memory_mid_ESTIMATE": false,
+   "shots": "not computable (f < 1e-12)"
+  },
+  "2x4|quantinuum_helios_1": {
+   "device": "Helios-1",
+   "lattice": "2x4",
+   "eps2": 0.00079,
+   "eps1": 3e-05,
+   "eps_ro": 0.00048,
+   "eps_ro_rule": "eps_ro = mean of the published 0 and 1 SPAM values (as the planner prototype)",
+   "qubits_fit": true,
+   "f_gate_only_mean": 1.8535434210594482e-26,
+   "f_gate_only_worst": 1.8535434210594482e-26,
+   "f_2q_only": 1.2053435519971771e-24,
+   "eps2_for_mean_f_0.1": null,
+   "eps2_for_worst_f_0.05": null,
+   "hqc_per_shot_mean": 167.1742,
+   "meets_mean_0.1_gate_only": false,
+   "meets_worst_0.05_gate_only": false,
+   "memory_ESTIMATE": {
+    "flag": "ESTIMATE",
+    "rate_per_qubit_per_s": 0.00909090909090909,
+    "rounds": 68653,
+    "rounds_gate_bound": 17422,
+    "depth_2q": 68653,
+    "scenarios": {
+     "low": {
+      "t_round_s": 0.0005,
+      "shot_time_s": 34.3265,
+      "S_idle_nats": 8.737654545454545,
+      "f_with_memory": 2.9736346616060972e-30
+     },
+     "mid": {
+      "t_round_s": 0.0011,
+      "shot_time_s": 75.51830000000001,
+      "S_idle_nats": 19.222840000000005,
+      "f_with_memory": 8.310543474617358e-35
+     },
+     "high": {
+      "t_round_s": 0.0044,
+      "shot_time_s": 302.07320000000004,
+      "S_idle_nats": 76.89136000000002,
+      "f_with_memory": 7.490475885714744e-60
+     }
+    }
+   },
+   "f_with_memory_mid_ESTIMATE": 8.310543474617358e-35,
+   "meets_mean_0.1_with_memory_mid_ESTIMATE": false,
+   "shots": "not computable (f < 1e-12)"
+  },
+  "2x4|quantinuum_h1_1": {
+   "device": "H1-1",
+   "lattice": "2x4",
+   "eps2": 0.00097,
+   "eps1": 1.8e-05,
+   "eps_ro": 0.0023,
+   "eps_ro_rule": "eps_ro = mean of the published 0 and 1 SPAM values (as the planner prototype)",
+   "qubits_fit": false,
+   "f_gate_only_mean": 3.2827362651043938e-31,
+   "f_gate_only_worst": 3.2827362651043938e-31,
+   "f_2q_only": 4.251988917264762e-30,
+   "eps2_for_mean_f_0.1": null,
+   "eps2_for_worst_f_0.05": 6.234018399164931e-06,
+   "hqc_per_shot_mean": 167.1742,
+   "meets_mean_0.1_gate_only": false,
+   "meets_worst_0.05_gate_only": false,
+   "memory_ESTIMATE": {
+    "flag": "ESTIMATE",
+    "rate_per_qubit_per_s": 0.0030800000000000003,
+    "rounds": 68653,
+    "rounds_gate_bound": 13938,
+    "depth_2q": 68653,
+    "scenarios": {
+     "low": {
+      "t_round_s": 0.0005,
+      "shot_time_s": 34.3265,
+      "S_idle_nats": 2.9603173600000003,
+      "f_with_memory": 1.700538617631839e-32
+     },
+     "mid": {
+      "t_round_s": 0.0011,
+      "shot_time_s": 75.51830000000001,
+      "S_idle_nats": 6.512698192000002,
+      "f_with_memory": 4.873119998657623e-34
+     },
+     "high": {
+      "t_round_s": 0.0044,
+      "shot_time_s": 302.07320000000004,
+      "S_idle_nats": 26.050792768000008,
+      "f_with_memory": 1.5941179226706313e-42
+     }
+    }
+   },
+   "f_with_memory_mid_ESTIMATE": 4.873119998657623e-34,
+   "meets_mean_0.1_with_memory_mid_ESTIMATE": false,
+   "shots": "not computable (f < 1e-12)"
+  },
+  "2x4|quantinuum_h2_1": {
+   "device": "H2-1",
+   "lattice": "2x4",
+   "eps2": 0.0011,
+   "eps1": 1.9e-05,
+   "eps_ro": 0.001,
+   "eps_ro_rule": "eps_ro = mean of the published 0 and 1 SPAM values (as the planner prototype)",
+   "qubits_fit": true,
+   "f_gate_only_mean": 3.414182311285286e-35,
+   "f_gate_only_worst": 3.414182311285286e-35,
+   "f_2q_only": 4.8983625609040885e-34,
+   "eps2_for_mean_f_0.1": null,
+   "eps2_for_worst_f_0.05": 4.766723608717882e-06,
+   "hqc_per_shot_mean": 167.1742,
+   "meets_mean_0.1_gate_only": false,
+   "meets_worst_0.05_gate_only": false,
+   "memory_ESTIMATE": {
+    "flag": "ESTIMATE",
+    "rate_per_qubit_per_s": 0.0028,
+    "rounds": 68653,
+    "rounds_gate_bound": 17422,
+    "depth_2q": 68653,
+    "scenarios": {
+     "low": {
+      "t_round_s": 0.0005,
+      "shot_time_s": 34.3265,
+      "S_idle_nats": 2.6911976,
+      "f_with_memory": 2.3148051534505867e-36
+     },
+     "mid": {
+      "t_round_s": 0.0011,
+      "shot_time_s": 75.51830000000001,
+      "S_idle_nats": 5.920634720000002,
+      "f_with_memory": 9.161945830233775e-38
+     },
+     "high": {
+      "t_round_s": 0.0044,
+      "shot_time_s": 302.07320000000004,
+      "S_idle_nats": 23.682538880000006,
+      "f_with_memory": 1.7704788982383506e-45
+     }
+    }
+   },
+   "f_with_memory_mid_ESTIMATE": 9.161945830233775e-38,
+   "meets_mean_0.1_with_memory_mid_ESTIMATE": false,
+   "shots": "not computable (f < 1e-12)"
+  }
+ },
+ "prototype_reproduction": {
+  "quantinuum_h2_2": {
+   "f_table": 0.1501564273668166,
+   "f_prototype": 0.1501564273668166,
+   "abs_diff": 0.0,
+   "counts": [
+    2158,
+    3053,
+    20
+   ]
+  },
+  "quantinuum_helios_1": {
+   "f_table": 0.16419715026462242,
+   "f_prototype": 0.16419715026462242,
+   "abs_diff": 0.0,
+   "counts": [
+    2158,
+    3053,
+    20
+   ]
+  },
+  "quantinuum_h1_1": {
+   "f_table": 0.11132701097457495,
+   "f_prototype": 0.11132701097457495,
+   "abs_diff": 0.0,
+   "counts": [
+    2158,
+    3053,
+    20
+   ]
+  },
+  "quantinuum_h2_1": {
+   "f_table": 0.08602441686690669,
+   "f_prototype": 0.08602441686690669,
+   "abs_diff": 0.0,
+   "counts": [
+    2158,
+    3053,
+    20
+   ]
+  }
+ },
+ "ionq_reproduction": {
+  "2x3|ionq_aria|physical_rz": {
+   "f_table": 4.1876253488544305e-06,
+   "f_json": 4.1876253488544305e-06,
+   "abs_diff": 0.0
+  },
+  "2x3|ionq_aria|virtual_rz": {
+   "f_table": 3.520422603461551e-05,
+   "f_json": 3.520422603461551e-05,
+   "abs_diff": 0.0
+  },
+  "2x3|ionq_forte|physical_rz": {
+   "f_table": 3.6737694502187494e-05,
+   "f_json": 3.6737694502187494e-05,
+   "abs_diff": 0.0
+  },
+  "2x3|ionq_forte|virtual_rz": {
+   "f_table": 8.608097968623741e-05,
+   "f_json": 8.608097968623741e-05,
+   "abs_diff": 0.0
+  },
+  "2x2|ionq_aria|physical_rz": {
+   "f_table": 0.21587407787582166,
+   "f_json": 0.21587407787582166,
+   "abs_diff": 0.0
+  },
+  "2x2|ionq_aria|virtual_rz": {
+   "f_table": 0.26092751689045807,
+   "f_json": 0.26092751689045807,
+   "abs_diff": 0.0
+  },
+  "2x2|ionq_forte|physical_rz": {
+   "f_table": 0.2807691767944303,
+   "f_json": 0.2807691767944303,
+   "abs_diff": 0.0
+  },
+  "2x2|ionq_forte|virtual_rz": {
+   "f_table": 0.30288114804633365,
+   "f_json": 0.30288114804633365,
+   "abs_diff": 0.0
+  },
+  "scenario_eps2_for_2x3|0.004": {
+   "f_table": 8.608097968623741e-05,
+   "f_json": 8.608097968623741e-05,
+   "abs_diff": 0.0
+  },
+  "scenario_eps2_for_2x3|0.001": {
+   "f_table": 0.056699401464448955,
+   "f_json": 0.056699401464448955,
+   "abs_diff": 0.0
+  },
+  "scenario_eps2_for_2x3|0.0005": {
+   "f_table": 0.1669298283210969,
+   "f_json": 0.1669298283210969,
+   "abs_diff": 0.0
+  },
+  "scenario_eps2_for_2x3|0.0001": {
+   "f_table": 0.39584890430133085,
+   "f_json": 0.39584890430133085,
+   "abs_diff": 0.0
+  }
+ },
+ "reproduction_tolerance": 1e-12,
+ "reproduction_ok": true,
+ "ionq_rows_as_read": {
+  "specs": {
+   "ionq_aria": {
+    "source": "https://learn.microsoft.com/en-us/azure/quantum/provider-ionq",
+    "source_updated": "2026-08-29 (page metadata)",
+    "read_on": "2026-10-01",
+    "verbatim": {
+     "two_qubit_gate_fidelity": "99.6% (not SPAM corrected)",
+     "single_qubit_gate_fidelity": "99.95% (SPAM corrected)",
+     "SPAM": "99.61%",
+     "T1": "10-100 s",
+     "T2": "1 s",
+     "single_qubit_gate_time": "135 us",
+     "two_qubit_gate_time": "600 us",
+     "qubits": 25,
+     "connectivity": "all-to-all"
+    },
+    "eps2": 0.0040000000000000036,
+    "eps1": 0.0004999999999999449,
+    "eps_ro": 0.0039000000000000146,
+    "t_2q_s": 0.0006,
+    "t_1q_s": 0.000135,
+    "T2_s": 1.0,
+    "T1_s": 10.0,
+    "qubits": 25
+   },
+   "ionq_forte": {
+    "source": "https://www.ionq.com/quantum-systems/forte",
+    "read_on": "2026-10-01",
+    "verbatim": {
+     "two_qubit_gate_error": "0.4%",
+     "one_qubit_gate_error": "0.02%",
+     "SPAM_error": "0.5%",
+     "T1_and_T2": "10-100s, ~1s",
+     "gate_times": "NOT STATED on the page",
+     "qubits": 36,
+     "connectivity": "all-to-all"
+    },
+    "eps2": 0.004,
+    "eps1": 0.0002,
+    "eps_ro": 0.005,
+    "t_2q_s": null,
+    "t_1q_s": null,
+    "T2_s": 1.0,
+    "T1_s": 10.0,
+    "qubits": 36
+   }
+  },
+  "tempo": {
+   "source": "https://www.ionq.com/quantum-systems/tempo",
+   "read_on": "2026-10-01",
+   "verbatim": {
+    "target_fidelity": "99.9%",
+    "target_qubits": 100,
+    "AQ": 64
+   },
+   "status": "targets, not achieved specifications; no gate times, coherence times, SPAM or one-qubit figures are published, so Tempo cannot be evaluated as a device"
+  },
+  "counts": {
+   "2x3": {
+    "n_qubits": 20,
+    "n_2q": 2158,
+    "n_1q": 7310,
+    "n_1q_virtual_rz": 3053,
+    "n_meas": 20,
+    "source": "data/S2D_2x3_device_requirements.json counts.coarse_step (RZZ basis, all-to-all: the natural basis of an ion trap)"
+   },
+   "2x2": {
+    "n_qubits": 12,
+    "n_2q": 256,
+    "n_1q": 920,
+    "n_1q_virtual_rz": 541,
+    "n_meas": 12,
+    "source": "validation/S2.json data.2x2.coarse_step.all_to_all.ops"
+   }
+  },
+  "results": {
+   "2x3|ionq_aria|physical_rz": {
+    "gate_only": {
+     "n_1q_used": 7310,
+     "f_gates": 4.1876253488544305e-06,
+     "budget_used_nats": 12.383376727206315,
+     "budget_nats": 2.302585092994046,
+     "meets_mean_0.1": false,
+     "meets_worst_0.05": false,
+     "eps2_required_at_published_eps1_eps_ro": null,
+     "eps2_published": 0.0040000000000000036,
+     "f_with_idle_estimate": 3.0867682434830763e-15
+    },
+    "idle": {
+     "computable": true,
+     "assumption": "ESTIMATE: fully serial execution, linear small-window PTA, T1 >> duration.",
+     "duration_s": 2.28165,
+     "idle_per_qubit_s": 2.1028275,
+     "S_idle_estimate": 21.028275,
+     "gates_per_coherence_time": 1666.6666666666667,
+     "idle_factor_exp_minus_S": 7.37116620121591e-10
+    }
+   },
+   "2x3|ionq_aria|virtual_rz": {
+    "gate_only": {
+     "n_1q_used": 3053,
+     "f_gates": 3.520422603461551e-05,
+     "budget_used_nats": 10.254344424765007,
+     "budget_nats": 2.302585092994046,
+     "meets_mean_0.1": false,
+     "meets_worst_0.05": false,
+     "eps2_required_at_published_eps1_eps_ro": 0.00032318726518554275,
+     "eps2_published": 0.0040000000000000036,
+     "f_with_idle_estimate": 6.098264308887299e-12
+    },
+    "idle": {
+     "computable": true,
+     "assumption": "ESTIMATE: fully serial execution, linear small-window PTA, T1 >> duration.",
+     "duration_s": 1.706955,
+     "idle_per_qubit_s": 1.55686725,
+     "S_idle_estimate": 15.5686725,
+     "gates_per_coherence_time": 1666.6666666666667,
+     "idle_factor_exp_minus_S": 1.7322534808437532e-07
+    }
+   },
+   "2x3|ionq_forte|physical_rz": {
+    "gate_only": {
+     "n_1q_used": 7310,
+     "f_gates": 3.6737694502187494e-05,
+     "budget_used_nats": 10.211707231855915,
+     "budget_nats": 2.302585092994046,
+     "meets_mean_0.1": false,
+     "meets_worst_0.05": false,
+     "eps2_required_at_published_eps1_eps_ro": 0.00034293841997845576,
+     "eps2_published": 0.004
+    },
+    "idle": {
+     "computable": false,
+     "reason": "the vendor publishes no gate durations for this device"
+    }
+   },
+   "2x3|ionq_forte|virtual_rz": {
+    "gate_only": {
+     "n_1q_used": 3053,
+     "f_gates": 8.608097968623741e-05,
+     "budget_used_nats": 9.360222080502211,
+     "budget_nats": 2.302585092994046,
+     "meets_mean_0.1": false,
+     "meets_worst_0.05": false,
+     "eps2_required_at_published_eps1_eps_ro": 0.0007372967324049684,
+     "eps2_published": 0.004
+    },
+    "idle": {
+     "computable": false,
+     "reason": "the vendor publishes no gate durations for this device"
+    }
+   },
+   "2x2|ionq_aria|physical_rz": {
+    "gate_only": {
+     "n_1q_used": 920,
+     "f_gates": 0.21587407787582166,
+     "budget_used_nats": 1.5330600140898065,
+     "budget_nats": 2.302585092994046,
+     "meets_mean_0.1": true,
+     "meets_worst_0.05": true,
+     "eps2_required_at_published_eps1_eps_ro": 0.006989438197275155,
+     "eps2_published": 0.0040000000000000036,
+     "f_with_idle_estimate": 0.050581973854756136
+    },
+    "idle": {
+     "computable": true,
+     "assumption": "ESTIMATE: fully serial execution, linear small-window PTA, T1 >> duration.",
+     "duration_s": 0.2778,
+     "idle_per_qubit_s": 0.24184999999999998,
+     "S_idle_estimate": 1.4510999999999998,
+     "gates_per_coherence_time": 1666.6666666666667,
+     "idle_factor_exp_minus_S": 0.2343124026398976
+    }
+   },
+   "2x2|ionq_aria|virtual_rz": {
+    "gate_only": {
+     "n_1q_used": 541,
+     "f_gates": 0.26092751689045807,
+     "budget_used_nats": 1.3435126232922365,
+     "budget_nats": 2.302585092994046,
+     "meets_mean_0.1": true,
+     "meets_worst_0.05": true,
+     "eps2_required_at_published_eps1_eps_ro": 0.007724410448806562,
+     "eps2_published": 0.0040000000000000036,
+     "f_with_idle_estimate": 0.08100818149557716
+    },
+    "idle": {
+     "computable": true,
+     "assumption": "ESTIMATE: fully serial execution, linear small-window PTA, T1 >> duration.",
+     "duration_s": 0.22663499999999998,
+     "idle_per_qubit_s": 0.19494874999999998,
+     "S_idle_estimate": 1.1696924999999998,
+     "gates_per_coherence_time": 1666.6666666666667,
+     "idle_factor_exp_minus_S": 0.3104623937749954
+    }
+   },
+   "2x2|ionq_forte|physical_rz": {
+    "gate_only": {
+     "n_1q_used": 920,
+     "f_gates": 0.2807691767944303,
+     "budget_used_nats": 1.2702223821061704,
+     "budget_nats": 2.302585092994046,
+     "meets_mean_0.1": true,
+     "meets_worst_0.05": true,
+     "eps2_required_at_published_eps1_eps_ro": 0.008008448371387367,
+     "eps2_published": 0.004
+    },
+    "idle": {
+     "computable": false,
+     "reason": "the vendor publishes no gate durations for this device"
+    }
+   },
+   "2x2|ionq_forte|virtual_rz": {
+    "gate_only": {
+     "n_1q_used": 541,
+     "f_gates": 0.30288114804633365,
+     "budget_used_nats": 1.1944148010953521,
+     "budget_nats": 2.302585092994046,
+     "meets_mean_0.1": true,
+     "meets_worst_0.05": true,
+     "eps2_required_at_published_eps1_eps_ro": 0.00830215675694046,
+     "eps2_published": 0.004
+    },
+    "idle": {
+     "computable": false,
+     "reason": "the vendor publishes no gate durations for this device"
+    }
+   }
+  },
+  "read_on": "2026-10-01",
+  "script": "scripts/ionq_2x3_feasibility.py"
+ },
+ "not_established": [
+  "No number here was measured by this project; Quantinuum values are vendor RB-sweep values of unspecified date.",
+  "The memory term is an ESTIMATE (three scenarios); the vendor emulator (Stage E) settles it.",
+  "USD per HQC is the Azure Standard-plan equivalent; pay-as-you-go and research rates are not public.",
+  "2x2 and 2x4 counts are CZ-basis transpilations; only 2x3 has a native ZZPhase build."
+ ]
+}
