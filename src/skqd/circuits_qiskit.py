@@ -45,6 +45,9 @@ def ir_to_qiskit(gates: list, n: int, measure: bool = True):
             qc.cp(par, qs[0], qs[1])
         elif name == "cx":
             qc.cx(qs[0], qs[1])
+        elif name == "rzz":
+            # exp(-i par Z x Z / 2), qiskit's RZZGate (prompts/26: the native ZZPhase(par/pi))
+            qc.rzz(par, qs[0], qs[1])
         elif name == "unitary":
             qc.unitary(np.asarray(par), list(qs), label=f"U{len(qs)}")
         elif name == "mcu":
@@ -67,6 +70,31 @@ def statevector(gates: list, n: int) -> np.ndarray:
 
     qc = ir_to_qiskit(gates, n, measure=False)
     return np.asarray(Statevector(qc).data)
+
+
+def statevector_aer(gates: list, n: int, threads: int = 0, fusion: bool = True) -> np.ndarray:
+    """The same state as `statevector`, computed by Aer's double-precision statevector method.
+
+    `statevector` (qiskit.quantum_info) costs 110-170 s per 20-qubit 2x3 coarse step on the
+    laptop; Aer does the same circuit in ~14 s with gate fusion (2 threads), ~42 s without.
+    Fusion multiplies neighbouring gates into blocks first; on a 20-qubit 2x3 native circuit the
+    fused and unfused states differ by 3e-14 (measured 2026-10-02, prompts/26), far below the
+    1e-10 / 1e-12 criteria it serves.  The agreement with `statevector` is a unit test
+    (tests/test_quantinuum_native.py) and a recorded cross-check in the Q0P_2x3 build.
+    threads: Aer `max_parallel_threads` (0 = Aer's default, all cores)."""
+    from qiskit_aer import AerSimulator
+
+    qc = ir_to_qiskit(gates, n, measure=False)
+    qc.save_statevector()
+    sim = AerSimulator(method="statevector", precision="double", fusion_enable=bool(fusion),
+                       max_parallel_threads=int(threads))
+    names = {inst.operation.name for inst in qc.data}
+    if not names <= set(sim.configuration().basis_gates) | {"save_statevector", "unitary"}:
+        from qiskit import transpile           # unroll only what Aer cannot apply (e.g. mcu)
+
+        qc = transpile(qc, sim, optimization_level=0)
+    res = sim.run(qc, shots=1).result()
+    return np.asarray(res.data(0)["statevector"].data)
 
 
 def transpile_counts(gates: list, n: int, coupling_map=None, basis=("rz", "sx", "x", "cz"),
