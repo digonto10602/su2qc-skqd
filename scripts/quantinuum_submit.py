@@ -222,14 +222,16 @@ def a6_noise_model():
     return nm
 
 
-def run_aer(circuits, jobs, threads=0):
-    """All jobs of one shot count in one Aer call (memory: batching beats separate calls)."""
+def run_aer(circuits, jobs, threads=0, noise_model=None):
+    """All jobs of one shot count in one Aer call (memory: batching beats separate calls).
+    noise_model: None = the A6 model (`a6_noise_model`); prompts/28 A4 passes its bit-flip-only
+    counting-control model through the same sampler path."""
     from qiskit_aer import AerSimulator
 
     from skqd import circuits_qiskit as cq
     from skqd.reference_sim import qiskit_key_to_bits
 
-    nm = a6_noise_model()
+    nm = a6_noise_model() if noise_model is None else noise_model
     out = {}
     by_shots = {}
     for j in jobs:

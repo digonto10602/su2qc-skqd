@@ -29,6 +29,10 @@ def ir_to_qiskit(gates: list, n: int, measure: bool = True):
     for name, qs, par in gates:
         if name == "x":
             qc.x(qs[0])
+        elif name == "y":
+            qc.y(qs[0])                 # prompts/28 A1: inserted Pauli-trajectory errors
+        elif name == "z":
+            qc.z(qs[0])
         elif name == "h":
             qc.h(qs[0])
         elif name == "rz":
