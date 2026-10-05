@@ -1,0 +1,298 @@
+{
+ "gate": "CF_estimator_2x2_info",
+ "title": "the recorded 2x2 clean-fraction values labelled by statistic, the corrected f_hat_ideal and the 2x2 signed-bar qualification (information)",
+ "status": "PASS",
+ "criteria": [
+  {
+   "name": "I1 every cited record read unedited (no working-tree change against HEAD); sha256 recorded",
+   "value": "6 records; git diff clean",
+   "threshold": "clean",
+   "passed": true
+  },
+  {
+   "name": "I2 r_nc read from data/cf_trajectories/r_nc.json and equal to the upper end of its bootstrap interval",
+   "value": "r_nc 1.115135, interval [1.028593, 1.115135]",
+   "threshold": "r_nc = interval upper end",
+   "passed": true
+  }
+ ],
+ "data": {
+  "prompt": "prompts/28_2x3_shot_rule_and_clean_fraction_estimator.md B4 as amended by prompts/29_cf_traj_reruling_ideal_sample_fraction.md 3(3) and Part B'",
+  "owner_decision": "data/owner_decision_20261005_partB.md (3a: the 2x2 qualification is accepted)",
+  "records_sha256": {
+   "validation/H0_kpilot.json": "1e6cffb6da84e256273a0a95b05d1088fb9ca2b887208dbe8190dc5d2f436e02",
+   "validation/H0_ddtest.json": "68163a7108e2387aac116da086cf5bacd4033a949ebcfe2ee38c8bf83e5c8253",
+   "validation/H0_2x2.json": "ebdb8ae98492bfd2a96ee4718b95f397df73c13fb273571321fbb3cf11cbe14b",
+   "validation/H0_model.json": "31f1cee0020cdbd1584b7466ec6ec925245ac69624f0cd873bdc12e852d80083",
+   "validation/CF_traj.json": "2fbcc1c6ef9d06ab2685c29dd74ae394defeb9a7eeaec161a01de595982b3da1",
+   "data/cf_trajectories/r_nc.json": "b7cce6714586e5ad25b3757a485656d7c744112b846b94905a7aadefde76eac2"
+  },
+  "r_nc": 1.1151352098004452,
+  "r_nc_95": [
+   1.0285934561902321,
+   1.1151352098004452
+  ],
+  "r_nc_caveat": "r_nc is a gate-noise (A6 channel) value; on H2-2 the memory term is 5-30 % of the gate term (survey), so the composition stays gate-dominated; on IBM devices (idle dephasing) it is unknown and A5 gives the only model estimate (prompts/29 3(1))",
+  "label_f_hit": "f_hit (reference-hit fraction): an estimator of the ideal-sample fraction f_ideal with a gate-noise bias of 1.05-1.12 (CF_traj, A6 channel) and an unknown bias under idle dephasing (CF_traj A5, both T2 ends, is the model bracket); an upper end of the fault-free fraction f_0",
+  "label_mixture": "mixture estimate (clean_fraction_mixture): the shape statistic; at k = 4 under the A6 channel it over-estimates f_ideal by the CF_traj C7 factor",
+  "rows": [
+   {
+    "record": "validation/H0_kpilot.json",
+    "field": "data.decision.f_pool",
+    "statistic": "f_hit",
+    "f": 0.041292968981847554,
+    "f_95": [
+     0.03611475190519078,
+     0.046998193545383316
+    ],
+    "recorded_verdict": "NO-GO (kpilot)",
+    "f_hat_ideal": 0.037029562531019876,
+    "f_hat_ideal_95": [
+     0.03219367682873945,
+     0.04240601777841274
+    ],
+    "signed_bar_recorded_rule_on_f_hat_ideal": "NO-GO",
+    "go_rule_v3_on_f_hat_ideal": "NO-GO"
+   },
+   {
+    "record": "validation/H0_ddtest.json",
+    "field": "data.decision.cells.T0.f_pool",
+    "statistic": "f_hit",
+    "f": 0.04003148575751112,
+    "f_95": [
+     0.03584396906236148,
+     0.04456910542684543
+    ],
+    "recorded_verdict": null,
+    "f_hat_ideal": 0.035898324620809705,
+    "f_hat_ideal_95": [
+     0.031914108920465874,
+     0.04026212299755999
+    ],
+    "signed_bar_recorded_rule_on_f_hat_ideal": "NO-GO",
+    "go_rule_v3_on_f_hat_ideal": "NO-GO"
+   },
+   {
+    "record": "validation/H0_ddtest.json",
+    "field": "data.decision.cells.T1.f_pool",
+    "statistic": "f_hit",
+    "f": 0.00046678463059607653,
+    "f_95": [
+     -1.9665458625529073e-05,
+     0.001337210469555201
+    ],
+    "recorded_verdict": null,
+    "f_hat_ideal": 0.0004185901642183894,
+    "f_hat_ideal_95": [
+     0.0,
+     0.0012000759320567997
+    ],
+    "signed_bar_recorded_rule_on_f_hat_ideal": "NO-GO",
+    "go_rule_v3_on_f_hat_ideal": "NO-GO"
+   },
+   {
+    "record": "validation/H0_ddtest.json",
+    "field": "data.decision.cells.T2.f_pool",
+    "statistic": "f_hit",
+    "f": 0.11182134925156569,
+    "f_95": [
+     0.10476383182627858,
+     0.119226557385242
+    ],
+    "recorded_verdict": null,
+    "f_hat_ideal": 0.10027604569276963,
+    "f_hat_ideal_95": [
+     0.09287313101202394,
+     0.1081707585759852
+    ],
+    "signed_bar_recorded_rule_on_f_hat_ideal": "AMBIGUOUS",
+    "go_rule_v3_on_f_hat_ideal": "GO"
+   },
+   {
+    "record": "validation/H0_ddtest.json",
+    "field": "data.decision.cells.T3.f_pool",
+    "statistic": "f_hit",
+    "f": 0.11285347188965912,
+    "f_95": [
+     0.10576302365101482,
+     0.12029159424610036
+    ],
+    "recorded_verdict": "signed bar GO (adopted)",
+    "f_hat_ideal": 0.10120160398294158,
+    "f_hat_ideal_95": [
+     0.09375461691702554,
+     0.10914199960743501
+    ],
+    "signed_bar_recorded_rule_on_f_hat_ideal": "AMBIGUOUS",
+    "go_rule_v3_on_f_hat_ideal": "GO"
+   },
+   {
+    "record": "validation/H0_2x2.json",
+    "field": "data.clean_fraction.pooled.f",
+    "statistic": "f_hit",
+    "f": 0.12705263971368283,
+    "f_95": [
+     0.10842761410616225,
+     0.14794202139648335
+    ],
+    "recorded_verdict": null,
+    "f_hat_ideal": 0.11393473956975948,
+    "f_hat_ideal_95": [
+     0.09674145581651843,
+     0.13336805705000326
+    ],
+    "signed_bar_recorded_rule_on_f_hat_ideal": "AMBIGUOUS",
+    "go_rule_v3_on_f_hat_ideal": "GO"
+   },
+   {
+    "record": "validation/H0_2x2.json",
+    "field": "data.adopted_configuration.f_pool",
+    "statistic": "f_hit",
+    "f": 0.11285347188965912,
+    "f_95": [
+     0.10576302365101482,
+     0.12029159424610036
+    ],
+    "recorded_verdict": "signed bar GO",
+    "f_hat_ideal": 0.10120160398294158,
+    "f_hat_ideal_95": [
+     0.09375461691702554,
+     0.10914199960743501
+    ],
+    "signed_bar_recorded_rule_on_f_hat_ideal": "AMBIGUOUS",
+    "go_rule_v3_on_f_hat_ideal": "GO"
+   },
+   {
+    "record": "validation/H0_model.json",
+    "field": "data.C2_pooled_device_clean_count.pooled_reference_test.f_clean",
+    "statistic": "f_hit",
+    "f": 0.0006649808530393149,
+    "f_95": null,
+    "recorded_verdict": null
+   },
+   {
+    "record": "validation/H0_model.json",
+    "field": "data.C2_pooled_device_clean_count.pooled_mixture.f_clean",
+    "statistic": "mixture",
+    "f": 0.0005729177887850741,
+    "f_95": null,
+    "recorded_verdict": null
+   }
+  ],
+  "H0_model_C1_C3": [
+   {
+    "criterion": "C1 unscheduled Aer sample (2000 shots, seed 11): the mixture estimate of the clean accepted shots 206.3 against the reference-count estimate n_ref / p_ref = 201.5 (near-clean 105.5, garbage 16.2)",
+    "value": 0.0237,
+    "passed": true
+   },
+   {
+    "criterion": "C1 scheduled Aer sample (2000 shots, seed 11): the mixture estimate of the clean accepted shots 24.0 against the reference-count estimate n_ref / p_ref = 23.8 (near-clean 30.7, garbage 18.3)",
+    "value": 0.0108,
+    "passed": true
+   },
+   {
+    "criterion": "C2 the device counts carry a clean component: 6 reference-string hits over 8267 shots of 5 pubs against a garbage expectation of 2.018 (2.80 sigma; clean 4.0 shots, f_clean 6.650e-04)",
+    "value": 0.0172,
+    "passed": true
+   },
+   {
+    "criterion": "C3 the T2* end of the bracket post-dicts the measured clean count: predicted 4.18 clean reference hits over 8267 shots against the measured 3.98 (echo end 197.42, ratio 49.58)",
+    "value": 1.0503,
+    "passed": true
+   }
+  ],
+  "adopted_2x2": {
+   "f_pool": 0.11285347188965912,
+   "f_pool_95": [
+    0.10576302365101482,
+    0.12029159424610036
+   ],
+   "corrected": {
+    "f_hit": 0.11285347188965912,
+    "f_hit_interval": [
+     0.10576302365101482,
+     0.12029159424610036
+    ],
+    "confidence": 0.95,
+    "z": 1.959963984540054,
+    "r_nc": 1.1151352098004452,
+    "r_nc_95": [
+     1.0285934561902321,
+     1.1151352098004452
+    ],
+    "sigma_ln_r_bootstrap": 0.020608381101512745,
+    "f_hat_ideal": 0.10120160398294158,
+    "f_hat_ideal_interval": [
+     0.09375461691702554,
+     0.10914199960743501
+    ],
+    "lower_bound_at_zero": false,
+    "estimator": "f_hat_ideal = f_hit / r_nc; interval = Garwood (hit count) and bootstrap (r_nc) combined on the log scale, each end separately",
+    "r_nc_source": "data/cf_trajectories/r_nc.json"
+   },
+   "recorded_rule_on_f_hat_ideal": "AMBIGUOUS",
+   "go_rule_v3_on_f_hat_ideal": "GO",
+   "planner_arithmetic_r_1.10": {
+    "r_nc": 1.1,
+    "f_hat_ideal": 0.10259406535423556,
+    "lower_garwood_only": 0.09614820331910438
+   }
+  },
+  "A5_bracket": {
+   "star": {
+    "r_d1e-03": 0.6738132530467965,
+    "r_ci95": [
+     0.5386338394354983,
+     0.8346367915989745
+    ],
+    "f_hit_model": 0.018867846015459856,
+    "f_ideal_model": 0.028001595293866206,
+    "adopted_f_pool_over_r": 0.16748479104465078,
+    "adopted_f_pool_over_r_ci95": [
+     0.13521267337551404,
+     0.2095179760854468
+    ]
+   },
+   "echo": {
+    "r_d1e-03": 0.9016522360939936,
+    "r_ci95": [
+     0.8842340464986699,
+     0.9183292300060492
+    ],
+    "f_hit_model": 0.2881236667072857,
+    "f_ideal_model": 0.31955077043390145,
+    "adopted_f_pool_over_r": 0.1251629701253185,
+    "adopted_f_pool_over_r_ci95": [
+     0.12288999217515459,
+     0.12762850778764814
+    ]
+   }
+  },
+  "A5_note": "Markovian Pauli model of the H0_2x2 adopted circuit (cell T3, ALAP + client XY4): depolarizing cz/sx/x from the calibration record, idle Z with probability (1 - exp(-t/T2))/2 per explicit delay; cannot represent DD refocusing of quasi-static dephasing, so the two T2 ends bracket a model number, not a device prediction",
+  "unchanged": [
+   "every H0_* criterion: the same statistic on both sides of each comparison, or f-independent",
+   "the H0_kpilot NO-GO (strengthened: f_hit = 0.041 is an upper end of f_0, and f_hat_ideal is lower still)",
+   "the H0_ddtest adoption of T3: R is a ratio of hit statistics (information: DD changes the error composition, so R is not exactly the ratio of f_0 or of f_ideal)",
+   "the H0_2x2 energies (sector saturation; f-independent) and recall (1.0 from the observed per-state counts)"
+  ],
+  "qualified": "'signed bar GO on f_pool >= 0.1' in H0_ddtest and H0_2x2 is a GO on f_hit.  On the corrected statistic f_hat_ideal = f_hit / r_nc (r_nc = 1.1151) the recorded rule (lower 95 % bound >= 0.1) reads AMBIGUOUS; the v3 rule of the 2x3 stages (lower >= 0.05 and point >= 0.10) reads GO.  The gate-noise correction is not established for ibm_kingston (idle dephasing); the A5 model bracket has r < 1 at both T2 ends, i.e. f_hit would UNDER-estimate f_ideal there.  External citations carry this qualification (owner decision 3a); no recorded verdict is edited",
+  "k4_mixture_bias_CF_traj": {
+   "value": 1.2743607577857625,
+   "se_boot": 0.05990810467670162,
+   "ci95": [
+    1.1699868870105876,
+    1.4020537123300305
+   ]
+  }
+ },
+ "runtime_s": 1.44858980178833,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.2",
+  "scipy": "1.18.0",
+  "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+  "cpu_count": 12,
+  "git_commit": "e23a05d",
+  "timestamp": "2026-10-05 16:11:09 MDT"
+ }
+}

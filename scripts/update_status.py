@@ -39,6 +39,11 @@ GATES = [  # gate, description (manual Step 10), where it runs
     ("H0_ddtest", "one-job A/B test of client-side DD (context-aware, XY4, XY4-long) against the no-DD baseline on the pilot's two k = 1 circuits; adoption by the preregistered ratio rule (measurement gate)", "QPU"),
     ("H0_2x2", "the full 2x2 SKQD run on ibm_kingston below the signed budget (owner decision 2026-10-02): both sectors, D3' at the measured f, decoding, Ritz energies vs exact E0, certificates, garbage and random baselines (measurement gate)", "QPU"),
     ("Q0P_2x3", "prompts/26 Stage A: the signed 2x3 circuits compiled to the Quantinuum native gate set (Rz, PhasedX, ZZPhase) for H2-2 / H1-1, verified exactly against the IR, costed in HQC, packaged with the submission path (0 HQC; Stage E emulator and Stage P pilot NOT run: no Nexus login, no budget)", "laptop"),
+    ("CF_traj", "prompts/28 Part A / prompts/29 Part A': Pauli-trajectory decomposition of the A6 Aer channel on the frozen 2x3 circuits; the near-clean term, f_ideal, r_nc (laptop; 0 HQC)", "laptop"),
+    ("CF_estimator_2x2_info", "note under H0_2x2 (prompts/28 B4 / prompts/29 3(3)): the recorded 2x2 f values are f_hit; f_hat_ideal = f_hit / r_nc and the 2x2 signed-bar qualification (information)", "laptop"),
+    ("CV_2x2_info", "note under H0_2x2 (prompts/30 section 5): the convergence/coverage curves on the H0_2x2 counts; not a device test (saturation); CV0 only", "laptop"),
+    ("Q0P_2x3_plan", "prompts/28 B3 / prompts/29 B' / prompts/30 P7: rule D3'-R (minimum 2x3 sizing), GO rule v3 on f_hat_ideal, Stage E/P v3, prereg v2, the emulated convergence check (0 HQC)", "laptop"),
+    ("CV_2x3_plan", "prompts/30 (owner decision 2a): energy convergence vs shots and Krylov k and weighted coverage of the D3'-R plan in the S1 proxy emulation; re-sizing rule s in {2,4,8}", "laptop"),
 ]
 
 

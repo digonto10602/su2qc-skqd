@@ -66,3 +66,41 @@ def measure_and_decode(codec: Codec, codewords: np.ndarray, psi: np.ndarray, sho
     cdict = {tuple(int(x) for x in row): int(c) for row, c in zip(uniq, counts)}
     acc, rej = codec.decode_counts(cdict, target_twoB)
     return acc, rej
+
+
+# Rejection reasons of `Codec.decode` in a fixed order; `measure_and_decode_sequence` returns the
+# index into this tuple per shot (0 = accepted).
+SEQUENCE_REASONS = ("accepted", "flag", "link", "sector", "unknown")
+
+
+def measure_and_decode_sequence(codec: Codec, codewords: np.ndarray, psi: np.ndarray, shots: int,
+                                f: float, p_ro: float, rng: np.random.Generator, target_twoB=None):
+    """`measure_and_decode` with the shot ORDER kept (prompts/30 section 2.3).
+
+    Makes exactly the two random calls of `measure_and_decode` -- `rng.choice` for the clean
+    samples, then `corrupt_shots` -- so that at the same generator state the histogram of the
+    returned sequence equals `measure_and_decode`'s output (tests/test_cv.py), and decodes each
+    distinct measured string once.  Returns
+
+        decoded : (shots,) int64, the decoded basis index of every shot in sampling order, -1 if rejected
+        reason  : (shots,) int8, index into SEQUENCE_REASONS (0 = accepted)
+
+    The first n entries are the n-shot experiment of the same generator, so prefixes of the
+    sequence give nested sub-samples B(n) subset of B(n') for n < n'.
+    """
+    p = np.abs(psi) ** 2
+    p = p / p.sum()
+    sample_idx = rng.choice(len(p), size=shots, p=p)
+    bits = corrupt_shots(codewords, sample_idx, f, p_ro, rng)
+    uniq, inverse = np.unique(bits, axis=0, return_inverse=True)
+    inverse = np.asarray(inverse).reshape(-1)
+    code = {r: i for i, r in enumerate(SEQUENCE_REASONS)}
+    dec_u = np.full(len(uniq), -1, dtype=np.int64)
+    why_u = np.zeros(len(uniq), dtype=np.int8)
+    for j, row in enumerate(uniq):
+        acc, rej = codec.decode_counts({tuple(int(x) for x in row): 1}, target_twoB)
+        if acc:
+            dec_u[j] = int(next(iter(acc)))
+        else:
+            why_u[j] = code[next(k for k, v in rej.items() if v)]
+    return dec_u[inverse], why_u[inverse]

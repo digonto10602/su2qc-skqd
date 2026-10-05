@@ -375,6 +375,7 @@ def analyse_dryrun(model, mans, cals):
     files = sorted(glob.glob(os.path.join(DRYRUN, "counts", "*.json")))
     recs = {os.path.basename(f)[:-5]: load_json(f) for f in files}
     a, a_src = garbage_acceptance_from_E2("2x3")
+    acceptance = a           # prompts/28 B1 fix: `a` was overwritten below by the timing-pilot loop
     records = []
     for cid, rec in recs.items():
         if rec.get("kind") == "calibration":
@@ -436,9 +437,9 @@ def analyse_dryrun(model, mans, cals):
     timing = {"pilots": pilots, "planned_shots_per_circuit": A6_PLANNED_SHOTS,
               "budget_s": A6_BUDGET_S, "shots_used_per_k1_circuit": sorted({r[1] for r in rows68})}
     if len(pilots) == 2:
-        a, b = pilots["shots12"], pilots["shots40"]
-        slope = (b["sampling_wall_s"] - a["sampling_wall_s"]) / (b["shots_per_circuit"] - a["shots_per_circuit"])
-        icpt = a["sampling_wall_s"] - slope * a["shots_per_circuit"]
+        p12, p40 = pilots["shots12"], pilots["shots40"]
+        slope = (p40["sampling_wall_s"] - p12["sampling_wall_s"]) / (p40["shots_per_circuit"] - p12["shots_per_circuit"])
+        icpt = p12["sampling_wall_s"] - slope * p12["shots_per_circuit"]
         timing.update({"s_per_shot_of_the_4_circuit_call": slope, "intercept_s": icpt,
                        "estimate_at_planned_shots_s": icpt + slope * A6_PLANNED_SHOTS,
                        "max_shots_in_budget": int((A6_BUDGET_S - icpt) / slope),
@@ -475,7 +476,7 @@ def analyse_dryrun(model, mans, cals):
         "jobs": [{k: j[k] for k in ("circuit_id", "n_shots", "max_cost", "backend_config", "job_id")}
                  for j in sess["jobs"]],
         "sampling_wall_s": sess.get("sampling_wall_s"),
-        "garbage_acceptance": a, "garbage_acceptance_source": a_src,
+        "garbage_acceptance": acceptance, "garbage_acceptance_source": a_src,
         "clean_statistics_project_path": cs, "reference_string_direct": direct, "predictions": preds,
         "pooled_95": pooled95, "pooled_68": pooled68,
         "pooled_f_estimate": (pooled95 or {}).get("f_clean"), "pooled_f_95": [lo, hi],
@@ -850,6 +851,9 @@ def report_text(R, D):
 
 
 def stage_prereg_md(args):
+    if os.path.exists(os.path.join(ROOT, "validation", PLAN_GATE + ".json")):
+        raise SystemExit("the preregistration block v2 is in force (prompts/28 B3 / prompts/29 B'): render it with "
+                         "--stage plan28; v1 stays in git history at a2e6060")
     P = fragment("predict")
     if not P:
         raise SystemExit("run --stage predict first")
@@ -891,9 +895,616 @@ def stage_prereg_md(args):
     return 0
 
 
+# =========================================================================== plan28: gate Q0P_2x3_plan
+PLAN_GATE = "Q0P_2x3_plan"
+PLAN_TITLE = ("the 2x3 shot rule D3'-R (minimum sizing, owner decision 2a), the f_hat_ideal statistic and GO rule v3, "
+              "Stage E / P v3, the emulated convergence check (P7)")
+PLAN_PROMPT = ("prompts/28_2x3_shot_rule_and_clean_fraction_estimator.md Part B as amended by "
+               "prompts/29_cf_traj_reruling_ideal_sample_fraction.md Part B' and prompts/30_convergence_and_coverage_criteria.md")
+PLAN_WHAT_PASS_MEANS = (
+    "rule D3'-R is implemented, reproduces the planner's prototype to the shot and the 2x2 record's plan, guarantees "
+    "lambda* on S99 and P(recall of S999 >= 0.9) >= 0.95 from clean shots at f = 0.05 / 0.10 / 0.15, its HQC follow "
+    "the billing formula job by job, the preregistration v2 is rendered from the JSON only, and (P7) the emulated "
+    "convergence-and-coverage gate CV_2x3_plan passes on the plan in the table.  PASS commits no HQC and says "
+    "nothing about any device")
+PREREG_V2_FIRST_LINE = ("v2 replaces v1 of 2026-10-03 03:22 UTC before any Stage E/P shot; v1 is in git history at "
+                        "a2e6060")
+STAGE_EP_V3 = {"B0_ref25_k1": 800, "B1_ref57_k1": 800, "B0_ref25_k4": 200, "B1_ref57_k4": 200}
+CAL_PLAN_SHOTS = 1000
+PLAN_F_CHECK = 0.10                 # prompts/28 B3: the emulated check at f = 0.10
+GO_BAR_POINT, GO_BAR_LO = 0.10, 0.05
+RECALL_TARGET, PROB_TARGET = 0.9, 0.95
+MIXTURE_STOP_FACTOR = 1.5
+H0_2X2_PREP = os.path.join(ROOT, "data", "hardware", "H0_2x2_prep")
+CF_TRAJ = os.path.join(ROOT, "validation", "CF_traj.json")
+R_NC = os.path.join(ROOT, "data", "cf_trajectories", "r_nc.json")
+CV_JSON = os.path.join(ROOT, "validation", "CV_2x3_plan.json")
+PROTOTYPE = os.path.join(ROOT, "scratch", "planner", "d3s_2x3_shot_rule_20261003.json")
+
+
+def go_rule_v3(f_hat, lo, hi, bar=GO_BAR_POINT, bar_lo=GO_BAR_LO):
+    """GO rule v3 (prompts/29 3(3)): GO iff lo95 >= 0.05 and f_hat >= 0.10; NO-GO iff hi95 < 0.10; else AMBIGUOUS."""
+    if lo >= bar_lo and f_hat >= bar:
+        return "GO"
+    if hi < bar:
+        return "NO-GO"
+    return "AMBIGUOUS"
+
+
+def sector_sets(model, twoB):
+    """Sector positions of S99 / S999 (the prototype's order: sector weights, descending) and the
+    exact_support cross-check."""
+    from skqd.skqd import exact_support
+    r = model.reference(G2, twoB, k=4)
+    w = np.abs(r.ground) ** 2
+    order = np.argsort(w)[::-1]
+    S999, S99 = np.sort(order[: r.support999]), np.sort(order[: r.support99])
+    prob = np.zeros(model.basis.dim)
+    prob[r.indices] = w
+    idx = np.asarray(r.indices)
+    same = (set(idx[S999].tolist()) == set(exact_support(prob, 1e-3).tolist())
+            and set(idx[S99].tolist()) == set(exact_support(prob, 1e-2).tolist()))
+    return r, w, S99, S999, same
+
+
+def plan_guarantees(P, f, ids, shots, S99, S999):
+    from h0_support_plan import lambda_of_plan, recall_tail_prob
+
+    from skqd.skqd import READOUT_FACTOR, poisson_lambda_star
+    lam = lambda_of_plan(P, {c: f for c in ids}, shots, READOUT_FACTOR, D3_MARGIN, only=ids)
+    k_needed = int(math.ceil(RECALL_TARGET * len(S999) - 1e-9))
+    return {"lambda_min_S99": float(lam[S99].min()), "lambda_min_S999": float(lam[S999].min()),
+            "recall_floor_S999": float(np.mean(1 - np.exp(-lam[S999]))),
+            "P_recall_S999_ge_0.9": recall_tail_prob(1 - np.exp(-lam[S999]), k_needed),
+            "n_S99_below_lambda_star": int((lam[S99] < poisson_lambda_star()).sum()),
+            "n_S999_below_lambda_star": int((lam[S999] < poisson_lambda_star()).sum())}
+
+
+def d3r_2x2_check():
+    """prompts/28 B2: d3r_plan on Model(2) with the H0_2x2 circuits at the adopted f returns sector totals <= the
+    recorded plan, and the recorded plan satisfies both D3'-R conditions."""
+    from h0_support_plan import d3r_plan, lambda_of_plan, recall_tail_prob
+
+    from skqd.exact import Model
+    from skqd.krylov import ideal_sector_distribution
+    from skqd.skqd import READOUT_FACTOR, poisson_lambda_star
+
+    rec = load_json(os.path.join(H0_2X2_PREP, "shot_plan.json"))
+    h0 = load_json(os.path.join(ROOT, "validation", "H0_2x2.json"))["data"]
+    f = float(h0["adopted_configuration"]["f_pool"])
+    M = Model(2)
+    mans = {}
+    for pth in sorted(glob.glob(os.path.join(H0_2X2_PREP, "circuits", "*.json"))):
+        m = load_json(pth)
+        if m.get("kind") == "coarse_step":
+            mans[m["id"]] = m
+    out = {"f": f, "f_source": "validation/H0_2x2.json data.adopted_configuration.f_pool",
+           "recorded_plan": os.path.relpath(os.path.join(H0_2X2_PREP, "shot_plan.json"), ROOT), "sectors": {}}
+    ok = True
+    lam_star = poisson_lambda_star()
+    for sec, tb in (("B=0", 0), ("B=1", 2)):
+        r, w, S99, S999, same = sector_sets(M, tb)
+        ids = sorted(c for c, m in mans.items() if int(m["twoB"]) == tb)
+        k4 = [c for c in ids if int(mans[c]["k"]) == 4]
+        P = {c: np.asarray(ideal_sector_distribution(M, G2, tb, int(mans[c]["reference"]), int(mans[c]["k"]),
+                                                     float(mans[c]["dt"]), int(mans[c]["repetitions"]))["p"]) for c in ids}
+        d = d3r_plan(P, {c: f for c in ids}, ids, k4, S99, S999)
+        recd = {c: int(rec["shots_by_circuit"][c]) for c in ids}
+        lam = lambda_of_plan(P, {c: f for c in ids}, recd, READOUT_FACTOR, D3_MARGIN, only=ids)
+        k_needed = int(math.ceil(RECALL_TARGET * len(S999) - 1e-9))
+        pr = recall_tail_prob(1 - np.exp(-lam[S999]), k_needed)
+        rec_tot = int(sum(recd.values()))
+        s_ok = bool(d["shots_total"] <= rec_tot and lam[S99].min() >= lam_star and pr >= PROB_TARGET and same)
+        ok &= s_ok
+        out["sectors"][sec] = {"d3r_shots_total": d["shots_total"], "d3r_shots": d["shots"], "recorded_total": rec_tot,
+                               "recorded_lambda_min_S99": float(lam[S99].min()),
+                               "recorded_lambda_min_S999": float(lam[S999].min()),
+                               "recorded_P_recall_S999_ge_0.9": pr, "S99_size": int(len(S99)), "S999_size": int(len(S999)),
+                               "sets_match_exact_support": same, "ok": s_ok}
+    out["ok"] = bool(ok)
+    return out
+
+
+def md_number_tokens(md):
+    """Number tokens of a markdown text outside inline code spans and outside the mandated first line."""
+    import re
+    body = "\n".join(md.split("\n")[1:])
+    body = re.sub(r"`[^`]*`", " ", body)
+    toks = re.findall(r"(?<![\w./=-])-?\d[\d,]*(?:\.\d+)?(?:e[-+]?\d+)?(?!\w)(?!\.\d)", body)
+    toks += re.findall(r"(?<==)-?\d[\d,]*(?:\.\d+)?(?:e[-+]?\d+)?(?!\w)(?!\.\d)", body)
+    return [t.rstrip(",") for t in toks if t.rstrip(",")]
+
+
+def _numeric_leaves(x, out):
+    if isinstance(x, bool):
+        return
+    if isinstance(x, (int, float)) and not (isinstance(x, float) and not math.isfinite(x)):
+        out.add(x)
+    elif isinstance(x, dict):
+        for k, v in x.items():
+            _numeric_leaves(v, out)
+            try:
+                _numeric_leaves(float(k.split("=")[-1]) if "=" in str(k) else None, out)
+            except ValueError:
+                pass
+    elif isinstance(x, (list, tuple)):
+        for v in x:
+            _numeric_leaves(v, out)
+
+
+def md_numbers_untraceable(md, *objs):
+    """Every number in the rendered markdown must be one of the JSON's numbers in one of the renderer's formats
+    (prompts/28 P5).  Returns the untraceable tokens (empty = PASS)."""
+    vals = set()
+    for o in objs:
+        _numeric_leaves(o, vals)
+    allowed = set()
+    for v in vals:
+        if isinstance(v, int) or (isinstance(v, float) and float(v).is_integer() and abs(v) < 1e15):
+            iv = int(v)
+            allowed |= {str(iv), f"{iv:,}"}
+        fv = float(v)
+        for nd in (3, 4, 5, 6):
+            allowed.add(fmt(fv, nd))
+        allowed |= {f"{fv:.2f}", f"{fv:.3e}", f"{fv:.2e}", f"{fv:.1e}", f"{fv:.1f}", f"{fv:g}"}
+    return sorted({t for t in md_number_tokens(md) if t not in allowed})
+
+
+def stage_plan28(args):
+    from h0_support_plan import d3r_plan, recall_tail_prob  # noqa: F401
+
+    from skqd.exact import Model
+    from skqd.skqd import READOUT_FACTOR, corrected_clean_fraction, poisson_lambda_star
+
+    t0 = time.time()
+    idx, mans, cals = manifests()
+    hqc_by_id = {c: m["hqc_per_shot"] for c, m in mans.items()}
+    V = fragment("verify")
+    Pf = fragment("predict")
+    if not V or not Pf:
+        raise SystemExit("the verify and predict fragments are needed (frozen-circuit distributions, dry run)")
+    model = Model(3)
+    dists, _ = sector_p(model, mans, V, [])
+    table = load_json(DEVICES)
+    usd = table["billing"]["usd_per_hqc_ESTIMATE"]["value"]
+    shot_s = table["rows"]["2x3|quantinuum_h2_2"]["memory_ESTIMATE"]["scenarios"]["mid"]["shot_time_s"]
+    lam_star = poisson_lambda_star()
+    proto = load_json(PROTOTYPE) if os.path.exists(PROTOTYPE) else None
+    R = GateResult(PLAN_GATE, PLAN_TITLE)
+    data = {"prompt": PLAN_PROMPT, "what_pass_means": PLAN_WHAT_PASS_MEANS,
+            "owner_decision": "data/owner_decision_20261005_partB.md (1a, 2a with the convergence condition, 3a)",
+            "constants": {"lambda_star": lam_star, "margin": D3_MARGIN, "floor": D3_FLOOR, "round_to": D3_ROUND,
+                          "readout_factor": READOUT_FACTOR, "recall_target": RECALL_TARGET, "prob_target": PROB_TARGET,
+                          "f_grid": list(CAMPAIGN_F), "go_bar_point": GO_BAR_POINT, "go_bar_lo95": GO_BAR_LO,
+                          "confidence_percent": 95, "max_shots_per_job": qn.MAX_SHOTS_PER_JOB,
+                          "hqc_job_base": qn.HQC_JOB_BASE, "max_cost_margin": MAX_COST_MARGIN,
+                          "calibration_shots": CAL_PLAN_SHOTS, "mixture_stop_factor": MIXTURE_STOP_FACTOR,
+                          "usd_per_hqc_ESTIMATE": usd, "shot_time_s_mid_ESTIMATE": shot_s,
+                          "k_values": [1, 2, 3, 4], "sigma_C3prime": 3, "tol_relative_P4": Q45_TOL,
+                          "d3prime_unreachable_p": 1e-6, "hardware_cv_draw_seeds": [2030, 2049]}}
+    # ---------------- target sets and reachability
+    sets, P_by_sec, ids_by_sec = {}, {}, {}
+    for sec, tb in (("B=0", 0), ("B=1", 2)):
+        r, w, S99, S999, same = sector_sets(model, tb)
+        ids = sorted(c for c, m in mans.items() if m["sector"] == sec)
+        k4 = [c for c in ids if int(mans[c]["k"]) == 4]
+        P = {c: dists[c]["p"] for c in ids}
+        P_by_sec[sec], ids_by_sec[sec] = P, ids
+        sum_all = sum(P[c] for c in ids)
+        sum_k4 = sum(P[c] for c in k4)
+        mx = np.max(np.array([P[c] for c in ids]), axis=0)
+        unreach = np.where(sum_k4 < 1e-6)[0]
+        sets[sec] = {"dim": int(r.dim), "S99_size": int(len(S99)), "S999_size": int(len(S999)),
+                     "S99_positions": S99.tolist(), "S999_positions": S999.tolist(),
+                     "sets_match_exact_support": same, "n_circuits": len(ids), "n_k4_circuits": len(k4),
+                     "reachability_S999": {"min_sum_p_all_circuits": float(sum_all[S999].min()),
+                                           "min_sum_p_k4": float(sum_k4[S999].min()),
+                                           "min_max_p_any_circuit": float(mx[S999].min())},
+                     "states_sum_k4_p_below_1e-6": int(len(unreach)),
+                     "states_sum_k4_p_below_1e-6_in_S999": int(np.isin(unreach, S999).sum()),
+                     "states_sum_k4_p_below_1e-6_max_ground_weight": float(w[unreach].max()) if len(unreach) else None,
+                     "_S99": S99, "_S999": S999, "_k4": k4}
+    # ---------------- plan table
+    plan_table = {}
+    p1_rows = {}
+    for f in CAMPAIGN_F:
+        key = f"f={f:.2f}"
+        row = {"f": f, "clean_yield_per_shot": READOUT_FACTOR * D3_MARGIN * f}
+        shots_r, shots_s, sec_info = {}, {}, {}
+        for sec in ("B=0", "B=1"):
+            S = sets[sec]
+            ids, P = ids_by_sec[sec], P_by_sec[sec]
+            F = {c: f for c in ids}
+            d = d3r_plan(P, F, ids, S["_k4"], S["_S99"], S["_S999"], floor=D3_FLOOR, round_to=D3_ROUND,
+                         margin=D3_MARGIN, readout_factor=READOUT_FACTOR, recall_target=RECALL_TARGET,
+                         prob_target=PROB_TARGET, lambda_star=lam_star)
+            dS = d3r_plan(P, F, ids, S["_k4"], S["_S999"], S["_S999"], floor=D3_FLOOR, round_to=D3_ROUND,
+                          margin=D3_MARGIN, readout_factor=READOUT_FACTOR, recall_target=RECALL_TARGET,
+                          prob_target=PROB_TARGET, lambda_star=lam_star)
+            shots_r.update(d["shots"])
+            shots_s.update(dS["shots"])
+            sec_info[sec] = {k: v for k, v in d.items() if k not in ("shots", "lp_shots", "lambda_by_state", "rule",
+                                                                     "constants", "k4_ids")}
+            sec_info[sec]["rule"] = d["rule"]
+            sec_info[sec]["D3S_shots_total"] = dS["shots_total"]
+            sec_info[sec]["D3S_guarantees"] = plan_guarantees(P, f, ids, dS["shots"], S["_S99"], S["_S999"])
+            if proto is not None:
+                pr = proto["plans"][f"{sec}|{key}"]["D3R"]
+                p1_rows[f"{sec}|{key}"] = {"gate_total": d["shots_total"], "prototype_total": int(pr["shots_total"]),
+                                           "gate_k4_extra": d["k4_extra_per_circuit"],
+                                           "prototype_k4_extra": int(pr["k4_extra_per_circuit"]),
+                                           "circuits_differing": sorted(c for c in ids if int(pr["shots"][c]) != d["shots"][c])}
+        D3R = cost_of_plan(shots_r, mans, hqc_by_id)
+        D3S = cost_of_plan(shots_s, mans, hqc_by_id)
+        D3T = d3type_plan(mans, f, hqc_by_id)
+        for v in (D3R, D3S, D3T):
+            v["usd_ESTIMATE"] = v["hqc_total"] * usd
+            v["machine_hours_mid_ESTIMATE"] = v["shots_total"] * shot_s / 3600.0
+        D3R["sectors"] = sec_info
+        D3R["floor_circuits"] = int(sum(1 for s in shots_r.values() if s == D3_FLOOR))
+        D3R["floor_share_circuits"] = D3R["floor_circuits"] / len(shots_r)
+        D3T["guarantees"] = {sec: plan_guarantees(P_by_sec[sec], f, ids_by_sec[sec], D3T["shots_by_circuit"],
+                                                  sets[sec]["_S99"], sets[sec]["_S999"]) for sec in ("B=0", "B=1")}
+        row.update({"D3R": D3R, "D3S_LP": D3S, "D3type_union": D3T})
+        plan_table[key] = row
+    cal_plan = {}
+    for c, m in cals.items():
+        cal_plan[c] = {"shots": CAL_PLAN_SHOTS, "jobs": 1, "hqc": qn.hqc_job(m["counts"], CAL_PLAN_SHOTS)}
+    data["calibration_plan"] = cal_plan
+    # ---------------- P1: prototype reproduction (f = 0.10 to the shot) + 2x2 consistency
+    p1_010 = {k: v for k, v in p1_rows.items() if k.endswith("f=0.10")}
+    p1_proto = bool(proto is not None and p1_010 and all(v["gate_total"] == v["prototype_total"]
+                                                         and not v["circuits_differing"] for v in p1_010.values()))
+    chk2 = d3r_2x2_check()
+    R.add("P1 d3r_plan reproduces the planner prototype at f = 0.10 to the shot; 2x2: d3r_plan totals <= the recorded "
+          "H0_2x2 plan, which satisfies both D3'-R conditions",
+          "; ".join(f"{k}: {v['gate_total']} vs {v['prototype_total']} (differing circuits {len(v['circuits_differing'])})"
+                    for k, v in p1_rows.items())
+          + "; 2x2 " + "; ".join(f"{s}: {v['d3r_shots_total']} <= {v['recorded_total']}, recorded lambda_min(S99) "
+                                 f"{v['recorded_lambda_min_S99']:.2f}, P(recall >= 0.9) {v['recorded_P_recall_S999_ge_0.9']:.4f}"
+                                 for s, v in chk2["sectors"].items()),
+          "identical at f = 0.10; totals <= recorded; lambda* and 0.95 met", p1_proto and chk2["ok"])
+    data["prototype_reproduction"] = {"source": os.path.relpath(PROTOTYPE, ROOT), "rows": p1_rows}
+    data["d3r_2x2_check"] = chk2
+    # ---------------- P2
+    p2 = all(plan_table[k]["D3R"]["sectors"][s]["lambda_min_S99"] >= lam_star
+             and plan_table[k]["D3R"]["sectors"][s]["P_recall_S999_ge_target"] >= PROB_TARGET
+             for k in plan_table for s in ("B=0", "B=1"))
+    R.add("P2 every S99 state lambda_s >= lambda* and P(recall of S999 >= 0.9) >= 0.95, both sectors, all three f",
+          "; ".join(f"{k} {s}: lambda_min(S99) {plan_table[k]['D3R']['sectors'][s]['lambda_min_S99']:.3f}, "
+                    f"P {plan_table[k]['D3R']['sectors'][s]['P_recall_S999_ge_target']:.4f}"
+                    for k in plan_table for s in ("B=0", "B=1")),
+          f">= {lam_star:.4f}; >= {PROB_TARGET}", p2)
+    # ---------------- Stage E / P v3
+    stage_e = cost_of_plan(STAGE_EP_V3, mans, hqc_by_id)
+    stage_e.update({"device": "H2-2E", "unit": "eHQC",
+                    "max_cost_per_job": {c: stage_e["per_circuit"][c]["hqc"] * MAX_COST_MARGIN for c in STAGE_EP_V3}})
+    stage_p = cost_of_plan(STAGE_EP_V3, mans, hqc_by_id)
+    stage_p.update({"device": "H2-2", "unit": "HQC", "usd_ESTIMATE": stage_p["hqc_total"] * usd,
+                    "max_cost_per_job": {c: stage_p["per_circuit"][c]["hqc"] * MAX_COST_MARGIN for c in STAGE_EP_V3}})
+    rnc = load_json(R_NC)
+    k1 = [c for c in STAGE_EP_V3 if c.endswith("_k1")]
+    ref_den = sum(STAGE_EP_V3[c] * float(mans[c]["p_reference"]) for c in k1)
+    exp_hits = {}
+    for fv in list(CAMPAIGN_F) + [float(rnc["pooled_f_hit"])]:
+        n = ref_den * fv
+        from scipy.stats import chi2
+        lo, hi = chi2.ppf(0.025, 2 * n) / 2.0, chi2.ppf(0.975, 2 * n + 2) / 2.0
+        exp_hits[f"{fv:.4g}"] = {"f_hit": fv, "expected_reference_hits": n,
+                                 "garwood95_relative_halfwidth": float((hi - lo) / 2.0 / n)}
+    cf = load_json(CF_TRAJ)["data"]
+    c7 = cf["C7_k4_mixture"]
+    data["stage_E_v3"] = stage_e
+    data["stage_P_v3"] = stage_p
+    data["go_rule_v3"] = {
+        "statistic": "f_hat_ideal = f_hit / r_nc, pooled over the stage's k = 1 circuits (pooled_reference_string_test, "
+                     "readout factor 1.0, Garwood 95 %), interval combined with the r_nc bootstrap on the log scale "
+                     "(skqd.skqd.corrected_clean_fraction)",
+        "rule": "GO iff the lower 95 % bound >= 0.05 and the point estimate >= 0.10; NO-GO iff the upper 95 % bound < 0.10; "
+                "AMBIGUOUS otherwise (one top-up of equal size by Poisson scaling, the H0_kpilot rule)",
+        "C3prime": "every k = 1 circuit's reference count >= 3 sigma above the garbage expectation (bit-order test)",
+        "k4_mixture_cross_check": "clean_fraction_mixture (readout factor 1.0) on the k = 4 circuits, reported beside "
+                                  "f_hat_ideal with the CF_traj-measured bias; a STOP for the planner if it disagrees "
+                                  "with f_hat_ideal by more than the factor 1.5 either way",
+        "r_nc": rnc["r_nc"], "r_nc_95": rnc["pooled_r_ci95"], "r_nc_source": os.path.relpath(R_NC, ROOT),
+        "r_nc_caveat": rnc["caveat"], "k4_mixture_bias_CF_traj": c7["bias_ratio"],
+        "expected_reference_hits_stage": exp_hits,
+        "expected_reference_hits_note": "sum over the two k = 1 circuits of N_c p_ref,c f_hit (garbage excluded)",
+        "stage_E_P_scope": ("f only: the v3 plans sample two references per sector and cannot generate the support; any "
+                            "Ritz energy from their accepted strings is information labelled 'two references only: not "
+                            "a support, no convergence statement' (prompts/30 section 6)")}
+    # the A6 dry run through the corrected statistic (information) and the analyse_dryrun fix
+    dr = Pf["dryrun"]
+    a6 = corrected_clean_fraction(dr["pooled_95"], rnc["r_nc"], rnc["pooled_r_ci95"])
+    dry_fixed = analyse_dryrun(model, mans, cals)
+    data["dryrun_information"] = {
+        "A6_f_hit": dr["pooled_95"]["f_clean"], "A6_f_hat_ideal": a6, "A6_go_rule_v3_reading": go_rule_v3(
+            a6["f_hat_ideal"], *a6["f_hat_ideal_interval"]),
+        "analyse_dryrun_fix": {"garbage_acceptance_now": dry_fixed.get("garbage_acceptance"),
+                               "predict_json_field_was": ("a timing-pilot record (dict), not the acceptance"
+                                                          if isinstance(dr.get("garbage_acceptance"), dict) else
+                                                          dr.get("garbage_acceptance")),
+                               "pooled_f_unchanged": abs(dry_fixed["pooled_f_estimate"] - dr["pooled_f_estimate"]) < 1e-15,
+                               "note": "predict.json is not rewritten (it feeds validation/Q0P_2x3.json, which stays as it is)"}}
+    # ---------------- P3 / P7 from the CV gate
+    cv = load_json(CV_JSON) if os.path.exists(CV_JSON) else None
+    key010 = f"f={PLAN_F_CHECK:.2f}"
+    if cv:
+        cvd = cv["data"]
+        emu = {}
+        p3 = True
+        for sec in ("B=0", "B=1"):
+            emu[sec] = {}
+            for seed, cvs in cvd["curves"][key010][sec].items():
+                full = cvs["shots"][-1]
+                e = {b: {"recall_S999": full[b]["recall_S999"], "size": full[b]["size"], "E_R_minus_E0": full[b]["err"],
+                         "rH": full[b]["rH"], "weinstein": full[b]["weinstein"],
+                         "width": full[b]["weinstein"][1] - full[b]["weinstein"][0],
+                         "E0_in_weinstein": full[b]["E0_in_weinstein"]} for b in ("sig", "all")}
+                emu[sec][seed] = e
+                p3 &= bool(e["sig"]["recall_S999"] >= RECALL_TARGET and e["sig"]["E0_in_weinstein"])
+        data["emulated_check"] = {"source": os.path.relpath(CV_JSON, ROOT) + f" data.curves.{key010} (phi = 1, 1x plan)",
+                                  "per_seed": emu, "h1_width_information": 0.1}
+        R.add("P3 emulated check of the plan (f = 0.10, 3 seeds, clean fraction 0.7 f): recall of S999 >= 0.9 on B_sig "
+              "(B_all beside) and E0 inside the Weinstein interval, every seed",
+              "; ".join(f"{s} seed {sd}: recall {v['sig']['recall_S999']:.3f} (all {v['all']['recall_S999']:.3f}), "
+                        f"inside {v['sig']['E0_in_weinstein']}, width {v['sig']['width']:.3f}"
+                        for s, d in emu.items() for sd, v in d.items()),
+              ">= 0.9; inside", p3)
+    else:
+        R.add("P3 emulated check of the plan", "validation/CV_2x3_plan.json absent (run scripts/gate_CV.py)", ">= 0.9", False)
+    # ---------------- re-sized rows from the CV gate (section 4) and P7
+    p7, p7_detail = False, {}
+    if cv:
+        resized = {}
+        same_all = True
+        for key in plan_table:
+            for sec in ("B=0", "B=1"):
+                pr = cv["data"]["plan"].get(key, {}).get(sec)
+                ids = ids_by_sec[sec]
+                if pr is None:
+                    same_all = False
+                    p7_detail[f"{sec}|{key}"] = "missing in the CV JSON"
+                    continue
+                s = pr["resized_by"]
+                base = {c: plan_table[key]["D3R"]["shots_by_circuit"][c] for c in ids}
+                if s in (None,):
+                    want = base
+                elif s == 1:
+                    want = base
+                else:
+                    want = {c: (int(math.ceil(D3_FLOOR * s / D3_ROUND) * D3_ROUND) if base[c] == D3_FLOOR else base[c] * s)
+                            for c in ids}
+                eq_base = all(int(pr["base_shots_by_circuit"][c]) == base[c] for c in ids)
+                eq_final = all(int(pr["final_shots_by_circuit"][c]) == want[c] for c in ids)
+                same_all &= eq_base and eq_final
+                p7_detail[f"{sec}|{key}"] = {"resized_by": s, "base_identical": eq_base, "final_identical": eq_final}
+                if s not in (1, None):
+                    cst = cost_of_plan(want, mans, hqc_by_id)
+                    resized.setdefault(key, {})[sec] = {"s": s, "shots_by_circuit": want, "shots_total": cst["shots_total"],
+                                                        "jobs": cst["jobs"], "hqc": cst["hqc_total"],
+                                                        "usd_ESTIMATE": cst["hqc_total"] * usd,
+                                                        "machine_hours_mid_ESTIMATE": cst["shots_total"] * shot_s / 3600.0,
+                                                        "hqc_before": plan_table[key]["D3R"]["by_sector"][sec]["hqc"]}
+        data["resized_rows"] = resized
+        p7 = bool(cv["status"] == "PASS" and same_all)
+        R.add("P7 validation/CV_2x3_plan.json status PASS and its plan equals the plan table's rows (per-circuit shots "
+              "identical, D3'-R x s where re-sized)",
+              f"CV status {cv['status']}; plans identical {same_all}; resized_by "
+              + ", ".join(f"{k}: {v['resized_by'] if isinstance(v, dict) else v}" for k, v in p7_detail.items()),
+              "PASS; identical", p7)
+    else:
+        R.add("P7 CV_2x3_plan PASS and plan identical", "validation/CV_2x3_plan.json absent", "PASS; identical", False)
+    data["P7_detail"] = p7_detail
+    # ---------------- P4: HQC = formula job by job
+    def formula_total(shots):
+        tot = 0.0
+        for c, s in shots.items():
+            full, rest = divmod(int(s), qn.MAX_SHOTS_PER_JOB)
+            tot += full * qn.hqc_job(mans[c]["counts"], qn.MAX_SHOTS_PER_JOB)
+            if rest:
+                tot += qn.hqc_job(mans[c]["counts"], rest)
+        return tot
+    checks = []
+    for key, row in plan_table.items():
+        for name in ("D3R", "D3S_LP", "D3type_union"):
+            checks.append((f"{key} {name}", row[name]["hqc_total"], formula_total(row[name]["shots_by_circuit"])))
+    for key, d in data.get("resized_rows", {}).items():
+        for sec, v in d.items():
+            checks.append((f"{key} {sec} x{v['s']}", v["hqc"], formula_total(v["shots_by_circuit"])))
+    checks.append(("Stage E v3", stage_e["hqc_total"], formula_total(STAGE_EP_V3)))
+    p4_max = max(abs(a - b) / max(1.0, abs(b)) for _n, a, b in checks)
+    R.add("P4 HQC totals = the billing formula applied job by job (<= 10,000 shots per job, 5 HQC per job)",
+          f"{len(checks)} plans; max relative difference {p4_max:.1e}", f"<= {Q45_TOL:g}", p4_max <= Q45_TOL)
+    data["P4"] = {"plans_checked": len(checks), "max_relative_difference": p4_max}
+    for k in sets:
+        for x in ("_S99", "_S999", "_k4"):
+            sets[k].pop(x)
+    data.update({"target_sets": sets, "plan_table": plan_table, "campaign_sizing_rule": campaign_rule_text(),
+                 "cv_source": os.path.relpath(CV_JSON, ROOT) if cv else None})
+    # ---------------- P5: render the prereg v2 from the JSON only and check every number
+    R.data = data
+    jd = json.loads(json.dumps(_jsonable_plain(data)))
+    md = prereg_v2_text(jd, cv)
+    bad = md_numbers_untraceable(md, jd, cv or {})
+    R.add("P5 preregistration v2 rendered from the JSON only: every number in reports/Q0P_2x3_prereg.md is a number of "
+          "validation/Q0P_2x3_plan.json or validation/CV_2x3_plan.json",
+          f"untraceable tokens: {bad[:12] if bad else 'none'}", "none", not bad)
+    data["P5_untraceable"] = bad
+    # ---------------- P6
+    if args.skip_tests:
+        R.add("P6 pytest -q tests and check_package.py", "not run (--skip-tests)", "pass", False)
+    else:
+        ch = {}
+        for name, cmd in (("pytest", [sys.executable, "-m", "pytest", "-q", "tests"]),
+                          ("check_package", [sys.executable, "scripts/check_package.py"])):
+            t1 = time.time()
+            pr = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            tail = (pr.stdout.strip().splitlines() or [""])[-1]
+            ch[name] = {"returncode": pr.returncode, "summary": tail, "wall_s": time.time() - t1}
+        R.add("P6 pytest -q tests and check_package.py pass",
+              f"pytest: {ch['pytest']['summary']}; check_package rc {ch['check_package']['returncode']} "
+              f"({ch['check_package']['summary']})", "rc 0", all(v["returncode"] == 0 for v in ch.values()))
+        data["P6"] = ch
+    R.data = data
+    R.runtime_s = time.time() - t0
+    path = R.save()
+    saved = load_json(path)
+    write_report(f"{PLAN_GATE}.md", plan_report_text(R, saved["data"], cv))
+    write_report(f"{GATE}_prereg.md", prereg_v2_text(saved["data"], cv))
+    print(f"{PLAN_GATE}: {'PASS' if R.passed else 'FAIL'} -> {os.path.relpath(path, ROOT)}")
+    for c in R.criteria:
+        print(f"  [{'PASS' if c.passed else 'FAIL'}] {c.name}: {c.value}")
+    return 0 if R.passed else 1
+
+
+def _jsonable_plain(x):
+    from skqd.report import _jsonable
+    return _jsonable(x)
+
+
+def campaign_rule_text():
+    return {
+        "sizing": ("f_size = f_hat_ideal of Stage P (point estimate, rounded down to 0.01); D3'-R at y = 0.82 x 0.7 x "
+                   "f_size; re-sized by prompts/30 section 4 if gate CV_2x3_plan re-run at that f says so; the cost "
+                   "returns to the owner before submission (decision 2a: signing commits no HQC)"),
+        "safety": ("floor theorem (`prompts/29 2.4`): f_eff(s) >= f_ideal (1 - 2 delta / p_c(s)) for every state, so f_ideal "
+                   "is a safe sizing input on S99 while the device's near-clean ratio stays within r_nc / 0.7"),
+        "halves": ("(ii) submitted in two halves per circuit: ceil(N_c / 2) shots of every circuit in the first half, jobs "
+                   "of <= 10,000 shots; the first half is the real N/2 prefix"),
+        "mid_campaign": ("after the first half, the pooled observed/expected ratio on S99 (expected = lambda_s / 2 at the "
+                         "plan's y) over all circuits; if it is < 0.7 the second half is re-sized by that ratio once (HQC "
+                         "cap: the owner's)"),
+        "hardware_cv": ("(iii) CV1-CV5 preregistered on the hardware counts with the N/2 point = the first half (real time "
+                        "order) and the finer points by hypergeometric sub-sampling within halves (seeds `2030..2049`, "
+                        "information); E_tol, the H1/H2 widths, 0.99 and the random seeds exactly as in gate CV_2x3_plan"),
+        "outcome": ("(iv) the certificates and the H1 / H2 / P1 rows are reported for any B (rigorous or gap-assumed as "
+                    "labelled); a campaign that fails CV1, CV2, CV4 or CV5 on hardware is labelled 'not converged at the "
+                    "plan' in every table and the P1 curve is reported to the size of B_sig with that label; one top-up "
+                    "by s = 2 only under a new owner decision; a CV3 failure on hardware is reported as a family result "
+                    "(no top-up)")}
+
+
+def plan_report_text(R, D, cv):
+    L = [f"# Gate {PLAN_GATE} — {PLAN_TITLE}", "",
+         f"Status: **{'PASS' if R.passed else 'FAIL'}** ({len(R.criteria)} criteria).  Generated by "
+         f"`scripts/gate_Q0P_2x3.py --stage plan28` from `validation/{PLAN_GATE}.json`; no number is typed.  "
+         f"{env_block()}", "", f"Prompt: {D['prompt']}.  Owner decision: {D['owner_decision']}.", "",
+         f"What PASS means: \"{D['what_pass_means']}\".", "", "## Criteria", "", R.criteria_table(), "",
+         "The preregistration block v2 is `reports/Q0P_2x3_prereg.md` (rendered from the same JSON).", ""]
+    L += [prereg_tables(D, cv)]
+    return "\n".join(L)
+
+
+def prereg_tables(D, cv):
+    c = D["constants"]
+    L = ["## Target sets and reachability", "",
+         md_table(["sector", "dim", "S99", "S999", "min over S999 of sum_c p_c", "of sum_(k=4) p_c", "of max_c p_c",
+                   f"states with sum_(k=4) p < {c['d3prime_unreachable_p']:g} (D3' unreachable)",
+                   "their largest ground weight"],
+                  [[s, v["dim"], v["S99_size"], v["S999_size"], fmt(v["reachability_S999"]["min_sum_p_all_circuits"]),
+                    fmt(v["reachability_S999"]["min_sum_p_k4"]), fmt(v["reachability_S999"]["min_max_p_any_circuit"]),
+                    v["states_sum_k4_p_below_1e-6"], fmt(v["states_sum_k4_p_below_1e-6_max_ground_weight"])]
+                   for s, v in D["target_sets"].items()]), "",
+         f"## Rule D3'-R (the minimum 2x3 sizing, owner decision 2a): lambda* = {fmt(c['lambda_star'])} on every S99 state at "
+         f"y = {fmt(c['readout_factor'])} x {fmt(c['margin'])} x f, floor {c['floor']}, rounding {c['round_to']}; then the "
+         f"k = 4 circuits until P(recall of S999 >= {fmt(c['recall_target'])}) >= {fmt(c['prob_target'])}", "",
+         md_table(["f", "sector", "shots", "k = 4 extra", "jobs", "HQC", "lambda_min S99", "lambda_min S999",
+                   "recall floor S999", "P(recall >= 0.9)", "P(all S99 seen)"],
+                  [[fmt(r["f"]), s, fmt(r["D3R"]["by_sector"][s]["shots"]), v["k4_extra_per_circuit"],
+                    r["D3R"]["by_sector"][s]["jobs"], fmt(r["D3R"]["by_sector"][s]["hqc"]), fmt(v["lambda_min_S99"]),
+                    fmt(v["lambda_min_S999"]), fmt(v["recall_floor_S999"]), fmt(v["P_recall_S999_ge_target"]),
+                    fmt(v["P_all_S99_seen"])]
+                   for r in D["plan_table"].values() for s, v in r["D3R"]["sectors"].items()]), "",
+         md_table(["f", "D3'-R shots", "jobs", "HQC", "USD (ESTIMATE)", "machine hours (H2-2 mid ESTIMATE)",
+                   "floor circuits", "D3'-S (LP on S999) shots / HQC", "D3-type union shots / HQC"],
+                  [[fmt(r["f"]), fmt(r["D3R"]["shots_total"]), r["D3R"]["jobs"], fmt(r["D3R"]["hqc_total"]),
+                    fmt(r["D3R"]["usd_ESTIMATE"]), fmt(r["D3R"]["machine_hours_mid_ESTIMATE"]),
+                    f"{r['D3R']['floor_circuits']} of {len(r['D3R']['shots_by_circuit'])}",
+                    f"{fmt(r['D3S_LP']['shots_total'])} / {fmt(r['D3S_LP']['hqc_total'])}",
+                    f"{fmt(r['D3type_union']['shots_total'])} / {fmt(r['D3type_union']['hqc_total'])}"]
+                   for r in D["plan_table"].values()]), "",
+         "Comparison guarantees (information): " + "; ".join(
+             f"{fmt(r['f'])} {s}: D3'-S lambda_min S999 {fmt(r['D3R']['sectors'][s]['D3S_guarantees']['lambda_min_S999'])}, "
+             f"D3-type P(recall >= 0.9) {fmt(r['D3type_union']['guarantees'][s]['P_recall_S999_ge_0.9'])}"
+             for r in D["plan_table"].values() for s in ("B=0", "B=1")) + ".", "",
+         "Calibration circuits: " + "; ".join(f"`{k}` {v['shots']} shots, {fmt(v['hqc'])} HQC"
+                                              for k, v in D["calibration_plan"].items()) + ".", ""]
+    if D.get("resized_rows"):
+        L += ["## Re-sized rows (prompts/30 section 4: D3'-R x s replaces the D3'-R row; the cost returns to the owner)", "",
+              md_table(["f", "sector", "s", "shots", "jobs", "HQC before", "HQC after", "USD after (ESTIMATE)",
+                        "machine hours after (mid ESTIMATE)"],
+                       [[k, s, v["s"], fmt(v["shots_total"]), v["jobs"], fmt(v["hqc_before"]), fmt(v["hqc"]),
+                         fmt(v["usd_ESTIMATE"]), fmt(v["machine_hours_mid_ESTIMATE"])]
+                        for k, d in D["resized_rows"].items() for s, v in d.items()]), ""]
+    g = D["go_rule_v3"]
+    L += ["## Stage E v3 (H2-2E, eHQC) and Stage P v3 (H2-2, HQC): f only", "",
+          md_table(["circuit", "shots", "jobs", "eHQC (Stage E) = HQC (Stage P)", "max_cost per job (formula + 10 %)"],
+                   [[f"`{cid}`", v["shots"], v["jobs"], fmt(v["hqc"]), fmt(D["stage_E_v3"]["max_cost_per_job"][cid])]
+                    for cid, v in D["stage_E_v3"]["per_circuit"].items()]), "",
+          f"Stage E total {fmt(D['stage_E_v3']['hqc_total'])} eHQC; Stage P total {fmt(D['stage_P_v3']['hqc_total'])} HQC "
+          f"(USD {fmt(D['stage_P_v3']['usd_ESTIMATE'])}, ESTIMATE).  Scope: {g['stage_E_P_scope']}.", "",
+          f"**GO rule v3** (both stages).  Statistic: {g['statistic']}; r_nc = {fmt(g['r_nc'])}, bootstrap 95 % "
+          f"[{fmt(g['r_nc_95'][0])}, {fmt(g['r_nc_95'][1])}] (`{g['r_nc_source']}`).  Rule: {g['rule']}.  C3': "
+          f"{g['C3prime']}.  Cross-check: {g['k4_mixture_cross_check']} (CF_traj bias {fmt(g['k4_mixture_bias_CF_traj']['value'])}, "
+          f"95 % [{fmt(g['k4_mixture_bias_CF_traj']['ci95'][0])}, {fmt(g['k4_mixture_bias_CF_traj']['ci95'][1])}]).  "
+          f"Caveat: {g['r_nc_caveat']}.", "",
+          "Expected reference hits of the stage (" + g["expected_reference_hits_note"] + "): " + "; ".join(
+              f"f_hit {fmt(v['f_hit'])}: {fmt(v['expected_reference_hits'])} (Garwood 95 % relative half-width "
+              f"{fmt(v['garwood95_relative_halfwidth'])})" for v in g["expected_reference_hits_stage"].values()) + ".", "",
+          "A6 dry run through the corrected statistic (information): f_hit "
+          f"{fmt(D['dryrun_information']['A6_f_hit'])} -> f_hat_ideal {fmt(D['dryrun_information']['A6_f_hat_ideal']['f_hat_ideal'])} "
+          f"[{fmt(D['dryrun_information']['A6_f_hat_ideal']['f_hat_ideal_interval'][0])}, "
+          f"{fmt(D['dryrun_information']['A6_f_hat_ideal']['f_hat_ideal_interval'][1])}], v3 reading "
+          f"{D['dryrun_information']['A6_go_rule_v3_reading']}.", "",
+          "## Campaign sizing and execution (prompts/29 3(3), prompts/30 section 6)", ""]
+    L += [f"- **{k}**: {v}" for k, v in D["campaign_sizing_rule"].items()] + [""]
+    if D.get("emulated_check"):
+        e = D["emulated_check"]
+        L += ["## Emulated check of the plan (f = 0.10, phi = 1; source `" + e["source"] + "`)", "",
+              md_table(["sector", "seed", "recall S999 (B_sig / B_all)", "size (B_sig / B_all)", "E_R - E0 (B_sig)",
+                        "r_H (B_sig)", "Weinstein width", "E0 inside"],
+                       [[s, sd, f"{fmt(v['sig']['recall_S999'])} / {fmt(v['all']['recall_S999'])}",
+                         f"{v['sig']['size']} / {v['all']['size']}", fmt(v["sig"]["E_R_minus_E0"]), fmt(v["sig"]["rH"]),
+                         fmt(v["sig"]["width"]), v["sig"]["E0_in_weinstein"]]
+                        for s, d in e["per_seed"].items() for sd, v in d.items()]), ""]
+    if cv:
+        L += convergence_section(cv)
+    return "\n".join(L)
+
+
+def convergence_section(cv):
+    d = cv["data"]
+    L = ["## Convergence and coverage (decision 2a)", "",
+         f"Gate `CV_2x3_plan`: **{cv['status']}** ({sum(1 for c in cv['criteria'] if c['passed'])} of "
+         f"{len(cv['criteria'])} criteria hold).  E_tol (prompts/30 2.7, the Ritz error of the best support at H1's recall "
+         "target 0.8 of S999): " + "; ".join(f"{s} {fmt(v['value'])}" for s, v in d["E_tol"].items()) + ".", "",
+         md_table(["f", "sector", "seed", "CV1 ratio", "r_H(N/2)", "r_H(N)", "CV3 dE_k", "CV3 r_H(k=4)", "CV4 margin",
+                   "W(N)", "resized_by"],
+                  [[fk, sec, seed, fmt(c["CV1"]["ratio"]), fmt(c["CV2"]["rH_half"]), fmt(c["CV2"]["rH_full"]),
+                    fmt(d["criteria_by_seed"][fk][sec][seed]["CV3"]["dE_k"]),
+                    fmt(d["criteria_by_seed"][fk][sec][seed]["CV3"]["rH_k4"]),
+                    fmt(c["CV4"]["margin_at_N"]), fmt(c["CV5"]["W_at_N"], 6), d["plan"][fk][sec]["resized_by"]]
+                   for fk, ds in d["criteria_by_seed"].items() for sec, bys in ds.items() for seed, c in bys.items()]), "",
+         "Failed criteria: " + ("; ".join(c["name"] for c in cv["criteria"] if not c["passed"]) or "none") + ".", ""]
+    return L
+
+
+def prereg_v2_text(D, cv):
+    L = [PREREG_V2_FIRST_LINE, "",
+         "# Q0P_2x3 preregistration block v2 (prompts/28 B3 as amended by prompts/29 Part B' and prompts/30)", "",
+         "Generated by `scripts/gate_Q0P_2x3.py --stage plan28` from `validation/Q0P_2x3_plan.json` and "
+         "`validation/CV_2x3_plan.json`; no number below is typed (criterion P5 checks every number against the JSON).  "
+         "Owner decision: `data/owner_decision_20261005_partB.md` (1a, 2a with the convergence condition, 3a).  "
+         "`validation/Q0P_2x3.json` (v1's gate) is not rewritten.", ""]
+    L.append(prereg_tables(D, cv))
+    return "\n".join(L)
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--stage", required=True, choices=("verify", "predict", "prereg-md", "assemble-emulator", "assemble"))
+    ap.add_argument("--stage", required=True, choices=("verify", "predict", "prereg-md", "assemble-emulator", "assemble",
+                                                       "plan28"))
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--threads", type=int, default=2)
     ap.add_argument("--skip-tests", action="store_true")
@@ -908,6 +1519,8 @@ def main():
         return stage_prereg_md(args)
     if args.stage == "assemble-emulator":
         return stage_assemble_emulator(args)
+    if args.stage == "plan28":
+        return stage_plan28(args)
     return assemble()
 
 

@@ -82,3 +82,8 @@ gate H0_model and the free device survey → 21 the pilot on the selected patch 
 owner's answers) → 07 H0 hardware session → 24 the 2x2 run on ibm_kingston (H0_2x2) → 25/26 2x3 device
 survey: only Quantinuum H2-2 / Helios-1 meet the signed bar on published numbers → 26 Stage A (gate
 Q0P_2x3: native build, 0 HQC) → Stage E (vendor emulator) after the owner's Nexus login and eHQC budget.
+
+
+## 2x3 plan check (prompts/29 Part B' + prompts/30, 2026-10-05; executor-opus)
+
+Gate Q0P_2x3_plan **FAIL** (5/7): rule D3'-R reproduces the planner prototype to the shot (f = 0.10: 34,909 / 49,203 shots, 418,166 HQC), P2/P4/P5/P6 hold; P3 (recall >= 0.9 on B_sig) and P7 (CV_2x3_plan PASS) fail.  Gate CV_2x3_plan **FAIL** (27/36) with the binding STOP of prompts/30 section 10: CV3 fails in every cell and re-sizing to s = 8 still fails CV2 at B=0 (the r_H width on B_sig; B_sig's threshold mu_s = N a / dim rises with N).  E_tol = 0.01423 (B=0) / 0.01104 (B=1).  CV_2x2_info **PASS** (CV0 only; label 'not a device test (saturation)').  CF_estimator_2x2_info **PASS**: the H0_2x2 adopted f_hit 0.1129 gives f_hat_ideal 0.1012 [0.0938, 0.1091]: AMBIGUOUS under the recorded rule, GO under the v3 rule (owner decision 3a: qualification accepted, no verdict edited).  The planner returns (validation/BLOCKED.md); no HQC, no QPU, no push.

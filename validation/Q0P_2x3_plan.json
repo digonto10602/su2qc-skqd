@@ -1,0 +1,3856 @@
+{
+ "gate": "Q0P_2x3_plan",
+ "title": "the 2x3 shot rule D3'-R (minimum sizing, owner decision 2a), the f_hat_ideal statistic and GO rule v3, Stage E / P v3, the emulated convergence check (P7)",
+ "status": "FAIL",
+ "criteria": [
+  {
+   "name": "P1 d3r_plan reproduces the planner prototype at f = 0.10 to the shot; 2x2: d3r_plan totals <= the recorded H0_2x2 plan, which satisfies both D3'-R conditions",
+   "value": "B=0|f=0.05: 63875 vs 63875 (differing circuits 0); B=1|f=0.05: 96503 vs 96503 (differing circuits 0); B=0|f=0.10: 34909 vs 34909 (differing circuits 0); B=1|f=0.10: 49203 vs 49203 (differing circuits 0); B=0|f=0.15: 27309 vs 27309 (differing circuits 0); B=1|f=0.15: 33503 vs 33503 (differing circuits 0); 2x2 B=0: 5340 <= 69505, recorded lambda_min(S99) 165.08, P(recall >= 0.9) 1.0000; B=1: 2902 <= 64402, recorded lambda_min(S99) 228.39, P(recall >= 0.9) 1.0000",
+   "threshold": "identical at f = 0.10; totals <= recorded; lambda* and 0.95 met",
+   "passed": true
+  },
+  {
+   "name": "P2 every S99 state lambda_s >= lambda* and P(recall of S999 >= 0.9) >= 0.95, both sectors, all three f",
+   "value": "f=0.05 B=0: lambda_min(S99) 7.250, P 0.9531; f=0.05 B=1: lambda_min(S99) 6.306, P 0.9935; f=0.10 B=0: lambda_min(S99) 7.342, P 0.9603; f=0.10 B=1: lambda_min(S99) 6.299, P 0.9933; f=0.15 B=0: lambda_min(S99) 7.737, P 0.9652; f=0.15 B=1: lambda_min(S99) 6.319, P 0.9935",
+   "threshold": ">= 6.2958; >= 0.95",
+   "passed": true
+  },
+  {
+   "name": "P3 emulated check of the plan (f = 0.10, 3 seeds, clean fraction 0.7 f): recall of S999 >= 0.9 on B_sig (B_all beside) and E0 inside the Weinstein interval, every seed",
+   "value": "B=0 seed 20260914: recall 0.884 (all 0.953), inside True, width 0.221; B=0 seed 1: recall 0.907 (all 0.977), inside True, width 0.215; B=0 seed 2: recall 0.849 (all 0.953), inside True, width 0.259; B=1 seed 20260914: recall 0.863 (all 0.947), inside True, width 0.211; B=1 seed 1: recall 0.905 (all 0.958), inside True, width 0.196; B=1 seed 2: recall 0.937 (all 0.958), inside True, width 0.183",
+   "threshold": ">= 0.9; inside",
+   "passed": false
+  },
+  {
+   "name": "P7 validation/CV_2x3_plan.json status PASS and its plan equals the plan table's rows (per-circuit shots identical, D3'-R x s where re-sized)",
+   "value": "CV status FAIL; plans identical True; resized_by B=0|f=0.05: None, B=1|f=0.05: 4, B=0|f=0.10: None, B=1|f=0.10: 8, B=0|f=0.15: None, B=1|f=0.15: 8",
+   "threshold": "PASS; identical",
+   "passed": false
+  },
+  {
+   "name": "P4 HQC totals = the billing formula applied job by job (<= 10,000 shots per job, 5 HQC per job)",
+   "value": "13 plans; max relative difference 1.5e-16",
+   "threshold": "<= 1e-12",
+   "passed": true
+  },
+  {
+   "name": "P5 preregistration v2 rendered from the JSON only: every number in reports/Q0P_2x3_prereg.md is a number of validation/Q0P_2x3_plan.json or validation/CV_2x3_plan.json",
+   "value": "untraceable tokens: none",
+   "threshold": "none",
+   "passed": true
+  },
+  {
+   "name": "P6 pytest -q tests and check_package.py pass",
+   "value": "pytest: 316 passed, 19 skipped, 10 warnings in 975.80s (0:16:15); check_package rc 0 (PACKAGE OK)",
+   "threshold": "rc 0",
+   "passed": true
+  }
+ ],
+ "data": {
+  "prompt": "prompts/28_2x3_shot_rule_and_clean_fraction_estimator.md Part B as amended by prompts/29_cf_traj_reruling_ideal_sample_fraction.md Part B' and prompts/30_convergence_and_coverage_criteria.md",
+  "what_pass_means": "rule D3'-R is implemented, reproduces the planner's prototype to the shot and the 2x2 record's plan, guarantees lambda* on S99 and P(recall of S999 >= 0.9) >= 0.95 from clean shots at f = 0.05 / 0.10 / 0.15, its HQC follow the billing formula job by job, the preregistration v2 is rendered from the JSON only, and (P7) the emulated convergence-and-coverage gate CV_2x3_plan passes on the plan in the table.  PASS commits no HQC and says nothing about any device",
+  "owner_decision": "data/owner_decision_20261005_partB.md (1a, 2a with the convergence condition, 3a)",
+  "constants": {
+   "lambda_star": 6.295793621871989,
+   "margin": 0.7,
+   "floor": 267,
+   "round_to": 100,
+   "readout_factor": 0.82,
+   "recall_target": 0.9,
+   "prob_target": 0.95,
+   "f_grid": [
+    0.05,
+    0.1,
+    0.15
+   ],
+   "go_bar_point": 0.1,
+   "go_bar_lo95": 0.05,
+   "confidence_percent": 95,
+   "max_shots_per_job": 10000,
+   "hqc_job_base": 5.0,
+   "max_cost_margin": 1.1,
+   "calibration_shots": 1000,
+   "mixture_stop_factor": 1.5,
+   "usd_per_hqc_ESTIMATE": 12.5,
+   "shot_time_s_mid_ESTIMATE": 2.1175,
+   "k_values": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "sigma_C3prime": 3,
+   "tol_relative_P4": 1e-12,
+   "d3prime_unreachable_p": 1e-06,
+   "hardware_cv_draw_seeds": [
+    2030,
+    2049
+   ]
+  },
+  "calibration_plan": {
+   "CAL_zeros": {
+    "shots": 1000,
+    "jobs": 1,
+    "hqc": 45.0
+   },
+   "CAL_x0": {
+    "shots": 1000,
+    "jobs": 1,
+    "hqc": 45.2
+   }
+  },
+  "prototype_reproduction": {
+   "source": "scratch/planner/d3s_2x3_shot_rule_20261003.json",
+   "rows": {
+    "B=0|f=0.05": {
+     "gate_total": 63875,
+     "prototype_total": 63875,
+     "gate_k4_extra": 2000,
+     "prototype_k4_extra": 2000,
+     "circuits_differing": []
+    },
+    "B=1|f=0.05": {
+     "gate_total": 96503,
+     "prototype_total": 96503,
+     "gate_k4_extra": 0,
+     "prototype_k4_extra": 0,
+     "circuits_differing": []
+    },
+    "B=0|f=0.10": {
+     "gate_total": 34909,
+     "prototype_total": 34909,
+     "gate_k4_extra": 1100,
+     "prototype_k4_extra": 1100,
+     "circuits_differing": []
+    },
+    "B=1|f=0.10": {
+     "gate_total": 49203,
+     "prototype_total": 49203,
+     "gate_k4_extra": 0,
+     "prototype_k4_extra": 0,
+     "circuits_differing": []
+    },
+    "B=0|f=0.15": {
+     "gate_total": 27309,
+     "prototype_total": 27309,
+     "gate_k4_extra": 1000,
+     "prototype_k4_extra": 1000,
+     "circuits_differing": []
+    },
+    "B=1|f=0.15": {
+     "gate_total": 33503,
+     "prototype_total": 33503,
+     "gate_k4_extra": 0,
+     "prototype_k4_extra": 0,
+     "circuits_differing": []
+    }
+   }
+  },
+  "d3r_2x2_check": {
+   "f": 0.11285347188965912,
+   "f_source": "validation/H0_2x2.json data.adopted_configuration.f_pool",
+   "recorded_plan": "data/hardware/H0_2x2_prep/shot_plan.json",
+   "sectors": {
+    "B=0": {
+     "d3r_shots_total": 5340,
+     "d3r_shots": {
+      "B0_ref06_k1": 267,
+      "B0_ref06_k2": 267,
+      "B0_ref06_k3": 267,
+      "B0_ref06_k4": 267,
+      "B0_ref17_k1": 267,
+      "B0_ref17_k2": 267,
+      "B0_ref17_k3": 267,
+      "B0_ref17_k4": 267,
+      "B0_ref21_k1": 267,
+      "B0_ref21_k2": 267,
+      "B0_ref21_k3": 267,
+      "B0_ref21_k4": 267,
+      "B0_ref30_k1": 267,
+      "B0_ref30_k2": 267,
+      "B0_ref30_k3": 267,
+      "B0_ref30_k4": 267,
+      "B0_ref43_k1": 267,
+      "B0_ref43_k2": 267,
+      "B0_ref43_k3": 267,
+      "B0_ref43_k4": 267
+     },
+     "recorded_total": 69505,
+     "recorded_lambda_min_S99": 165.0828646999123,
+     "recorded_lambda_min_S999": 30.14804098908897,
+     "recorded_P_recall_S999_ge_0.9": 1.0,
+     "S99_size": 9,
+     "S999_size": 16,
+     "sets_match_exact_support": true,
+     "ok": true
+    },
+    "B=1": {
+     "d3r_shots_total": 2902,
+     "d3r_shots": {
+      "B1_ref07_k1": 267,
+      "B1_ref07_k2": 267,
+      "B1_ref07_k3": 267,
+      "B1_ref07_k4": 800,
+      "B1_ref14_k1": 267,
+      "B1_ref14_k2": 267,
+      "B1_ref14_k3": 267,
+      "B1_ref14_k4": 500
+     },
+     "recorded_total": 64402,
+     "recorded_lambda_min_S99": 228.38794185298406,
+     "recorded_lambda_min_S999": 32.764616106221794,
+     "recorded_P_recall_S999_ge_0.9": 1.0,
+     "S99_size": 8,
+     "S999_size": 13,
+     "sets_match_exact_support": true,
+     "ok": true
+    }
+   },
+   "ok": true
+  },
+  "stage_E_v3": {
+   "shots_by_circuit": {
+    "B0_ref25_k1": 800,
+    "B1_ref57_k1": 800,
+    "B0_ref25_k4": 200,
+    "B1_ref57_k4": 200
+   },
+   "per_circuit": {
+    "B0_ref25_k1": {
+     "shots": 800,
+     "jobs": 1,
+     "hqc": 3984.3599999999997
+    },
+    "B1_ref57_k1": {
+     "shots": 800,
+     "jobs": 1,
+     "hqc": 3968.04
+    },
+    "B0_ref25_k4": {
+     "shots": 200,
+     "jobs": 1,
+     "hqc": 998.72
+    },
+    "B1_ref57_k4": {
+     "shots": 200,
+     "jobs": 1,
+     "hqc": 998.8000000000001
+    }
+   },
+   "by_sector": {
+    "B=0": {
+     "shots": 1000,
+     "jobs": 2,
+     "hqc": 4983.08
+    },
+    "B=1": {
+     "shots": 1000,
+     "jobs": 2,
+     "hqc": 4966.84
+    }
+   },
+   "shots_total": 2000,
+   "jobs": 4,
+   "hqc_total": 9949.919999999998,
+   "device": "H2-2E",
+   "unit": "eHQC",
+   "max_cost_per_job": {
+    "B0_ref25_k1": 4382.796,
+    "B1_ref57_k1": 4364.844,
+    "B0_ref25_k4": 1098.592,
+    "B1_ref57_k4": 1098.68
+   }
+  },
+  "stage_P_v3": {
+   "shots_by_circuit": {
+    "B0_ref25_k1": 800,
+    "B1_ref57_k1": 800,
+    "B0_ref25_k4": 200,
+    "B1_ref57_k4": 200
+   },
+   "per_circuit": {
+    "B0_ref25_k1": {
+     "shots": 800,
+     "jobs": 1,
+     "hqc": 3984.3599999999997
+    },
+    "B1_ref57_k1": {
+     "shots": 800,
+     "jobs": 1,
+     "hqc": 3968.04
+    },
+    "B0_ref25_k4": {
+     "shots": 200,
+     "jobs": 1,
+     "hqc": 998.72
+    },
+    "B1_ref57_k4": {
+     "shots": 200,
+     "jobs": 1,
+     "hqc": 998.8000000000001
+    }
+   },
+   "by_sector": {
+    "B=0": {
+     "shots": 1000,
+     "jobs": 2,
+     "hqc": 4983.08
+    },
+    "B=1": {
+     "shots": 1000,
+     "jobs": 2,
+     "hqc": 4966.84
+    }
+   },
+   "shots_total": 2000,
+   "jobs": 4,
+   "hqc_total": 9949.919999999998,
+   "device": "H2-2",
+   "unit": "HQC",
+   "usd_ESTIMATE": 124373.99999999997,
+   "max_cost_per_job": {
+    "B0_ref25_k1": 4382.796,
+    "B1_ref57_k1": 4364.844,
+    "B0_ref25_k4": 1098.592,
+    "B1_ref57_k4": 1098.68
+   }
+  },
+  "go_rule_v3": {
+   "statistic": "f_hat_ideal = f_hit / r_nc, pooled over the stage's k = 1 circuits (pooled_reference_string_test, readout factor 1.0, Garwood 95 %), interval combined with the r_nc bootstrap on the log scale (skqd.skqd.corrected_clean_fraction)",
+   "rule": "GO iff the lower 95 % bound >= 0.05 and the point estimate >= 0.10; NO-GO iff the upper 95 % bound < 0.10; AMBIGUOUS otherwise (one top-up of equal size by Poisson scaling, the H0_kpilot rule)",
+   "C3prime": "every k = 1 circuit's reference count >= 3 sigma above the garbage expectation (bit-order test)",
+   "k4_mixture_cross_check": "clean_fraction_mixture (readout factor 1.0) on the k = 4 circuits, reported beside f_hat_ideal with the CF_traj-measured bias; a STOP for the planner if it disagrees with f_hat_ideal by more than the factor 1.5 either way",
+   "r_nc": 1.1151352098004452,
+   "r_nc_95": [
+    1.0285934561902321,
+    1.1151352098004452
+   ],
+   "r_nc_source": "data/cf_trajectories/r_nc.json",
+   "r_nc_caveat": "r_nc is a gate-noise (A6 channel) value; on H2-2 the memory term is 5-30 % of the gate term (survey), so the composition stays gate-dominated; on IBM devices (idle dephasing) it is unknown and A5 gives the only model estimate (prompts/29 3(1))",
+   "k4_mixture_bias_CF_traj": {
+    "value": 1.2743607577857625,
+    "se_boot": 0.05990810467670162,
+    "ci95": [
+     1.1699868870105876,
+     1.4020537123300305
+    ]
+   },
+   "expected_reference_hits_stage": {
+    "0.05": {
+     "f_hit": 0.05,
+     "expected_reference_hits": 73.0888095904617,
+     "garwood95_relative_halfwidth": 0.2366060882144478
+    },
+    "0.1": {
+     "f_hit": 0.1,
+     "expected_reference_hits": 146.1776191809234,
+     "garwood95_relative_halfwidth": 0.16570947549652273
+    },
+    "0.15": {
+     "f_hit": 0.15,
+     "expected_reference_hits": 219.26642877138505,
+     "garwood95_relative_halfwidth": 0.13473982522124783
+    },
+    "0.2481": {
+     "f_hit": 0.24807954876330926,
+     "expected_reference_hits": 362.6367780569833,
+     "garwood95_relative_halfwidth": 0.10434776215832783
+    }
+   },
+   "expected_reference_hits_note": "sum over the two k = 1 circuits of N_c p_ref,c f_hit (garbage excluded)",
+   "stage_E_P_scope": "f only: the v3 plans sample two references per sector and cannot generate the support; any Ritz energy from their accepted strings is information labelled 'two references only: not a support, no convergence statement' (prompts/30 section 6)"
+  },
+  "dryrun_information": {
+   "A6_f_hit": 0.25018181355048436,
+   "A6_f_hat_ideal": {
+    "f_hit": 0.25018181355048436,
+    "f_hit_interval": [
+     0.19266977917476535,
+     0.319477437045917
+    ],
+    "confidence": 0.95,
+    "z": 1.959963984540054,
+    "r_nc": 1.1151352098004452,
+    "r_nc_95": [
+     1.0285934561902321,
+     1.1151352098004452
+    ],
+    "sigma_ln_r_bootstrap": 0.020608381101512745,
+    "f_hat_ideal": 0.2243511023163323,
+    "f_hat_ideal_interval": [
+     0.1722415030978245,
+     0.28744309927302153
+    ],
+    "lower_bound_at_zero": false,
+    "estimator": "f_hat_ideal = f_hit / r_nc; interval = Garwood (hit count) and bootstrap (r_nc) combined on the log scale, each end separately",
+    "r_nc_source": "data/cf_trajectories/r_nc.json"
+   },
+   "A6_go_rule_v3_reading": "GO",
+   "analyse_dryrun_fix": {
+    "garbage_acceptance_now": 0.00146,
+    "predict_json_field_was": "a timing-pilot record (dict), not the acceptance",
+    "pooled_f_unchanged": true,
+    "note": "predict.json is not rewritten (it feeds validation/Q0P_2x3.json, which stays as it is)"
+   }
+  },
+  "emulated_check": {
+   "source": "validation/CV_2x3_plan.json data.curves.f=0.10 (phi = 1, 1x plan)",
+   "per_seed": {
+    "B=0": {
+     "20260914": {
+      "sig": {
+       "recall_S999": 0.8837209302325582,
+       "size": 126,
+       "E_R_minus_E0": 0.006719340693236653,
+       "rH": 0.22121395999874466,
+       "weinstein": [
+        -5.8170950771872745,
+        -5.595881117188529
+       ],
+       "width": 0.22121395999874505,
+       "E0_in_weinstein": true
+      },
+      "all": {
+       "recall_S999": 0.9534883720930233,
+       "size": 201,
+       "E_R_minus_E0": 0.0030331276285266995,
+       "rH": 0.14911820872577375,
+       "weinstein": [
+        -5.7486855389790135,
+        -5.599567330253239
+       ],
+       "width": 0.14911820872577408,
+       "E0_in_weinstein": true
+      }
+     },
+     "1": {
+      "sig": {
+       "recall_S999": 0.9069767441860465,
+       "size": 122,
+       "E_R_minus_E0": 0.006349909000635812,
+       "rH": 0.2150784330790752,
+       "weinstein": [
+        -5.811328981960205,
+        -5.59625054888113
+       ],
+       "width": 0.21507843307907493,
+       "E0_in_weinstein": true
+      },
+      "all": {
+       "recall_S999": 0.9767441860465116,
+       "size": 208,
+       "E_R_minus_E0": 0.0025721519595673925,
+       "rH": 0.1424145231546329,
+       "weinstein": [
+        -5.742442829076832,
+        -5.600028305922199
+       ],
+       "width": 0.142414523154633,
+       "E0_in_weinstein": true
+      }
+     },
+     "2": {
+      "sig": {
+       "recall_S999": 0.8488372093023255,
+       "size": 107,
+       "E_R_minus_E0": 0.008928353078232476,
+       "rH": 0.25853931932622753,
+       "weinstein": [
+        -5.852211424129761,
+        -5.593672104803534
+       ],
+       "width": 0.25853931932622753,
+       "E0_in_weinstein": true
+      },
+      "all": {
+       "recall_S999": 0.9534883720930233,
+       "size": 185,
+       "E_R_minus_E0": 0.0037262270597473446,
+       "rH": 0.17293066358975256,
+       "weinstein": [
+        -5.771804894411772,
+        -5.598874230822019
+       ],
+       "width": 0.17293066358975295,
+       "E0_in_weinstein": true
+      }
+     }
+    },
+    "B=1": {
+     "20260914": {
+      "sig": {
+       "recall_S999": 0.8631578947368421,
+       "size": 129,
+       "E_R_minus_E0": 0.0066716508493991356,
+       "rH": 0.21053572397793918,
+       "weinstein": [
+        -4.029948516252687,
+        -3.819412792274748
+       ],
+       "width": 0.21053572397793907,
+       "E0_in_weinstein": true
+      },
+      "all": {
+       "recall_S999": 0.9473684210526315,
+       "size": 201,
+       "E_R_minus_E0": 0.0027071333632990857,
+       "rH": 0.13722323046909157,
+       "weinstein": [
+        -3.9606005402299393,
+        -3.823377309760848
+       ],
+       "width": 0.13722323046909146,
+       "E0_in_weinstein": true
+      }
+     },
+     "1": {
+      "sig": {
+       "recall_S999": 0.9052631578947369,
+       "size": 134,
+       "E_R_minus_E0": 0.005578901374805323,
+       "rH": 0.19601453729114152,
+       "weinstein": [
+        -4.016520079040483,
+        -3.8205055417493416
+       ],
+       "width": 0.1960145372911417,
+       "E0_in_weinstein": true
+      },
+      "all": {
+       "recall_S999": 0.9578947368421052,
+       "size": 202,
+       "E_R_minus_E0": 0.0022436325306838256,
+       "rH": 0.12463381526532509,
+       "weinstein": [
+        -3.9484746258587884,
+        -3.823840810593463
+       ],
+       "width": 0.12463381526532524,
+       "E0_in_weinstein": true
+      }
+     },
+     "2": {
+      "sig": {
+       "recall_S999": 0.9368421052631579,
+       "size": 144,
+       "E_R_minus_E0": 0.004535409706408977,
+       "rH": 0.18349090363439127,
+       "weinstein": [
+        -4.005039937052129,
+        -3.821549033417738
+       ],
+       "width": 0.18349090363439124,
+       "E0_in_weinstein": true
+      },
+      "all": {
+       "recall_S999": 0.9578947368421052,
+       "size": 203,
+       "E_R_minus_E0": 0.002670415989519448,
+       "rH": 0.14329706587573549,
+       "weinstein": [
+        -3.966711093010363,
+        -3.8234140271346275
+       ],
+       "width": 0.14329706587573554,
+       "E0_in_weinstein": true
+      }
+     }
+    }
+   },
+   "h1_width_information": 0.1
+  },
+  "resized_rows": {
+   "f=0.05": {
+    "B=1": {
+     "s": 4,
+     "shots_by_circuit": {
+      "B1_ref27_k1": 1100,
+      "B1_ref27_k2": 1100,
+      "B1_ref27_k3": 1100,
+      "B1_ref27_k4": 119200,
+      "B1_ref29_k1": 1100,
+      "B1_ref29_k2": 1100,
+      "B1_ref29_k3": 1100,
+      "B1_ref29_k4": 91600,
+      "B1_ref57_k1": 1100,
+      "B1_ref57_k2": 1100,
+      "B1_ref57_k3": 1100,
+      "B1_ref57_k4": 165600
+     },
+     "shots_total": 386300,
+     "jobs": 48,
+     "hqc": 1919714.46,
+     "usd_ESTIMATE": 23996430.75,
+     "machine_hours_mid_ESTIMATE": 227.2195138888889,
+     "hqc_before": 479611.5190000001
+    }
+   },
+   "f=0.10": {
+    "B=1": {
+     "s": 8,
+     "shots_by_circuit": {
+      "B1_ref27_k1": 2200,
+      "B1_ref27_k2": 2200,
+      "B1_ref27_k3": 2200,
+      "B1_ref27_k4": 118400,
+      "B1_ref29_k1": 2200,
+      "B1_ref29_k2": 2200,
+      "B1_ref29_k3": 2200,
+      "B1_ref29_k4": 91200,
+      "B1_ref57_k1": 2200,
+      "B1_ref57_k2": 2200,
+      "B1_ref57_k3": 2200,
+      "B1_ref57_k4": 164800
+     },
+     "shots_total": 394200,
+     "jobs": 48,
+     "hqc": 1958876.9200000004,
+     "usd_ESTIMATE": 24485961.500000004,
+     "machine_hours_mid_ESTIMATE": 231.86625000000004,
+     "hqc_before": 244552.51899999997
+    }
+   },
+   "f=0.15": {
+    "B=1": {
+     "s": 8,
+     "shots_by_circuit": {
+      "B1_ref27_k1": 2200,
+      "B1_ref27_k2": 2200,
+      "B1_ref27_k3": 2200,
+      "B1_ref27_k4": 79200,
+      "B1_ref29_k1": 2200,
+      "B1_ref29_k2": 2200,
+      "B1_ref29_k3": 2200,
+      "B1_ref29_k4": 60000,
+      "B1_ref57_k1": 2200,
+      "B1_ref57_k2": 2200,
+      "B1_ref57_k3": 2200,
+      "B1_ref57_k4": 109600
+     },
+     "shots_total": 268600,
+     "jobs": 34,
+     "hqc": 1334686.44,
+     "usd_ESTIMATE": 16683580.5,
+     "machine_hours_mid_ESTIMATE": 157.98902777777778,
+     "hqc_before": 166522.459
+    }
+   }
+  },
+  "P7_detail": {
+   "B=0|f=0.05": {
+    "resized_by": null,
+    "base_identical": true,
+    "final_identical": true
+   },
+   "B=1|f=0.05": {
+    "resized_by": 4,
+    "base_identical": true,
+    "final_identical": true
+   },
+   "B=0|f=0.10": {
+    "resized_by": null,
+    "base_identical": true,
+    "final_identical": true
+   },
+   "B=1|f=0.10": {
+    "resized_by": 8,
+    "base_identical": true,
+    "final_identical": true
+   },
+   "B=0|f=0.15": {
+    "resized_by": null,
+    "base_identical": true,
+    "final_identical": true
+   },
+   "B=1|f=0.15": {
+    "resized_by": 8,
+    "base_identical": true,
+    "final_identical": true
+   }
+  },
+  "P4": {
+   "plans_checked": 13,
+   "max_relative_difference": 1.4603812178695217e-16
+  },
+  "target_sets": {
+   "B=0": {
+    "dim": 677,
+    "S99_size": 31,
+    "S999_size": 86,
+    "S99_positions": [
+     2,
+     4,
+     5,
+     7,
+     8,
+     9,
+     13,
+     16,
+     22,
+     28,
+     34,
+     39,
+     44,
+     59,
+     70,
+     103,
+     117,
+     122,
+     152,
+     195,
+     199,
+     201,
+     204,
+     211,
+     231,
+     309,
+     313,
+     315,
+     382,
+     440,
+     540
+    ],
+    "S999_positions": [
+     2,
+     4,
+     5,
+     7,
+     8,
+     9,
+     13,
+     16,
+     20,
+     21,
+     22,
+     24,
+     25,
+     27,
+     28,
+     30,
+     31,
+     34,
+     39,
+     40,
+     41,
+     44,
+     48,
+     53,
+     58,
+     59,
+     60,
+     61,
+     65,
+     70,
+     73,
+     79,
+     86,
+     92,
+     103,
+     116,
+     117,
+     118,
+     119,
+     122,
+     126,
+     137,
+     142,
+     152,
+     156,
+     192,
+     193,
+     195,
+     196,
+     197,
+     199,
+     201,
+     203,
+     204,
+     206,
+     208,
+     211,
+     213,
+     215,
+     218,
+     227,
+     231,
+     236,
+     253,
+     307,
+     309,
+     310,
+     311,
+     313,
+     315,
+     321,
+     325,
+     341,
+     351,
+     382,
+     384,
+     386,
+     392,
+     405,
+     440,
+     444,
+     450,
+     514,
+     540,
+     555,
+     563
+    ],
+    "sets_match_exact_support": true,
+    "n_circuits": 32,
+    "n_k4_circuits": 8,
+    "reachability_S999": {
+     "min_sum_p_all_circuits": 0.005891418211428538,
+     "min_sum_p_k4": 0.0024107249689638913,
+     "min_max_p_any_circuit": 0.0016417137581232445
+    },
+    "states_sum_k4_p_below_1e-6": 32,
+    "states_sum_k4_p_below_1e-6_in_S999": 0,
+    "states_sum_k4_p_below_1e-6_max_ground_weight": 2.3161369815645417e-08
+   },
+   "B=1": {
+    "dim": 426,
+    "S99_size": 42,
+    "S999_size": 95,
+    "S99_positions": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     6,
+     7,
+     9,
+     10,
+     12,
+     13,
+     14,
+     15,
+     18,
+     19,
+     22,
+     23,
+     27,
+     29,
+     31,
+     40,
+     42,
+     48,
+     53,
+     67,
+     77,
+     80,
+     82,
+     84,
+     102,
+     128,
+     129,
+     132,
+     134,
+     149,
+     195,
+     196,
+     199,
+     216,
+     241,
+     330,
+     340
+    ],
+    "S999_positions": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     6,
+     7,
+     9,
+     10,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     26,
+     27,
+     28,
+     29,
+     30,
+     31,
+     32,
+     35,
+     38,
+     40,
+     41,
+     42,
+     43,
+     44,
+     46,
+     48,
+     51,
+     53,
+     55,
+     60,
+     64,
+     67,
+     77,
+     80,
+     81,
+     82,
+     83,
+     84,
+     85,
+     88,
+     93,
+     95,
+     102,
+     104,
+     127,
+     128,
+     129,
+     130,
+     131,
+     132,
+     133,
+     134,
+     137,
+     140,
+     144,
+     147,
+     149,
+     151,
+     161,
+     169,
+     194,
+     195,
+     196,
+     197,
+     198,
+     199,
+     200,
+     202,
+     203,
+     205,
+     216,
+     222,
+     241,
+     242,
+     245,
+     253,
+     269,
+     270,
+     275,
+     315,
+     330,
+     340,
+     346,
+     347
+    ],
+    "sets_match_exact_support": true,
+    "n_circuits": 12,
+    "n_k4_circuits": 3,
+    "reachability_S999": {
+     "min_sum_p_all_circuits": 0.0010979301337431684,
+     "min_sum_p_k4": 0.0006202186688583435,
+     "min_max_p_any_circuit": 0.0006186827538635775
+    },
+    "states_sum_k4_p_below_1e-6": 11,
+    "states_sum_k4_p_below_1e-6_in_S999": 0,
+    "states_sum_k4_p_below_1e-6_max_ground_weight": 3.46576118910891e-06
+   }
+  },
+  "plan_table": {
+   "f=0.05": {
+    "f": 0.05,
+    "clean_yield_per_shot": 0.0287,
+    "D3R": {
+     "shots_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 2900,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 2700,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 267,
+      "B0_ref25_k4": 37000,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 2700,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 3100,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 3700,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 2267,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 3100,
+      "B1_ref27_k1": 267,
+      "B1_ref27_k2": 267,
+      "B1_ref27_k3": 267,
+      "B1_ref27_k4": 29800,
+      "B1_ref29_k1": 267,
+      "B1_ref29_k2": 267,
+      "B1_ref29_k3": 267,
+      "B1_ref29_k4": 22900,
+      "B1_ref57_k1": 267,
+      "B1_ref57_k2": 267,
+      "B1_ref57_k3": 267,
+      "B1_ref57_k4": 41400
+     },
+     "per_circuit": {
+      "B0_ref117_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.0046
+      },
+      "B0_ref117_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6938
+      },
+      "B0_ref117_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.99
+      },
+      "B0_ref117_k4": {
+       "shots": 2900,
+       "jobs": 1,
+       "hqc": 14415.68
+      },
+      "B0_ref169_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.1114
+      },
+      "B0_ref169_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.5336
+      },
+      "B0_ref169_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.8832
+      },
+      "B0_ref169_k4": {
+       "shots": 2700,
+       "jobs": 1,
+       "hqc": 13419.68
+      },
+      "B0_ref25_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.1114
+      },
+      "B0_ref25_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6404
+      },
+      "B0_ref25_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.8298
+      },
+      "B0_ref25_k4": {
+       "shots": 37000,
+       "jobs": 4,
+       "hqc": 183858.2
+      },
+      "B0_ref333_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1332.8444000000002
+      },
+      "B0_ref333_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.4802000000002
+      },
+      "B0_ref333_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.7230000000002
+      },
+      "B0_ref333_k4": {
+       "shots": 2700,
+       "jobs": 1,
+       "hqc": 13419.68
+      },
+      "B0_ref525_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1332.8978
+      },
+      "B0_ref525_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.5336
+      },
+      "B0_ref525_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.99
+      },
+      "B0_ref525_k4": {
+       "shots": 3100,
+       "jobs": 1,
+       "hqc": 15408.900000000001
+      },
+      "B0_ref70_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.058
+      },
+      "B0_ref70_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6404
+      },
+      "B0_ref70_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.8832
+      },
+      "B0_ref70_k4": {
+       "shots": 3700,
+       "jobs": 1,
+       "hqc": 18389.56
+      },
+      "B0_ref795_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1332.791
+      },
+      "B0_ref795_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6404
+      },
+      "B0_ref795_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.9366
+      },
+      "B0_ref795_k4": {
+       "shots": 2267,
+       "jobs": 1,
+       "hqc": 11269.723
+      },
+      "B0_ref86_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.058
+      },
+      "B0_ref86_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.587
+      },
+      "B0_ref86_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.99
+      },
+      "B0_ref86_k4": {
+       "shots": 3100,
+       "jobs": 1,
+       "hqc": 15408.279999999999
+      },
+      "B1_ref27_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1327.7714
+      },
+      "B1_ref27_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.8298
+      },
+      "B1_ref27_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1328.2520000000002
+      },
+      "B1_ref27_k4": {
+       "shots": 29800,
+       "jobs": 3,
+       "hqc": 148097.16
+      },
+      "B1_ref29_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1327.7179999999998
+      },
+      "B1_ref29_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.7764
+      },
+      "B1_ref29_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1328.1986
+      },
+      "B1_ref29_k4": {
+       "shots": 22900,
+       "jobs": 3,
+       "hqc": 113809.68
+      },
+      "B1_ref57_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1327.6646
+      },
+      "B1_ref57_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.7230000000002
+      },
+      "B1_ref57_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1328.1452
+      },
+      "B1_ref57_k4": {
+       "shots": 41400,
+       "jobs": 5,
+       "hqc": 205741.6
+      }
+     },
+     "by_sector": {
+      "B=0": {
+       "shots": 63875,
+       "jobs": 35,
+       "hqc": 317545.5547999999
+      },
+      "B=1": {
+       "shots": 96503,
+       "jobs": 20,
+       "hqc": 479611.5190000001
+      }
+     },
+     "shots_total": 160378,
+     "jobs": 55,
+     "hqc_total": 797157.0737999999,
+     "usd_ESTIMATE": 9964463.4225,
+     "machine_hours_mid_ESTIMATE": 94.33344861111112,
+     "sectors": {
+      "B=0": {
+       "shots_total": 63875,
+       "lp_shots_total": 47875,
+       "lp_objective": 47402.49761515182,
+       "k4_extra_per_circuit": 2000,
+       "lambda_min_S99": 7.249606855141915,
+       "lambda_min_S999": 0.570120900373091,
+       "n_S999_states_below_lambda_star": 45,
+       "recall_floor_S999": 0.9402249149486924,
+       "P_recall_S999_ge_target": 0.953118170847421,
+       "k_needed_of_S999": 78,
+       "P_all_S99_seen": 0.9985540842128849,
+       "floor_circuits": 24,
+       "rule": "D3'-R (prompts/28 B2): LP min sum N_c s.t. every S99 state >= lambda* expected clean counts at y_c = readout_factor x margin x f_c, N_c >= floor (floor circuits exact, others rounded up to round_to); then the k = 4 circuits + a common extra (multiple of round_to) until P(clean-only recall of S999 >= recall_target) >= prob_target (Poisson-binomial, exact)",
+       "D3S_shots_total": 374142,
+       "D3S_guarantees": {
+        "lambda_min_S99": 9.724321523526111,
+        "lambda_min_S999": 6.297006415334818,
+        "recall_floor_S999": 0.9998614448921171,
+        "P_recall_S999_ge_0.9": 1.0000000000000002,
+        "n_S99_below_lambda_star": 0,
+        "n_S999_below_lambda_star": 0
+       }
+      },
+      "B=1": {
+       "shots_total": 96503,
+       "lp_shots_total": 96503,
+       "lp_objective": 96298.2058622964,
+       "k4_extra_per_circuit": 0,
+       "lambda_min_S99": 6.306338542607366,
+       "lambda_min_S999": 0.6256813152992566,
+       "n_S999_states_below_lambda_star": 34,
+       "recall_floor_S999": 0.95007460973622,
+       "P_recall_S999_ge_target": 0.9934846188429568,
+       "k_needed_of_S999": 86,
+       "P_all_S99_seen": 0.9911857569260206,
+       "floor_circuits": 9,
+       "rule": "D3'-R (prompts/28 B2): LP min sum N_c s.t. every S99 state >= lambda* expected clean counts at y_c = readout_factor x margin x f_c, N_c >= floor (floor circuits exact, others rounded up to round_to); then the k = 4 circuits + a common extra (multiple of round_to) until P(clean-only recall of S999 >= recall_target) >= prob_target (Poisson-binomial, exact)",
+       "D3S_shots_total": 734703,
+       "D3S_guarantees": {
+        "lambda_min_S99": 19.94470060513371,
+        "lambda_min_S999": 6.2960821519307455,
+        "recall_floor_S999": 0.9998950432997189,
+        "P_recall_S999_ge_0.9": 1.0,
+        "n_S99_below_lambda_star": 0,
+        "n_S999_below_lambda_star": 0
+       }
+      }
+     },
+     "floor_circuits": 33,
+     "floor_share_circuits": 0.75
+    },
+    "D3S_LP": {
+     "shots_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 44700,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 5500,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 267,
+      "B0_ref25_k4": 267,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 123700,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 21600,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 49200,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 267,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 122500,
+      "B1_ref27_k1": 267,
+      "B1_ref27_k2": 267,
+      "B1_ref27_k3": 267,
+      "B1_ref27_k4": 305400,
+      "B1_ref29_k1": 267,
+      "B1_ref29_k2": 267,
+      "B1_ref29_k3": 267,
+      "B1_ref29_k4": 72800,
+      "B1_ref57_k1": 267,
+      "B1_ref57_k2": 267,
+      "B1_ref57_k3": 267,
+      "B1_ref57_k4": 354100
+     },
+     "per_circuit": {
+      "B0_ref117_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.0046
+      },
+      "B0_ref117_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6938
+      },
+      "B0_ref117_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.99
+      },
+      "B0_ref117_k4": {
+       "shots": 44700,
+       "jobs": 5,
+       "hqc": 222148.24
+      },
+      "B0_ref169_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.1114
+      },
+      "B0_ref169_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.5336
+      },
+      "B0_ref169_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.8832
+      },
+      "B0_ref169_k4": {
+       "shots": 5500,
+       "jobs": 1,
+       "hqc": 27331.2
+      },
+      "B0_ref25_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.1114
+      },
+      "B0_ref25_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6404
+      },
+      "B0_ref25_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.8298
+      },
+      "B0_ref25_k4": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.6162000000002
+      },
+      "B0_ref333_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1332.8444000000002
+      },
+      "B0_ref333_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.4802000000002
+      },
+      "B0_ref333_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.7230000000002
+      },
+      "B0_ref333_k4": {
+       "shots": 123700,
+       "jobs": 13,
+       "hqc": 614656.08
+      },
+      "B0_ref525_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1332.8978
+      },
+      "B0_ref525_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.5336
+      },
+      "B0_ref525_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.99
+      },
+      "B0_ref525_k4": {
+       "shots": 21600,
+       "jobs": 3,
+       "hqc": 107345.40000000001
+      },
+      "B0_ref70_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.058
+      },
+      "B0_ref70_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6404
+      },
+      "B0_ref70_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.8832
+      },
+      "B0_ref70_k4": {
+       "shots": 49200,
+       "jobs": 5,
+       "hqc": 244489.96
+      },
+      "B0_ref795_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1332.791
+      },
+      "B0_ref795_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6404
+      },
+      "B0_ref795_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.9366
+      },
+      "B0_ref795_k4": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.7230000000002
+      },
+      "B0_ref86_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.058
+      },
+      "B0_ref86_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.587
+      },
+      "B0_ref86_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.99
+      },
+      "B0_ref86_k4": {
+       "shots": 122500,
+       "jobs": 13,
+       "hqc": 608743.0
+      },
+      "B1_ref27_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1327.7714
+      },
+      "B1_ref27_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.8298
+      },
+      "B1_ref27_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1328.2520000000002
+      },
+      "B1_ref27_k4": {
+       "shots": 305400,
+       "jobs": 31,
+       "hqc": 1517748.68
+      },
+      "B1_ref29_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1327.7179999999998
+      },
+      "B1_ref29_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.7764
+      },
+      "B1_ref29_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1328.1986
+      },
+      "B1_ref29_k4": {
+       "shots": 72800,
+       "jobs": 8,
+       "hqc": 361797.76
+      },
+      "B1_ref57_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1327.6646
+      },
+      "B1_ref57_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.7230000000002
+      },
+      "B1_ref57_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1328.1452
+      },
+      "B1_ref57_k4": {
+       "shots": 354100,
+       "jobs": 36,
+       "hqc": 1759702.9000000001
+      }
+     },
+     "by_sector": {
+      "B=0": {
+       "shots": 374142,
+       "jobs": 66,
+       "hqc": 1859333.0709999998
+      },
+      "B=1": {
+       "shots": 734703,
+       "jobs": 84,
+       "hqc": 3651212.419
+      }
+     },
+     "shots_total": 1108845,
+     "jobs": 150,
+     "hqc_total": 5510545.49,
+     "usd_ESTIMATE": 68881818.625,
+     "machine_hours_mid_ESTIMATE": 652.21646875
+    },
+    "D3type_union": {
+     "shots_by_circuit": {
+      "B0_ref117_k1": 6385,
+      "B0_ref117_k2": 6385,
+      "B0_ref117_k3": 6385,
+      "B0_ref117_k4": 6385,
+      "B0_ref169_k1": 6385,
+      "B0_ref169_k2": 6385,
+      "B0_ref169_k3": 6385,
+      "B0_ref169_k4": 6385,
+      "B0_ref25_k1": 6385,
+      "B0_ref25_k2": 6385,
+      "B0_ref25_k3": 6385,
+      "B0_ref25_k4": 6385,
+      "B0_ref333_k1": 6385,
+      "B0_ref333_k2": 6385,
+      "B0_ref333_k3": 6385,
+      "B0_ref333_k4": 6385,
+      "B0_ref525_k1": 6385,
+      "B0_ref525_k2": 6385,
+      "B0_ref525_k3": 6385,
+      "B0_ref525_k4": 6385,
+      "B0_ref70_k1": 6385,
+      "B0_ref70_k2": 6385,
+      "B0_ref70_k3": 6385,
+      "B0_ref70_k4": 6385,
+      "B0_ref795_k1": 6385,
+      "B0_ref795_k2": 6385,
+      "B0_ref795_k3": 6385,
+      "B0_ref795_k4": 6385,
+      "B0_ref86_k1": 6385,
+      "B0_ref86_k2": 6385,
+      "B0_ref86_k3": 6385,
+      "B0_ref86_k4": 6385,
+      "B1_ref27_k1": 16925,
+      "B1_ref27_k2": 16925,
+      "B1_ref27_k3": 16925,
+      "B1_ref27_k4": 16925,
+      "B1_ref29_k1": 16925,
+      "B1_ref29_k2": 16925,
+      "B1_ref29_k3": 16925,
+      "B1_ref29_k4": 16925,
+      "B1_ref57_k1": 16925,
+      "B1_ref57_k2": 16925,
+      "B1_ref57_k3": 16925,
+      "B1_ref57_k4": 16925
+     },
+     "per_circuit": {
+      "B0_ref117_k1": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31762.713
+      },
+      "B0_ref117_k2": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31683.539
+      },
+      "B0_ref117_k3": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31738.449999999997
+      },
+      "B0_ref117_k4": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31733.342
+      },
+      "B0_ref169_k1": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31765.267
+      },
+      "B0_ref169_k2": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31679.708
+      },
+      "B0_ref169_k3": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31735.895999999997
+      },
+      "B0_ref169_k4": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31728.234
+      },
+      "B0_ref25_k1": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31765.267
+      },
+      "B0_ref25_k2": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31682.262
+      },
+      "B0_ref25_k3": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31734.619000000002
+      },
+      "B0_ref25_k4": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31729.511000000002
+      },
+      "B0_ref333_k1": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31758.882
+      },
+      "B0_ref333_k2": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31678.431
+      },
+      "B0_ref333_k3": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31732.065000000002
+      },
+      "B0_ref333_k4": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31728.234
+      },
+      "B0_ref525_k1": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31760.159
+      },
+      "B0_ref525_k2": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31679.708
+      },
+      "B0_ref525_k3": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31738.449999999997
+      },
+      "B0_ref525_k4": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31732.065000000002
+      },
+      "B0_ref70_k1": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31763.99
+      },
+      "B0_ref70_k2": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31682.262
+      },
+      "B0_ref70_k3": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31735.895999999997
+      },
+      "B0_ref70_k4": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31730.788
+      },
+      "B0_ref795_k1": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31757.605
+      },
+      "B0_ref795_k2": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31682.262
+      },
+      "B0_ref795_k3": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31737.173000000003
+      },
+      "B0_ref795_k4": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31732.065000000002
+      },
+      "B0_ref86_k1": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31763.99
+      },
+      "B0_ref86_k2": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31680.985
+      },
+      "B0_ref86_k3": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31738.449999999997
+      },
+      "B0_ref86_k4": {
+       "shots": 6385,
+       "jobs": 1,
+       "hqc": 31730.788
+      },
+      "B1_ref27_k1": {
+       "shots": 16925,
+       "jobs": 2,
+       "hqc": 83859.835
+      },
+      "B1_ref27_k2": {
+       "shots": 16925,
+       "jobs": 2,
+       "hqc": 84117.095
+      },
+      "B1_ref27_k3": {
+       "shots": 16925,
+       "jobs": 2,
+       "hqc": 83890.3
+      },
+      "B1_ref27_k4": {
+       "shots": 16925,
+       "jobs": 2,
+       "hqc": 84113.70999999999
+      },
+      "B1_ref29_k1": {
+       "shots": 16925,
+       "jobs": 2,
+       "hqc": 83856.45
+      },
+      "B1_ref29_k2": {
+       "shots": 16925,
+       "jobs": 2,
+       "hqc": 84113.70999999999
+      },
+      "B1_ref29_k3": {
+       "shots": 16925,
+       "jobs": 2,
+       "hqc": 83886.915
+      },
+      "B1_ref29_k4": {
+       "shots": 16925,
+       "jobs": 2,
+       "hqc": 84113.70999999999
+      },
+      "B1_ref57_k1": {
+       "shots": 16925,
+       "jobs": 2,
+       "hqc": 83853.065
+      },
+      "B1_ref57_k2": {
+       "shots": 16925,
+       "jobs": 2,
+       "hqc": 84110.32500000001
+      },
+      "B1_ref57_k3": {
+       "shots": 16925,
+       "jobs": 2,
+       "hqc": 83883.53
+      },
+      "B1_ref57_k4": {
+       "shots": 16925,
+       "jobs": 2,
+       "hqc": 84110.32500000001
+      }
+     },
+     "by_sector": {
+      "B=0": {
+       "shots": 204320,
+       "jobs": 32,
+       "hqc": 1015283.0559999999
+      },
+      "B=1": {
+       "shots": 203100,
+       "jobs": 24,
+       "hqc": 1007908.97
+      }
+     },
+     "shots_total": 407420,
+     "jobs": 56,
+     "hqc_total": 2023192.0259999996,
+     "f": 0.05,
+     "margin": 0.7,
+     "sectors": {
+      "B=0": {
+       "N_sector_rule": 204300,
+       "N_sector_at_f_0.1": 71500,
+       "per_circuit": 6385
+      },
+      "B=1": {
+       "N_sector_rule": 203100,
+       "N_sector_at_f_0.1": 71075,
+       "per_circuit": 16925
+      }
+     },
+     "rule": "D3-type union reading (data/S2D_recall_at_f.json results.<sector>|f=0.1.shot_rule_union_reading_N_sector, gate S1's recall criterion) x 0.1 / (0.7 f), rounded up to 100, spread evenly over the sector's circuits",
+     "usd_ESTIMATE": 25289900.324999996,
+     "machine_hours_mid_ESTIMATE": 239.64218055555557,
+     "guarantees": {
+      "B=0": {
+       "lambda_min_S99": 6.428893027115386,
+       "lambda_min_S999": 1.079599441535174,
+       "recall_floor_S999": 0.9848902649948186,
+       "P_recall_S999_ge_0.9": 0.9999999652330431,
+       "n_S99_below_lambda_star": 0,
+       "n_S999_below_lambda_star": 23
+      },
+      "B=1": {
+       "lambda_min_S99": 4.483227898412482,
+       "lambda_min_S999": 0.5333168176404097,
+       "recall_floor_S999": 0.9281518758015854,
+       "P_recall_S999_ge_0.9": 0.8947870719972183,
+       "n_S99_below_lambda_star": 3,
+       "n_S999_below_lambda_star": 38
+      }
+     }
+    }
+   },
+   "f=0.10": {
+    "f": 0.1,
+    "clean_yield_per_shot": 0.0574,
+    "D3R": {
+     "shots_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 1367,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 1367,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 1000,
+      "B0_ref25_k4": 17600,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 1367,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 1500,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 1700,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 1367,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 1500,
+      "B1_ref27_k1": 267,
+      "B1_ref27_k2": 267,
+      "B1_ref27_k3": 267,
+      "B1_ref27_k4": 14800,
+      "B1_ref29_k1": 267,
+      "B1_ref29_k2": 267,
+      "B1_ref29_k3": 267,
+      "B1_ref29_k4": 11400,
+      "B1_ref57_k1": 267,
+      "B1_ref57_k2": 267,
+      "B1_ref57_k3": 267,
+      "B1_ref57_k4": 20600
+     },
+     "per_circuit": {
+      "B0_ref117_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.0046
+      },
+      "B0_ref117_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6938
+      },
+      "B0_ref117_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.99
+      },
+      "B0_ref117_k4": {
+       "shots": 1367,
+       "jobs": 1,
+       "hqc": 6797.8964
+      },
+      "B0_ref169_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.1114
+      },
+      "B0_ref169_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.5336
+      },
+      "B0_ref169_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.8832
+      },
+      "B0_ref169_k4": {
+       "shots": 1367,
+       "jobs": 1,
+       "hqc": 6796.8027999999995
+      },
+      "B0_ref25_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.1114
+      },
+      "B0_ref25_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6404
+      },
+      "B0_ref25_k3": {
+       "shots": 1000,
+       "jobs": 1,
+       "hqc": 4974.400000000001
+      },
+      "B0_ref25_k4": {
+       "shots": 17600,
+       "jobs": 2,
+       "hqc": 87457.36
+      },
+      "B0_ref333_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1332.8444000000002
+      },
+      "B0_ref333_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.4802000000002
+      },
+      "B0_ref333_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.7230000000002
+      },
+      "B0_ref333_k4": {
+       "shots": 1367,
+       "jobs": 1,
+       "hqc": 6796.8027999999995
+      },
+      "B0_ref525_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1332.8978
+      },
+      "B0_ref525_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.5336
+      },
+      "B0_ref525_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.99
+      },
+      "B0_ref525_k4": {
+       "shots": 1500,
+       "jobs": 1,
+       "hqc": 7458.500000000001
+      },
+      "B0_ref70_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.058
+      },
+      "B0_ref70_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6404
+      },
+      "B0_ref70_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.8832
+      },
+      "B0_ref70_k4": {
+       "shots": 1700,
+       "jobs": 1,
+       "hqc": 8451.96
+      },
+      "B0_ref795_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1332.791
+      },
+      "B0_ref795_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6404
+      },
+      "B0_ref795_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.9366
+      },
+      "B0_ref795_k4": {
+       "shots": 1367,
+       "jobs": 1,
+       "hqc": 6797.6230000000005
+      },
+      "B0_ref86_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.058
+      },
+      "B0_ref86_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.587
+      },
+      "B0_ref86_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.99
+      },
+      "B0_ref86_k4": {
+       "shots": 1500,
+       "jobs": 1,
+       "hqc": 7458.2
+      },
+      "B1_ref27_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1327.7714
+      },
+      "B1_ref27_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.8298
+      },
+      "B1_ref27_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1328.2520000000002
+      },
+      "B1_ref27_k4": {
+       "shots": 14800,
+       "jobs": 2,
+       "hqc": 73554.16
+      },
+      "B1_ref29_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1327.7179999999998
+      },
+      "B1_ref29_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.7764
+      },
+      "B1_ref29_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1328.1986
+      },
+      "B1_ref29_k4": {
+       "shots": 11400,
+       "jobs": 2,
+       "hqc": 56658.88
+      },
+      "B1_ref57_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1327.6646
+      },
+      "B1_ref57_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.7230000000002
+      },
+      "B1_ref57_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1328.1452
+      },
+      "B1_ref57_k4": {
+       "shots": 20600,
+       "jobs": 3,
+       "hqc": 102376.40000000001
+      }
+     },
+     "by_sector": {
+      "B=0": {
+       "shots": 34909,
+       "jobs": 33,
+       "hqc": 173613.56699999998
+      },
+      "B=1": {
+       "shots": 49203,
+       "jobs": 16,
+       "hqc": 244552.51899999997
+      }
+     },
+     "shots_total": 84112,
+     "jobs": 49,
+     "hqc_total": 418166.08600000007,
+     "usd_ESTIMATE": 5227076.075000001,
+     "machine_hours_mid_ESTIMATE": 49.47421111111111,
+     "sectors": {
+      "B=0": {
+       "shots_total": 34909,
+       "lp_shots_total": 26109,
+       "lp_objective": 25929.559186461534,
+       "k4_extra_per_circuit": 1100,
+       "lambda_min_S99": 7.3424015167892716,
+       "lambda_min_S999": 0.5825738612835518,
+       "n_S999_states_below_lambda_star": 45,
+       "recall_floor_S999": 0.9418079873761426,
+       "P_recall_S999_ge_target": 0.9603412331814347,
+       "k_needed_of_S999": 78,
+       "P_all_S99_seen": 0.9987173851850317,
+       "floor_circuits": 23,
+       "rule": "D3'-R (prompts/28 B2): LP min sum N_c s.t. every S99 state >= lambda* expected clean counts at y_c = readout_factor x margin x f_c, N_c >= floor (floor circuits exact, others rounded up to round_to); then the k = 4 circuits + a common extra (multiple of round_to) until P(clean-only recall of S999 >= recall_target) >= prob_target (Poisson-binomial, exact)",
+       "D3S_shots_total": 189442,
+       "D3S_guarantees": {
+        "lambda_min_S99": 11.38138706730742,
+        "lambda_min_S999": 6.300486476920494,
+        "recall_floor_S999": 0.9998664615068467,
+        "P_recall_S999_ge_0.9": 1.0,
+        "n_S99_below_lambda_star": 0,
+        "n_S999_below_lambda_star": 0
+       }
+      },
+      "B=1": {
+       "shots_total": 49203,
+       "lp_shots_total": 49203,
+       "lp_objective": 49062.96987752925,
+       "k4_extra_per_circuit": 0,
+       "lambda_min_S99": 6.299261149809251,
+       "lambda_min_S999": 0.6254756581601941,
+       "n_S999_states_below_lambda_star": 34,
+       "recall_floor_S999": 0.949956009999757,
+       "P_recall_S999_ge_target": 0.9933294154258548,
+       "k_needed_of_S999": 86,
+       "P_all_S99_seen": 0.9913792413949969,
+       "floor_circuits": 9,
+       "rule": "D3'-R (prompts/28 B2): LP min sum N_c s.t. every S99 state >= lambda* expected clean counts at y_c = readout_factor x margin x f_c, N_c >= floor (floor circuits exact, others rounded up to round_to); then the k = 4 circuits + a common extra (multiple of round_to) until P(clean-only recall of S999 >= recall_target) >= prob_target (Poisson-binomial, exact)",
+       "D3S_shots_total": 368403,
+       "D3S_guarantees": {
+        "lambda_min_S99": 20.002099094220128,
+        "lambda_min_S999": 6.296924136728335,
+        "recall_floor_S999": 0.9998953817965879,
+        "P_recall_S999_ge_0.9": 1.0,
+        "n_S99_below_lambda_star": 0,
+        "n_S999_below_lambda_star": 0
+       }
+      }
+     },
+     "floor_circuits": 32,
+     "floor_share_circuits": 0.7272727272727273
+    },
+    "D3S_LP": {
+     "shots_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 22200,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 2800,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 267,
+      "B0_ref25_k4": 267,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 61600,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 10500,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 24400,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 267,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 61000,
+      "B1_ref27_k1": 267,
+      "B1_ref27_k2": 267,
+      "B1_ref27_k3": 267,
+      "B1_ref27_k4": 152600,
+      "B1_ref29_k1": 267,
+      "B1_ref29_k2": 267,
+      "B1_ref29_k3": 267,
+      "B1_ref29_k4": 36400,
+      "B1_ref57_k1": 267,
+      "B1_ref57_k2": 267,
+      "B1_ref57_k3": 267,
+      "B1_ref57_k4": 177000
+     },
+     "per_circuit": {
+      "B0_ref117_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.0046
+      },
+      "B0_ref117_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6938
+      },
+      "B0_ref117_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.99
+      },
+      "B0_ref117_k4": {
+       "shots": 22200,
+       "jobs": 3,
+       "hqc": 110331.23999999999
+      },
+      "B0_ref169_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.1114
+      },
+      "B0_ref169_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.5336
+      },
+      "B0_ref169_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.8832
+      },
+      "B0_ref169_k4": {
+       "shots": 2800,
+       "jobs": 1,
+       "hqc": 13916.52
+      },
+      "B0_ref25_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.1114
+      },
+      "B0_ref25_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6404
+      },
+      "B0_ref25_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.8298
+      },
+      "B0_ref25_k4": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.6162000000002
+      },
+      "B0_ref333_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1332.8444000000002
+      },
+      "B0_ref333_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.4802000000002
+      },
+      "B0_ref333_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.7230000000002
+      },
+      "B0_ref333_k4": {
+       "shots": 61600,
+       "jobs": 7,
+       "hqc": 306088.44
+      },
+      "B0_ref525_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1332.8978
+      },
+      "B0_ref525_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.5336
+      },
+      "B0_ref525_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.99
+      },
+      "B0_ref525_k4": {
+       "shots": 10500,
+       "jobs": 2,
+       "hqc": 52184.5
+      },
+      "B0_ref70_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.058
+      },
+      "B0_ref70_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6404
+      },
+      "B0_ref70_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.8832
+      },
+      "B0_ref70_k4": {
+       "shots": 24400,
+       "jobs": 3,
+       "hqc": 121253.72
+      },
+      "B0_ref795_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1332.791
+      },
+      "B0_ref795_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6404
+      },
+      "B0_ref795_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.9366
+      },
+      "B0_ref795_k4": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.7230000000002
+      },
+      "B0_ref86_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.058
+      },
+      "B0_ref86_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.587
+      },
+      "B0_ref86_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.99
+      },
+      "B0_ref86_k4": {
+       "shots": 61000,
+       "jobs": 7,
+       "hqc": 303131.8
+      },
+      "B1_ref27_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1327.7714
+      },
+      "B1_ref27_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.8298
+      },
+      "B1_ref27_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1328.2520000000002
+      },
+      "B1_ref27_k4": {
+       "shots": 152600,
+       "jobs": 16,
+       "hqc": 758379.9199999999
+      },
+      "B1_ref29_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1327.7179999999998
+      },
+      "B1_ref29_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.7764
+      },
+      "B1_ref29_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1328.1986
+      },
+      "B1_ref29_k4": {
+       "shots": 36400,
+       "jobs": 4,
+       "hqc": 180898.88
+      },
+      "B1_ref57_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1327.6646
+      },
+      "B1_ref57_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.7230000000002
+      },
+      "B1_ref57_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1328.1452
+      },
+      "B1_ref57_k4": {
+       "shots": 177000,
+       "jobs": 18,
+       "hqc": 879603.0
+      }
+     },
+     "by_sector": {
+      "B=0": {
+       "shots": 189442,
+       "jobs": 49,
+       "hqc": 941525.4109999998
+      },
+      "B=1": {
+       "shots": 368403,
+       "jobs": 47,
+       "hqc": 1830844.879
+      }
+     },
+     "shots_total": 557845,
+     "jobs": 96,
+     "hqc_total": 2772370.29,
+     "usd_ESTIMATE": 34654628.625,
+     "machine_hours_mid_ESTIMATE": 328.1213298611111
+    },
+    "D3type_union": {
+     "shots_by_circuit": {
+      "B0_ref117_k1": 3194,
+      "B0_ref117_k2": 3194,
+      "B0_ref117_k3": 3194,
+      "B0_ref117_k4": 3194,
+      "B0_ref169_k1": 3194,
+      "B0_ref169_k2": 3194,
+      "B0_ref169_k3": 3194,
+      "B0_ref169_k4": 3194,
+      "B0_ref25_k1": 3194,
+      "B0_ref25_k2": 3194,
+      "B0_ref25_k3": 3194,
+      "B0_ref25_k4": 3194,
+      "B0_ref333_k1": 3194,
+      "B0_ref333_k2": 3194,
+      "B0_ref333_k3": 3194,
+      "B0_ref333_k4": 3194,
+      "B0_ref525_k1": 3194,
+      "B0_ref525_k2": 3194,
+      "B0_ref525_k3": 3194,
+      "B0_ref525_k4": 3194,
+      "B0_ref70_k1": 3194,
+      "B0_ref70_k2": 3194,
+      "B0_ref70_k3": 3194,
+      "B0_ref70_k4": 3194,
+      "B0_ref795_k1": 3194,
+      "B0_ref795_k2": 3194,
+      "B0_ref795_k3": 3194,
+      "B0_ref795_k4": 3194,
+      "B0_ref86_k1": 3194,
+      "B0_ref86_k2": 3194,
+      "B0_ref86_k3": 3194,
+      "B0_ref86_k4": 3194,
+      "B1_ref27_k1": 8467,
+      "B1_ref27_k2": 8467,
+      "B1_ref27_k3": 8467,
+      "B1_ref27_k4": 8467,
+      "B1_ref29_k1": 8467,
+      "B1_ref29_k2": 8467,
+      "B1_ref29_k3": 8467,
+      "B1_ref29_k4": 8467,
+      "B1_ref57_k1": 8467,
+      "B1_ref57_k2": 8467,
+      "B1_ref57_k3": 8467,
+      "B1_ref57_k4": 8467
+     },
+     "per_circuit": {
+      "B0_ref117_k1": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15891.3172
+      },
+      "B0_ref117_k2": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15851.7116
+      },
+      "B0_ref117_k3": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15879.179999999998
+      },
+      "B0_ref117_k4": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15876.6248
+      },
+      "B0_ref169_k1": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15892.594799999999
+      },
+      "B0_ref169_k2": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15849.7952
+      },
+      "B0_ref169_k3": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15877.902399999999
+      },
+      "B0_ref169_k4": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15874.069599999999
+      },
+      "B0_ref25_k1": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15892.594799999999
+      },
+      "B0_ref25_k2": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15851.0728
+      },
+      "B0_ref25_k3": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15877.2636
+      },
+      "B0_ref25_k4": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15874.708400000001
+      },
+      "B0_ref333_k1": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15889.400800000001
+      },
+      "B0_ref333_k2": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15849.156400000002
+      },
+      "B0_ref333_k3": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15875.986
+      },
+      "B0_ref333_k4": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15874.069599999999
+      },
+      "B0_ref525_k1": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15890.0396
+      },
+      "B0_ref525_k2": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15849.7952
+      },
+      "B0_ref525_k3": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15879.179999999998
+      },
+      "B0_ref525_k4": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15875.986
+      },
+      "B0_ref70_k1": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15891.956
+      },
+      "B0_ref70_k2": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15851.0728
+      },
+      "B0_ref70_k3": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15877.902399999999
+      },
+      "B0_ref70_k4": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15875.3472
+      },
+      "B0_ref795_k1": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15888.761999999999
+      },
+      "B0_ref795_k2": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15851.0728
+      },
+      "B0_ref795_k3": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15878.541200000001
+      },
+      "B0_ref795_k4": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15875.986
+      },
+      "B0_ref86_k1": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15891.956
+      },
+      "B0_ref86_k2": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15850.434000000001
+      },
+      "B0_ref86_k3": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15879.179999999998
+      },
+      "B0_ref86_k4": {
+       "shots": 3194,
+       "jobs": 1,
+       "hqc": 15875.3472
+      },
+      "B1_ref27_k1": {
+       "shots": 8467,
+       "jobs": 1,
+       "hqc": 41952.2114
+      },
+      "B1_ref27_k2": {
+       "shots": 8467,
+       "jobs": 1,
+       "hqc": 42080.9098
+      },
+      "B1_ref27_k3": {
+       "shots": 8467,
+       "jobs": 1,
+       "hqc": 41967.452000000005
+      },
+      "B1_ref27_k4": {
+       "shots": 8467,
+       "jobs": 1,
+       "hqc": 42079.2164
+      },
+      "B1_ref29_k1": {
+       "shots": 8467,
+       "jobs": 1,
+       "hqc": 41950.518
+      },
+      "B1_ref29_k2": {
+       "shots": 8467,
+       "jobs": 1,
+       "hqc": 42079.2164
+      },
+      "B1_ref29_k3": {
+       "shots": 8467,
+       "jobs": 1,
+       "hqc": 41965.7586
+      },
+      "B1_ref29_k4": {
+       "shots": 8467,
+       "jobs": 1,
+       "hqc": 42079.2164
+      },
+      "B1_ref57_k1": {
+       "shots": 8467,
+       "jobs": 1,
+       "hqc": 41948.8246
+      },
+      "B1_ref57_k2": {
+       "shots": 8467,
+       "jobs": 1,
+       "hqc": 42077.523
+      },
+      "B1_ref57_k3": {
+       "shots": 8467,
+       "jobs": 1,
+       "hqc": 41964.0652
+      },
+      "B1_ref57_k4": {
+       "shots": 8467,
+       "jobs": 1,
+       "hqc": 42077.523
+      }
+     },
+     "by_sector": {
+      "B=0": {
+       "shots": 102208,
+       "jobs": 32,
+       "hqc": 507960.0064
+      },
+      "B=1": {
+       "shots": 101604,
+       "jobs": 12,
+       "hqc": 504222.4348
+      }
+     },
+     "shots_total": 203812,
+     "jobs": 44,
+     "hqc_total": 1012182.4412000002,
+     "f": 0.1,
+     "margin": 0.7,
+     "sectors": {
+      "B=0": {
+       "N_sector_rule": 102200,
+       "N_sector_at_f_0.1": 71500,
+       "per_circuit": 3194
+      },
+      "B=1": {
+       "N_sector_rule": 101600,
+       "N_sector_at_f_0.1": 71075,
+       "per_circuit": 8467
+      }
+     },
+     "rule": "D3-type union reading (data/S2D_recall_at_f.json results.<sector>|f=0.1.shot_rule_union_reading_N_sector, gate S1's recall criterion) x 0.1 / (0.7 f), rounded up to 100, spread evenly over the sector's circuits",
+     "usd_ESTIMATE": 12652280.515000002,
+     "machine_hours_mid_ESTIMATE": 119.88108611111112,
+     "guarantees": {
+      "B=0": {
+       "lambda_min_S99": 6.431913650307451,
+       "lambda_min_S999": 1.0801066926431777,
+       "recall_floor_S999": 0.9849042232667038,
+       "P_recall_S999_ge_0.9": 0.9999999656696655,
+       "n_S99_below_lambda_star": 0,
+       "n_S999_below_lambda_star": 23
+      },
+      "B=1": {
+       "lambda_min_S99": 4.485611889614002,
+       "lambda_min_S999": 0.5336004129939556,
+       "recall_floor_S999": 0.9282022415536617,
+       "P_recall_S999_ge_0.9": 0.8952312548536656,
+       "n_S99_below_lambda_star": 3,
+       "n_S999_below_lambda_star": 38
+      }
+     }
+    }
+   },
+   "f=0.15": {
+    "f": 0.15,
+    "clean_yield_per_shot": 0.0861,
+    "D3R": {
+     "shots_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 1267,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 1267,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 10400,
+      "B0_ref25_k4": 1400,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 1267,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 1400,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 1500,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 1267,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 1400,
+      "B1_ref27_k1": 267,
+      "B1_ref27_k2": 267,
+      "B1_ref27_k3": 267,
+      "B1_ref27_k4": 9900,
+      "B1_ref29_k1": 267,
+      "B1_ref29_k2": 267,
+      "B1_ref29_k3": 267,
+      "B1_ref29_k4": 7500,
+      "B1_ref57_k1": 267,
+      "B1_ref57_k2": 267,
+      "B1_ref57_k3": 267,
+      "B1_ref57_k4": 13700
+     },
+     "per_circuit": {
+      "B0_ref117_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.0046
+      },
+      "B0_ref117_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6938
+      },
+      "B0_ref117_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.99
+      },
+      "B0_ref117_k4": {
+       "shots": 1267,
+       "jobs": 1,
+       "hqc": 6300.9764
+      },
+      "B0_ref169_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.1114
+      },
+      "B0_ref169_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.5336
+      },
+      "B0_ref169_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.8832
+      },
+      "B0_ref169_k4": {
+       "shots": 1267,
+       "jobs": 1,
+       "hqc": 6299.9628
+      },
+      "B0_ref25_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.1114
+      },
+      "B0_ref25_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6404
+      },
+      "B0_ref25_k3": {
+       "shots": 10400,
+       "jobs": 2,
+       "hqc": 51691.76
+      },
+      "B0_ref25_k4": {
+       "shots": 1400,
+       "jobs": 1,
+       "hqc": 6961.040000000001
+      },
+      "B0_ref333_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1332.8444000000002
+      },
+      "B0_ref333_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.4802000000002
+      },
+      "B0_ref333_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.7230000000002
+      },
+      "B0_ref333_k4": {
+       "shots": 1267,
+       "jobs": 1,
+       "hqc": 6299.9628
+      },
+      "B0_ref525_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1332.8978
+      },
+      "B0_ref525_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.5336
+      },
+      "B0_ref525_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.99
+      },
+      "B0_ref525_k4": {
+       "shots": 1400,
+       "jobs": 1,
+       "hqc": 6961.6
+      },
+      "B0_ref70_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.058
+      },
+      "B0_ref70_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6404
+      },
+      "B0_ref70_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.8832
+      },
+      "B0_ref70_k4": {
+       "shots": 1500,
+       "jobs": 1,
+       "hqc": 7458.2
+      },
+      "B0_ref795_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1332.791
+      },
+      "B0_ref795_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6404
+      },
+      "B0_ref795_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.9366
+      },
+      "B0_ref795_k4": {
+       "shots": 1267,
+       "jobs": 1,
+       "hqc": 6300.723
+      },
+      "B0_ref86_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.058
+      },
+      "B0_ref86_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.587
+      },
+      "B0_ref86_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.99
+      },
+      "B0_ref86_k4": {
+       "shots": 1400,
+       "jobs": 1,
+       "hqc": 6961.32
+      },
+      "B1_ref27_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1327.7714
+      },
+      "B1_ref27_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.8298
+      },
+      "B1_ref27_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1328.2520000000002
+      },
+      "B1_ref27_k4": {
+       "shots": 9900,
+       "jobs": 1,
+       "hqc": 49200.08
+      },
+      "B1_ref29_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1327.7179999999998
+      },
+      "B1_ref29_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.7764
+      },
+      "B1_ref29_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1328.1986
+      },
+      "B1_ref29_k4": {
+       "shots": 7500,
+       "jobs": 1,
+       "hqc": 37274.0
+      },
+      "B1_ref57_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1327.6646
+      },
+      "B1_ref57_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.7230000000002
+      },
+      "B1_ref57_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1328.1452
+      },
+      "B1_ref57_k4": {
+       "shots": 13700,
+       "jobs": 2,
+       "hqc": 68085.3
+      }
+     },
+     "by_sector": {
+      "B=0": {
+       "shots": 27309,
+       "jobs": 33,
+       "hqc": 135859.567
+      },
+      "B=1": {
+       "shots": 33503,
+       "jobs": 13,
+       "hqc": 166522.459
+      }
+     },
+     "shots_total": 60812,
+     "jobs": 46,
+     "hqc_total": 302382.026,
+     "usd_ESTIMATE": 3779775.325,
+     "machine_hours_mid_ESTIMATE": 35.769280555555554,
+     "sectors": {
+      "B=0": {
+       "shots_total": 27309,
+       "lp_shots_total": 19309,
+       "lp_objective": 19072.171437906578,
+       "k4_extra_per_circuit": 1000,
+       "lambda_min_S99": 7.737102551569028,
+       "lambda_min_S999": 0.5312329763191888,
+       "n_S999_states_below_lambda_star": 47,
+       "recall_floor_S999": 0.9427200919230273,
+       "P_recall_S999_ge_target": 0.9652256071270859,
+       "k_needed_of_S999": 78,
+       "P_all_S99_seen": 0.9991540240714715,
+       "floor_circuits": 23,
+       "rule": "D3'-R (prompts/28 B2): LP min sum N_c s.t. every S99 state >= lambda* expected clean counts at y_c = readout_factor x margin x f_c, N_c >= floor (floor circuits exact, others rounded up to round_to); then the k = 4 circuits + a common extra (multiple of round_to) until P(clean-only recall of S999 >= recall_target) >= prob_target (Poisson-binomial, exact)",
+       "D3S_shots_total": 127742,
+       "D3S_guarantees": {
+        "lambda_min_S99": 13.044045680797094,
+        "lambda_min_S999": 6.302986438832172,
+        "recall_floor_S999": 0.9998667989893762,
+        "P_recall_S999_ge_0.9": 0.9999999999999997,
+        "n_S99_below_lambda_star": 0,
+        "n_S999_below_lambda_star": 0
+       }
+      },
+      "B=1": {
+       "shots_total": 33503,
+       "lp_shots_total": 33503,
+       "lp_objective": 33317.90942112912,
+       "k4_extra_per_circuit": 0,
+       "lambda_min_S99": 6.3186508240252905,
+       "lambda_min_S999": 0.6313199495344307,
+       "n_S999_states_below_lambda_star": 34,
+       "recall_floor_S999": 0.9501511695518772,
+       "P_recall_S999_ge_target": 0.9935154632235462,
+       "k_needed_of_S999": 86,
+       "P_all_S99_seen": 0.9917574388675621,
+       "floor_circuits": 9,
+       "rule": "D3'-R (prompts/28 B2): LP min sum N_c s.t. every S99 state >= lambda* expected clean counts at y_c = readout_factor x margin x f_c, N_c >= floor (floor circuits exact, others rounded up to round_to); then the k = 4 circuits + a common extra (multiple of round_to) until P(clean-only recall of S999 >= recall_target) >= prob_target (Poisson-binomial, exact)",
+       "D3S_shots_total": 246203,
+       "D3S_guarantees": {
+        "lambda_min_S99": 20.00486261023957,
+        "lambda_min_S999": 6.295887981666814,
+        "recall_floor_S999": 0.9998950533074332,
+        "P_recall_S999_ge_0.9": 1.0000000000000002,
+        "n_S99_below_lambda_star": 0,
+        "n_S999_below_lambda_star": 0
+       }
+      }
+     },
+     "floor_circuits": 32,
+     "floor_share_circuits": 0.7272727272727273
+    },
+    "D3S_LP": {
+     "shots_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 14600,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 1800,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 267,
+      "B0_ref25_k4": 267,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 40900,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 6800,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 16200,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 267,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 40500,
+      "B1_ref27_k1": 267,
+      "B1_ref27_k2": 267,
+      "B1_ref27_k3": 267,
+      "B1_ref27_k4": 101700,
+      "B1_ref29_k1": 267,
+      "B1_ref29_k2": 267,
+      "B1_ref29_k3": 267,
+      "B1_ref29_k4": 24200,
+      "B1_ref57_k1": 267,
+      "B1_ref57_k2": 267,
+      "B1_ref57_k3": 267,
+      "B1_ref57_k4": 117900
+     },
+     "per_circuit": {
+      "B0_ref117_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.0046
+      },
+      "B0_ref117_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6938
+      },
+      "B0_ref117_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.99
+      },
+      "B0_ref117_k4": {
+       "shots": 14600,
+       "jobs": 2,
+       "hqc": 72560.31999999999
+      },
+      "B0_ref169_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.1114
+      },
+      "B0_ref169_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.5336
+      },
+      "B0_ref169_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.8832
+      },
+      "B0_ref169_k4": {
+       "shots": 1800,
+       "jobs": 1,
+       "hqc": 8948.119999999999
+      },
+      "B0_ref25_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.1114
+      },
+      "B0_ref25_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6404
+      },
+      "B0_ref25_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.8298
+      },
+      "B0_ref25_k4": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.6162000000002
+      },
+      "B0_ref333_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1332.8444000000002
+      },
+      "B0_ref333_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.4802000000002
+      },
+      "B0_ref333_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.7230000000002
+      },
+      "B0_ref333_k4": {
+       "shots": 40900,
+       "jobs": 5,
+       "hqc": 203232.56
+      },
+      "B0_ref525_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1332.8978
+      },
+      "B0_ref525_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.5336
+      },
+      "B0_ref525_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.99
+      },
+      "B0_ref525_k4": {
+       "shots": 6800,
+       "jobs": 1,
+       "hqc": 33794.200000000004
+      },
+      "B0_ref70_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.058
+      },
+      "B0_ref70_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6404
+      },
+      "B0_ref70_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.8832
+      },
+      "B0_ref70_k4": {
+       "shots": 16200,
+       "jobs": 2,
+       "hqc": 80504.56
+      },
+      "B0_ref795_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1332.791
+      },
+      "B0_ref795_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.6404
+      },
+      "B0_ref795_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.9366
+      },
+      "B0_ref795_k4": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.7230000000002
+      },
+      "B0_ref86_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1333.058
+      },
+      "B0_ref86_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1329.587
+      },
+      "B0_ref86_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.99
+      },
+      "B0_ref86_k4": {
+       "shots": 40500,
+       "jobs": 5,
+       "hqc": 201261.4
+      },
+      "B1_ref27_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1327.7714
+      },
+      "B1_ref27_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.8298
+      },
+      "B1_ref27_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1328.2520000000002
+      },
+      "B1_ref27_k4": {
+       "shots": 101700,
+       "jobs": 11,
+       "hqc": 505422.63999999996
+      },
+      "B1_ref29_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1327.7179999999998
+      },
+      "B1_ref29_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.7764
+      },
+      "B1_ref29_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1328.1986
+      },
+      "B1_ref29_k4": {
+       "shots": 24200,
+       "jobs": 3,
+       "hqc": 120269.64
+      },
+      "B1_ref57_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1327.6646
+      },
+      "B1_ref57_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1331.7230000000002
+      },
+      "B1_ref57_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 1328.1452
+      },
+      "B1_ref57_k4": {
+       "shots": 117900,
+       "jobs": 12,
+       "hqc": 585905.1000000001
+      }
+     },
+     "by_sector": {
+      "B=0": {
+       "shots": 127742,
+       "jobs": 42,
+       "hqc": 634920.351
+      },
+      "B=1": {
+       "shots": 246203,
+       "jobs": 35,
+       "hqc": 1223560.459
+      }
+     },
+     "shots_total": 373945,
+     "jobs": 77,
+     "hqc_total": 1858480.81,
+     "usd_ESTIMATE": 23231010.125,
+     "machine_hours_mid_ESTIMATE": 219.9523715277778
+    },
+    "D3type_union": {
+     "shots_by_circuit": {
+      "B0_ref117_k1": 2129,
+      "B0_ref117_k2": 2129,
+      "B0_ref117_k3": 2129,
+      "B0_ref117_k4": 2129,
+      "B0_ref169_k1": 2129,
+      "B0_ref169_k2": 2129,
+      "B0_ref169_k3": 2129,
+      "B0_ref169_k4": 2129,
+      "B0_ref25_k1": 2129,
+      "B0_ref25_k2": 2129,
+      "B0_ref25_k3": 2129,
+      "B0_ref25_k4": 2129,
+      "B0_ref333_k1": 2129,
+      "B0_ref333_k2": 2129,
+      "B0_ref333_k3": 2129,
+      "B0_ref333_k4": 2129,
+      "B0_ref525_k1": 2129,
+      "B0_ref525_k2": 2129,
+      "B0_ref525_k3": 2129,
+      "B0_ref525_k4": 2129,
+      "B0_ref70_k1": 2129,
+      "B0_ref70_k2": 2129,
+      "B0_ref70_k3": 2129,
+      "B0_ref70_k4": 2129,
+      "B0_ref795_k1": 2129,
+      "B0_ref795_k2": 2129,
+      "B0_ref795_k3": 2129,
+      "B0_ref795_k4": 2129,
+      "B0_ref86_k1": 2129,
+      "B0_ref86_k2": 2129,
+      "B0_ref86_k3": 2129,
+      "B0_ref86_k4": 2129,
+      "B1_ref27_k1": 5642,
+      "B1_ref27_k2": 5642,
+      "B1_ref27_k3": 5642,
+      "B1_ref27_k4": 5642,
+      "B1_ref29_k1": 5642,
+      "B1_ref29_k2": 5642,
+      "B1_ref29_k3": 5642,
+      "B1_ref29_k4": 5642,
+      "B1_ref57_k1": 5642,
+      "B1_ref57_k2": 5642,
+      "B1_ref57_k3": 5642,
+      "B1_ref57_k4": 5642
+     },
+     "per_circuit": {
+      "B0_ref117_k1": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10594.2202
+      },
+      "B0_ref117_k2": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10567.820600000001
+      },
+      "B0_ref117_k3": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10586.13
+      },
+      "B0_ref117_k4": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10584.4268
+      },
+      "B0_ref169_k1": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10595.0718
+      },
+      "B0_ref169_k2": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10566.5432
+      },
+      "B0_ref169_k3": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10585.2784
+      },
+      "B0_ref169_k4": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10582.7236
+      },
+      "B0_ref25_k1": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10595.0718
+      },
+      "B0_ref25_k2": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10567.3948
+      },
+      "B0_ref25_k3": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10584.8526
+      },
+      "B0_ref25_k4": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10583.1494
+      },
+      "B0_ref333_k1": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10592.9428
+      },
+      "B0_ref333_k2": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10566.117400000001
+      },
+      "B0_ref333_k3": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10584.001
+      },
+      "B0_ref333_k4": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10582.7236
+      },
+      "B0_ref525_k1": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10593.3686
+      },
+      "B0_ref525_k2": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10566.5432
+      },
+      "B0_ref525_k3": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10586.13
+      },
+      "B0_ref525_k4": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10584.001
+      },
+      "B0_ref70_k1": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10594.646
+      },
+      "B0_ref70_k2": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10567.3948
+      },
+      "B0_ref70_k3": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10585.2784
+      },
+      "B0_ref70_k4": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10583.5752
+      },
+      "B0_ref795_k1": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10592.517
+      },
+      "B0_ref795_k2": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10567.3948
+      },
+      "B0_ref795_k3": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10585.7042
+      },
+      "B0_ref795_k4": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10584.001
+      },
+      "B0_ref86_k1": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10594.646
+      },
+      "B0_ref86_k2": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10566.969000000001
+      },
+      "B0_ref86_k3": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10586.13
+      },
+      "B0_ref86_k4": {
+       "shots": 2129,
+       "jobs": 1,
+       "hqc": 10583.5752
+      },
+      "B1_ref27_k1": {
+       "shots": 5642,
+       "jobs": 1,
+       "hqc": 27956.596400000002
+      },
+      "B1_ref27_k2": {
+       "shots": 5642,
+       "jobs": 1,
+       "hqc": 28042.3548
+      },
+      "B1_ref27_k3": {
+       "shots": 5642,
+       "jobs": 1,
+       "hqc": 27966.752000000004
+      },
+      "B1_ref27_k4": {
+       "shots": 5642,
+       "jobs": 1,
+       "hqc": 28041.2264
+      },
+      "B1_ref29_k1": {
+       "shots": 5642,
+       "jobs": 1,
+       "hqc": 27955.467999999997
+      },
+      "B1_ref29_k2": {
+       "shots": 5642,
+       "jobs": 1,
+       "hqc": 28041.2264
+      },
+      "B1_ref29_k3": {
+       "shots": 5642,
+       "jobs": 1,
+       "hqc": 27965.6236
+      },
+      "B1_ref29_k4": {
+       "shots": 5642,
+       "jobs": 1,
+       "hqc": 28041.2264
+      },
+      "B1_ref57_k1": {
+       "shots": 5642,
+       "jobs": 1,
+       "hqc": 27954.3396
+      },
+      "B1_ref57_k2": {
+       "shots": 5642,
+       "jobs": 1,
+       "hqc": 28040.098
+      },
+      "B1_ref57_k3": {
+       "shots": 5642,
+       "jobs": 1,
+       "hqc": 27964.495199999998
+      },
+      "B1_ref57_k4": {
+       "shots": 5642,
+       "jobs": 1,
+       "hqc": 28040.098
+      }
+     },
+     "by_sector": {
+      "B=0": {
+       "shots": 68128,
+       "jobs": 32,
+       "hqc": 338640.34239999996
+      },
+      "B=1": {
+       "shots": 67704,
+       "jobs": 12,
+       "hqc": 336009.5048
+      }
+     },
+     "shots_total": 135832,
+     "jobs": 44,
+     "hqc_total": 674649.8472,
+     "f": 0.15,
+     "margin": 0.7,
+     "sectors": {
+      "B=0": {
+       "N_sector_rule": 68100,
+       "N_sector_at_f_0.1": 71500,
+       "per_circuit": 2129
+      },
+      "B=1": {
+       "N_sector_rule": 67700,
+       "N_sector_at_f_0.1": 71075,
+       "per_circuit": 5642
+      }
+     },
+     "rule": "D3-type union reading (data/S2D_recall_at_f.json results.<sector>|f=0.1.shot_rule_union_reading_N_sector, gate S1's recall criterion) x 0.1 / (0.7 f), rounded up to 100, spread evenly over the sector's circuits",
+     "usd_ESTIMATE": 8433123.09,
+     "machine_hours_mid_ESTIMATE": 79.89562777777778,
+     "guarantees": {
+      "B=0": {
+       "lambda_min_S99": 6.430906775910095,
+       "lambda_min_S999": 1.0799376089405097,
+       "recall_floor_S999": 0.9848995725306474,
+       "P_recall_S999_ge_0.9": 0.999999965524743,
+       "n_S99_below_lambda_star": 0,
+       "n_S999_below_lambda_star": 23
+      },
+      "B=1": {
+       "lambda_min_S99": 4.483492786323763,
+       "lambda_min_S999": 0.5333483282352482,
+       "recall_floor_S999": 0.9281574743820814,
+       "P_recall_S999_ge_0.9": 0.8948365038099609,
+       "n_S99_below_lambda_star": 3,
+       "n_S999_below_lambda_star": 38
+      }
+     }
+    }
+   }
+  },
+  "campaign_sizing_rule": {
+   "sizing": "f_size = f_hat_ideal of Stage P (point estimate, rounded down to 0.01); D3'-R at y = 0.82 x 0.7 x f_size; re-sized by prompts/30 section 4 if gate CV_2x3_plan re-run at that f says so; the cost returns to the owner before submission (decision 2a: signing commits no HQC)",
+   "safety": "floor theorem (`prompts/29 2.4`): f_eff(s) >= f_ideal (1 - 2 delta / p_c(s)) for every state, so f_ideal is a safe sizing input on S99 while the device's near-clean ratio stays within r_nc / 0.7",
+   "halves": "(ii) submitted in two halves per circuit: ceil(N_c / 2) shots of every circuit in the first half, jobs of <= 10,000 shots; the first half is the real N/2 prefix",
+   "mid_campaign": "after the first half, the pooled observed/expected ratio on S99 (expected = lambda_s / 2 at the plan's y) over all circuits; if it is < 0.7 the second half is re-sized by that ratio once (HQC cap: the owner's)",
+   "hardware_cv": "(iii) CV1-CV5 preregistered on the hardware counts with the N/2 point = the first half (real time order) and the finer points by hypergeometric sub-sampling within halves (seeds `2030..2049`, information); E_tol, the H1/H2 widths, 0.99 and the random seeds exactly as in gate CV_2x3_plan",
+   "outcome": "(iv) the certificates and the H1 / H2 / P1 rows are reported for any B (rigorous or gap-assumed as labelled); a campaign that fails CV1, CV2, CV4 or CV5 on hardware is labelled 'not converged at the plan' in every table and the P1 curve is reported to the size of B_sig with that label; one top-up by s = 2 only under a new owner decision; a CV3 failure on hardware is reported as a family result (no top-up)"
+  },
+  "cv_source": "validation/CV_2x3_plan.json",
+  "P5_untraceable": [],
+  "P6": {
+   "pytest": {
+    "returncode": 0,
+    "summary": "316 passed, 19 skipped, 10 warnings in 975.80s (0:16:15)",
+    "wall_s": 977.2851192951202
+   },
+   "check_package": {
+    "returncode": 0,
+    "summary": "PACKAGE OK",
+    "wall_s": 0.5881571769714355
+   }
+  }
+ },
+ "runtime_s": 1014.7216897010803,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.2",
+  "scipy": "1.18.0",
+  "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+  "cpu_count": 12,
+  "git_commit": "408e49c",
+  "timestamp": "2026-10-05 16:46:08 MDT"
+ }
+}

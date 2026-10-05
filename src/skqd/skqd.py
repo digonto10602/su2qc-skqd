@@ -461,3 +461,98 @@ def pooled_reference_string_test(rows, readout_factor: float = READOUT_FACTOR,
             "readout_factor": rf, "confidence": float(conf),
             "estimator": ("(sum n_ref - sum N a / dim) / (sum N p_ref readout_factor); "
                           "Poisson (Garwood) interval on the pooled count")}
+
+
+# ------------------------------------------------- the ideal-sample fraction (prompts/29 3(1), Part B')
+R_NC_SOURCE = "data/cf_trajectories/r_nc.json"
+
+
+def corrected_clean_fraction(pooled: dict, r_nc: float, r_nc_95) -> dict:
+    """The corrected reference-hit fraction  f_hat_ideal = f_hit / r_nc  (prompts/29 3(1)).
+
+    `pooled` is the output of `pooled_reference_string_test` (its `f_clean` is f_hit, its
+    `f_clean_68` the Garwood interval at `pooled["confidence"]` -- the key name is the module's,
+    the confidence is whatever the caller asked for, 0.95 for the GO rules).  `r_nc` is the
+    near-clean correction of gate CF_traj (the UPPER end of the 95 % bootstrap interval of the
+    pooled f_hit / f_ideal(1e-3), `data/cf_trajectories/r_nc.json`), `r_nc_95` that bootstrap
+    interval [lo, hi].
+
+    What it measures: f_ideal, the fraction of shots whose output distribution is the ideal one
+    (fault-free plus benign-fault shots).  f_hit over-estimates it under gate noise by the factor
+    r(1e-3) of CF_traj (1.03-1.12); dividing by the upper bound r_nc makes the bar harder, never
+    looser.  Caveat (prompts/29 3(1)): r_nc is a gate-noise (A6 channel) value; on IBM devices
+    (idle dephasing) it is unknown and the A5 arm of CF_traj is the only model estimate.
+
+    Interval: the Garwood interval of the hit count and the bootstrap interval of r_nc combined
+    on the log scale (sum of variances, each end separately):
+        s_r   = (ln r_hi - ln r_lo) / (2 z)                     (bootstrap, symmetric in ln r)
+        lo    = f_hat exp(-sqrt(ln(f_hit / f_lo)^2 + (z s_r)^2))
+        hi    = f_hat exp(+sqrt(ln(f_hi / f_hit)^2 + (z s_r)^2))
+    with z the normal quantile of `pooled["confidence"]`.  A non-positive Garwood lower end
+    (no significant excess) gives lo = 0.
+    """
+    from scipy.stats import norm
+
+    conf = float(pooled.get("confidence", 0.95))
+    z = float(norm.ppf(0.5 + conf / 2.0))
+    r_nc = float(r_nc)
+    r_lo, r_hi = float(r_nc_95[0]), float(r_nc_95[1])
+    if not (r_nc > 0 and 0 < r_lo <= r_hi):
+        raise ValueError("r_nc and its interval must be positive with lo <= hi")
+    f_hit = pooled["f_clean"]
+    f_lo, f_hi = pooled["f_clean_68"]
+    s_r = (np.log(r_hi) - np.log(r_lo)) / (2.0 * z)
+    if f_hit is None:
+        raise ValueError("pooled f_clean is None (no clean denominator)")
+    f_hat = float(f_hit) / r_nc
+    if f_hit > 0 and f_lo is not None and f_lo > 0:
+        lo = f_hat * float(np.exp(-np.sqrt(np.log(f_hit / f_lo) ** 2 + (z * s_r) ** 2)))
+    else:
+        lo = 0.0
+    if f_hit > 0 and f_hi is not None and f_hi > 0:
+        hi = f_hat * float(np.exp(np.sqrt(np.log(f_hi / f_hit) ** 2 + (z * s_r) ** 2)))
+    else:
+        hi = (float(f_hi) / r_nc * float(np.exp(z * s_r))) if (f_hi is not None and f_hi > 0) else 0.0
+    return {"f_hit": float(f_hit), "f_hit_interval": [f_lo, f_hi], "confidence": conf, "z": z,
+            "r_nc": r_nc, "r_nc_95": [r_lo, r_hi], "sigma_ln_r_bootstrap": float(s_r),
+            "f_hat_ideal": f_hat, "f_hat_ideal_interval": [float(lo), float(hi)],
+            "lower_bound_at_zero": bool(lo == 0.0),
+            "estimator": ("f_hat_ideal = f_hit / r_nc; interval = Garwood (hit count) and bootstrap (r_nc) "
+                          "combined on the log scale, each end separately"),
+            "r_nc_source": R_NC_SOURCE}
+
+
+# ----------------------------------------------- the H1-derived energy tolerance (prompts/30 2.7)
+def h1_energy_tolerance(H, prob_full: np.ndarray, refs, recall_target: float = 0.8, eps: float = 1e-3,
+                        sector_idx=None, E0=None) -> dict:
+    """E_tol = E_R(R u S_eps^{top}) - E_0, the Ritz error of the best support that just meets a
+    recall target of S_eps (gate H1, manual Step 10: recall >= 0.8 of S_999).
+
+    The top ceil(recall_target |S_eps|) states by exact ground-state weight are selected with
+    `controls.oracle` (the function of gate S1's Table 3; `sector_idx` defaults to the states of
+    positive weight, which gives the same order), the references `refs` are added, and the
+    Ritz energy is taken with `ritz`.  E_0 defaults to the Ritz energy on the support of the
+    exact ground state (prob_full > 0), which contains the ground state and therefore equals
+    E_0 to round-off.  With refs = [] and recall_target = n / |S_eps| this is Table 3's oracle
+    row at |B| = n.
+    """
+    import math
+
+    from .controls import oracle
+
+    prob_full = np.asarray(prob_full, dtype=float)
+    S = exact_support(prob_full, eps)
+    n = int(math.ceil(float(recall_target) * len(S) - 1e-9))
+    n = max(0, min(n, len(S)))
+    if sector_idx is None:
+        sector_idx = np.flatnonzero(prob_full > 0)
+    top = oracle(prob_full, np.asarray(sector_idx, dtype=int), n)
+    basis = np.asarray(sorted(set(int(b) for b in top) | set(int(r) for r in refs)))
+    res = ritz(H, basis)
+    if E0 is None:
+        E0 = ritz(H, np.flatnonzero(prob_full > 0)).ER
+    return {"E_tol": float(res.ER - float(E0)), "E_R": float(res.ER), "E0": float(E0), "rH": float(res.rH),
+            "n_top": n, "support_size": int(len(S)), "eps": float(eps), "recall_target": float(recall_target),
+            "states_top": [int(b) for b in sorted(int(x) for x in top)], "references": [int(r) for r in refs],
+            "basis_size": int(len(basis)), "captured_weight": float(prob_full[basis].sum()),
+            "definition": "E_R(R u top ceil(recall_target |S_eps|) states of S_eps by weight) - E_0 (controls.oracle, ritz)"}

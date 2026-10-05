@@ -133,6 +133,86 @@ def p_all_seen(lam):
     return float(np.prod(p_seen(lam)))
 
 
+# --------------------------------------------------------------- rule D3'-R (prompts/28 B2)
+def recall_tail_prob(q, k_needed):
+    """P(sum of independent Bernoulli(q_i) >= k_needed): exact Poisson-binomial DP."""
+    q = np.asarray(q, dtype=float)
+    dist = np.zeros(len(q) + 1)
+    dist[0] = 1.0
+    for qi in q:
+        dist[1:] = dist[1:] * (1.0 - qi) + dist[:-1] * qi
+        dist[0] *= (1.0 - qi)
+    return float(dist[int(k_needed):].sum())
+
+
+def d3r_plan(p_by_circuit, f_by_circuit, ids, k4_ids, S99, S999, floor=267, round_to=100, margin=0.7,
+             readout_factor=READOUT_FACTOR, recall_target=0.9, prob_target=0.95, lambda_star=None):
+    """Rule D3'-R (prompts/28 B2, signed as the MINIMUM 2x3 sizing by owner decision 2a, 2026-10-05).
+
+    (i) Linear programme (`scipy.optimize.linprog`, HiGHS): minimise sum_c N_c subject to
+        sum_c N_c y_c p_c(s) >= lambda* for every s in S99 and N_c >= floor, with
+        y_c = readout_factor x margin x f_c.  Circuits at the floor stay at exactly `floor`, the
+        others are rounded up to a multiple of `round_to`.
+    (ii) The k = 4 circuits get the smallest common extra (a multiple of `round_to`) such that
+        the clean shots alone recall >= recall_target of S999 with probability >= prob_target
+        (`recall_tail_prob`, each state seen at least once with probability 1 - exp(-lambda_s)).
+
+    `p_by_circuit[c]` is the ideal distribution over the sector positions; S99 / S999 are sector
+    positions.  An infeasible LP (a state of S99 with zero probability in every circuit) raises:
+    that is a STOP of prompts/28, never a default.
+    """
+    import math
+
+    from scipy.optimize import linprog
+
+    lam_star = poisson_lambda_star() if lambda_star is None else float(lambda_star)
+    ids = list(ids)
+    k4 = [c for c in ids if c in set(k4_ids)]
+    S99 = np.asarray(S99, dtype=int)
+    S999 = np.asarray(S999, dtype=int)
+    rate = clean_rate({c: p_by_circuit[c] for c in ids}, f_by_circuit, readout_factor, margin)
+    A = -np.array([[rate[c][s] for c in ids] for s in S99])
+    res = linprog(np.ones(len(ids)), A_ub=A, b_ub=-lam_star * np.ones(len(S99)),
+                  bounds=[(floor, None)] * len(ids), method="highs")
+    if not res.success:
+        reach = sum(np.asarray(p_by_circuit[c], float) for c in ids)[S99]
+        raise ValueError(f"D3'-R LP infeasible ({res.message}); S99 states with zero total probability: "
+                         f"{S99[reach <= 0].tolist()}")
+
+    def up(x):
+        return int(math.ceil(max(float(x), 0.0) / round_to) * round_to)
+
+    lp = {c: (int(floor) if x <= floor + 1e-9 else up(x)) for c, x in zip(ids, res.x)}
+    k_needed = int(math.ceil(recall_target * len(S999) - 1e-9))
+    extra = 0
+    while True:
+        shots = {c: lp[c] + (extra if c in k4 else 0) for c in ids}
+        lam = lambda_of_plan(p_by_circuit, f_by_circuit, shots, readout_factor, margin, only=ids)
+        pr = recall_tail_prob(1.0 - np.exp(-lam[S999]), k_needed)
+        if pr >= prob_target:
+            break
+        extra += round_to
+        if extra > 10 ** 9:
+            raise ValueError("D3'-R: no finite k = 4 extra reaches the recall target")
+    return {"shots": shots, "shots_total": int(sum(shots.values())), "lp_shots": lp,
+            "lp_shots_total": int(sum(lp.values())), "lp_objective": float(res.fun),
+            "k4_extra_per_circuit": int(extra), "k4_ids": k4,
+            "lambda_by_state": lam.tolist(),
+            "lambda_min_S99": float(lam[S99].min()), "lambda_min_S999": float(lam[S999].min()),
+            "n_S999_states_below_lambda_star": int((lam[S999] < lam_star).sum()),
+            "recall_floor_S999": float(np.mean(1.0 - np.exp(-lam[S999]))),
+            "P_recall_S999_ge_target": float(pr), "k_needed_of_S999": k_needed,
+            "P_all_S99_seen": float(np.prod(1.0 - np.exp(-lam[S99]))),
+            "floor_circuits": int(sum(1 for c in ids if shots[c] == floor)),
+            "constants": {"floor": int(floor), "round_to": int(round_to), "margin": float(margin),
+                          "readout_factor": float(readout_factor), "recall_target": float(recall_target),
+                          "prob_target": float(prob_target), "lambda_star": lam_star},
+            "rule": ("D3'-R (prompts/28 B2): LP min sum N_c s.t. every S99 state >= lambda* expected clean counts at "
+                     "y_c = readout_factor x margin x f_c, N_c >= floor (floor circuits exact, others rounded up to "
+                     "round_to); then the k = 4 circuits + a common extra (multiple of round_to) until "
+                     "P(clean-only recall of S999 >= recall_target) >= prob_target (Poisson-binomial, exact)")}
+
+
 # --------------------------------------------------------------- f from a calibration file
 def load_calibration(path):
     p = path if os.path.isabs(path) else os.path.join(ROOT, path)
