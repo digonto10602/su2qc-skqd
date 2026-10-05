@@ -114,15 +114,16 @@ def test_d3r_plan_infeasible_raises():
         d3r_plan(P, {"a": 0.1, "b": 0.1}, ["a", "b"], ["b"], [0, 1], [0, 1])
 
 
-def test_prereg_v2_numbers_trace_to_json():
-    """P5: every number in reports/Q0P_2x3_prereg.md is a number of the plan / CV JSON (renderer formats)."""
-    from gate_Q0P_2x3 import PREREG_V2_FIRST_LINE, md_numbers_untraceable
+def test_prereg_v3_numbers_trace_to_json():
+    """P5: every number in reports/Q0P_2x3_prereg.md is a number of the plan / CV JSON (renderer formats).
+    The block is v3 since prompts/31 ruling 5 (v2 is in git history at eb3f71e)."""
+    from gate_Q0P_2x3 import PREREG_V3_FIRST_LINE, md_numbers_untraceable
     plan_p = os.path.join(ROOT, "validation", "Q0P_2x3_plan.json")
     md_p = os.path.join(ROOT, "reports", "Q0P_2x3_prereg.md")
     if not os.path.exists(plan_p):
         pytest.skip("gate Q0P_2x3_plan not run")
     md = open(md_p).read()
-    assert md.split("\n")[0] == PREREG_V2_FIRST_LINE
+    assert md.split("\n")[0] == PREREG_V3_FIRST_LINE
     assert "## Convergence and coverage (decision 2a)" in md
     cv_p = os.path.join(ROOT, "validation", "CV_2x3_plan.json")
     cv = json.load(open(cv_p)) if os.path.exists(cv_p) else {}

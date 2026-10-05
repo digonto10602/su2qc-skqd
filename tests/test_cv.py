@@ -130,3 +130,91 @@ def test_sig_support_reused_and_B_all_nested(m2):
             assert set(prev).issubset(set(pt["_B_all"]))
         prev = pt["_B_all"]
         assert pt["sig"]["E_R"] >= S.E0 - 1e-9
+
+
+# ----------------------------------------------------------------------------- prompts/31
+def test_kt_rigorous_width_hand_built():
+    """certify(...).kt_rigorous with beta = the exact E1: width r_H^2 / (E1 - E_R) (manual 5.3, prompts/31 ruling 2)."""
+    from skqd.skqd import RitzResult, certify
+    res = RitzResult(B=np.array([0, 1]), energies=np.array([-1.0, 0.5]), vectors=np.eye(2), rH=0.3)
+    c = certify(res, exact_E0=-1.05, exact_E1=0.0)
+    assert c.kt_rigorous is not None
+    assert abs((c.kt_rigorous[1] - c.kt_rigorous[0]) - 0.3 ** 2 / (0.0 - (-1.0))) < 1e-15
+    assert c.kt_rigorous[1] == -1.0
+    # E_R above the exact E1: no rigorous Kato-Temple interval
+    c2 = certify(RitzResult(B=np.array([0, 1]), energies=np.array([0.2, 0.5]), vectors=np.eye(2), rH=0.3), -1.05, 0.0)
+    assert c2.kt_rigorous is None
+
+
+def test_basis_metrics_kt_width_matches_formula(m2):
+    import gate_CV as G
+    from skqd.skqd import ritz
+    M = m2[0]
+    S = G.Sector(M, "2x2", "B=0", 0, 38 / 4096)
+    B = sorted(set(S.refs) | set(int(x) for x in S.S99))
+    m = S.basis_metrics(B)
+    res = ritz(S.H, np.asarray(B))
+    assert m["E_R_below_E1"]
+    assert abs(m["kt_width"] - res.rH ** 2 / (S.E1 - res.ER)) < 1e-14
+    assert m["kt_rigorous"][1] == m["E_R"] and m["E0_in_kt"] and m["E0_in_weinstein"]
+
+
+def test_k5_circuit_histogram_matches_coarse_state(m2):
+    """The k = 5 circuit (gate_CV.k_next_states) is coarse_states(..., 5)[5]; its noiseless sampled histogram at
+    1e5 shots matches |psi|^2 (chi^2, bins with expected count >= 5, the rest pooled)."""
+    from scipy.stats import chisquare
+
+    import gate_CV as G
+    M, codec, cw, _ = m2
+    S = G.Sector(M, "2x2", "B=0", 0, 38 / 4096)
+    st = G.k_next_states(S)
+    assert sorted(st) == sorted(f"B0_ref{r}_k5" for r in S.refs)
+    groups = term_groups(M.terms, 4.0, mass_default(4.0))
+    r0 = S.refs[0]
+    psi5 = coarse_states(groups, basis_vector(M.basis.dim, r0), S.dt, 5)[5]
+    assert np.max(np.abs(st[f"B0_ref{r0}_k5"] - psi5)) < 1e-14
+    n = 100_000
+    dec, why = measure_and_decode_sequence(codec, cw, psi5, n, 1.0, 0.0, np.random.default_rng(11), target_twoB=0)
+    assert np.all(dec >= 0)
+    p = np.abs(psi5) ** 2
+    p = p / p.sum()
+    obs = np.bincount(dec, minlength=M.basis.dim).astype(float)
+    exp = n * p
+    big = exp >= 5
+    o = np.append(obs[big], obs[~big].sum())
+    e = np.append(exp[big], exp[~big].sum())
+    keep = e > 0
+    assert chisquare(o[keep], e[keep]).pvalue > 1e-3
+
+
+def test_resize_picks_smallest_grid_value():
+    import gate_CV as G
+    called = []
+
+    def ok_at(s):
+        called.append(s)
+        return s >= 3
+    assert G.pick_resize(G.PHI_RESIZE, ok_at) == 3
+    assert called == [1.5, 2, 3]
+    assert G.pick_resize(G.PHI_RESIZE, lambda s: False) is None
+    assert G.PHI_RESIZE == (1.5, 2, 3, 4, 6, 8)
+    assert G.resized_shots(267, 1.5) == 500 and G.resized_shots(2267, 1.5) == 3401 and G.resized_shots(1000, 1.5) == 1500
+    assert G.resized_shots(267, 6) == 1700 and G.resized_shots(1367, 3) == 4101
+
+
+def test_oracle_table_monotone():
+    """The oracle-width table (prompts/31 D1): r_H and 1 - W decrease as eps decreases (nested supports), at 2x2
+    (computed) and in the planner prototype's 2x3 rows."""
+    import gate_CV as G
+    M = Model(2)
+    for _sec, tb in G.SECTORS:
+        t = G.oracle_width(M, tb)
+        rows = [t["rows"][f"{e:g}"] for e in G.ORACLE_EPS]
+        assert all(rows[i + 1]["one_minus_W"] <= rows[i]["one_minus_W"] + 1e-15 for i in range(len(rows) - 1))
+        assert all(rows[i + 1]["rH"] <= rows[i]["rH"] + 1e-12 for i in range(len(rows) - 1))
+        assert all(rows[i + 1]["size"] >= rows[i]["size"] for i in range(len(rows) - 1))
+    proto = json.load(open(os.path.join(ROOT, "scratch", "planner", "oracle_width_20261005.json")))
+    for sec in ("B=0", "B=1"):
+        rows = [proto[sec]["rows"][f"{e:g}"] for e in G.ORACLE_EPS]
+        assert all(rows[i + 1]["one_minus_W"] < rows[i]["one_minus_W"] for i in range(len(rows) - 1))
+        assert all(rows[i + 1]["rH"] < rows[i]["rH"] for i in range(len(rows) - 1))

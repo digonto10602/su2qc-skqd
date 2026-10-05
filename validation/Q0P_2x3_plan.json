@@ -1,7 +1,7 @@
 {
  "gate": "Q0P_2x3_plan",
  "title": "the 2x3 shot rule D3'-R (minimum sizing, owner decision 2a), the f_hat_ideal statistic and GO rule v3, Stage E / P v3, the emulated convergence check (P7)",
- "status": "FAIL",
+ "status": "PASS",
  "criteria": [
   {
    "name": "P1 d3r_plan reproduces the planner prototype at f = 0.10 to the shot; 2x2: d3r_plan totals <= the recorded H0_2x2 plan, which satisfies both D3'-R conditions",
@@ -16,16 +16,16 @@
    "passed": true
   },
   {
-   "name": "P3 emulated check of the plan (f = 0.10, 3 seeds, clean fraction 0.7 f): recall of S999 >= 0.9 on B_sig (B_all beside) and E0 inside the Weinstein interval, every seed",
-   "value": "B=0 seed 20260914: recall 0.884 (all 0.953), inside True, width 0.221; B=0 seed 1: recall 0.907 (all 0.977), inside True, width 0.215; B=0 seed 2: recall 0.849 (all 0.953), inside True, width 0.259; B=1 seed 20260914: recall 0.863 (all 0.947), inside True, width 0.211; B=1 seed 1: recall 0.905 (all 0.958), inside True, width 0.196; B=1 seed 2: recall 0.937 (all 0.958), inside True, width 0.183",
+   "name": "P3 emulated check of the plan (f = 0.10, 3 seeds, clean fraction 0.7 f): recall of S999 >= 0.9 on B_all (B_sig beside) and E0 inside the H1 / H2 certificate (B=0 Kato-Temple with the exact E1, B=1 Weinstein), every seed",
+   "value": "B=0 seed 20260914: recall 0.953 (sig 0.884), inside True, kato_temple_exact_E1 width 0.008; B=0 seed 1: recall 0.977 (sig 0.907), inside True, kato_temple_exact_E1 width 0.007; B=0 seed 2: recall 0.953 (sig 0.849), inside True, kato_temple_exact_E1 width 0.011; B=1 seed 20260914: recall 0.947 (sig 0.863), inside True, weinstein width 0.137; B=1 seed 1: recall 0.958 (sig 0.905), inside True, weinstein width 0.125; B=1 seed 2: recall 0.958 (sig 0.937), inside True, weinstein width 0.143",
    "threshold": ">= 0.9; inside",
-   "passed": false
+   "passed": true
   },
   {
    "name": "P7 validation/CV_2x3_plan.json status PASS and its plan equals the plan table's rows (per-circuit shots identical, D3'-R x s where re-sized)",
-   "value": "CV status FAIL; plans identical True; resized_by B=0|f=0.05: None, B=1|f=0.05: 4, B=0|f=0.10: None, B=1|f=0.10: 8, B=0|f=0.15: None, B=1|f=0.15: 8",
+   "value": "CV status PASS; plans identical True; resized_by B=0|f=0.05: 1, B=1|f=0.05: 2, B=0|f=0.10: 1, B=1|f=0.10: 2, B=0|f=0.15: 1, B=1|f=0.15: 2",
    "threshold": "PASS; identical",
-   "passed": false
+   "passed": true
   },
   {
    "name": "P4 HQC totals = the billing formula applied job by job (<= 10,000 shots per job, 5 HQC per job)",
@@ -34,21 +34,21 @@
    "passed": true
   },
   {
-   "name": "P5 preregistration v2 rendered from the JSON only: every number in reports/Q0P_2x3_prereg.md is a number of validation/Q0P_2x3_plan.json or validation/CV_2x3_plan.json",
+   "name": "P5 preregistration v3 rendered from the JSON only: every number in reports/Q0P_2x3_prereg.md is a number of validation/Q0P_2x3_plan.json or validation/CV_2x3_plan.json",
    "value": "untraceable tokens: none",
    "threshold": "none",
    "passed": true
   },
   {
    "name": "P6 pytest -q tests and check_package.py pass",
-   "value": "pytest: 316 passed, 19 skipped, 10 warnings in 975.80s (0:16:15); check_package rc 0 (PACKAGE OK)",
+   "value": "pytest: 321 passed, 19 skipped, 10 warnings in 762.58s (0:12:42); check_package rc 0 (PACKAGE OK)",
    "threshold": "rc 0",
    "passed": true
   }
  ],
  "data": {
-  "prompt": "prompts/28_2x3_shot_rule_and_clean_fraction_estimator.md Part B as amended by prompts/29_cf_traj_reruling_ideal_sample_fraction.md Part B' and prompts/30_convergence_and_coverage_criteria.md",
-  "what_pass_means": "rule D3'-R is implemented, reproduces the planner's prototype to the shot and the 2x2 record's plan, guarantees lambda* on S99 and P(recall of S999 >= 0.9) >= 0.95 from clean shots at f = 0.05 / 0.10 / 0.15, its HQC follow the billing formula job by job, the preregistration v2 is rendered from the JSON only, and (P7) the emulated convergence-and-coverage gate CV_2x3_plan passes on the plan in the table.  PASS commits no HQC and says nothing about any device",
+  "prompt": "prompts/28_2x3_shot_rule_and_clean_fraction_estimator.md Part B as amended by prompts/29_cf_traj_reruling_ideal_sample_fraction.md Part B', prompts/30_convergence_and_coverage_criteria.md and prompts/31_CV_2x3_plan_fix_20261005.md",
+  "what_pass_means": "rule D3'-R is implemented, reproduces the planner's prototype to the shot and the 2x2 record's plan, guarantees lambda* on S99 and P(recall of S999 >= 0.9) >= 0.95 from clean shots at f = 0.05 / 0.10 / 0.15, its HQC follow the billing formula job by job, the preregistration v3 is rendered from the JSON only, and (P7) the emulated convergence-and-coverage gate CV_2x3_plan passes on the plan in the table.  PASS commits no HQC and says nothing about any device",
   "owner_decision": "data/owner_decision_20261005_partB.md (1a, 2a with the convergence condition, 3a)",
   "constants": {
    "lambda_star": 6.295793621871989,
@@ -395,6 +395,12 @@
   },
   "emulated_check": {
    "source": "validation/CV_2x3_plan.json data.curves.f=0.10 (phi = 1, 1x plan)",
+   "basis": "B_all | refs (prompts/31 ruling 1)",
+   "certificate": {
+    "B=0": "kato_temple_exact_E1",
+    "B=1": "weinstein"
+   },
+   "owner_confirmation_kt": "data/owner_decision_20261005_kt_certificate.md",
    "per_seed": {
     "B=0": {
      "20260914": {
@@ -408,7 +414,13 @@
         -5.595881117188529
        ],
        "width": 0.22121395999874505,
-       "E0_in_weinstein": true
+       "E0_in_weinstein": true,
+       "kt_rigorous": [
+        -5.613956692801958,
+        -5.595881117188529
+       ],
+       "kt_width": 0.01807557561342854,
+       "E0_in_kt": true
       },
       "all": {
        "recall_S999": 0.9534883720930233,
@@ -420,7 +432,18 @@
         -5.599567330253239
        ],
        "width": 0.14911820872577408,
-       "E0_in_weinstein": true
+       "E0_in_weinstein": true,
+       "kt_rigorous": [
+        -5.607769665230703,
+        -5.599567330253239
+       ],
+       "kt_width": 0.008202334977463366,
+       "E0_in_kt": true
+      },
+      "certificate": {
+       "type": "kato_temple_exact_E1",
+       "E0_inside": true,
+       "width": 0.008202334977463366
       }
      },
      "1": {
@@ -434,7 +457,13 @@
         -5.59625054888113
        ],
        "width": 0.21507843307907493,
-       "E0_in_weinstein": true
+       "E0_in_weinstein": true,
+       "kt_rigorous": [
+        -5.6133350202066294,
+        -5.59625054888113
+       ],
+       "kt_width": 0.017084471325499173,
+       "E0_in_kt": true
       },
       "all": {
        "recall_S999": 0.9767441860465116,
@@ -446,7 +475,18 @@
         -5.600028305922199
        ],
        "width": 0.142414523154633,
-       "E0_in_weinstein": true
+       "E0_in_weinstein": true,
+       "kt_rigorous": [
+        -5.607508465514749,
+        -5.600028305922199
+       ],
+       "kt_width": 0.007480159592549995,
+       "E0_in_kt": true
+      },
+      "certificate": {
+       "type": "kato_temple_exact_E1",
+       "E0_inside": true,
+       "width": 0.007480159592549995
       }
      },
      "2": {
@@ -460,7 +500,13 @@
         -5.593672104803534
        ],
        "width": 0.25853931932622753,
-       "E0_in_weinstein": true
+       "E0_in_weinstein": true,
+       "kt_rigorous": [
+        -5.618382220937461,
+        -5.593672104803534
+       ],
+       "kt_width": 0.02471011613392715,
+       "E0_in_kt": true
       },
       "all": {
        "recall_S999": 0.9534883720930233,
@@ -472,7 +518,18 @@
         -5.598874230822019
        ],
        "width": 0.17293066358975295,
-       "E0_in_weinstein": true
+       "E0_in_weinstein": true,
+       "kt_rigorous": [
+        -5.609908185851479,
+        -5.598874230822019
+       ],
+       "kt_width": 0.011033955029460252,
+       "E0_in_kt": true
+      },
+      "certificate": {
+       "type": "kato_temple_exact_E1",
+       "E0_inside": true,
+       "width": 0.011033955029460252
       }
      }
     },
@@ -488,7 +545,13 @@
         -3.819412792274748
        ],
        "width": 0.21053572397793907,
-       "E0_in_weinstein": true
+       "E0_in_weinstein": true,
+       "kt_rigorous": [
+        -6.3258207871325265,
+        -3.819412792274748
+       ],
+       "kt_width": 2.5064079948577787,
+       "E0_in_kt": true
       },
       "all": {
        "recall_S999": 0.9473684210526315,
@@ -500,7 +563,18 @@
         -3.823377309760848
        ],
        "width": 0.13722323046909146,
-       "E0_in_weinstein": true
+       "E0_in_weinstein": true,
+       "kt_rigorous": [
+        -4.693161147377858,
+        -3.823377309760848
+       ],
+       "kt_width": 0.8697838376170104,
+       "E0_in_kt": true
+      },
+      "certificate": {
+       "type": "weinstein",
+       "E0_inside": true,
+       "width": 0.13722323046909157
       }
      },
      "1": {
@@ -514,7 +588,13 @@
         -3.8205055417493416
        ],
        "width": 0.1960145372911417,
-       "E0_in_weinstein": true
+       "E0_in_weinstein": true,
+       "kt_rigorous": [
+        -5.866657828629871,
+        -3.8205055417493416
+       ],
+       "kt_width": 2.0461522868805297,
+       "E0_in_kt": true
       },
       "all": {
        "recall_S999": 0.9578947368421052,
@@ -526,7 +606,18 @@
         -3.823840810593463
        ],
        "width": 0.12463381526532524,
-       "E0_in_weinstein": true
+       "E0_in_weinstein": true,
+       "kt_rigorous": [
+        -4.526311067565979,
+        -3.823840810593463
+       ],
+       "kt_width": 0.7024702569725161,
+       "E0_in_kt": true
+      },
+      "certificate": {
+       "type": "weinstein",
+       "E0_inside": true,
+       "width": 0.12463381526532509
       }
      },
      "2": {
@@ -540,7 +631,13 @@
         -3.821549033417738
        ],
        "width": 0.18349090363439124,
-       "E0_in_weinstein": true
+       "E0_in_weinstein": true,
+       "kt_rigorous": [
+        -5.520195126892178,
+        -3.821549033417738
+       ],
+       "kt_width": 1.6986460934744398,
+       "E0_in_kt": true
       },
       "all": {
        "recall_S999": 0.9578947368421052,
@@ -552,7 +649,18 @@
         -3.8234140271346275
        ],
        "width": 0.14329706587573554,
-       "E0_in_weinstein": true
+       "E0_in_weinstein": true,
+       "kt_rigorous": [
+        -4.770293514414463,
+        -3.8234140271346275
+       ],
+       "kt_width": 0.9468794872798352,
+       "E0_in_kt": true
+      },
+      "certificate": {
+       "type": "weinstein",
+       "E0_inside": true,
+       "width": 0.14329706587573549
       }
      }
     }
@@ -562,108 +670,108 @@
   "resized_rows": {
    "f=0.05": {
     "B=1": {
-     "s": 4,
+     "s": 2,
      "shots_by_circuit": {
-      "B1_ref27_k1": 1100,
-      "B1_ref27_k2": 1100,
-      "B1_ref27_k3": 1100,
-      "B1_ref27_k4": 119200,
-      "B1_ref29_k1": 1100,
-      "B1_ref29_k2": 1100,
-      "B1_ref29_k3": 1100,
-      "B1_ref29_k4": 91600,
-      "B1_ref57_k1": 1100,
-      "B1_ref57_k2": 1100,
-      "B1_ref57_k3": 1100,
-      "B1_ref57_k4": 165600
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 59600,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 45800,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 82800
      },
-     "shots_total": 386300,
-     "jobs": 48,
-     "hqc": 1919714.46,
-     "usd_ESTIMATE": 23996430.75,
-     "machine_hours_mid_ESTIMATE": 227.2195138888889,
+     "shots_total": 193600,
+     "jobs": 29,
+     "hqc": 962114.0800000001,
+     "usd_ESTIMATE": 12026426.0,
+     "machine_hours_mid_ESTIMATE": 113.87444444444446,
      "hqc_before": 479611.5190000001
     }
    },
    "f=0.10": {
     "B=1": {
-     "s": 8,
+     "s": 2,
      "shots_by_circuit": {
-      "B1_ref27_k1": 2200,
-      "B1_ref27_k2": 2200,
-      "B1_ref27_k3": 2200,
-      "B1_ref27_k4": 118400,
-      "B1_ref29_k1": 2200,
-      "B1_ref29_k2": 2200,
-      "B1_ref29_k3": 2200,
-      "B1_ref29_k4": 91200,
-      "B1_ref57_k1": 2200,
-      "B1_ref57_k2": 2200,
-      "B1_ref57_k3": 2200,
-      "B1_ref57_k4": 164800
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 29600,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 22800,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 41200
      },
-     "shots_total": 394200,
-     "jobs": 48,
-     "hqc": 1958876.9200000004,
-     "usd_ESTIMATE": 24485961.500000004,
-     "machine_hours_mid_ESTIMATE": 231.86625000000004,
+     "shots_total": 99000,
+     "jobs": 20,
+     "hqc": 491991.0800000001,
+     "usd_ESTIMATE": 6149888.500000001,
+     "machine_hours_mid_ESTIMATE": 58.23125000000001,
      "hqc_before": 244552.51899999997
     }
    },
    "f=0.15": {
     "B=1": {
-     "s": 8,
+     "s": 2,
      "shots_by_circuit": {
-      "B1_ref27_k1": 2200,
-      "B1_ref27_k2": 2200,
-      "B1_ref27_k3": 2200,
-      "B1_ref27_k4": 79200,
-      "B1_ref29_k1": 2200,
-      "B1_ref29_k2": 2200,
-      "B1_ref29_k3": 2200,
-      "B1_ref29_k4": 60000,
-      "B1_ref57_k1": 2200,
-      "B1_ref57_k2": 2200,
-      "B1_ref57_k3": 2200,
-      "B1_ref57_k4": 109600
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 19800,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 15000,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 27400
      },
-     "shots_total": 268600,
-     "jobs": 34,
-     "hqc": 1334686.44,
-     "usd_ESTIMATE": 16683580.5,
-     "machine_hours_mid_ESTIMATE": 157.98902777777778,
+     "shots_total": 67600,
+     "jobs": 16,
+     "hqc": 335940.95999999996,
+     "usd_ESTIMATE": 4199262.0,
+     "machine_hours_mid_ESTIMATE": 39.761944444444445,
      "hqc_before": 166522.459
     }
    }
   },
   "P7_detail": {
    "B=0|f=0.05": {
-    "resized_by": null,
+    "resized_by": 1,
     "base_identical": true,
     "final_identical": true
    },
    "B=1|f=0.05": {
-    "resized_by": 4,
+    "resized_by": 2,
     "base_identical": true,
     "final_identical": true
    },
    "B=0|f=0.10": {
-    "resized_by": null,
+    "resized_by": 1,
     "base_identical": true,
     "final_identical": true
    },
    "B=1|f=0.10": {
-    "resized_by": 8,
+    "resized_by": 2,
     "base_identical": true,
     "final_identical": true
    },
    "B=0|f=0.15": {
-    "resized_by": null,
+    "resized_by": 1,
     "base_identical": true,
     "final_identical": true
    },
    "B=1|f=0.15": {
-    "resized_by": 8,
+    "resized_by": 2,
     "base_identical": true,
     "final_identical": true
    }
@@ -3825,32 +3933,32 @@
    "safety": "floor theorem (`prompts/29 2.4`): f_eff(s) >= f_ideal (1 - 2 delta / p_c(s)) for every state, so f_ideal is a safe sizing input on S99 while the device's near-clean ratio stays within r_nc / 0.7",
    "halves": "(ii) submitted in two halves per circuit: ceil(N_c / 2) shots of every circuit in the first half, jobs of <= 10,000 shots; the first half is the real N/2 prefix",
    "mid_campaign": "after the first half, the pooled observed/expected ratio on S99 (expected = lambda_s / 2 at the plan's y) over all circuits; if it is < 0.7 the second half is re-sized by that ratio once (HQC cap: the owner's)",
-   "hardware_cv": "(iii) CV1-CV5 preregistered on the hardware counts with the N/2 point = the first half (real time order) and the finer points by hypergeometric sub-sampling within halves (seeds `2030..2049`, information); E_tol, the H1/H2 widths, 0.99 and the random seeds exactly as in gate CV_2x3_plan",
-   "outcome": "(iv) the certificates and the H1 / H2 / P1 rows are reported for any B (rigorous or gap-assumed as labelled); a campaign that fails CV1, CV2, CV4 or CV5 on hardware is labelled 'not converged at the plan' in every table and the P1 curve is reported to the size of B_sig with that label; one top-up by s = 2 only under a new owner decision; a CV3 failure on hardware is reported as a family result (no top-up)"
+   "hardware_cv": "(iii) CV1-CV5 preregistered on the hardware counts with the N/2 point = the first half (real time order) and the finer points by hypergeometric sub-sampling within halves (seeds `2030..2049`, information); evaluated on B_all | refs (manual Step 5.1, prompts/31 ruling 1); the H1 width on the Kato-Temple interval with the exact E1 at B=0 and the H2 width on Weinstein at B=1 (prompts/31 ruling 2); CV3 = the k = 4 -> 5 step where a k = 5 circuit exists; E_tol, the H1/H2 widths, 0.99 and the random seeds exactly as in gate CV_2x3_plan",
+   "outcome": "(iv) the certificates and the H1 / H2 / P1 rows are reported for any B (rigorous or gap-assumed as labelled); a campaign that fails CV1, CV2, CV4 or CV5 on hardware is labelled 'not converged at the plan' in every table; the P1 curve is the ranked curve by count (manual Tables 3-4) with the P9 cut marked as one point and the expected garbage count dim (1 - exp(-mu_s)) beside it; one top-up by s = 2 only under a new owner decision; a CV3 failure on hardware is reported as a family result (no top-up)"
   },
   "cv_source": "validation/CV_2x3_plan.json",
   "P5_untraceable": [],
   "P6": {
    "pytest": {
     "returncode": 0,
-    "summary": "316 passed, 19 skipped, 10 warnings in 975.80s (0:16:15)",
-    "wall_s": 977.2851192951202
+    "summary": "321 passed, 19 skipped, 10 warnings in 762.58s (0:12:42)",
+    "wall_s": 763.6947455406189
    },
    "check_package": {
     "returncode": 0,
     "summary": "PACKAGE OK",
-    "wall_s": 0.5881571769714355
+    "wall_s": 0.7058262825012207
    }
   }
  },
- "runtime_s": 1014.7216897010803,
+ "runtime_s": 780.8032484054565,
  "environment": {
   "python": "3.12.14",
   "numpy": "2.5.2",
   "scipy": "1.18.0",
   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
   "cpu_count": 12,
-  "git_commit": "408e49c",
-  "timestamp": "2026-10-05 16:46:08 MDT"
+  "git_commit": "3d5f05a",
+  "timestamp": "2026-10-05 17:56:24 MDT"
  }
 }

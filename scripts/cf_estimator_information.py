@@ -42,6 +42,19 @@ LABEL_MIX = ("mixture estimate (clean_fraction_mixture): the shape statistic; at
              "over-estimates f_ideal by the CF_traj C7 factor")
 
 
+RULING_SOURCE = "prompts/31_CV_2x3_plan_fix_20261005.md"
+
+
+def qualification_ruling():
+    """prompts/31 ruling 6, verbatim (read from the prompt file, not retyped): the text between the item marker
+    '6. **The 2x2 qualification' and the next item '7. **'."""
+    with open(os.path.join(ROOT, RULING_SOURCE)) as fh:
+        lines = fh.read().split("\n")
+    i0 = next(i for i, ln in enumerate(lines) if ln.startswith("6. **The 2x2 qualification"))
+    i1 = next(i for i in range(i0 + 1, len(lines)) if lines[i].startswith("7. **"))
+    return {"text": "\n".join(lines[i0:i1]).rstrip(), "source": f"{RULING_SOURCE} (Ruling, item 6; lines {i0 + 1}-{i1})"}
+
+
 def load(p):
     with open(os.path.join(ROOT, p)) as fh:
         return json.load(fh)
@@ -152,7 +165,8 @@ def main():
                               "planner_arithmetic_r_1.10": planner},
               "A5_bracket": a5, "A5_note": cf["A5_2x2_arm"]["model_note"],
               "unchanged": unchanged, "qualified": qualified,
-              "k4_mixture_bias_CF_traj": cf["C7_k4_mixture"]["bias_ratio"]}
+              "k4_mixture_bias_CF_traj": cf["C7_k4_mixture"]["bias_ratio"],
+              "qualification_ruling": qualification_ruling()}
     R.runtime_s = time.time() - t0
     path = R.save()
     D = R.data
@@ -191,7 +205,9 @@ def main():
                         for e, v in a5.items()]), "",
               f"Model note (CF_traj): {D['A5_note']}.", "",
               "## What does not change", ""] + [f"- {u}" for u in unchanged] + [
-              "", "## What is qualified", "", qualified + ".", ""]
+              "", "## What is qualified", "", qualified + ".", "",
+              "## Qualification ruling (prompts/31 ruling 6, verbatim; source `" + D["qualification_ruling"]["source"] + "`)",
+              "", D["qualification_ruling"]["text"], ""]
     write_report("CF_estimator_2x2_information_20261003.md", "\n".join(lines))
     print(f"{GATE}: {'PASS' if R.passed else 'FAIL'} -> {os.path.relpath(path, ROOT)}")
     for c in R.criteria:

@@ -900,15 +900,19 @@ PLAN_GATE = "Q0P_2x3_plan"
 PLAN_TITLE = ("the 2x3 shot rule D3'-R (minimum sizing, owner decision 2a), the f_hat_ideal statistic and GO rule v3, "
               "Stage E / P v3, the emulated convergence check (P7)")
 PLAN_PROMPT = ("prompts/28_2x3_shot_rule_and_clean_fraction_estimator.md Part B as amended by "
-               "prompts/29_cf_traj_reruling_ideal_sample_fraction.md Part B' and prompts/30_convergence_and_coverage_criteria.md")
+               "prompts/29_cf_traj_reruling_ideal_sample_fraction.md Part B', prompts/30_convergence_and_coverage_criteria.md "
+               "and prompts/31_CV_2x3_plan_fix_20261005.md")
 PLAN_WHAT_PASS_MEANS = (
     "rule D3'-R is implemented, reproduces the planner's prototype to the shot and the 2x2 record's plan, guarantees "
     "lambda* on S99 and P(recall of S999 >= 0.9) >= 0.95 from clean shots at f = 0.05 / 0.10 / 0.15, its HQC follow "
-    "the billing formula job by job, the preregistration v2 is rendered from the JSON only, and (P7) the emulated "
+    "the billing formula job by job, the preregistration v3 is rendered from the JSON only, and (P7) the emulated "
     "convergence-and-coverage gate CV_2x3_plan passes on the plan in the table.  PASS commits no HQC and says "
     "nothing about any device")
 PREREG_V2_FIRST_LINE = ("v2 replaces v1 of 2026-10-03 03:22 UTC before any Stage E/P shot; v1 is in git history at "
                         "a2e6060")
+PREREG_V3_FIRST_LINE = ("v3 replaces v2 of 2026-10-05 before any Stage E/P shot; v2 is in git history at eb3f71e")
+OWNER_KT = "data/owner_decision_20261005_kt_certificate.md"
+CV2_TYPE = {"B=0": "kato_temple_exact_E1", "B=1": "weinstein"}     # prompts/31 ruling 2
 STAGE_EP_V3 = {"B0_ref25_k1": 800, "B1_ref57_k1": 800, "B0_ref25_k4": 200, "B1_ref57_k4": 200}
 CAL_PLAN_SHOTS = 1000
 PLAN_F_CHECK = 0.10                 # prompts/28 B3: the emulated check at f = 0.10
@@ -1240,15 +1244,24 @@ def stage_plan28(args):
                 e = {b: {"recall_S999": full[b]["recall_S999"], "size": full[b]["size"], "E_R_minus_E0": full[b]["err"],
                          "rH": full[b]["rH"], "weinstein": full[b]["weinstein"],
                          "width": full[b]["weinstein"][1] - full[b]["weinstein"][0],
-                         "E0_in_weinstein": full[b]["E0_in_weinstein"]} for b in ("sig", "all")}
+                         "E0_in_weinstein": full[b]["E0_in_weinstein"], "kt_rigorous": full[b].get("kt_rigorous"),
+                         "kt_width": full[b].get("kt_width"), "E0_in_kt": full[b].get("E0_in_kt")} for b in ("sig", "all")}
+                # prompts/31 ruling 5: recall on B_all and E0 inside the H1 (B=0: Kato-Temple, exact E1) / H2 (B=1:
+                # Weinstein) certificate of ruling 2
+                typ = CV2_TYPE[sec]
+                inside = bool(e["all"]["E0_in_kt"]) if typ.startswith("kato") else bool(e["all"]["E0_in_weinstein"])
+                cert_w = e["all"]["kt_width"] if typ.startswith("kato") else e["all"]["rH"]
+                e["certificate"] = {"type": typ, "E0_inside": inside, "width": cert_w}
                 emu[sec][seed] = e
-                p3 &= bool(e["sig"]["recall_S999"] >= RECALL_TARGET and e["sig"]["E0_in_weinstein"])
+                p3 &= bool(e["all"]["recall_S999"] >= RECALL_TARGET and inside)
         data["emulated_check"] = {"source": os.path.relpath(CV_JSON, ROOT) + f" data.curves.{key010} (phi = 1, 1x plan)",
-                                  "per_seed": emu, "h1_width_information": 0.1}
-        R.add("P3 emulated check of the plan (f = 0.10, 3 seeds, clean fraction 0.7 f): recall of S999 >= 0.9 on B_sig "
-              "(B_all beside) and E0 inside the Weinstein interval, every seed",
-              "; ".join(f"{s} seed {sd}: recall {v['sig']['recall_S999']:.3f} (all {v['all']['recall_S999']:.3f}), "
-                        f"inside {v['sig']['E0_in_weinstein']}, width {v['sig']['width']:.3f}"
+                                  "basis": "B_all | refs (prompts/31 ruling 1)", "certificate": CV2_TYPE,
+                                  "owner_confirmation_kt": OWNER_KT, "per_seed": emu, "h1_width_information": 0.1}
+        R.add("P3 emulated check of the plan (f = 0.10, 3 seeds, clean fraction 0.7 f): recall of S999 >= 0.9 on B_all "
+              "(B_sig beside) and E0 inside the H1 / H2 certificate (B=0 Kato-Temple with the exact E1, B=1 Weinstein), "
+              "every seed",
+              "; ".join(f"{s} seed {sd}: recall {v['all']['recall_S999']:.3f} (sig {v['sig']['recall_S999']:.3f}), "
+                        f"inside {v['certificate']['E0_inside']}, {v['certificate']['type']} width {v['certificate']['width']:.3f}"
                         for s, d in emu.items() for sd, v in d.items()),
               ">= 0.9; inside", p3)
     else:
@@ -1273,8 +1286,8 @@ def stage_plan28(args):
                 elif s == 1:
                     want = base
                 else:
-                    want = {c: (int(math.ceil(D3_FLOOR * s / D3_ROUND) * D3_ROUND) if base[c] == D3_FLOOR else base[c] * s)
-                            for c in ids}
+                    want = {c: (int(math.ceil(D3_FLOOR * s / D3_ROUND - 1e-9) * D3_ROUND) if base[c] == D3_FLOOR
+                                else int(math.ceil(base[c] * s - 1e-9))) for c in ids}
                 eq_base = all(int(pr["base_shots_by_circuit"][c]) == base[c] for c in ids)
                 eq_final = all(int(pr["final_shots_by_circuit"][c]) == want[c] for c in ids)
                 same_all &= eq_base and eq_final
@@ -1322,12 +1335,12 @@ def stage_plan28(args):
             sets[k].pop(x)
     data.update({"target_sets": sets, "plan_table": plan_table, "campaign_sizing_rule": campaign_rule_text(),
                  "cv_source": os.path.relpath(CV_JSON, ROOT) if cv else None})
-    # ---------------- P5: render the prereg v2 from the JSON only and check every number
+    # ---------------- P5: render the prereg (v3) from the JSON only and check every number
     R.data = data
     jd = json.loads(json.dumps(_jsonable_plain(data)))
     md = prereg_v2_text(jd, cv)
     bad = md_numbers_untraceable(md, jd, cv or {})
-    R.add("P5 preregistration v2 rendered from the JSON only: every number in reports/Q0P_2x3_prereg.md is a number of "
+    R.add("P5 preregistration v3 rendered from the JSON only: every number in reports/Q0P_2x3_prereg.md is a number of "
           "validation/Q0P_2x3_plan.json or validation/CV_2x3_plan.json",
           f"untraceable tokens: {bad[:12] if bad else 'none'}", "none", not bad)
     data["P5_untraceable"] = bad
@@ -1377,10 +1390,14 @@ def campaign_rule_text():
                          "cap: the owner's)"),
         "hardware_cv": ("(iii) CV1-CV5 preregistered on the hardware counts with the N/2 point = the first half (real time "
                         "order) and the finer points by hypergeometric sub-sampling within halves (seeds `2030..2049`, "
-                        "information); E_tol, the H1/H2 widths, 0.99 and the random seeds exactly as in gate CV_2x3_plan"),
+                        "information); evaluated on B_all | refs (manual Step 5.1, prompts/31 ruling 1); the H1 width on the "
+                        "Kato-Temple interval with the exact E1 at B=0 and the H2 width on Weinstein at B=1 (prompts/31 "
+                        "ruling 2); CV3 = the k = 4 -> 5 step where a k = 5 circuit exists; E_tol, the H1/H2 widths, 0.99 and "
+                        "the random seeds exactly as in gate CV_2x3_plan"),
         "outcome": ("(iv) the certificates and the H1 / H2 / P1 rows are reported for any B (rigorous or gap-assumed as "
                     "labelled); a campaign that fails CV1, CV2, CV4 or CV5 on hardware is labelled 'not converged at the "
-                    "plan' in every table and the P1 curve is reported to the size of B_sig with that label; one top-up "
+                    "plan' in every table; the P1 curve is the ranked curve by count (manual Tables 3-4) with the P9 cut "
+                    "marked as one point and the expected garbage count dim (1 - exp(-mu_s)) beside it; one top-up "
                     "by s = 2 only under a new owner decision; a CV3 failure on hardware is reported as a family result "
                     "(no top-up)")}
 
@@ -1391,7 +1408,7 @@ def plan_report_text(R, D, cv):
          f"`scripts/gate_Q0P_2x3.py --stage plan28` from `validation/{PLAN_GATE}.json`; no number is typed.  "
          f"{env_block()}", "", f"Prompt: {D['prompt']}.  Owner decision: {D['owner_decision']}.", "",
          f"What PASS means: \"{D['what_pass_means']}\".", "", "## Criteria", "", R.criteria_table(), "",
-         "The preregistration block v2 is `reports/Q0P_2x3_prereg.md` (rendered from the same JSON).", ""]
+         "The preregistration block v3 is `reports/Q0P_2x3_prereg.md` (rendered from the same JSON).", ""]
     L += [prereg_tables(D, cv)]
     return "\n".join(L)
 
@@ -1461,12 +1478,12 @@ def prereg_tables(D, cv):
     L += [f"- **{k}**: {v}" for k, v in D["campaign_sizing_rule"].items()] + [""]
     if D.get("emulated_check"):
         e = D["emulated_check"]
-        L += ["## Emulated check of the plan (f = 0.10, phi = 1; source `" + e["source"] + "`)", "",
-              md_table(["sector", "seed", "recall S999 (B_sig / B_all)", "size (B_sig / B_all)", "E_R - E0 (B_sig)",
-                        "r_H (B_sig)", "Weinstein width", "E0 inside"],
-                       [[s, sd, f"{fmt(v['sig']['recall_S999'])} / {fmt(v['all']['recall_S999'])}",
-                         f"{v['sig']['size']} / {v['all']['size']}", fmt(v["sig"]["E_R_minus_E0"]), fmt(v["sig"]["rH"]),
-                         fmt(v["sig"]["width"]), v["sig"]["E0_in_weinstein"]]
+        L += ["## Emulated check of the plan (P3; f = 0.10, phi = 1; basis B_all | refs; source `" + e["source"] + "`)", "",
+              md_table(["sector", "seed", "recall S999 (B_all / B_sig)", "size (B_all / B_sig)", "E_R - E0 (B_all)",
+                        "Weinstein r_H (B_all)", "certificate", "certificate width", "E0 inside"],
+                       [[s, sd, f"{fmt(v['all']['recall_S999'])} / {fmt(v['sig']['recall_S999'])}",
+                         f"{v['all']['size']} / {v['sig']['size']}", fmt(v["all"]["E_R_minus_E0"]), fmt(v["all"]["rH"]),
+                         v["certificate"]["type"], fmt(v["certificate"]["width"]), v["certificate"]["E0_inside"]]
                         for s, d in e["per_seed"].items() for sd, v in d.items()]), ""]
     if cv:
         L += convergence_section(cv)
@@ -1477,13 +1494,14 @@ def convergence_section(cv):
     d = cv["data"]
     L = ["## Convergence and coverage (decision 2a)", "",
          f"Gate `CV_2x3_plan`: **{cv['status']}** ({sum(1 for c in cv['criteria'] if c['passed'])} of "
-         f"{len(cv['criteria'])} criteria hold).  E_tol (prompts/30 2.7, the Ritz error of the best support at H1's recall "
-         "target 0.8 of S999): " + "; ".join(f"{s} {fmt(v['value'])}" for s, v in d["E_tol"].items()) + ".", "",
-         md_table(["f", "sector", "seed", "CV1 ratio", "r_H(N/2)", "r_H(N)", "CV3 dE_k", "CV3 r_H(k=4)", "CV4 margin",
+         f"{len(cv['criteria'])} criteria hold); basis {d.get('basis', 'B_sig')}; STOP fired "
+         f"{d['stop']['fired']}.  E_tol (prompts/30 2.7, the Ritz error of the best support at H1's recall "
+         "target 0.8 of S999): " + "; ".join(f"{s} {fmt(v['value'])}" for s, v in d["E_tol"].items()) + ".  CV2: B=0 "
+         "Kato-Temple width with the exact E1 (H1), B=1 Weinstein r_H (H2); CV3: the k = 4 -> 5 step.", "",
+         md_table(["f", "sector", "seed", "CV1 ratio", "CV2 width(N/2)", "CV2 width(N)", "CV3 dE (k 4 -> 5)", "CV4 margin",
                    "W(N)", "resized_by"],
-                  [[fk, sec, seed, fmt(c["CV1"]["ratio"]), fmt(c["CV2"]["rH_half"]), fmt(c["CV2"]["rH_full"]),
-                    fmt(d["criteria_by_seed"][fk][sec][seed]["CV3"]["dE_k"]),
-                    fmt(d["criteria_by_seed"][fk][sec][seed]["CV3"]["rH_k4"]),
+                  [[fk, sec, seed, fmt(c["CV1"]["ratio"]), fmt(c["CV2"].get("width_half")), fmt(c["CV2"].get("width_full")),
+                    fmt(c.get("CV3", {}).get("dE_k4_k5")),
                     fmt(c["CV4"]["margin_at_N"]), fmt(c["CV5"]["W_at_N"], 6), d["plan"][fk][sec]["resized_by"]]
                    for fk, ds in d["criteria_by_seed"].items() for sec, bys in ds.items() for seed, c in bys.items()]), "",
          "Failed criteria: " + ("; ".join(c["name"] for c in cv["criteria"] if not c["passed"]) or "none") + ".", ""]
@@ -1491,11 +1509,13 @@ def convergence_section(cv):
 
 
 def prereg_v2_text(D, cv):
-    L = [PREREG_V2_FIRST_LINE, "",
-         "# Q0P_2x3 preregistration block v2 (prompts/28 B3 as amended by prompts/29 Part B' and prompts/30)", "",
+    """The preregistration block, now rendered as v3 (prompts/31 ruling 5); the v2 text is in git history at eb3f71e."""
+    L = [PREREG_V3_FIRST_LINE, "",
+         "# Q0P_2x3 preregistration block v3 (prompts/28 B3 as amended by prompts/29 Part B', prompts/30 and prompts/31)", "",
          "Generated by `scripts/gate_Q0P_2x3.py --stage plan28` from `validation/Q0P_2x3_plan.json` and "
          "`validation/CV_2x3_plan.json`; no number below is typed (criterion P5 checks every number against the JSON).  "
-         "Owner decision: `data/owner_decision_20261005_partB.md` (1a, 2a with the convergence condition, 3a).  "
+         "Owner decision: `data/owner_decision_20261005_partB.md` (1a, 2a with the convergence condition, 3a); B=0 "
+         "certificate on Kato-Temple with the exact E1 confirmed in `data/owner_decision_20261005_kt_certificate.md`.  "
          "`validation/Q0P_2x3.json` (v1's gate) is not rewritten.", ""]
     L.append(prereg_tables(D, cv))
     return "\n".join(L)
