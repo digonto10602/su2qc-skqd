@@ -1,0 +1,48 @@
+{
+ "created": "2026-10-05 17:46:22 UTC",
+ "script": "scripts/cf_trajectories.py --control-xx",
+ "phase": "A4 counting control",
+ "dry_run": true,
+ "executed_on": "local AerSimulator (statevector, CPU) via quantinuum_submit.run_aer",
+ "noise_model": {
+  "source": "quantinuum_submit.A6_NOISE event probabilities, bit flips only",
+  "rzz": "pauli_error([('XX', 0.000778125), ('II', 1 - e2)])",
+  "rx_ry": "pauli_error([('X', 2.1e-05), ('I', 1 - e1)])",
+  "readout": "ReadoutError([[1 - 0.00067, 0.00067], [0.0012, 1 - 0.0012]])",
+  "A6_NOISE": {
+   "source": "data/quantinuum/devices_20261002.json specs.quantinuum_h2_2 (H2-2 row, read 2026-10-02)",
+   "depolarizing_2q_rzz": 0.00083,
+   "depolarizing_1q_rx_ry": 2.8e-05,
+   "rz": "noiseless (virtual)",
+   "readout_p1_given_0": 0.00067,
+   "readout_p0_given_1": 0.0012,
+   "memory_term": "none",
+   "label": "gate-only path check (no memory/transport term)",
+   "channel": "qiskit_aer depolarizing_error(p, n): rho -> (1-p) rho + p I/2^n"
+  }
+ },
+ "git_commit": "6002fc5",
+ "jobs": [
+  {
+   "circuit_id": "B0_ref25_k1",
+   "chunk": 0,
+   "n_shots": 280,
+   "device_name": "local Aer (A4 control)",
+   "aer_seed": 23,
+   "job_id": null,
+   "submitted": null,
+   "backend_config": null,
+   "status": "COMPLETED (local Aer)",
+   "aer_seconds_share": 1651.4503238201141
+  }
+ ],
+ "versions": {
+  "pytket": "2.18.4",
+  "pytket-quantinuum": "0.59.3",
+  "pytket-qiskit": "0.78.0",
+  "qnexus": "0.51.0",
+  "quantinuum-schemas": "7.8.2"
+ },
+ "sampling_wall_s": 1652.5733497142792,
+ "completed": "2026-10-05 18:13:55 UTC"
+}
