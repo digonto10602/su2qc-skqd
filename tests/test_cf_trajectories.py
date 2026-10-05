@@ -167,3 +167,75 @@ def test_tv_distance():
     assert cf.tv_distance(np.array([0.0, 0.0, 1.0]), a) == pytest.approx(1.0)
     d = cf.hamming_distance_table(3, 0b101)
     assert list(d) == [2, 1, 3, 2, 1, 0, 2, 1]
+
+
+# --------------------------------------------------------------------------- gate_CF_traj formulas
+def _synthetic_arm(p_tau_fn, K=50, dim=6):
+    """A fake arm: ideal p_c over `dim` sector states, reference at position 0."""
+    pc = np.array([0.80, 0.10, 0.05, 0.03, 0.0195, 0.0005])
+    trajs = []
+    rng = np.random.default_rng(0)
+    for i in range(K):
+        p = p_tau_fn(pc, rng)
+        trajs.append({"p_ref_post": float(p[0]), "p_ref_pre": float(p[0]), "tail_post": float(p[1:5].sum()),
+                      "tv_pre": cf.tv_distance(p, pc) if p.sum() > 0 else 1.0, "z_only": bool(i % 3 == 0),
+                      "n_2q": 1, "n_1q": 0, "p_sector_post": [float(x) for x in p]})
+    base = {"no_error_probability_g0": cf.no_error_probability(10, 10, 0.01, 0.01),
+            "readout_survival_reference": cf.readout_survival([0, 1], 0.001, 0.002), "channel": "depol",
+            "sector": {"tail_pos": [1, 2, 3, 4], "S99": [0, 1, 2, 3], "S999": [0, 1, 2, 3, 4, 5],
+                       "ints": [0, 1, 2, 3, 4, 5], "ref_pos": 0},
+            "ideal": {"p_c": list(pc), "p_ref_post_readout": 0.8, "p_sector_vs_verify_json_max_abs": 0.0},
+            "chunk": 0, "seed": 1, "K": K, "git_commit": "x", "git_dirty_scripts_src": False, "wall_s": 1.0,
+            "workers": 1, "n_draws": K, "n_rejected_all_identity": 0,
+            "aer_error_placement_check": {"error_applied_after_gate": True}, "trajectories": trajs}
+    man = {"counts": {"n_zz": 10, "n_phasedx": 10}, "reference_bits": [0, 1], "p_reference": 0.8}
+    A6 = {"depolarizing_2q_rzz": 0.01, "depolarizing_1q_rx_ry": 0.01, "readout_p1_given_0": 0.001,
+          "readout_p0_given_1": 0.002}
+    return {"chunks": [("f", base)], "base": base, "trajs": trajs}, man, A6
+
+
+def test_gate_formulas_limits():
+    import gate_CF_traj as g
+
+    # faulty trajectories that never land in the sector: every rate equals f0'
+    arm, man, A6 = _synthetic_arm(lambda pc, rng: np.zeros_like(pc))
+    s = g.arm_statistics("syn", arm, man, A6, None)
+    f0 = s["f0_prime"]
+    assert s["stats"]["rho_ref"]["value"] == pytest.approx(1.0)
+    assert s["stats"]["rho_T"]["value"] == pytest.approx(1.0)
+    assert s["stats"]["min_feff_over_f0_S999"]["value"] == pytest.approx(1.0)
+    assert s["stats"]["benign_fraction"]["value"] == 0.0
+    # faulty trajectories that reproduce the ideal distribution: every rate equals 1, b = 1
+    arm, man, A6 = _synthetic_arm(lambda pc, rng: pc.copy())
+    s = g.arm_statistics("syn", arm, man, A6, None)
+    assert s["stats"]["f_hit"]["value"] == pytest.approx(1.0)
+    assert s["stats"]["f_T"]["value"] == pytest.approx(1.0)
+    assert s["stats"]["rho_T"]["value"] == pytest.approx(1.0 / f0)
+    assert s["stats"]["benign_fraction"]["value"] == 1.0
+    assert s["stats"]["n_S99_feff_below_margin_fT"]["value"] == 0
+
+
+def test_gate_poisson_helpers():
+    import gate_CF_traj as g
+    from scipy.stats import poisson
+
+    assert g.two_sided_poisson_p(64, 44.06) == pytest.approx(2 * poisson.sf(63, 44.06))
+    lo, hi = g.poisson_band(44.0)
+    assert poisson.cdf(lo - 1, 44.0) < 0.025 <= poisson.cdf(lo, 44.0)
+    assert hi >= 44 + 1.9 * math.sqrt(44.0)
+    lo, hi = g.clopper_pearson(0, 10)
+    assert lo == 0.0 and hi == pytest.approx(1 - 0.025 ** 0.1)
+
+
+def test_checkpoint_index_never_skips_the_error_gate():
+    bounds = [0, 10, 20, 30]
+    assert cf.checkpoint_index(bounds, 0) == 0
+    assert cf.checkpoint_index(bounds, 9) == 0
+    assert cf.checkpoint_index(bounds, 10) == 1          # state after gates[0:10]; gate 10 re-applied
+    assert cf.checkpoint_index(bounds, 29) == 2
+    assert cf.checkpoint_index(bounds, 35) == 3
+    for first in range(40):
+        c = cf.checkpoint_index(bounds, first)
+        ev = [[0, first, "1q", [0], "X"]]
+        ir = [("rx", [0], 0.1)] * 40
+        cf.insert_paulis(ir, ev, bounds[c])               # must not raise

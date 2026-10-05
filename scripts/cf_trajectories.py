@@ -159,6 +159,16 @@ def hamming_distance_table(n: int, ref_int: int) -> np.ndarray:
     return d
 
 
+def checkpoint_index(bounds, first_event_pos: int) -> int:
+    """The last checkpoint whose state does NOT yet contain the gate carrying the first error: the
+    checkpoint state is the state after gates[0:b], so b <= first_event_pos is required (the gate at
+    first_event_pos is re-applied and its Pauli inserted after it)."""
+    c = int(np.searchsorted(np.asarray(bounds), int(first_event_pos), side="right") - 1)
+    if c < 0 or int(bounds[c]) > int(first_event_pos):
+        raise ValueError("no checkpoint at or before the first event")
+    return c
+
+
 def tv_distance(p_sector: np.ndarray, p_ideal: np.ndarray) -> float:
     """Total-variation distance of the sector-normalised p from the (sector-normalised) ideal."""
     m = float(np.sum(p_sector))
@@ -309,7 +319,7 @@ def run_one(task):
     t0 = time.time()
     ir, n, bounds = _W["ir"], _W["n"], _W["bounds"]
     first = min(int(e[1]) for e in events)
-    c = int(np.searchsorted(bounds, first + 1, side="right") - 1)     # largest bound <= first + 1
+    c = checkpoint_index(bounds, first)
     start = int(bounds[c])
     gates = insert_paulis(ir, events, start)
     sv0 = None if start == 0 else np.array(_W["ckpt"][c])
