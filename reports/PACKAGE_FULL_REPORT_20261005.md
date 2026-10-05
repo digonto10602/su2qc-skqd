@@ -19,11 +19,34 @@
 
 **Date and status caveat.** "Today" is 2026-10-05. Two other agents were working in the repository while this file was written: one runs the **K1 pilot** (a 2x3 clean-fraction pilot on the IBM device `ibm_kingston`), the other works on `prompts/29` Part B' and `prompts/30` (a re-sizing and convergence check of the 2x3 plan). Their files are uncommitted and may change after this file was written; where I cite them I say so.
 
-**File map for the reader.** Section 1 summary; 2 physics and method from scratch; 3 the intended plan; 4 package layout; 5 gate table; 6 history; 7 QPU ledger; 8 lessons; 9 present state and open decisions; 10 progress measure; 11 data blocks; 12 glossary.
+**File map for the reader.** Section 1 summary; 2 physics and method from scratch; 3 the intended plan; 4 package layout; 5 gate table; 6 history; 7 QPU ledger; 8 lessons; 9 present state and open decisions; 10 progress measure; 11 data blocks; 12 glossary. Section 9.7 lists the numbers I could not source or reconcile, and the files that were still changing while I wrote.
 
 ## 1. Executive summary
 
-*(section still to be written)*
+**What the project is.** `su2qc-skqd` is a research code base and a preregistered experimental programme (owner: Digonto, digonto10602) that tests whether a quantum computer can help find the lowest energy levels of an SU(2) lattice gauge theory (a two-colour toy version of the strong force) with dynamical staggered quarks on small two-row lattices ("ladders" of 2x2, 2x3 and 2x4 sites). The method is **neural-enhanced sample-based Krylov quantum diagonalization (SKQD)**: a quantum computer prepares states that spread a starting configuration over the configurations that matter, the measured bit strings are decoded and used to pick a small subspace, and an ordinary computer finds the exact lowest energy inside that subspace together with a rigorous error bar (the Weinstein and Kato-Temple certificates). The quantum device only chooses the subspace; the energy is never below the true value. The "neural-enhanced" part (a classical learned ranking of configurations) is so far only a minimal ridge-regression baseline tested on simulated data. The plan's own expectation is a characterized null result (a classical selected-CI method is at least as good as the device at these sizes), publishable as the first measured device-support-quality curve for a non-Abelian theory.
+
+**Where it stands today (2026-10-05).**
+- *Classical machinery:* complete and validated. The exact reference energies, the gauge-invariant basis, the hardware encoding and decoder, the exact structured circuits for 2x2, 2x3 and 2x4, and the certification all pass their gates (E1, E2, E3, S1, CS, L2, L5, S2_2x4, Q0P_2x3). Of 38 gate result files, 25 PASS and 13 FAIL; the FAILs are either deliberately re-defined cost gates, honest negative hardware results, or by-construction records (Section 5).
+- *2x2 on a real quantum computer:* the entire pipeline has been run end to end on IBM's `ibm_kingston` (12 jobs, 102 s of the 600 s allowance used, 498 s left). It is a measurement-gate PASS but, as the project's own planner states, **not an SKQD physics result**, because at this size noise alone fills every sector.
+- *2x3 on a real quantum computer:* **nothing has run.** IBM superconducting devices cannot run it (gate-only ceiling $1.14\times10^{-2}$ on the best calibrated edge), and no IonQ device can. Only Quantinuum's H2-2 and Helios-1 meet the signed gate-error bar on published numbers; access has not yet been requested (an email draft exists). A cheap 2x3 clean-fraction pilot on `ibm_kingston` (cap 300 s) is authorised and is being prepared by another agent; the 2x3 plan check (convergence and coverage criteria) is being executed by a third.
+- *2x4:* compiled and verified on a simulator; far out of reach of any device that exists.
+- *Neural step, primary endpoint P1, gates H1/H2/M1:* open.
+
+**The five most important numbers** (each with its source):
+
+| # | number | meaning | source |
+|---|---|---|---|
+| 1 | clean fraction **$6.65\times10^{-4}$** measured vs **0.2195** predicted (`ibm_fez`, 2026-09-22) $\Rightarrow$ **0.0413** [0.0361, 0.0470] (`ibm_kingston`, no DD) $\Rightarrow$ **0.1271** [0.1084, 0.1479] with client-side XY4 dynamical decoupling | the fraction of shots with no error: the gate-only model was wrong by a factor of about 330 on the first device (0.2195 / 6.65e-4, my division of the two sourced numbers) because idle-time dephasing was missing; mitigation brought it back above the 0.1 bar on the reference-hit statistic (which may read AMBIGUOUS after the near-clean correction $r_{nc}=1.115$) | `validation/H0_model.json`, `H0_canary.json`, `H0_kpilot.json`, `H0_2x2.json` |
+| 2 | **$E_R-E_0=5.48\times10^{-4}$ ($B{=}0$) and $5.75\times10^{-6}$ ($B{=}1$)**, with certified intervals containing the exact $E_0$; **but** uniformly random bit strings reproduce the all-state energy in **100 of 100 seeds** ($Na/\dim=16.97$ and 15.72) | what the 2x2 run shows and what it cannot show: the signal support is at the 5.0th and 28.5th percentile of random equal-size bases, so only a modest signal in one sector | `validation/H0_2x2.json -> data.energies, data.baselines, data.C22` |
+| 3 | **102 s** of 600 s QPU time used, **498 s** left, 12 jobs; 53.0 s bought the full 2x2 run | the entire hardware budget so far | `data/hardware/*/session.json`, `account_check_after_20261002T2157Z.json` |
+| 4 | **0.1502 (H2-2) and 0.1642 (Helios-1)** gate-only clean fraction for the 2x3 circuits vs **$1.14\times10^{-2}$** ceiling on `ibm_kingston`; a minimum 2x3 campaign (rule D3'-R, $f=0.10$) costs **418 166 HQC** (planner arithmetic) | only trapped-ion machines of one vendor reach the signed bar on paper; the transport (memory) error that decides it is unmeasured | `data/quantinuum/devices_20261002.json`, `reports/qpu_survey_2x3_20261002.md`, `scratch/planner/d3s_2x3_shot_rule_20261003.json` |
+| 5 | **$r_{nc}=1.115$** (reference-hit fraction over ideal-sample fraction, upper 95 % end; CF_traj PASS 7/7) and plan fulfilment **31 F / 12 FD / 8 ND of 51 rows** | the statistical correction that makes the clean-fraction bar a conservative statement, and the progress measure against the manual's plan | `validation/CF_traj.json`, `data/cf_trajectories/r_nc.json`, `reports/H0_2x2_full_hardware_report_20261002.md` |
+
+**Three lessons that changed the project.** (i) *Accepted shots are not clean shots*: the decoder accepts near-clean strings at a rate comparable to pure noise, so the manual's yield inversion overstated the clean fraction 15-fold. (ii) *Idle-time dephasing, not gate count, dominates* on current superconducting devices for this circuit family; only a scheduled simulation at the measured free-induction $T_2^*$ post-dicts the data. (iii) *At 2x2 the SKQD energy from the accepted states is not a device measurement*; the project built controls (garbage-only, random-equal-size) and a signal support to read it honestly.
+
+**What is next (Section 9).** (1) The K1 pilot (2x3 on `ibm_kingston`, cap 300 s) and the convergence/coverage check of the 2x3 plan; (2) Quantinuum access (emulator first, then a pilot of about 9 950 HQC and, if the preregistered rule passes, a campaign of at least 418 166 HQC); (3) twelve open owner decisions listed in Section 9.6, including whether to close the 2x2 campaign as a methods note.
+
+**Honest status of publishability.** The 2x2 result supports a methods note on running sample-based diagonalization at a noise-saturated size and, after replication, a short note on client-side XY4 in long idle windows; it does not support an SKQD physics claim. A physics claim needs 2x3 hardware data (Section 9.5).
 
 ## 2. The physics and the method, explained from scratch
 
@@ -238,8 +261,8 @@ Source: `proposal/SU2QC_Project2_rev2_SKQD_Implementation_Manual.md` (Steps 0-11
 | H0 | 2x2: decoder validity, bit order, parity checks; **measured $f$ within 30 % of the model** | -- | week 3 |
 | H1 | 2x3 $B=0$: certified interval $I_0$ of width $\le0.1$ containing the exact $E_0$; recall $\ge0.8$ | -- | week 4 |
 | H2 | 2x3 $B=1$: cluster energy certified to $\pm r_H\le0.15$; $V(1),V(2)$ intervals containing the exact values | -- | week 4 |
-| P1 | **primary endpoint**: curves $E_R-E_0$ and $R_{10^{-3}}$ versus $|B|$ for device and CIPSI at equal $|B|$, bootstrap bands; "advantage" declared only if the device curve lies below CIPSI everywhere with non-overlapping bands | -- | week 5 |
-| M1 | ML uses credited only under Step 7.5 (must beat the baseline at equal $|B|$ on 2x3 hardware data and on held-out couplings) | -- | week 5 |
+| P1 | **primary endpoint**: curves $E_R-E_0$ and $R_{10^{-3}}$ versus $\lvert B\rvert $ for device and CIPSI at equal $\lvert B\rvert $, bootstrap bands; "advantage" declared only if the device curve lies below CIPSI everywhere with non-overlapping bands | -- | week 5 |
+| M1 | ML uses credited only under Step 7.5 (must beat the baseline at equal $\lvert B\rvert $ on 2x3 hardware data and on held-out couplings) | -- | week 5 |
 
 **Primary endpoint P1** (manual Step 6.3): the pair of curves $E_R-E_0$ and $R_{10^{-3}}$ versus $|B|$, device versus CIPSI at equal $|B|$, on 2x3 hardware data. The manual's own expectation is a characterized null (device between BFS and CIPSI) and says it is publishable as "the first measured support-quality curve for a non-Abelian theory".
 
@@ -274,7 +297,7 @@ Source: `CLAUDE.md`, `README.md`, `RUNBOOK.md`, `SKQD-CI-SETUP.md`, `prompts/ROU
 | `fermions.py` | the two-colour staggered-fermion site (Fock space, Jordan-Wigner pieces) |
 | `lattice.py` | the open $2\times L_x$ ladder: site index $x_1L_y+x_2$, links, plaquettes, staggered phases $\eta$ |
 | `vertex.py` | local singlet (intertwiner) tensors of one dressed vertex (manual Algorithm 1) |
-| `basis.py` | the gauge-invariant configuration basis $|\{j\},\{n\},\{\iota\}\rangle$ with baryon-number sectors (Step 2) |
+| `basis.py` | the gauge-invariant configuration basis $\lvert \{j\},\{n\},\{\iota\}\rangle$ with baryon-number sectors (Step 2) |
 | `hamiltonian.py` | the dressed-site Hamiltonian builder (Step 3, Algorithm 2) and the Hamiltonian-neighbour query |
 | `fullspace.py` | the second, independent route: the redundant-basis "projector" construction of the 2x2 model (gate E1) |
 | `exact.py` | exact sector references (Table 1): class `Model` (central object: 86 edges in the graph), sector energies, $\Delta t$, supports |
@@ -311,6 +334,8 @@ Source: `CLAUDE.md`, `README.md`, `RUNBOOK.md`, `SKQD-CI-SETUP.md`, `prompts/ROU
 | `hardware.py` | hardware-session helpers: readout confusion matrix, inverse, transpiled layout, `logical_statevector`, link-consistency checks |
 | `hpc.py` | CI / Slurm / GPU telemetry helpers shared by gate scripts that may run on Perlmutter |
 | `report.py` | gate-result bookkeeping: each gate script records its criteria and the numbers it computed in `validation/<GATE>.json` and writes `reports/<GATE>_*.md` from the same numbers; nothing in a report is typed by hand |
+
+Uncommitted additions by the other agents at the time of writing (not described above as stable): `noise.measure_and_decode_sequence` (nested shot prefixes for the convergence check), `skqd.corrected_clean_fraction` (the $\hat f_{\rm ideal}=f_{\rm hit}/r_{nc}$ statistic), `skqd.h1_energy_tolerance` (the CV constant $E_{\rm tol}$), and `h0_support_plan.py` edits.
 
 `graphify god-nodes` (the code knowledge graph, 895 nodes at the last full build, AST-only, no API cost; navigation aid, never evidence) lists as the most connected nodes: `Model` (86 edges), `Codec` (69), `load_manifests()` (52), `CircuitFactory` (48), `resolve_backend()` (48), `stage_assemble()` (45), `references()` (44), `load_circuit()` (43), `md_table()` (42), `CodewordEmbedding` (38).
 
@@ -371,10 +396,10 @@ Source: every `validation/*.json` (enumerated with a python snippet that reads `
 
 | gate | file | date, time as recorded | status | criteria | kind | runtime | commit | one-line meaning | key numbers (source in the file named) |
 |---|---|---|---|---|---|---|---|---|---|
-| `E1` | `validation/E1.json` | 2026-09-14 16:43:44 MDT | PASS | 23/23 | validation | 427 s | 57b3bff | Gauss law and the two independent Hamiltonian builders (2x2) | $\max|[G_a(x),H]|=0.0$ in the 160 000-dim redundant space; kernel dimension 82; sector split $\{2B:\dim\}=\{-4{:}2,-2{:}20,0{:}38,2{:}20,4{:}2\}$; $\max|{\rm eig}(P^\dagger HP)-{\rm eig}(H_{\rm dressed})|=2.309\times10^{-14}$ over 82 levels (threshold $10^{-12}$); element-wise $3.55\times10^{-15}$; link covariance $1.1\times10^{-16}$ |
+| `E1` | `validation/E1.json` | 2026-09-14 16:43:44 MDT | PASS | 23/23 | validation | 427 s | 57b3bff | Gauss law and the two independent Hamiltonian builders (2x2) | $\max\lvert [G_a(x),H]\rvert =0.0$ in the 160 000-dim redundant space; kernel dimension 82; sector split $\{2B:\dim\}=\{-4{:}2,-2{:}20,0{:}38,2{:}20,4{:}2\}$; $\max\lvert {\rm eig}(P^\dagger HP)-{\rm eig}(H_{\rm dressed})\rvert =2.309\times10^{-14}$ over 82 levels (threshold $10^{-12}$); element-wise $3.55\times10^{-15}$; link covariance $1.1\times10^{-16}$ |
 | `E2` | `validation/E2.json` | 2026-09-14 16:44:00 MDT | PASS | 51/51 | validation | 15 s | 57b3bff | State counts (Table 2), vertex tables, codewords, decoder | 82 / 1 727 / 37 165 states at 2x2 / 2x3 / 2x4; 82/82 round trip at 2x2 (113/113 with a static pair); 2x3 sector dims $\{0{:}677,\pm2{:}426,\pm4{:}95,\pm6{:}4\}$ in the $2B$ key; random-string acceptance 0.15 % at 2x3 (0.242 % for static $[0,4]$) |
 | `E3` | `validation/E3.json` | 2026-09-14 16:44:36 MDT | PASS | 85/85 | validation | 36 s | 57b3bff | Exact references (Table 1), static sectors, derived quantities, $\Delta t$ per sector | all Table 1 rows to 4 decimals (e.g. 2x2 $B{=}0$ $E_0=-3.6408$, $\pi/W=0.245$); 2x3 $V(2)=2.5898$; 2x4 $M_B=1.7851$; 2x2 $j_{\max}=1$ gives 152 states |
-| `S1` | `validation/S1.json` | 2026-09-14 16:48:20 MDT | PASS | 12/12 | validation | 223 s | 57b3bff | Emulated support recall, certification and size-matched controls (2x3, 2x4) | 2x3 $B{=}0$ recall of the 99.9 % support $=1.0$ and $B{=}1$ $0.989$ at $f=0.1$, $2\times10^5$ shots (threshold 0.9); $E_0$ inside the Weinstein interval; $M_B$ interval $[1.6935,1.8314]\ni1.7765$; ridge Spearman 0.862 / 0.888; CIPSI within 3x of the oracle at $|B|=160,320$; 2x4 proxy recall $0.934$ (threshold 0.85) |
+| `S1` | `validation/S1.json` | 2026-09-14 16:48:20 MDT | PASS | 12/12 | validation | 223 s | 57b3bff | Emulated support recall, certification and size-matched controls (2x3, 2x4) | 2x3 $B{=}0$ recall of the 99.9 % support $=1.0$ and $B{=}1$ $0.989$ at $f=0.1$, $2\times10^5$ shots (threshold 0.9); $E_0$ inside the Weinstein interval; $M_B$ interval $[1.6935,1.8314]\ni1.7765$; ridge Spearman 0.862 / 0.888; CIPSI within 3x of the oracle at $\lvert B\rvert =160,320$; 2x4 proxy recall $0.934$ (threshold 0.85) |
 | `CS` | `validation/CS.json` | 2026-09-14 21:37:07 UTC | PASS | 4/4 | validation | 4 s | 3c32216 | Structure of the Hamiltonian terms in codeword space (input to S2) | 2x2 plaquette: one partner per state; 4 distinct pair amplitudes; structured plaquette gate vs dense exponential $3.97\times10^{-16}$; 30 CNOT (8 parity + 6 ladder + 16 UCRz) |
 | `S2` | `validation/S2.json` | 2026-09-15 15:12:59 MDT | FAIL | 3/5 | measurement | 436 s | 5d60461 | Structured basic-gate circuits (hopping chains, interior-corner plaquettes) and their CZ cost | FAIL on the cost criteria only: 2x2 routed 618 CZ (budget $\le250$), 2x3 routed 5 477 (budget $\le500$); exactness $1.87\times10^{-14}$ and leakage $4.5\times10^{-14}$ pass |
 | `S2_fixed` | `validation/S2_fixed.json` | 2026-09-15 20:18:31 MDT | FAIL | 5/9 | measurement | 301 s | 2fbcf29 | Fixed-angle generator (same codeword pairs, one angle per flip pattern): cost floor, leakage, recall | FAIL: 2x2 671 routed (heavy-hex) / 474 (square grid), 2x3 3 736 / 2 803, all above budget; recall kept (B=0 1.000, B=1 0.937 at $f=0.1$, `data/S2_fixed_recall.json`); not adopted |
@@ -384,9 +409,9 @@ Source: every `validation/*.json` (enumerated with a python snippet that reads `
 | `S2_2x4` | `validation/S2_2x4.json` | 2026-10-01 09:15:29 PDT | PASS | 12/12 | measurement | 0 s | n/a | 2x4 coarse step compiled to exact circuits, verified, measured (counts, duration, idle budget, $T_2/t_{2q}$) | PASS 12/12: exactness $3.4\times10^{-14}$; leakage of the transpiled 28-qubit circuit $1.10\times10^{-12}$ (GPU job 59162991); 69 688 CZ all-to-all, 148 726 routed; $T_2/t_{2q}=638\,742$ required vs Heron harmonic mean 1 038 (`reports/S2_2x4_compilation_and_device_requirement.md`) |
 | `S3_smoke` | `validation/S3_smoke.json` | 2026-09-16 11:46:01 MDT | FAIL | 1/2 | measurement | 295 s | 1223e92 | S3 pipeline smoke test at 2x3 $B{=}1$ (2 shots per circuit) | FAIL by construction: recall 0.0737 at 24 shots (criterion $\ge0.9$); 295 s on laptop CPU; shows 10.42 s per shot at 2 shots per call |
 | `S3` | `validation/S3.json` | 2026-09-22 18:01:22 PDT | PASS | 4/4 | measurement | 248 s | n/a | GPU throughput calibration of the 2x3 $B{=}0$ set (reduced size; recall criterion NOT evaluated) | PASS 4/4 as a calibration: 0.01987 s/shot at 20 qubits on one A100 (job 58771538) vs 3.198 s/shot on the laptop (161x); projected 1.10 h per $2\times10^5$-shot sector (4.41 h for four sectors) |
-| `L2` | `validation/L2.json` | 2026-09-15 20:20:11 MDT | PASS | 4/4 | validation | 8 s | 0420211 | Qiskit circuits reproduce the numpy reference at 2x2 | max $|\text{Qiskit}-\text{reference}|=2.69\times10^{-14}$ over 35 circuits; 10 000/10 000 noiseless shots decode; TVD 0.0103 |
+| `L2` | `validation/L2.json` | 2026-09-15 20:20:11 MDT | PASS | 4/4 | validation | 8 s | 0420211 | Qiskit circuits reproduce the numpy reference at 2x2 | max $\lvert \text{Qiskit}-\text{reference}\rvert =2.69\times10^{-14}$ over 35 circuits; 10 000/10 000 noiseless shots decode; TVD 0.0103 |
 | `L3` | `validation/L3.json` | 2026-09-15 15:04:26 MDT | FAIL | 0/2 | measurement | 14 s | 5d60461 | Transpiled CZ counts of the dense 2x2 circuits (S2 baseline) | FAIL as expected: 35 606 CZ all-to-all, 55 459 routed (budget 250); led to the structured-gate work of S2 |
-| `L4` | `validation/L4.json` | 2026-09-22 01:22:38 PDT | PASS | 4/4 | validation | 677 s | n/a | Aer noise-model sampling at 2x2 (S3 preparation); the current record is the GPU run | PASS 4/4 on the GPU at full production shots (job 58741899): yields 0.458 / 0.441 vs model 0.378 / 0.376 (ratios 1.21 / 1.17); $|B|=38/38$ and $20/20$; recall 1.000; 19.8x faster than the laptop. The two earlier laptop records are in `L4_p2_*.json` |
+| `L4` | `validation/L4.json` | 2026-09-22 01:22:38 PDT | PASS | 4/4 | validation | 677 s | n/a | Aer noise-model sampling at 2x2 (S3 preparation); the current record is the GPU run | PASS 4/4 on the GPU at full production shots (job 58741899): yields 0.458 / 0.441 vs model 0.378 / 0.376 (ratios 1.21 / 1.17); $\lvert B\rvert =38/38$ and $20/20$; recall 1.000; 19.8x faster than the laptop. The two earlier laptop records are in `L4_p2_*.json` |
 | `L4_p2_1e-3` | `validation/L4_p2_1e-3.json` | 2026-09-14 18:24:06 MDT | FAIL | 2/4 | validation | 1012 s | 30684f2 | L4 laptop record at $p_2=10^{-3}$ (reduced shots, 2026-09-14) | FAIL 2/4: yield criterion only ($f=(1-p_2)^{35670}\approx0$); Weinstein criteria pass; 1 012 s |
 | `L4_p2_3e-3` | `validation/L4_p2_3e-3.json` | 2026-09-14 18:00:36 MDT | FAIL | 2/4 | validation | 1376 s | 30684f2 | L4 laptop record at $p_2=3\times10^{-3}$ (reduced shots, 2026-09-14) | FAIL 2/4: same cause; 1 376 s |
 | `L4_fez` | `validation/L4_fez.json` | 2026-09-16 12:28:26 MDT | PASS | 4/4 | validation | 450 s | 3722018 | L4 with `NoiseModel.from_backend(FakeFez)` (H0 rehearsal) | PASS 4/4: measured yield 0.147 / 0.136 vs model 0.112 / 0.104 (ratios 1.32 / 1.31); recall 1.000; $E_0$ inside both Weinstein intervals |
@@ -406,7 +431,7 @@ Source: every `validation/*.json` (enumerated with a python snippet that reads `
 | `H0_ddtest` | `validation/H0_ddtest.json` | 2026-10-02 14:37:48 MDT | PASS | 8/8 | measurement | 601 s | d4b3855 | One-job A/B test of client-side DD vs no DD on the pilot's two $k{=}1$ circuits; adoption by preregistered ratio rule | PASS 8/8: T0 (no DD) $f=0.0400$ [0.0358, 0.0446]; T1 context-aware 0.0005 ($R=0.012$); T2 XY4 everywhere 0.1118 ($R=2.793$); **T3 XY4 in windows $\ge1\,\mu$s adopted: $f=0.1129$ [0.1058, 0.1203], $R=2.819$ [2.495, 3.185]**; 20.0 s QPU |
 | `H0_2x2_dryrun` | `validation/H0_2x2_dryrun.json` | 2026-10-02 15:04:52 MDT | PASS | 8/8 | measurement | 17 s | 4e979a0 | Full 2x2 run dry run | PASS 8/8 |
 | `H0_2x2` | `validation/H0_2x2.json` | 2026-10-02 16:04:51 MDT | PASS | 8/8 | measurement | 444 s | da715fc | The full 2x2 SKQD run on ibm_kingston below the signed budget (owner decision 2026-10-02) | PASS 8/8: pooled $f$ (7 $k{=}1$ circuits) 0.1271 [0.1084, 0.1479]; 133 907 coarse shots; $B_{\rm sig}$ 35/38 and 19/20; $E_R-E_0=5.48\times10^{-4}$ ($B{=}0$) and $5.75\times10^{-6}$ ($B{=}1$); garbage-only reproduces $E_0$ in 100/100 seeds; 53.0 s QPU |
-| `Q0P_2x3` | `validation/Q0P_2x3.json` | 2026-10-02 21:36:57 MDT | PASS | 7/7 | measurement | 926 s | 8072b8d | Signed 2x3 circuits compiled to the Quantinuum native gate set, verified, costed, packaged (Stage A; Stage E/P not run) | PASS 7/7: 44 frozen circuits, max $|\Delta\psi|=2.09\times10^{-13}$, 2 158 ZZPhase on all 44, mean 4.9666 HQC/shot; H2-2 gate-only $f=0.1502$, Helios-1 0.1642; Stage E 11 936 eHQC, pilot 9 938 HQC (later re-planned); 0 HQC spent |
+| `Q0P_2x3` | `validation/Q0P_2x3.json` | 2026-10-02 21:36:57 MDT | PASS | 7/7 | measurement | 926 s | 8072b8d | Signed 2x3 circuits compiled to the Quantinuum native gate set, verified, costed, packaged (Stage A; Stage E/P not run) | PASS 7/7: 44 frozen circuits, max $\lvert \Delta\psi\rvert =2.09\times10^{-13}$, 2 158 ZZPhase on all 44, mean 4.9666 HQC/shot; H2-2 gate-only $f=0.1502$, Helios-1 0.1642; Stage E 11 936 eHQC, pilot 9 938 HQC (later re-planned); 0 HQC spent |
 | `CF_traj` | `validation/CF_traj.json` | 2026-10-05 13:47:33 MDT | PASS | 7/7 | measurement | 1201 s | a8ebbaa | Pauli-trajectory decomposition of the reference-hit excess and the near-clean correction $r_{nc}$ | PASS 7/7: trajectory prediction 63.46 $\pm$ 2.254 vs 64 observed hits ($P=0.9794$); $r_{nc}=1.115$; floor theorem holds on all four arms; $k{=}4$ mixture bias 1.274 [1.170, 1.402] |
 | `K0_2x3_2x4` | `validation/K0_2x3_2x4.json` | 2026-10-05 15:47:54 MDT | FAIL | 5/6 | measurement | 23 s | c29a402 | ibm_kingston readiness of 2x3 and 2x4 on the day's record (prompts/25 Part A) -- UNCOMMITTED, written by the K1 agent | FAIL 5/6 only because tests were skipped (`--skip-tests`); 2x3 routed 5 527 CZ (seed 6), $f_{\rm ceiling,2q}=1.095\times10^{-2}$, $f_{\rm gates,layout}=5.542\times10^{-6}$; $\epsilon_2$ needed for $f=0.05$ is $5.420\times10^{-4}$ vs best edge $8.164\times10^{-4}$; 2x4 ceiling $\log_{10}f=-52.8$; verdict: no record meets 0.1 / 0.05 |
 
@@ -436,6 +461,8 @@ Source: every `validation/*.json` (enumerated with a python snippet that reads `
 ### 5.4 Totals
 
 Counting the 38 gate JSON files above: PASS 25, FAIL 13 **(sum of sourced statuses; counted by the python snippet)**. A machine-readable version of the table with dates is Appendix block (a).
+
+**Files that appeared while this report was being written (excluded from the counts and from block (a)).** The other agents' work in progress produced three further gate files, all uncommitted and possibly later rewritten: `validation/CV_2x2_info.json` (PASS 2/2; the convergence curves on the recorded 2x2 counts, information, 2026-10-05 16:04 MDT), `validation/CF_estimator_2x2_info.json` (PASS 2/2; the recorded 2x2 clean-fraction values labelled by statistic with the corrected $\hat f_{\rm ideal}$ and the 2x2 signed-bar qualification, 16:11 MDT) and `validation/Q0P_2x3_plan.json` (**FAIL 3/7** at 16:13 MDT: the 2x3 shot rule D3'-R, the $\hat f_{\rm ideal}$ statistic, GO rule v3 and Stage E / P v3; its failing criteria P3 and P7 need `validation/CV_2x3_plan.json`, which did not exist yet; P5 flagged untraceable tokens in the preregistration rendering; P6 tests were skipped, `--skip-tests`). Read them as interim states, not results.
 
 ## 6. The chronological history
 
@@ -515,7 +542,7 @@ Also in `prompts/`: `README.md` (format), `ROUTING.md` (model routing), `ESCALAT
 ### 6.6 2026-09-22: H0P_ibm_fez PASS 18/18, rule D9, and the first Perlmutter GPU runs (`prompts/16` part B', `17`, `18`)
 
 *H0P_ibm_fez.* Re-run with the D3' plan: PASS 18/18 at calibration stamp 20260922T0711Z ($N_4=8100/19600$, supports 38/38 and 20/20, r=1 simulated yields 0.1707 / 0.1564, 69.69 s estimate). But `ibm_fez` recalibrated twice under the session and the preflight's exact-match guard on the `last_update_date` string refused a stale stamp each time; measured windows between recalibrations: 30 min 17 s, 36 min 8 s, 51 min 4 s, then more than 52 min. *Rule D9* (`prompts/17`): the preflight now tests the calibration **content** the prediction reads (sha256 of the 30 qubit x 9 and 54 edge x 4 values; the 84 live clean fractions equal to $10^{-9}$) instead of the timestamp; three stamp-only updates changed 0 of those numbers; the fingerprint fired on the one real recalibration (a readout recalibration of all 30 qubits, ratios 0.3735 to 2.6571, which moved $f$ of the $r=1$ circuits by only -0.68 % to +0.48 %).
-*GPU runs (Perlmutter A100).* L4 job 58737320 crashed (GPU out-of-memory, 608 s: 20 circuits x 20 000 shots in one `run()` call); a memory-aware chunker (`shot_chunk_for`) and adaptive halving were added. L4 job 58741899 **PASS 4/4** (686 s; full production shots, 20 000 per circuit vs 8 / 22 on the laptop; yields 0.458 / 0.441 vs model 0.378 / 0.376; $|B|$ 38/38 and 20/20; recall 1.000): timing 0.00103 s/shot against the laptop's 0.02037 s/shot, a **19.8x speed-up**; peak GPU memory 27 915 MiB; mean GPU utilisation 15.3 % (max 27 %): not GPU-bound, so no second GPU is proposed; the allocation model underestimates memory by 3.5x (8.0 GB predicted, 27.9 GB measured). S3 calibration job 58771538 **PASS 4/4** (255 s job; 245 s gate): 0.01987 s/shot at 20 qubits vs 3.198 s/shot on the laptop (**161x**): a $2\times10^5$-shot sector is 1.10 h instead of 177.7 h; recall criterion not evaluated. `prompts/18` proposed the allowlist lines `S3 04:00:00 1` and `H0P 01:00:00 1` with the measured justification.
+*GPU runs (Perlmutter A100).* L4 job 58737320 crashed (GPU out-of-memory, 608 s: 20 circuits x 20 000 shots in one `run()` call); a memory-aware chunker (`shot_chunk_for`) and adaptive halving were added. L4 job 58741899 **PASS 4/4** (686 s; full production shots, 20 000 per circuit vs 8 / 22 on the laptop; yields 0.458 / 0.441 vs model 0.378 / 0.376; $|B|$ 38/38 and 20/20; recall 1.000): timing 0.00103 s/shot against the laptop's 0.02037 s/shot, a **19.8x speed-up**; peak GPU memory 27 915 MiB; mean GPU utilisation 15.3 % (max 27 %): not GPU-bound, so no second GPU is proposed; the allocation model underestimates memory by 3.5x (8.0 GB predicted, 27.9 GB measured). S3 calibration job 58771538 **PASS 4/4** (255 s job per `ci_gate_S3.json`; gate runtime 248 s, sampling wall 245 s): 0.01987 s/shot at 20 qubits vs 3.198 s/shot on the laptop (**161x**): a $2\times10^5$-shot sector is 1.10 h instead of 177.7 h; recall criterion not evaluated. `prompts/18` proposed the allowlist lines `S3 04:00:00 1` and `H0P 01:00:00 1` with the measured justification.
 *QPU s = 0.*
 
 ### 6.7 2026-09-22: the ibm_fez canary (first QPU job) and its NO-GO
@@ -642,7 +669,7 @@ Note on the budget history: the owner's "600 second budget" and the plan numbers
 | Perlmutter A100 (CI) | S3 calibration job 58771538 (PASS) | 255 s | `validation/ci_gate_S3.json` |
 | Perlmutter A100 (CI) | S2_2x4 job 59162991 (PASS) | 99 s | `validation/ci_gate_S2_2x4.json` |
 | Quantinuum (HQC / eHQC) | none: no Nexus account, no allocation | **0 HQC, 0 eHQC** | `prompts/LOG.md` row prompts/26 Stage A |
-| IonQ (Braket / Azure) | none | **$0** | `reports/ionq_devices_2x3_2x4_planner_analysis_20261002.md` |
+| IonQ (Braket / Azure) | none | **0 USD** | `reports/ionq_devices_2x3_2x4_planner_analysis_20261002.md` |
 | laptop | the longest gate runs: S2 436 s; H0P 1 179 s; H0P_repro 1 741 s; CF_traj 1 201 s | within the 30-minute rule | `validation/*.json -> runtime_s` |
 
 ### 7.4 What the hardware ledger says
@@ -716,7 +743,7 @@ Sources: `CLAUDE.md` status paragraph, `reports/SESSION_HANDOVER_20260925_1002.m
 
 **(i) The K1 pilot: 2x3 clean-fraction pilot on `ibm_kingston`** (`prompts/27` Stage 0b; owner decision D1 of 2026-10-05: "go with step 1,2 and 3, send the 2x3 job to ibm qpu first if its ready to submit"). Authorised: ONE preregistered submission, cap 300 s billed of the 498 s left, under the preconditions of Stage 0b: gate K0 on the day's record, dry run PASS, D9 fingerprint match, QPU estimate $\le300$ s. Per decision 1a the thresholds are read on $\hat f_{\rm ideal}=f_{\rm hit}/1.115$ with $f_{\rm hit}$ reported beside it. Design (`prompts/27`): the two signed $k=1$ circuits with the largest ideal reference-string probability (one per sector), routed on the day's record, ALAP with explicit delays, client XY4 in windows $\ge1.024\ \mu$s (the adopted 2x2 cell T3), plus two readout pubs; $10^5$ shots per circuit (planner: at $f=10^{-4}$ and $p_{\rm ref}\approx0.5$ about 8 expected reference hits against about 0.1 from garbage); rule: **GO-B** if $f\ge10^{-3}$ (a Tier-B run then costs $\le2\times10^{7}$ shots per sector, about 6 h at 2 700 shots/s), **GO-A** if $3\times10^{-4}\le f<10^{-3}$ (Tier A only), **NO-GO** below. Progress visible in the working tree on 2026-10-05 (uncommitted): `scripts/gate_K0_2x3_2x4.py` + `validation/K0_2x3_2x4.json` (gate K0, FAIL 5/6 only because tests were skipped; on the committed 20261002T1906Z record the 2x3 routed circuit (seed 6) has 5 527 CZ, $f_{\rm ceiling,2q}=1.095\times10^{-2}$, layout gate-only $f=5.542\times10^{-6}$, idle-aware (echo) $5.6\times10^{-21}$; XY4-transfer $1.6\times10^{-20}$, verdict: no record meets the bar); `scripts/gate_K1_2x3_fpilot.py` and `data/hardware/K1_2x3_prep/select.json` (circuits chosen: **`B0_ref117_k1`** with ideal reference probability 0.92836 and **`B1_ref29_k1`** with 0.92831; random-string acceptance of the 20-qubit decoder 677/$2^{20}$ = $6.456\times10^{-4}$ ($B=0$) and 426/$2^{20}$ = $4.063\times10^{-4}$ ($B=1$), `data/K1_2x3_fpilot/garbage_acceptance_2x3.json`). **No K1 job id exists in the repository at the time of writing and no QPU time has been spent on it.** Reading of the K0 numbers (my reading, not the planner's): the preregistered thresholds start at $10^{-3}$ on $\hat f_{\rm ideal}$ while the idle-aware gate-only prediction for 2x3 on this record is many orders lower, so a NO-GO would be the expected outcome, as the planner expected in `prompts/27` ("planner: at $f=10^{-4}$").
 
-**(ii) `prompts/29` Part B' and `prompts/30`** (the 2x3 plan check): Part B' is `prompts/28` Part B with the amendments: `skqd.skqd.corrected_clean_fraction(pooled, r_nc, r_nc_95)`; `d3r_plan` reproducing the planner's D3'-R table to the shot (gate `Q0P_2x3_plan`); the preregistration block "v2" with GO rule v3 and Stage E / P v3 plans (800 / 800 / 200 / 200 shots); the 2x2 information block with the A5 bracket. `prompts/30` adds the convergence and coverage criteria CV0-CV5 (Section 6.18) and the re-sizing rule. Uncommitted progress visible: `scripts/gate_CV.py`, `validation/CV_2x2_info.json` (**PASS**: "the CV curves on the recorded H0_2x2 ibm_kingston counts (information; not a device test (saturation))", criteria CV0 for $B=0$ and $B=1$: nested hypergeometric prefixes, variational bound, random bases contain the references, per-state counts, $E_0$ difference $0.0$), `reports/CV_2x2_information_20261005.md`, `data/cv/*` (2x3 emulated fragment at $f=0.10$, quick mode). **The CV verdict on the 2x3 plan has not been delivered**; if CV1-CV5 fail the planner re-sizes by a factor $s\in\{2,4,8\}$ and the new HQC cost returns to the owner.
+**(ii) `prompts/29` Part B' and `prompts/30`** (the 2x3 plan check): Part B' is `prompts/28` Part B with the amendments: `skqd.skqd.corrected_clean_fraction(pooled, r_nc, r_nc_95)`; `d3r_plan` reproducing the planner's D3'-R table to the shot (gate `Q0P_2x3_plan`); the preregistration block "v2" with GO rule v3 and Stage E / P v3 plans (800 / 800 / 200 / 200 shots); the 2x2 information block with the A5 bracket. `prompts/30` adds the convergence and coverage criteria CV0-CV5 (Section 6.18) and the re-sizing rule. Uncommitted progress visible: `scripts/gate_CV.py`, `validation/CV_2x2_info.json` (**PASS**: "the CV curves on the recorded H0_2x2 ibm_kingston counts (information; not a device test (saturation))", criteria CV0 for $B=0$ and $B=1$: nested hypergeometric prefixes, variational bound, random bases contain the references, per-state counts, $E_0$ difference $0.0$), `reports/CV_2x2_information_20261005.md`, `data/cv/*` (2x3 emulated fragment at $f=0.10$, quick mode). Snapshot at 16:13 MDT of the same work: `validation/CF_estimator_2x2_info.json` PASS 2/2 and `validation/Q0P_2x3_plan.json` FAIL 3/7 (interim: it needs the CV gate's `validation/CV_2x3_plan.json` and a preregistration rendering without untraceable tokens; see Section 5.4), `data/cv/` now holds emulated 2x3 fragments at $f=0.05$, $0.10$ and $0.15$. **The CV verdict on the 2x3 plan has not been delivered**; if CV1-CV5 fail the planner re-sizes by a factor $s\in\{2,4,8\}$ and the new HQC cost returns to the owner.
 
 **(iii) Not done although proposed in `prompts/27`:** Stage 0 (`T0_2x3_tiers`), Stage 0c (`T0c_levers`: no-plaq1, fixed-angle + no-plaq1, truncated multiplexed rotations, SqDRIFT-style random products) and Stage 1 (`S3H_2x3`, Helios-class device model on the GPU, needs a CI token): no gate JSON exists for any of them.
 
@@ -769,6 +796,17 @@ The memory (transport) error of a 20-qubit, mostly serial, 1 925-two-qubit-layer
 10. **The 400 IBM minutes** (allocation awaiting approval; not visible to the account) and the 498 s remaining on the open plan.
 11. **Pushing:** `master` is 4 commits ahead of `origin/master`; pushes are the owner's call (`CLAUDE.md` rule 5; the gate runner pushes only on PASS with `--push`).
 12. **The ML step:** whether to build the graph network of manual Step 7 and run the seven-protocol comparison once 2x3 data exist; until then the word "neural" is a plan, not a result.
+
+### 9.7 Gaps and discrepancies in this report (numbers I could not source or reconcile)
+
+1. **The canary's predicted accepted count.** `CLAUDE.md` quotes "8 accepted of 267 against the preregistered $\ge10$ and the simulated 71"; `prompts/15` D5 quotes a predicted 39.9; `validation/H0_canary.json -> data.f_comparison` gives a predicted yield 0.18725, which corresponds to 50.0 expected accepted shots of 267 **(my multiplication of sourced numbers)**. I could not reconcile the three; Section 6.7 uses the JSON values and the go-rule threshold of 10.
+2. **Time zones.** The `environment.timestamp` strings in the gate JSON are in the time zone of the run (MDT, PDT or UTC) and are shown as recorded; ordering across zones in block (a) is approximate (within hours).
+3. **Numbers taken from documents rather than JSON.** The following have no JSON key I could cite and come from prose reports (named where used): the `prompts/LOG.md` figures for the CI jobs' timings and utilisations, the GPU speed-ups (19.8x, 161x, about 300x), the planner's 2x2 `AMBIGUOUS` arithmetic ($r_{nc}=1.10$ version), the 94 % of shots at $k=4$, the `S2D` shot-quota numbers 556 000 / 808 104 (the handover says these exist only in a report and could not be cited into the amendment), and the memory scenarios' cost ESTIMATEs (HQC, USD at 12.5 USD per HQC).
+4. **Planner arithmetic not yet reproduced by a gate:** the whole 2x3 shot-rule table (Section 6.17, block (g)) comes from `scratch/planner/d3s_2x3_shot_rule_20261003.json`; gate `Q0P_2x3_plan` has not been run, so these are planner arithmetic until it reproduces them. The Stage E / P plans (9 950 eHQC / HQC) are planner arithmetic. The re-sizing costs (8.4e5 / 1.7e6 / 3.3e6 HQC) are planner arithmetic.
+5. **Values not computed in the repository.** The random acceptance of the 2x4 decoder; any 2x3 hardware number (none exists); any measurement of Quantinuum, IonQ, Google or other non-IBM devices (all vendor numbers were read from web pages by the planner on 2026-10-01/02 and are not measurements by this project); the memory/transport error of any ion-trap device for this circuit; the K1 pilot result (not run); the CV verdict on the 2x3 plan (not delivered); the context-aware DD collapse mechanism.
+6. **Unclear count.** The handover of 2026-10-02 says "233 passed, 2 skipped" for pytest at one point and later totals differ; test counts in Section 4.6 are the last values recorded in the cited JSON/LOG rows, not a fresh run (I ran no tests, as instructed).
+7. **Files written by the other agents** (`validation/K0_2x3_2x4.json`, `validation/CV_2x2_info.json`, `data/hardware/K1_2x3_prep/select.json`, ...) were uncommitted when I read them and may have changed since; I cite them only as "work in progress".
+8. **"Five most important numbers"** in Section 1 are my selection; the project itself does not rank numbers.
 
 ## 10. Progress measure
 
@@ -871,8 +909,847 @@ The project does not keep a separate milestone list; it tracks progress through 
 
 ## 11. DATA APPENDIX for plotting
 
-*(section still to be written)*
+**How to use.** Every block below is a fenced ```csv block that can be copied straight into pandas (`pd.read_csv(io.StringIO(text))`), R or a spreadsheet. Each block has a title, the source file(s) and key(s) it was generated from (the blocks were generated by a script that reads the JSON files directly, so no number was typed by hand; two small exceptions are marked inline: the survey rows of devices other than Quantinuum and IonQ come from the planner's survey table, and the r_nc-corrected block (b2) is my division of sourced numbers), and the units of its columns. Empty cells mean "not available in the source". Floats are printed with 6 significant digits. Blocks: (a) gate timeline, (b) clean-fraction history (b2 corrected by r_nc), (c) the H0_ddtest cells, (d) H0_2x2 energies, certificate intervals and baselines (d2, per-state counts d3), (e) B_all / B_sig support growth versus k, (f) device survey (f2 for 2x2), (g) 2x3 shots and HQC versus f for each shot rule, (h) CF_traj arms, (i) cumulative QPU seconds, (j) gate counts and device requirements, (k) exact reference energies (k2 derived quantities), (l) the 51 plan rows, (m) the 2x2 shot plan, (n) the S2D_levers Aer curves and the kingston pilot comparison.
+
+**Caution for the plotting assistant.** (1) The clean-fraction statistics in block (b) are *different estimators* (yield-inverted, reference-string `f_hit`, mixture); do not draw them as one series without saying so. (2) All device-prediction numbers (f in blocks (f), (g)) are **models** (planner arithmetic or ESTIMATE), not measurements; the only measured clean fractions are in blocks (b), (c). (3) Intervals are 95 % unless a column says 68 %.
+
+#### (a) Gate timeline
+
+**Source:** every `validation/*.json` with a criteria list (`environment.timestamp`, `status`, `criteria[*].passed`, `runtime_s`, `environment.git_commit`); 38 rows. Dates are in the time zone the run recorded (MDT/PDT/UTC); the same gate name can appear twice because `L4_p2_*` records carry `gate` = `L4`.
+
+**Columns and units:** `date` ISO date; `time` hh:mm:ss in `tz`; `file` JSON file stem; `gate` the gate name inside the file; `status` PASS or FAIL; `criteria_passed`, `criteria_total` counts; `runtime_s` seconds (wall time of the gate run); `commit` short git hash
+
+The CI wrapper results are separate: L4 job 58741899 686 s PASS; S3 job 58771538 255 s PASS; S2_2x4 job 59162991 99 s PASS (`validation/ci_gate_*.json`).
+
+```csv
+date,time,tz,file,gate,status,criteria_passed,criteria_total,runtime_s,commit
+2026-09-14,16:43:44,MDT,E1,E1,PASS,23,23,427,57b3bff
+2026-09-14,16:44:00,MDT,E2,E2,PASS,51,51,15,57b3bff
+2026-09-14,16:44:36,MDT,E3,E3,PASS,85,85,36,57b3bff
+2026-09-14,16:48:20,MDT,S1,S1,PASS,12,12,223,57b3bff
+2026-09-14,18:00:36,MDT,L4_p2_3e-3,L4,FAIL,2,4,1376,30684f2
+2026-09-14,18:24:06,MDT,L4_p2_1e-3,L4,FAIL,2,4,1012,30684f2
+2026-09-14,21:37:07,UTC,CS,CS,PASS,4,4,4,3c32216
+2026-09-15,15:04:26,MDT,L3,L3,FAIL,0,2,14,5d60461
+2026-09-15,15:12:59,MDT,S2,S2,FAIL,3,5,436,5d60461
+2026-09-15,20:18:31,MDT,S2_fixed,S2_fixed,FAIL,5,9,301,2fbcf29
+2026-09-15,20:19:58,MDT,L5,L5,PASS,6,6,3,0420211
+2026-09-15,20:20:11,MDT,L2,L2,PASS,4,4,8,0420211
+2026-09-16,07:02:12,MDT,S2D,S2D,FAIL,6,8,213,89102d2
+2026-09-16,11:46:01,MDT,S3_smoke,S3_smoke,FAIL,1,2,295,1223e92
+2026-09-16,12:28:26,MDT,L4_fez,L4_fez,PASS,4,4,450,3722018
+2026-09-16,13:15:46,MDT,H0P,H0P,PASS,16,16,1179,2392fb3
+2026-09-21,17:57:49,MDT,H0P_rehearsal,H0P_rehearsal,PASS,18,18,175,1e5c03b
+2026-09-22,01:22:38,PDT,L4,L4,PASS,4,4,677,n/a
+2026-09-22,11:46:55,MDT,H0P_ibm_fez,H0P_ibm_fez,PASS,18,18,319,1e6d7d3
+2026-09-22,14:16:46,MDT,H0_diag_dryrun,H0_diag_dryrun,FAIL,6,7,1,9cfe3ec
+2026-09-22,14:46:44,MDT,H0_diag,H0_diag,FAIL,6,8,1,4d1e8f6
+2026-09-22,16:36:34,MDT,S2D_idle,S2D_idle,FAIL,6,15,406,2c6edb6
+2026-09-22,18:01:22,PDT,S3,S3,PASS,4,4,248,n/a
+2026-09-30,15:28:44,MDT,H0P_repro,H0P_repro,PASS,15,15,1741,6180c6a
+2026-09-30,15:31:18,MDT,H0_model,H0_model,PASS,5,5,2,6180c6a
+2026-09-30,15:41:37,MDT,H0_dryrun,H0_dryrun,PASS,9,9,10,6180c6a
+2026-09-30,15:41:49,MDT,H0_canary,H0_canary,FAIL,3,6,11,6180c6a
+2026-10-01,09:15:29,PDT,S2_2x4,S2_2x4,PASS,12,12,0,n/a
+2026-10-02,11:13:55,MDT,S2D_levers,S2D_levers,PASS,9,9,489,782580c
+2026-10-02,12:04:30,MDT,H0_kpilot_dryrun,H0_kpilot_dryrun,PASS,9,9,49,761369f
+2026-10-02,12:31:53,MDT,H0_kpilot,H0_kpilot,FAIL,8,9,450,fc3a5a2
+2026-10-02,14:10:22,MDT,H0_ddtest_dryrun,H0_ddtest_dryrun,PASS,8,8,15,aa4da1e
+2026-10-02,14:37:48,MDT,H0_ddtest,H0_ddtest,PASS,8,8,601,d4b3855
+2026-10-02,15:04:52,MDT,H0_2x2_dryrun,H0_2x2_dryrun,PASS,8,8,17,4e979a0
+2026-10-02,16:04:51,MDT,H0_2x2,H0_2x2,PASS,8,8,444,da715fc
+2026-10-02,21:36:57,MDT,Q0P_2x3,Q0P_2x3,PASS,7,7,926,8072b8d
+2026-10-05,13:47:33,MDT,CF_traj,CF_traj,PASS,7,7,1201,a8ebbaa
+2026-10-05,15:47:54,MDT,K0_2x3_2x4,K0_2x3_2x4,FAIL,5,6,23,c29a402
+2026-10-05,16:04:12,MDT,CV_2x2_info,CV_2x2_info,PASS,2,2,28,a435dc1
+2026-10-05,16:11:09,MDT,CF_estimator_2x2_info,CF_estimator_2x2_info,PASS,2,2,1,e23a05d
+```
+
+#### (b) Clean-fraction history per hardware run
+
+**Source:** `validation/H0_canary.json`, `H0_model.json`, `H0_kpilot.json`, `H0_ddtest.json`, `H0_2x2.json` (keys in the last column). The H0_diag runs J1-J4 and the canary enter only through the pooled fez row (6 reference hits in 8 267 shots).
+
+**Columns and units:** `f` clean-fraction statistic (dimensionless probability per shot); `lo`,`hi` interval ends at the stated `level`; `shots` shots the statistic uses (for pooled rows the sum over circuits; for H0_2x2 pooled the 7 k=1 circuits x 267); `stat` names the estimator. Different statistics are NOT interchangeable: the yield-inverted value overstates the clean fraction (15x on fez); the reference-string value `f_hit` estimates the ideal-sample fraction (ratio r_nc = 1.115).
+
+```csv
+run,date,device,circuit,statistic,f,lo,hi,interval_level,shots,note,source_key
+H0_canary,2026-09-22,ibm_fez,B0_ref06_k1_rep1 (663 CZ),yield-inverted (y=0.82f+(1-f)a),0.0255145,,,,267,"DD on, twirling on; 8 accepted; NOT a clean-shot measurement",validation/H0_canary.json data.f_comparison
+H0_canary,2026-09-22,ibm_fez,B0_ref06_k1_rep1 (663 CZ),prediction: gate-only model,0.219522,,,,267,prediction,validation/H0_canary.json data.f_comparison
+H0_model (5 fez pubs),2026-09-22,ibm_fez,B0_ref06_k1 pooled over canary + J1-J4,reference-string f_clean (readout factor 0.82),0.000664981,0.000267503,0.0012635,68% Garwood,8267,"6 hits vs 2.018 from garbage; interval is 68%, not 95%",validation/H0_model.json data.C2_pooled_device_clean_count.pooled_reference_test
+H0_kpilot,2026-10-02,ibm_kingston,pooled 2 k=1 circuits,reference-string f_hit,0.041293,0.0361148,0.0469982,95%,8000,"DD off, twirling off; NO-GO",validation/H0_kpilot.json data.decision
+H0_kpilot,2026-10-02,ibm_kingston,B0_ref06_k1,reference-string f_hit,0.0403927,0.0332439,0.0486082,95%,4000,,validation/H0_kpilot.json data.decision.f_by_circuit
+H0_kpilot,2026-10-02,ibm_kingston,B1_ref07_k1,reference-string f_hit,0.0421874,0.034898,0.0505359,95%,4000,,validation/H0_kpilot.json data.decision.f_by_circuit
+H0_kpilot,2026-10-02,ibm_kingston,B0_ref06_k4,reference-string f_hit,0.0384758,0.0211611,0.0635501,95%,4000,,validation/H0_kpilot.json data.decision.f_by_circuit
+H0_ddtest T0,2026-10-02,ibm_kingston,pooled 2 k=1 circuits,reference-string f_hit,0.0400315,0.035844,0.0445691,95%,12000,cell T0,validation/H0_ddtest.json data.decision.cells.T0
+H0_ddtest T1,2026-10-02,ibm_kingston,pooled 2 k=1 circuits,reference-string f_hit,0.000466785,-1.96655e-05,0.00133721,95%,12000,cell T1,validation/H0_ddtest.json data.decision.cells.T1
+H0_ddtest T2,2026-10-02,ibm_kingston,pooled 2 k=1 circuits,reference-string f_hit,0.111821,0.104764,0.119227,95%,12000,cell T2,validation/H0_ddtest.json data.decision.cells.T2
+H0_ddtest T3,2026-10-02,ibm_kingston,pooled 2 k=1 circuits,reference-string f_hit,0.112853,0.105763,0.120292,95%,12000,cell T3,validation/H0_ddtest.json data.decision.cells.T3
+H0_2x2,2026-10-02,ibm_kingston,pooled 7 k=1 circuits,reference-string f_hit,0.127053,0.108428,0.147942,95%,1869,DD cell T3; 173 hits vs 0.456 from garbage,validation/H0_2x2.json data.clean_fraction.pooled
+H0_2x2,2026-10-02,ibm_kingston,B0_ref06_k1,reference-string f_hit,0.13411,0.0866992,0.198013,95%,267,,validation/H0_2x2.json data.clean_fraction.per_k1_circuit
+H0_2x2,2026-10-02,ibm_kingston,B0_ref06_k1,mixture estimator,0.127551,,,,267,"68 percent interval in source: [0.11235706313885048, 0.1414890748184295]",validation/H0_2x2.json data.clean_fraction.per_k1_circuit
+H0_2x2,2026-10-02,ibm_kingston,B0_ref17_k1,reference-string f_hit,0.128636,0.0823605,0.191382,95%,267,,validation/H0_2x2.json data.clean_fraction.per_k1_circuit
+H0_2x2,2026-10-02,ibm_kingston,B0_ref17_k1,mixture estimator,0.138705,,,,267,"68 percent interval in source: [0.12550506985006343, 0.14913202094957254]",validation/H0_2x2.json data.clean_fraction.per_k1_circuit
+H0_2x2,2026-10-02,ibm_kingston,B0_ref21_k1,reference-string f_hit,0.138953,0.0906493,0.203693,95%,267,,validation/H0_2x2.json data.clean_fraction.per_k1_circuit
+H0_2x2,2026-10-02,ibm_kingston,B0_ref21_k1,mixture estimator,0.148416,,,,267,"68 percent interval in source: [0.13767737943758027, 0.1561715400780899]",validation/H0_2x2.json data.clean_fraction.per_k1_circuit
+H0_2x2,2026-10-02,ibm_kingston,B0_ref30_k1,reference-string f_hit,0.138953,0.0906493,0.203693,95%,267,,validation/H0_2x2.json data.clean_fraction.per_k1_circuit
+H0_2x2,2026-10-02,ibm_kingston,B0_ref30_k1,mixture estimator,0.128372,,,,267,"68 percent interval in source: [0.1178297362522436, 0.13645570114493744]",validation/H0_2x2.json data.clean_fraction.per_k1_circuit
+H0_2x2,2026-10-02,ibm_kingston,B0_ref43_k1,reference-string f_hit,0.108,0.0660441,0.166513,95%,267,,validation/H0_2x2.json data.clean_fraction.per_k1_circuit
+H0_2x2,2026-10-02,ibm_kingston,B0_ref43_k1,mixture estimator,0.127889,,,,267,"68 percent interval in source: [0.12391147402301594, 0.1278889193386316]",validation/H0_2x2.json data.clean_fraction.per_k1_circuit
+H0_2x2,2026-10-02,ibm_kingston,B1_ref07_k1,reference-string f_hit,0.138375,0.090272,0.202845,95%,267,,validation/H0_2x2.json data.clean_fraction.per_k1_circuit
+H0_2x2,2026-10-02,ibm_kingston,B1_ref07_k1,mixture estimator,0.132496,,,,267,"68 percent interval in source: [0.12253408105946641, 0.13970340414288612]",validation/H0_2x2.json data.clean_fraction.per_k1_circuit
+H0_2x2,2026-10-02,ibm_kingston,B1_ref14_k1,reference-string f_hit,0.102413,0.0617701,0.15957,95%,267,,validation/H0_2x2.json data.clean_fraction.per_k1_circuit
+H0_2x2,2026-10-02,ibm_kingston,B1_ref14_k1,mixture estimator,0.101259,,,,267,"68 percent interval in source: [0.09038906250384834, 0.10963820058819713]",validation/H0_2x2.json data.clean_fraction.per_k1_circuit
+```
+
+#### (b2) The same three pooled values divided by r_nc (MY ARITHMETIC from sourced numbers)
+
+**Source:** `f` and 95 % ends from the files above; `r_nc` = 1.1151352098 from `validation/CF_traj.json -> data.pooled_k1.r_nc` (`data/cf_trajectories/r_nc.json`). The combined interval that includes the uncertainty of r_nc is wider than shown (the planner combines Garwood and bootstrap variances on the log scale; I did not).
+
+**Columns and units:** `f_hit` etc. dimensionless; `f_over_rnc` = f_hit / r_nc; `verdict_vs_0.1` compares the 95 % interval of f_hit/r_nc (without the r_nc uncertainty) with the mean bar 0.1
+
+```csv
+run,f_hit,lo95,hi95,r_nc,f_over_rnc,lo95_over_rnc,hi95_over_rnc,interval_vs_bar,bar
+H0_kpilot pooled,0.041293,0.0361148,0.0469982,1.11514,0.0370296,0.032386,0.0421457,below,0.1 (mean bar)
+H0_ddtest T3 (adopted),0.112853,0.105763,0.120292,1.11514,0.101202,0.0948432,0.107872,straddles,0.1 (mean bar)
+H0_2x2 pooled,0.127053,0.108428,0.147942,1.11514,0.113935,0.0972327,0.132667,straddles,0.1 (mean bar)
+```
+
+#### (c) H0_ddtest cells (ibm_kingston, job db01005j371s73dnmbd0, 2 circuits x 6 000 shots per cell)
+
+**Source:** `validation/H0_ddtest.json -> data.decision.cells.<cell>` (`f_pool`, `f_pool_95`, `R`, `R_95`, `null_ratio`, `accepted`, `reference_hits`, `qualifies`) and `data.decision.adopted`.
+
+**Columns and units:** `n_pulses_total` sum over the two circuits of inserted DD pulses (per circuit in the source; T1 862 each); `f` reference-string clean fraction of the pooled two circuits; `f_lo95`,`f_hi95` 95 % interval; `R` = f(cell)/f(T0) with its 95 % interval; `null_ratio` the ratio the pulse error alone would give (pulse cost exp(-nats)); `accepted`, `reference_hits` summed over the two circuits
+
+```csv
+cell,description,n_pulses_total,f,f_lo95,f_hi95,R,R_lo95,R_hi95,null_ratio,accepted,reference_hits,qualifies,adopted
+T0,no DD (baseline),0,0.0400315,0.035844,0.0445691,1,,,1,526,352,,False
+T1,"context-aware staggered X (qiskit ContextAwareDynamicalDecoupling, min window 512 ns)",1724,0.000466785,-1.96655e-05,0.00133721,0.0116604,0.00438888,0.0309796,0.816228,102,7,False,False
+T2,client XY4 in every idle window >= 256 ns,1556,0.111821,0.104764,0.119227,2.79333,2.4719,3.15656,0.841058,1429,978,True,False
+T3,client XY4 in idle windows >= 1.024 us only,488,0.112853,0.105763,0.120292,2.81912,2.49509,3.18523,0.944388,1456,987,True,True
+```
+
+#### (d) H0_2x2 Ritz energies versus exact E0, certificate intervals (per sector)
+
+**Source:** `validation/H0_2x2.json -> data.energies.<sector>.{B_all,B_sig}` (`E_R`, `abs_error`, `rH`, `weinstein_gap_assumed`, `kato_temple`, `gap_assumption_holds`, `E0_inside_gap_assumed_weinstein`) and `data.support.<sector>` (`dim`, `shots`, `accepted`, `Na_over_dim`).
+
+**Columns and units:** energies in lattice units (dimensionless); `abs_error` = |E_R - E0|; `rH` Hamiltonian residual; Weinstein/Kato-Temple intervals as [lo, hi] (the gap-assumed interval is [E_R - delta, E_R]); `Na_over_dim` = N a / dim, the saturation parameter (rule C22)
+
+```csv
+sector,basis,basis_size,E_R,E0_exact,abs_error,rH,weinstein_lo,weinstein_hi,kato_temple_lo,kato_temple_hi,gap_assumption_holds,E0_in_weinstein,sector_dim,shots,accepted,Na_over_dim
+B=0,B_all,38,-3.64077,-3.64077,0,6.14037e-15,-3.64077,-3.64077,-3.64077,-3.64077,True,True,38,69505,9454,16.969
+B=0,B_sig,35,-3.64022,-3.64077,0.000547674,0.0602701,-3.70049,-3.64022,-3.64157,-3.64022,True,True,38,69505,9454,16.969
+B=1,B_all,20,-1.86159,-1.86159,0,1.50912e-15,-1.86159,-1.86159,-1.86159,-1.86159,True,True,20,64402,7885,15.7231
+B=1,B_sig,19,-1.86158,-1.86159,5.74934e-06,0.00595351,-1.86754,-1.86158,-1.86242,-1.86158,True,True,20,64402,7885,15.7231
+```
+
+#### (d2) H0_2x2 baselines: random equal-size bases and garbage-only (per sector)
+
+**Source:** `validation/H0_2x2.json -> data.baselines.<sector>.{random_equal_size,garbage_only}`.
+
+**Columns and units:** `n_seeds` number of random draws (200 seeds 23-222 for random subsets of the sector codewords including the references; 100 seeds 11-110 for uniformly random 12-bit strings run through the decoder at the hardware shot counts); `basis_size` size of each random basis (for garbage-only the mean decoded support size); E columns are the Ritz energy distribution of the baseline in lattice units; `hardware_E_R` the hardware value compared (B_sig for the random baseline, B_all for garbage-only); `hardware_percentile` the percentile of the hardware value within the baseline (5.0 means only 5 % of random bases are at least as good as the hardware for B=0; for garbage-only 100 means the hardware value equals the garbage-only value)
+
+```csv
+sector,baseline,n_seeds,basis_size,E_R_mean,E_R_std,E_R_p2.5,E_R_p97.5,E_R_min,E_R_max,hardware_E_R,hardware_percentile
+B=0,random_equal_size,200,35,-3.63266,0.00638631,-3.64036,-3.61855,-3.64069,-3.61337,-3.64022,5
+B=0,garbage_only,100,38,-3.64077,4.46326e-16,-3.64077,-3.64077,-3.64077,-3.64077,-3.64077,100
+B=1,random_equal_size,200,19,-1.85411,0.00794102,-1.86158,-1.84104,-1.86158,-1.84104,-1.86158,28.5
+B=1,garbage_only,100,20,-1.86159,6.6949e-16,-1.86159,-1.86159,-1.86159,-1.86159,-1.86159,100
+```
+
+#### (d3) H0_2x2 per-state counts and exact ground-state weights (one row per sector state)
+
+**Source:** `validation/H0_2x2.json -> data.support.<sector>.per_state`.
+
+**Columns and units:** `n_s` accepted count of the state over all shots of the sector; `mu_s` expected count from uniform noise N a/dim; `z` one-sided Poisson significance above mu_s; `ground_state_weight` exact |<b|Omega>|^2 (dimensionless, sums to 1 over the sector); `label` is the project's (j2 flux labels); (n labels)
+
+```csv
+sector,basis_index,label,n_s,mu_s,z,in_B_all,in_B_sig,ground_state_weight,is_reference
+B=0,3,"(0,0,0,0); (0,0,2,2)",374,16.969,86.6718,True,True,0.00171136,False
+B=0,5,"(0,0,0,0); (0,2,0,2)",304,16.969,69.6788,True,True,0.00171136,False
+B=0,6,"(0,0,0,0); (0,2,2,0)",764,16.969,181.347,True,True,0.819498,True
+B=0,9,"(0,0,0,0); (2,0,0,2)",169,16.969,36.9066,True,True,2.03589e-05,False
+B=0,10,"(0,0,0,0); (2,0,2,0)",391,16.969,90.7987,True,True,0.00171136,False
+B=0,12,"(0,0,0,0); (2,2,0,0)",443,16.969,103.422,True,True,0.00171136,False
+B=0,17,"(0,0,0,1); (0,2,1,1)",634,16.969,149.789,True,True,0.0407652,True
+B=0,18,"(0,0,0,1); (2,0,1,1)",335,16.969,77.2043,True,True,0.000110977,False
+B=0,21,"(0,0,1,0); (0,1,2,1)",704,16.969,166.782,True,True,0.0407652,True
+B=0,22,"(0,0,1,0); (2,1,0,1)",289,16.969,66.0375,True,True,0.000110977,False
+B=0,25,"(0,0,1,1); (0,1,1,2)",283,16.969,64.5809,True,True,0.00097665,False
+B=0,26,"(0,0,1,1); (2,1,1,0)",137,16.969,29.1384,True,True,1.22896e-05,False
+B=0,29,"(0,1,0,0); (1,1,0,2)",218,16.969,48.8017,True,True,0.000110977,False
+B=0,30,"(0,1,0,0); (1,1,2,0)",639,16.969,151.002,True,True,0.0407652,True
+B=0,32,"(0,1,0,1); (1,1,1,1)",368,16.969,85.2153,True,True,0.00222583,False
+B=0,34,"(0,1,1,0); (1,0,2,1)",308,16.969,70.6498,True,True,0.00097665,False
+B=0,35,"(0,1,1,0); (1,2,0,1)",67,16.969,12.1454,True,True,1.22896e-05,False
+B=0,38,"(0,1,1,1); (1,0,1,2)",139,16.969,29.6239,True,True,2.69479e-05,False
+B=0,39,"(0,1,1,1); (1,2,1,0)",76,16.969,14.3302,True,True,7.81328e-05,False
+B=0,42,"(1,0,0,0); (1,0,1,2)",186,16.969,41.0335,True,True,0.000110977,False
+B=0,43,"(1,0,0,0); (1,2,1,0)",563,16.969,132.553,True,True,0.0407652,True
+B=0,46,"(1,0,0,1); (1,0,2,1)",91,16.969,17.9716,True,True,1.22896e-05,False
+B=0,47,"(1,0,0,1); (1,2,0,1)",395,16.969,91.7697,True,True,0.00097665,False
+B=0,49,"(1,0,1,0); (1,1,1,1)",403,16.969,93.7118,True,True,0.00222583,False
+B=0,51,"(1,0,1,1); (1,1,0,2)",112,16.969,23.0695,True,True,2.69479e-05,False
+B=0,52,"(1,0,1,1); (1,1,2,0)",97,16.969,19.4281,True,True,7.81328e-05,False
+B=0,55,"(1,1,0,0); (0,1,1,2)",44,16.969,6.56197,True,True,1.22896e-05,False
+B=0,56,"(1,1,0,0); (2,1,1,0)",272,16.969,61.9106,True,True,0.00097665,False
+B=0,59,"(1,1,0,1); (0,1,2,1)",30,16.969,3.16337,True,False,7.81328e-05,False
+B=0,60,"(1,1,0,1); (2,1,0,1)",171,16.969,37.3921,True,True,2.69479e-05,False
+B=0,63,"(1,1,1,0); (0,2,1,1)",55,16.969,9.2323,True,True,7.81328e-05,False
+B=0,64,"(1,1,1,0); (2,0,1,1)",161,16.969,34.9646,True,True,2.69479e-05,False
+B=0,69,"(1,1,1,1); (0,0,2,2)",28,16.969,2.67786,True,False,2.51948e-06,False
+B=0,71,"(1,1,1,1); (0,2,0,2)",26,16.969,2.19234,True,False,2.51948e-06,False
+B=0,72,"(1,1,1,1); (0,2,2,0)",59,16.969,10.2033,True,True,0.00129327,False
+B=0,75,"(1,1,1,1); (2,0,0,2)",37,16.969,4.86267,True,True,4.48908e-07,False
+B=0,76,"(1,1,1,1); (2,0,2,0)",50,16.969,8.01851,True,True,2.51948e-06,False
+B=0,78,"(1,1,1,1); (2,2,0,0)",32,16.969,3.64888,True,True,2.51948e-06,False
+B=1,7,"(0,0,0,0); (0,2,2,2)",555,15.7231,136.001,True,True,0.437467,True
+B=1,11,"(0,0,0,0); (2,0,2,2)",719,15.7231,177.36,True,True,0.00480969,False
+B=1,13,"(0,0,0,0); (2,2,0,2)",492,15.7231,120.113,True,True,0.00480969,False
+B=1,14,"(0,0,0,0); (2,2,2,0)",669,15.7231,164.751,True,True,0.437467,True
+B=1,19,"(0,0,0,1); (2,2,1,1)",826,15.7231,204.345,True,True,0.0270718,False
+B=1,23,"(0,0,1,0); (2,1,2,1)",1171,15.7231,291.351,True,True,0.0270718,False
+B=1,27,"(0,0,1,1); (2,1,1,2)",698,15.7231,172.064,True,True,0.00065098,False
+B=1,31,"(0,1,0,0); (1,1,2,2)",455,15.7231,110.782,True,True,0.0270718,False
+B=1,36,"(0,1,1,0); (1,2,2,1)",212,15.7231,49.4993,True,True,0.0022532,False
+B=1,40,"(0,1,1,1); (1,2,1,2)",135,15.7231,30.0806,True,True,9.32586e-07,False
+B=1,44,"(1,0,0,0); (1,2,1,2)",540,15.7231,132.218,True,True,0.0270718,False
+B=1,48,"(1,0,0,1); (1,2,2,1)",351,15.7231,84.5539,True,True,0.0022532,False
+B=1,53,"(1,0,1,1); (1,1,2,2)",27,15.7231,2.84393,True,False,9.32586e-07,False
+B=1,57,"(1,1,0,0); (2,1,1,2)",218,15.7231,51.0125,True,True,0.00065098,False
+B=1,61,"(1,1,0,1); (2,1,2,1)",176,15.7231,40.4204,True,True,9.32586e-07,False
+B=1,65,"(1,1,1,0); (2,2,1,1)",191,15.7231,44.2033,True,True,9.32586e-07,False
+B=1,73,"(1,1,1,1); (0,2,2,2)",80,15.7231,16.2101,True,True,0.000670039,False
+B=1,77,"(1,1,1,1); (2,0,2,2)",115,15.7231,25.0368,True,True,3.16517e-06,False
+B=1,79,"(1,1,1,1); (2,2,0,2)",131,15.7231,29.0718,True,True,3.16517e-06,False
+B=1,80,"(1,1,1,1); (2,2,2,0)",124,15.7231,27.3065,True,True,0.000670039,False
+```
+
+#### (e) B_all and B_sig support growth versus k (cumulative over circuits with k <= k_max)
+
+**Source:** `validation/H0_2x2.json -> data.support.<sector>.k_growth`.
+
+**Columns and units:** `k_max` largest Krylov order included; `shots` cumulative shots of the sector over circuits with k <= k_max (94 % of the shots are at k = 4); `B_all` and `B_sig` support sizes (number of sector states); `sector_dim` 38 or 20
+
+Reading note: at k_max = 4 the shot count jumps by a factor of about 17 (B=0: 4 005 -> 69 505), so the k-resolved curve mostly tracks shots rather than depth (planner report, lesson 9).
+
+```csv
+sector,sector_dim,k_max,shots,B_all,B_sig
+B=0,38,1,1335,21,8
+B=0,38,2,2670,26,13
+B=0,38,3,4005,34,19
+B=0,38,4,69505,38,35
+B=1,20,1,534,9,3
+B=1,20,2,1068,13,6
+B=1,20,3,1602,16,10
+B=1,20,4,64402,20,19
+```
+
+#### (f) Device survey for the signed 2x3 circuit family: gate-only f, f under the memory scenarios, and cost
+
+**Source:** `data/quantinuum/devices_20261002.json -> rows.2x3|*` (Quantinuum rows), `data/ionq_2x3_feasibility_20261001.json -> results` (IonQ rows), `reports/qpu_survey_2x3_20261002.md` section 3 and `reports/ionq_devices_2x3_2x4_planner_analysis_20261002.md` section 2.3 (the other devices; planner arithmetic with an ESTIMATE routing overhead where marked).
+
+**Columns and units:** `n_2q` two-qubit gates per circuit; `eps2`, `eps1`, `eps_ro` error rates per gate / per qubit (dimensionless); `f_gate_only_mean`, `f_gate_only_worst` clean fraction from gate and readout errors only; `f_mem_low/mid/high` clean fraction including the transport/memory term of the ESTIMATE scenarios (round time 0.5 / 1.1 / 4.4 ms); `shots_total` D3-type union shot rule scaled as 1/f; `hqc_est` HQC = 5 + C(N_1q+10N_2q+5N_m)/5000 per job summed (ESTIMATE); `usd_est` at 12.5 USD per HQC (Azure Standard-plan equivalent, ESTIMATE; pay-as-you-go not public); `machine_h_mid_est` hours at the mid scenario (ESTIMATE). Blank = not available in the sources. For non-Quantinuum rows `f_gate_only_mean` holds the survey's gate-only value.
+
+Signed bar: mean f >= 0.1 over the family and worst >= 0.05 (amendment 01 item 2). Only H2-2, Helios-1 and (marginally) H1-1 reach it on gate errors alone.
+
+```csv
+device,platform,lattice,n_2q,eps2,eps1,eps_ro,f_gate_only_mean,f_gate_only_worst,f_mem_low,f_mem_mid,f_mem_high,shots_total,hqc_est,usd_est,machine_h_mid_est,source,note
+H2-2,trapped ion (QCCD),2x3,2158,0.00083,2.8e-05,0.000935,0.150157,0.149997,0.145378,0.139845,0.112966,102100,507144,6339299,60.1,data/quantinuum/devices_20261002.json rows.2x3|quantinuum_h2_2,vendor numbers read 2026-10-02; memory and cost are ESTIMATE
+Helios-1,trapped ion (QCCD),2x3,2158,0.00079,3e-05,0.00048,0.164197,0.16401,0.137837,0.111728,0.0352008,127700,634299,7928733,75.1,data/quantinuum/devices_20261002.json rows.2x3|quantinuum_helios_1,vendor numbers read 2026-10-02; memory and cost are ESTIMATE
+H1-1,trapped ion (QCCD),2x3,2158,0.00097,1.8e-05,0.0023,0.111327,0.111251,0.104918,0.097713,0.0660704,146000,725197,9064966,85.9,data/quantinuum/devices_20261002.json rows.2x3|quantinuum_h1_1,vendor numbers read 2026-10-02; memory and cost are ESTIMATE
+H2-1,trapped ion (QCCD),2x3,2158,0.0011,1.9e-05,0.001,0.0860245,0.0859623,0.0815105,0.0764053,0.0535337,186700,927358,11591969,109.8,data/quantinuum/devices_20261002.json rows.2x3|quantinuum_h2_1,vendor numbers read 2026-10-02; memory and cost are ESTIMATE
+IonQ Aria (retired 2026),trapped ion,2x3,2158,0.004,0.0005,0.0039,3.52042e-05,,,,,,,,,data/ionq_2x3_feasibility_20261001.json results.2x3|ionq_aria|virtual_rz,virtual Rz; f incl. serial idle estimate 6.09826e-12
+IonQ Forte,trapped ion,2x3,2158,0.004,0.0002,0.005,8.6081e-05,,,,,,,,,data/ionq_2x3_feasibility_20261001.json results.2x3|ionq_forte|virtual_rz,virtual Rz; f incl. serial idle estimate 
+"IonQ Tempo (targets, late 2026)",trapped ion,2x3,2158,,,,0.077,,,,,,,,,reports/qpu_survey_2x3_20261002.md section 3,planner arithmetic: reports/qpu_survey_2x3_20261002.md table row 5 (99.9 % target; no gate time or T2 published)
+Google Willow chip 2 (iswap-like 1.4e-3),superconducting,2x3,3884,,,,0.0013,,,,,,,,,reports/qpu_survey_2x3_20261002.md section 3,"planner arithmetic, routing 1.8 ESTIMATE (qpu_survey rank 6); proposal-only access"
+"IBM Heron / ibm_kingston best edge, ceiling",superconducting,2x3,5477,0.0008164,,,0.0001,,,,,,,,,reports/qpu_survey_2x3_20261002.md section 3,gate-only ceiling f<=1.14e-2 at 5477 routed CZ (ionq_devices_2x3_2x4_planner_analysis_20261002.md 2.3); about 1e-4 with 1q+readout; K0 gate: 1.095e-2
+Infleqtion Sqale (raw 98.8 %),neutral atom,2x3,3884,,,,1.4e-05,,,,,,,,,reports/qpu_survey_2x3_20261002.md section 3,planner arithmetic (qpu_survey rank 9); private beta
+QuEra Gemini (99.2 % global),neutral atom,2x3,3884,,,,1.3e-08,,,,,,,,,reports/qpu_survey_2x3_20261002.md section 3,planner arithmetic (qpu_survey rank 10); consultation
+IBM Nighthawk / Heron-class median 2.15e-3,superconducting,2x3,5477,0.00215,,,3e-06,,,,,,,,,reports/qpu_survey_2x3_20261002.md section 3,planner arithmetic (qpu_survey rank 11)
+Rigetti Cepheus / IQM Emerald (99.5 %),superconducting,2x3,3884,0.005,,,1e-09,,,,,,,,,reports/qpu_survey_2x3_20261002.md section 3,planner arithmetic: f < 1e-9 (qpu_survey rank 12)
+AQT IBEX Q1,trapped ion,2x3,2158,0.013,,,5e-13,,,,,,,,,reports/qpu_survey_2x3_20261002.md section 3,12 qubits < 20 and a 2000-gate cap (qpu_survey rank 13); f_2q only; eps2 = 1 - 0.987 from the product page
+```
+
+#### (f2) The 2x2 circuit on the other devices (information; not a plan item)
+
+**Source:** `data/quantinuum/devices_20261002.json -> rows.2x2|*`, `data/ionq_2x3_feasibility_20261001.json -> results.2x2|*`, `validation/H0_2x2.json`.
+
+**Columns and units:** as block (f); 2x2 circuit of 256 two-qubit gates (all-to-all). The IBM row is the measured pooled reference-hit fraction with DD, 588 routed CZ.
+
+```csv
+device,lattice,n_2q,eps2,f_gate_only_mean,f_mem_low,f_mem_mid,f_mem_high,source
+H2-2,2x2,256,0.00083,0.787461,0.786953,0.786344,0.783003,data/quantinuum/devices_20261002.json rows.2x2|quantinuum_h2_2
+Helios-1,2x2,256,0.00079,0.799066,0.796282,0.792953,0.774892,data/quantinuum/devices_20261002.json rows.2x2|quantinuum_helios_1
+H1-1,2x2,256,0.00097,0.751405,0.750683,0.749818,0.745078,data/quantinuum/devices_20261002.json rows.2x2|quantinuum_h1_1
+H2-1,2x2,256,0.0011,0.737831,0.737038,0.736088,0.730883,data/quantinuum/devices_20261002.json rows.2x2|quantinuum_h2_1
+ionq_aria,2x2,256,0.004,0.260928,,,,data/ionq_2x3_feasibility_20261001.json results.2x2|ionq_aria|virtual_rz
+ionq_forte,2x2,256,0.004,0.302881,,,,data/ionq_2x3_feasibility_20261001.json results.2x2|ionq_forte|virtual_rz
+"IBM ibm_kingston, T3 measured (reference-hit statistic)",2x2,588,,0.127053,,,,"validation/H0_2x2.json (588 routed CZ on the patch; measured, not a model)"
+```
+
+#### (g) 2x3 shots and HQC versus clean fraction f, for each shot rule (PLANNER ARITHMETIC)
+
+**Source:** `scratch/planner/d3s_2x3_shot_rule_20261003.json -> plans["<sector>|f=<f>"].<rule>` (shots_total, jobs, hqc_total, recall floors, probabilities); the rows labelled D3'-R reproduce the table of `reports/2x3_shot_rule_estimator_ruling_20261003.md` section 2.4 (e.g. f=0.10: 34 909 + 49 203 shots, 418 166 HQC). This JSON is a planner prototype; gate `Q0P_2x3_plan` (prompts/29 Part B') has to reproduce it before it is cited outside this report. The "both" rows are sums over the two sectors **(sum of sourced numbers)**.
+
+**Columns and units:** `f` the clean (ideal-sample) fraction fed to the rule, dimensionless; `shots` total shots of the sector (or both); `jobs` Quantinuum jobs of <= 10 000 shots; `hqc` HQC = sum over jobs of [5 + C(N_1q + 10 N_2q + 5 N_m)/5000], 4.9666 HQC per shot at the mean counts (ESTIMATE of cost; USD at 12.5 USD per HQC would be hqc x 12.5); `recall_floor_S999` expected recall of the 99.9 % support from clean shots alone; `P_recall_ge_0.9` probability that clean shots alone recall >= 0.9 of S999; `n_S999_below_lambda_star` S999 states with expected clean count < 6.2958; `lambda_min` minimum expected clean count (over S99 for D3'-R and the S99 rule, over S999 otherwise) at y = 0.82 x 0.7 x f
+
+```csv
+rule,f,sector,shots,jobs,hqc,recall_floor_S999,P_recall_ge_0.9,n_S999_below_lambda_star,lambda_min
+D3'-R (ruling),0.05,B=0,63875,35,317546,0.940225,0.953118,45,7.24961
+D3'-R (ruling),0.05,B=1,96503,20,479612,0.950075,0.993485,34,6.30634
+D3'-R (ruling),0.05,both,160378,55,797157,,,,
+D3'-R (ruling),0.10,B=0,34909,33,173614,0.941808,0.960341,45,7.3424
+D3'-R (ruling),0.10,B=1,49203,16,244553,0.949956,0.993329,34,6.29926
+D3'-R (ruling),0.10,both,84112,49,418166,,,,
+D3'-R (ruling),0.15,B=0,27309,33,135860,0.94272,0.965226,47,7.7371
+D3'-R (ruling),0.15,B=1,33503,13,166522,0.950151,0.993515,34,6.31865
+D3'-R (ruling),0.15,both,60812,46,302382,,,,
+"D3'-S (lambda* on every S999 state, LP allocation)",0.05,B=0,375000,66,1.8636e+06,0.999863,,,6.30077
+"D3'-S (lambda* on every S999 state, LP allocation)",0.05,B=1,735000,84,3.65269e+06,0.999895,,,6.29653
+"D3'-S (lambda* on every S999 state, LP allocation)",0.05,both,1110000,150,5.51628e+06,,,,
+"D3'-S (lambda* on every S999 state, LP allocation)",0.10,B=0,190300,49,945788,0.999869,,,6.30801
+"D3'-S (lambda* on every S999 state, LP allocation)",0.10,B=1,368700,47,1.83232e+06,0.999896,,,6.2979
+"D3'-S (lambda* on every S999 state, LP allocation)",0.10,both,559000,96,2.77811e+06,,,,
+"D3'-S (lambda* on every S999 state, LP allocation)",0.15,B=0,128600,42,639183,0.99987,,,6.31405
+"D3'-S (lambda* on every S999 state, LP allocation)",0.15,B=1,246500,35,1.22503e+06,0.999895,,,6.29765
+"D3'-S (lambda* on every S999 state, LP allocation)",0.15,both,375100,77,1.86422e+06,,,,
+D3'-S k=4-scaled allocation (as D3'),0.05,B=0,732008,104,3.6377e+06,0.99996,,,6.30201
+D3'-S k=4-scaled allocation (as D3'),0.05,B=1,1062903,117,5.28227e+06,0.999959,,,6.29606
+D3'-S k=4-scaled allocation (as D3'),0.05,both,1794911,221,8.91997e+06,,,,
+D3'-S k=4-scaled allocation (as D3'),0.10,B=0,368008,64,1.82886e+06,0.99996,,,6.30792
+D3'-S k=4-scaled allocation (as D3'),0.10,B=1,532503,63,2.64637e+06,0.999959,,,6.29794
+D3'-S k=4-scaled allocation (as D3'),0.10,both,900511,127,4.47524e+06,,,,
+D3'-S k=4-scaled allocation (as D3'),0.15,B=0,246408,48,1.22458e+06,0.99996,,,6.30692
+D3'-S k=4-scaled allocation (as D3'),0.15,B=1,355503,45,1.76674e+06,0.999959,,,6.29626
+D3'-S k=4-scaled allocation (as D3'),0.15,both,601911,93,2.99133e+06,,,,
+lambda* on S99 only (LP),0.05,B=0,48700,35,242144,0.873018,0.185866,48,6.34723
+lambda* on S99 only (LP),0.05,B=1,96800,20,481085,0.950111,0.993525,34,6.31066
+lambda* on S99 only (LP),0.05,both,145500,55,723228,,,,
+lambda* on S99 only (LP),0.10,B=0,27000,33,134315,0.869123,0.156051,48,6.36359
+lambda* on S99 only (LP),0.10,B=1,49500,16,246026,0.950029,0.993411,34,6.30791
+lambda* on S99 only (LP),0.10,both,76500,49,380341,,,,
+lambda* on S99 only (LP),0.15,B=0,20200,33,100536,0.822438,0.0107314,48,6.40712
+lambda* on S99 only (LP),0.15,B=1,33800,13,167995,0.95026,0.993634,34,6.33564
+lambda* on S99 only (LP),0.15,both,54000,46,268532,,,,
+D3-type union reading (Stage A record),0.05,B=0,204320,32,1.01528e+06,0.98489,,,1.0796
+D3-type union reading (Stage A record),0.05,B=1,203100,24,1.00791e+06,0.928152,,,0.533317
+D3-type union reading (Stage A record),0.05,both,407420,56,2.02319e+06,,,,
+D3-type union reading (Stage A record),0.10,B=0,102208,32,507960,0.984904,,,1.08011
+D3-type union reading (Stage A record),0.10,B=1,101604,12,504222,0.928202,,,0.5336
+D3-type union reading (Stage A record),0.10,both,203812,44,1.01218e+06,,,,
+D3-type union reading (Stage A record),0.15,B=0,68128,32,338640,0.9849,,,1.07994
+D3-type union reading (Stage A record),0.15,B=1,67704,12,336010,0.928157,,,0.533348
+D3-type union reading (Stage A record),0.15,both,135832,44,674650,,,,
+```
+
+#### (h) CF_traj: per-arm f0', f_hit, benign fraction, f_ideal and r (with 95 % bootstrap intervals)
+
+**Source:** `validation/CF_traj.json -> data.arms.<arm>.stats`, `data.pooled_k1.stats`, `data.A5_2x2_arm.ends.<end>` (the A5 rows use the 2x2 circuit `B0_ref06_k1` with DD cell T3 under a twirled idle model at the two T2 ends; `star` = free-induction T2*, `echo` = Hahn-echo T2). The pooled row's `r` upper end is **r_nc = 1.1151352098** (`data/cf_trajectories/r_nc.json`). Arm `B0_ref25_k1__xx` is the bit-flip-only control. C7: the k=4 mixture-estimator bias is 1.27436 [1.16999, 1.40205] (`data.C7_k4_mixture.bias_ratio`).
+
+**Columns and units:** `K` number of Pauli trajectories; `n_zz`,`n_phasedx` gate counts of the circuit (2158 two-qubit gates at 2x3; 588 sites at 2x2); `p_ref` ideal probability of the reference string; `f0_prime` fault-free fraction (no gate error and the reference read out correctly), dimensionless; `f_hit` reference-hit fraction; `b` benign fraction of faulty trajectories within total-variation distance 1e-3 of the ideal; `f_ideal` = f0' + (1 - f0') b; `r` = f_hit / f_ideal; `min_feff_over_fideal_S99` the floor-theorem quantity (>= 0.95 required); `rho_T` information only (withdrawn statistic). Each estimate is followed by `_lo`,`_hi` = 95 % interval
+
+```csv
+arm,K,n_two_qubit,n_phasedx,p_ref,f0_prime,f_hit,f_hit_lo,f_hit_hi,b,b_lo,b_hi,f_ideal,f_ideal_lo,f_ideal_hi,r,r_lo,r_hi,min_feff_over_fideal_S99,min_lo,min_hi,rho_T
+B0_ref25_k1,720,2158,3091,0.915021,0.172087,0.238733,0.224073,0.254904,0.0569444,0.0416667,0.075,0.219232,0.206583,0.23418,1.08895,1.04969,1.13613,1.08895,1.04829,1.13314,3.07375
+B1_ref57_k1,240,2158,2989,0.912199,0.172365,0.257455,0.228477,0.290026,0.0875,0.0541667,0.125,0.244783,0.217195,0.275819,1.05177,0.987028,1.126,1.04031,0.980229,1.10469,3.85601
+B0_ref25_k4,240,2158,3063,0.236292,0.172188,0.245912,0.218692,0.276283,0.0583333,0.0291667,0.0916667,0.220477,0.196333,0.248071,1.11536,1.03564,1.21968,1.09967,1.01952,1.18691,1.6194
+B0_ref25_k1__xx,120,2158,3091,0.915021,0.172087,0.179345,0.172291,0.193086,0,0,0,0.172087,0.172087,0.172087,1.04218,1.00119,1.12202,1.04101,1.00077,1.11958,2.77239
+"pooled k=1 (B0_ref25_k1 + B1_ref57_k1, 800+800 shots)",,,,,,0.24808,0.23082,0.266234,,,,0.232007,0.216487,0.249826,1.06927,1.02859,1.11514,,,,
+"A5 2x2 star (T3 circuit, K=2000)",2000,588,,0.883276,1.64125e-06,0.0188678,0.0139073,0.0240857,0.028,0.021,0.0350125,0.0280016,0.0210016,0.0350141,0.673813,0.538634,0.834637,,,,
+"A5 2x2 echo (T3 circuit, K=2000)",2000,588,,0.883276,0.0915231,0.288124,0.272764,0.301992,0.251,0.2305,0.269,0.319551,0.300927,0.335903,0.901652,0.884234,0.918329,,,,
+```
+
+#### (i) Cumulative QPU seconds over time (IBM open plan, 600 s allowance)
+
+**Source:** `data/hardware/*/session.json -> jobs[*].{submitted,job_id,usage_s,n_pubs,group_shots}`, `backend`; the final cumulative 102 s equals the account counter `usage_consumed_seconds` 102 (`data/hardware/H0_2x2_ibm_kingston/account_check_after_20261002T2157Z.json`). `remaining_of_600_s` is my subtraction 600 - cumulative **(sum of sourced numbers)**; the account's own remaining value after the last job is 498.
+
+**Columns and units:** `submitted_utc` job submission time (UTC); `usage_s` billed QPU seconds of the job; `cumulative_s` running total; `remaining_of_600_s` allowance left; `n_pubs` circuits (pubs) in the job; `shots_per_pub`
+
+No QPU job has been run after 2026-10-02 21:06 UTC as far as the repository records show; the K1 pilot (cap 300 s) has no job id yet.
+
+```csv
+submitted_utc,device,job_id,what,usage_s,cumulative_s,remaining_of_600_s,n_pubs,shots_per_pub
+2026-09-22 17:48:32,ibm_fez,dapbusac505c73chv0og,canary,2,2,598,3,267
+2026-09-22 20:42:56,ibm_fez,dapegkcak42c73cierv0,diag J1 (both options off),5,7,593,5,2000
+2026-09-22 20:43:55,ibm_fez,dapeh3318flc739m51e0,diag J2 (XY4),4,11,589,3,2000
+2026-09-22 20:44:13,ibm_fez,dapeh7ac505c73ci2o60,diag J3 (twirling),3,14,586,1,2000
+2026-09-22 20:44:27,ibm_fez,dapehb4ak42c73cietig,diag J4 (XY4 + twirling),3,17,583,1,2000
+2026-10-02 18:12:35,ibm_kingston,davv8504oijs73e88fvg,H0_kpilot,12,29,571,8,4000
+2026-10-02 20:11:42,ibm_kingston,db01005j371s73dnmbd0,H0_ddtest,20,49,551,10,6000
+2026-10-02 21:05:55,ibm_kingston,db01pddj371s73dnnqm0,H0_2x2,3,52,548,14,267
+2026-10-02 21:05:57,ibm_kingston,db01pdtj371s73dnnqmg,H0_2x2,3,55,545,7,267
+2026-10-02 21:05:59,ibm_kingston,db01pe04oijs73e8cl30,H0_2x2,4,59,541,2,4000
+2026-10-02 21:06:00,ibm_kingston,db01pelj371s73dnnqo0,H0_2x2,22,81,519,5,13100
+2026-10-02 21:06:02,ibm_kingston,db01peql7guc73cfndc0,H0_2x2,21,102,498,2,31400
+```
+
+#### (j) 2x2 / 2x3 / 2x4 gate counts and device requirements
+
+**Source:** `validation/S2.json -> data.{2x2,2x3}.{per_term_cz,per_term_cz_routed,coarse_step}`, `validation/S2_2x4.json -> data.term_cost` and `data.schedule.schedule_*.rows` (the `B0_ref0_k1` rows; Heron durations from `data/hardware/H0_diag_prep/calibration_20260922T1400Z.json`).
+
+**Columns and units:** `value` is a count of two-qubit gates (CZ, or IR CX where stated), a transpiled depth, a duration in microseconds, a dimensionless utilisation, or a ratio T2 / t_2q (the coherence time over the two-qubit gate time the device must have for f = 0.1 with T1 -> infinity). `quantity` names which. 
+
+Note: the `per_term_ir_cx_before_transpile_*` rows are IR CX counts of each term circuit before the transpiler merges gates (so they differ from the transpiled per-term CZ rows of the 2x2 and 2x3 lattices); the same per-term table with all columns is in `reports/S2_2x4_compilation_and_device_requirement.md` (hop0 278 CX ... plaq1 66 468 CX; sum of the 13 hop/plaquette terms 71 520 exact and 16 546 fixed-angle).
+
+```csv
+lattice,kind,item,value,source
+2x2,per_term_cz_all_to_all,diag,8,validation/S2.json data.2x2.per_term_cz
+2x2,per_term_cz_all_to_all,hop0,60,validation/S2.json data.2x2.per_term_cz
+2x2,per_term_cz_all_to_all,hop1,48,validation/S2.json data.2x2.per_term_cz
+2x2,per_term_cz_all_to_all,hop2,66,validation/S2.json data.2x2.per_term_cz
+2x2,per_term_cz_all_to_all,hop3,44,validation/S2.json data.2x2.per_term_cz
+2x2,per_term_cz_all_to_all,plaq0,30,validation/S2.json data.2x2.per_term_cz
+2x2,per_term_cz_routed,diag,8,validation/S2.json data.2x2.per_term_cz_routed
+2x2,per_term_cz_routed,hop0,122,validation/S2.json data.2x2.per_term_cz_routed
+2x2,per_term_cz_routed,hop1,92,validation/S2.json data.2x2.per_term_cz_routed
+2x2,per_term_cz_routed,hop2,149,validation/S2.json data.2x2.per_term_cz_routed
+2x2,per_term_cz_routed,hop3,72,validation/S2.json data.2x2.per_term_cz_routed
+2x2,per_term_cz_routed,plaq0,73,validation/S2.json data.2x2.per_term_cz_routed
+2x2,coarse_step_all_to_all_cz,total,256,validation/S2.json data.2x2.coarse_step.all_to_all.cz
+2x2,coarse_step_all_to_all_depth,total,736,"validation/S2.json (transpiled depth, basis rz/sx/x/cz)"
+2x2,coarse_step_routed_cz,total,618,validation/S2.json data.2x2.coarse_step.routed.cz
+2x2,coarse_step_routed_depth,total,1294,"validation/S2.json (transpiled depth, basis rz/sx/x/cz)"
+2x3,per_term_cz_all_to_all,diag,20,validation/S2.json data.2x3.per_term_cz
+2x3,per_term_cz_all_to_all,hop0,194,validation/S2.json data.2x3.per_term_cz
+2x3,per_term_cz_all_to_all,hop1,48,validation/S2.json data.2x3.per_term_cz
+2x3,per_term_cz_all_to_all,hop2,182,validation/S2.json data.2x3.per_term_cz
+2x3,per_term_cz_all_to_all,hop3,184,validation/S2.json data.2x3.per_term_cz
+2x3,per_term_cz_all_to_all,hop4,358,validation/S2.json data.2x3.per_term_cz
+2x3,per_term_cz_all_to_all,hop5,156,validation/S2.json data.2x3.per_term_cz
+2x3,per_term_cz_all_to_all,hop6,44,validation/S2.json data.2x3.per_term_cz
+2x3,per_term_cz_all_to_all,plaq0,214,validation/S2.json data.2x3.per_term_cz
+2x3,per_term_cz_all_to_all,plaq1,764,validation/S2.json data.2x3.per_term_cz
+2x3,per_term_cz_routed,diag,20,validation/S2.json data.2x3.per_term_cz_routed
+2x3,per_term_cz_routed,hop0,433,validation/S2.json data.2x3.per_term_cz_routed
+2x3,per_term_cz_routed,hop1,82,validation/S2.json data.2x3.per_term_cz_routed
+2x3,per_term_cz_routed,hop2,415,validation/S2.json data.2x3.per_term_cz_routed
+2x3,per_term_cz_routed,hop3,396,validation/S2.json data.2x3.per_term_cz_routed
+2x3,per_term_cz_routed,hop4,846,validation/S2.json data.2x3.per_term_cz_routed
+2x3,per_term_cz_routed,hop5,275,validation/S2.json data.2x3.per_term_cz_routed
+2x3,per_term_cz_routed,hop6,72,validation/S2.json data.2x3.per_term_cz_routed
+2x3,per_term_cz_routed,plaq0,497,validation/S2.json data.2x3.per_term_cz_routed
+2x3,per_term_cz_routed,plaq1,1698,validation/S2.json data.2x3.per_term_cz_routed
+2x3,coarse_step_all_to_all_cz,total,2164,validation/S2.json data.2x3.coarse_step.all_to_all.cz
+2x3,coarse_step_all_to_all_depth,total,7325,"validation/S2.json (transpiled depth, basis rz/sx/x/cz)"
+2x3,coarse_step_routed_cz,total,5477,validation/S2.json data.2x3.coarse_step.routed.cz
+2x3,coarse_step_routed_depth,total,11540,"validation/S2.json (transpiled depth, basis rz/sx/x/cz)"
+2x3,per_term_ir_cx_before_transpile_exact,hop0,278,validation/S2_2x4.json data.term_cost.2x3|exact
+2x3,per_term_ir_cx_before_transpile_exact,hop1,54,validation/S2_2x4.json data.term_cost.2x3|exact
+2x3,per_term_ir_cx_before_transpile_exact,hop2,258,validation/S2_2x4.json data.term_cost.2x3|exact
+2x3,per_term_ir_cx_before_transpile_exact,hop3,260,validation/S2_2x4.json data.term_cost.2x3|exact
+2x3,per_term_ir_cx_before_transpile_exact,hop4,390,validation/S2_2x4.json data.term_cost.2x3|exact
+2x3,per_term_ir_cx_before_transpile_exact,hop5,244,validation/S2_2x4.json data.term_cost.2x3|exact
+2x3,per_term_ir_cx_before_transpile_exact,hop6,54,validation/S2_2x4.json data.term_cost.2x3|exact
+2x3,per_term_ir_cx_before_transpile_exact,plaq0,228,validation/S2_2x4.json data.term_cost.2x3|exact
+2x3,per_term_ir_cx_before_transpile_exact,plaq1,806,validation/S2_2x4.json data.term_cost.2x3|exact
+2x4,per_term_ir_cx_before_transpile_exact,hop0,278,validation/S2_2x4.json data.term_cost.2x4|exact
+2x4,per_term_ir_cx_before_transpile_exact,hop1,54,validation/S2_2x4.json data.term_cost.2x4|exact
+2x4,per_term_ir_cx_before_transpile_exact,hop2,258,validation/S2_2x4.json data.term_cost.2x4|exact
+2x4,per_term_ir_cx_before_transpile_exact,hop3,1548,validation/S2_2x4.json data.term_cost.2x4|exact
+2x4,per_term_ir_cx_before_transpile_exact,hop4,390,validation/S2_2x4.json data.term_cost.2x4|exact
+2x4,per_term_ir_cx_before_transpile_exact,hop5,542,validation/S2_2x4.json data.term_cost.2x4|exact
+2x4,per_term_ir_cx_before_transpile_exact,hop6,260,validation/S2_2x4.json data.term_cost.2x4|exact
+2x4,per_term_ir_cx_before_transpile_exact,hop7,390,validation/S2_2x4.json data.term_cost.2x4|exact
+2x4,per_term_ir_cx_before_transpile_exact,hop8,244,validation/S2_2x4.json data.term_cost.2x4|exact
+2x4,per_term_ir_cx_before_transpile_exact,hop9,54,validation/S2_2x4.json data.term_cost.2x4|exact
+2x4,per_term_ir_cx_before_transpile_exact,plaq0,228,validation/S2_2x4.json data.term_cost.2x4|exact
+2x4,per_term_ir_cx_before_transpile_exact,plaq2,806,validation/S2_2x4.json data.term_cost.2x4|exact
+2x4,per_term_ir_cx_before_transpile_exact,plaq1,66468,validation/S2_2x4.json data.term_cost.2x4|exact
+2x4,per_term_ir_cx_before_transpile_fixed,hop0,272,validation/S2_2x4.json data.term_cost.2x4|fixed
+2x4,per_term_ir_cx_before_transpile_fixed,hop1,52,validation/S2_2x4.json data.term_cost.2x4|fixed
+2x4,per_term_ir_cx_before_transpile_fixed,hop2,280,validation/S2_2x4.json data.term_cost.2x4|fixed
+2x4,per_term_ir_cx_before_transpile_fixed,hop3,536,validation/S2_2x4.json data.term_cost.2x4|fixed
+2x4,per_term_ir_cx_before_transpile_fixed,hop4,272,validation/S2_2x4.json data.term_cost.2x4|fixed
+2x4,per_term_ir_cx_before_transpile_fixed,hop5,536,validation/S2_2x4.json data.term_cost.2x4|fixed
+2x4,per_term_ir_cx_before_transpile_fixed,hop6,280,validation/S2_2x4.json data.term_cost.2x4|fixed
+2x4,per_term_ir_cx_before_transpile_fixed,hop7,272,validation/S2_2x4.json data.term_cost.2x4|fixed
+2x4,per_term_ir_cx_before_transpile_fixed,hop8,272,validation/S2_2x4.json data.term_cost.2x4|fixed
+2x4,per_term_ir_cx_before_transpile_fixed,hop9,52,validation/S2_2x4.json data.term_cost.2x4|fixed
+2x4,per_term_ir_cx_before_transpile_fixed,plaq0,286,validation/S2_2x4.json data.term_cost.2x4|fixed
+2x4,per_term_ir_cx_before_transpile_fixed,plaq1,12952,validation/S2_2x4.json data.term_cost.2x4|fixed
+2x4,per_term_ir_cx_before_transpile_fixed,plaq2,484,validation/S2_2x4.json data.term_cost.2x4|fixed
+2x2,"schedule[exact,all_to_all]",n_2q,256,validation/S2_2x4.json data.schedule.schedule_2_exact
+2x2,"schedule[exact,all_to_all]",cz_depth,202,same
+2x2,"schedule[exact,all_to_all]",duration_us,21.22,"T_s of the ASAP schedule at Heron durations (cz 68 ns, sx/x 24 ns)"
+2x2,"schedule[exact,all_to_all]",qubit_time_utilisation,0.1877,same
+2x2,"schedule[exact,all_to_all]",T2_req_over_t_2q_f0.1_T1inf,625.1,"T2 required / t_2q for f = 0.1, T1 -> infinity"
+2x2,"schedule[exact,all_to_all]",serial_bound_T2_over_t_2q,667.1,closed-form serial bound
+2x2,"schedule[exact,heavy_hex_3]",n_2q,618,validation/S2_2x4.json data.schedule.schedule_2_exact
+2x2,"schedule[exact,heavy_hex_3]",cz_depth,426,same
+2x2,"schedule[exact,heavy_hex_3]",duration_us,41.24,"T_s of the ASAP schedule at Heron durations (cz 68 ns, sx/x 24 ns)"
+2x2,"schedule[exact,heavy_hex_3]",qubit_time_utilisation,0.216,same
+2x2,"schedule[exact,heavy_hex_3]",T2_req_over_t_2q_f0.1_T1inf,1276.8,"T2 required / t_2q for f = 0.1, T1 -> infinity"
+2x2,"schedule[exact,heavy_hex_3]",serial_bound_T2_over_t_2q,1744.6,closed-form serial bound
+2x3,"schedule[exact,all_to_all]",n_2q,2164,validation/S2_2x4.json data.schedule.schedule_3_exact
+2x3,"schedule[exact,all_to_all]",cz_depth,1926,same
+2x3,"schedule[exact,all_to_all]",duration_us,213.84,"T_s of the ASAP schedule at Heron durations (cz 68 ns, sx/x 24 ns)"
+2x3,"schedule[exact,all_to_all]",qubit_time_utilisation,0.0929,same
+2x3,"schedule[exact,all_to_all]",T2_req_over_t_2q_f0.1_T1inf,11999.7,"T2 required / t_2q for f = 0.1, T1 -> infinity"
+2x3,"schedule[exact,all_to_all]",serial_bound_T2_over_t_2q,9398.1,closed-form serial bound
+2x3,"schedule[exact,heavy_hex_5]",n_2q,5477,validation/S2_2x4.json data.schedule.schedule_3_exact
+2x3,"schedule[exact,heavy_hex_5]",cz_depth,3692,same
+2x3,"schedule[exact,heavy_hex_5]",duration_us,363.78,"T_s of the ASAP schedule at Heron durations (cz 68 ns, sx/x 24 ns)"
+2x3,"schedule[exact,heavy_hex_5]",qubit_time_utilisation,0.1091,same
+2x3,"schedule[exact,heavy_hex_5]",T2_req_over_t_2q_f0.1_T1inf,21526.7,"T2 required / t_2q for f = 0.1, T1 -> infinity"
+2x3,"schedule[exact,heavy_hex_5]",serial_bound_T2_over_t_2q,30922.2,closed-form serial bound
+2x3,"schedule[exact,fakefez]",n_2q,5737,validation/S2_2x4.json data.schedule.schedule_3_exact
+2x3,"schedule[exact,fakefez]",cz_depth,3749,same
+2x3,"schedule[exact,fakefez]",duration_us,364.39,"T_s of the ASAP schedule at Heron durations (cz 68 ns, sx/x 24 ns)"
+2x3,"schedule[exact,fakefez]",qubit_time_utilisation,0.1177,same
+2x3,"schedule[exact,fakefez]",T2_req_over_t_2q_f0.1_T1inf,22500,"T2 required / t_2q for f = 0.1, T1 -> infinity"
+2x3,"schedule[exact,fakefez]",serial_bound_T2_over_t_2q,31144.3,closed-form serial bound
+2x4,"schedule[exact,all_to_all]",n_2q,69688,validation/S2_2x4.json data.schedule.schedule_4_exact
+2x4,"schedule[exact,all_to_all]",cz_depth,68653,same
+2x4,"schedule[exact,all_to_all]",duration_us,7920.58,"T_s of the ASAP schedule at Heron durations (cz 68 ns, sx/x 24 ns)"
+2x4,"schedule[exact,all_to_all]",qubit_time_utilisation,0.0577,same
+2x4,"schedule[exact,all_to_all]",T2_req_over_t_2q_f0.1_T1inf,638742,"T2 required / t_2q for f = 0.1, T1 -> infinity"
+2x4,"schedule[exact,all_to_all]",serial_bound_T2_over_t_2q,423712,closed-form serial bound
+2x4,"schedule[exact,heavy_hex_5]",n_2q,145958,validation/S2_2x4.json data.schedule.schedule_4_exact
+2x4,"schedule[exact,heavy_hex_5]",cz_depth,108091,same
+2x4,"schedule[exact,heavy_hex_5]",duration_us,11033.6,"T_s of the ASAP schedule at Heron durations (cz 68 ns, sx/x 24 ns)"
+2x4,"schedule[exact,heavy_hex_5]",qubit_time_utilisation,0.0865,same
+2x4,"schedule[exact,heavy_hex_5]",T2_req_over_t_2q_f0.1_T1inf,873536,"T2 required / t_2q for f = 0.1, T1 -> infinity"
+2x4,"schedule[exact,heavy_hex_5]",serial_bound_T2_over_t_2q,919137,closed-form serial bound
+2x4,"schedule[exact,heavy_hex_7]",n_2q,148850,validation/S2_2x4.json data.schedule.schedule_4_exact
+2x4,"schedule[exact,heavy_hex_7]",cz_depth,108634,same
+2x4,"schedule[exact,heavy_hex_7]",duration_us,11013,"T_s of the ASAP schedule at Heron durations (cz 68 ns, sx/x 24 ns)"
+2x4,"schedule[exact,heavy_hex_7]",qubit_time_utilisation,0.0912,same
+2x4,"schedule[exact,heavy_hex_7]",T2_req_over_t_2q_f0.1_T1inf,861392,"T2 required / t_2q for f = 0.1, T1 -> infinity"
+2x4,"schedule[exact,heavy_hex_7]",serial_bound_T2_over_t_2q,905026,closed-form serial bound
+2x4,"schedule[exact,fakefez]",n_2q,148726,validation/S2_2x4.json data.schedule.schedule_4_exact
+2x4,"schedule[exact,fakefez]",cz_depth,108053,same
+2x4,"schedule[exact,fakefez]",duration_us,10998.2,"T_s of the ASAP schedule at Heron durations (cz 68 ns, sx/x 24 ns)"
+2x4,"schedule[exact,fakefez]",qubit_time_utilisation,0.0916,same
+2x4,"schedule[exact,fakefez]",T2_req_over_t_2q_f0.1_T1inf,858529,"T2 required / t_2q for f = 0.1, T1 -> infinity"
+2x4,"schedule[exact,fakefez]",serial_bound_T2_over_t_2q,904272,closed-form serial bound
+2x4,"schedule[fixed,all_to_all]",n_2q,14048,validation/S2_2x4.json data.schedule.schedule_4_fixed
+2x4,"schedule[fixed,all_to_all]",cz_depth,13656,same
+2x4,"schedule[fixed,all_to_all]",duration_us,1564.64,"T_s of the ASAP schedule at Heron durations (cz 68 ns, sx/x 24 ns)"
+2x4,"schedule[fixed,all_to_all]",qubit_time_utilisation,0.0587,same
+2x4,"schedule[fixed,all_to_all]",T2_req_over_t_2q_f0.1_T1inf,126067,"T2 required / t_2q for f = 0.1, T1 -> infinity"
+2x4,"schedule[fixed,all_to_all]",serial_bound_T2_over_t_2q,85413.6,closed-form serial bound
+2x4,"schedule[fixed,heavy_hex_5]",n_2q,30208,validation/S2_2x4.json data.schedule.schedule_4_fixed
+2x4,"schedule[fixed,heavy_hex_5]",cz_depth,21216,same
+2x4,"schedule[fixed,heavy_hex_5]",duration_us,2109.22,"T_s of the ASAP schedule at Heron durations (cz 68 ns, sx/x 24 ns)"
+2x4,"schedule[fixed,heavy_hex_5]",qubit_time_utilisation,0.0894,same
+2x4,"schedule[fixed,heavy_hex_5]",T2_req_over_t_2q_f0.1_T1inf,163723,"T2 required / t_2q for f = 0.1, T1 -> infinity"
+2x4,"schedule[fixed,heavy_hex_5]",serial_bound_T2_over_t_2q,196788,closed-form serial bound
+2x4,"schedule[fixed,heavy_hex_7]",n_2q,28925,validation/S2_2x4.json data.schedule.schedule_4_fixed
+2x4,"schedule[fixed,heavy_hex_7]",cz_depth,19649,same
+2x4,"schedule[fixed,heavy_hex_7]",duration_us,2032.7,"T_s of the ASAP schedule at Heron durations (cz 68 ns, sx/x 24 ns)"
+2x4,"schedule[fixed,heavy_hex_7]",qubit_time_utilisation,0.0891,same
+2x4,"schedule[fixed,heavy_hex_7]",T2_req_over_t_2q_f0.1_T1inf,169701,"T2 required / t_2q for f = 0.1, T1 -> infinity"
+2x4,"schedule[fixed,heavy_hex_7]",serial_bound_T2_over_t_2q,188430,closed-form serial bound
+2x4,"schedule[fixed,fakefez]",n_2q,28765,validation/S2_2x4.json data.schedule.schedule_4_fixed
+2x4,"schedule[fixed,fakefez]",cz_depth,19484,same
+2x4,"schedule[fixed,fakefez]",duration_us,1998.49,"T_s of the ASAP schedule at Heron durations (cz 68 ns, sx/x 24 ns)"
+2x4,"schedule[fixed,fakefez]",qubit_time_utilisation,0.0871,same
+2x4,"schedule[fixed,fakefez]",T2_req_over_t_2q_f0.1_T1inf,172796,"T2 required / t_2q for f = 0.1, T1 -> infinity"
+2x4,"schedule[fixed,fakefez]",serial_bound_T2_over_t_2q,193634,closed-form serial bound
+```
+
+#### (k) Exact reference energies per lattice and sector
+
+**Source:** `data/references.json -> references` (the output of gate E3; `validation/E3.json` PASS 85/85).
+
+**Columns and units:** energies in lattice units (m = 3 g^2/16); `B` baryon number = twoB/2; `W` spectral width E_max - E_min of the sector block; `emax` largest eigenvalue; `dt` = pi/W the Krylov time step; `support99`, `support999` numbers of configurations carrying 99 % / 99.9 % of the ground-state weight; `PR` participation ratio. For the 2x4 sectors only the lowest levels from Lanczos are tabulated; for static-charge sectors only 3 levels are stored
+
+```csv
+lattice,g2,m,twoB,B,dim,E0,E1,E2,W,Emax,dt,support99,support999,PR
+2x2,4,0.75,0,0,38,-3.64077,-0.962245,-0.850567,12.8222,9.18144,0.245012,9,16,1.47438
+2x2,4,0.75,2,1,20,-1.86159,-1.81975,0.208229,9.46425,7.60266,0.331943,8,13,2.59238
+2x3,4,0.75,0,0,677,-5.6026,-2.8886,-2.86518,20.0813,14.4787,0.156443,31,86,1.91384
+2x3,4,0.75,2,1,426,-3.82608,-3.80173,-3.66866,16.8023,12.9763,0.186973,42,95,3.56092
+2x3,4,0.75,4,2,95,-2.01182,-1.86224,-1.84389,13.4486,11.4368,0.2336,15,22,1.50427
+2x3,2,0.375,0,0,677,-4.22161,-2.72359,-2.70321,12.2336,8.01204,0.256799,137,326,5.93582
+2x3,2,0.375,2,1,426,-3.08661,-2.97297,-2.79396,10.2927,7.20607,0.305226,135,240,11.9219
+2x3,1,0.1875,0,0,677,-4.39179,-3.42014,-3.25049,10.3818,5.98998,0.302607,396,549,33.8312
+2x4,4,0.75,0,0,12843,-7.56521,-4.8436,-4.83747,27.3901,19.8249,0.114698,76,305,2.4883
+2x4,4,0.75,2,1,8934,-5.78016,-5.77413,-5.65409,24.1081,18.3279,0.130313,127,470,4.78485
+2x3+static r=1,4,0.75,0,0,1089,-4.21542,-3.51247,-1.87712,17.7109,13.4954,0.177382,48,133,3.19288
+2x3+static r=2,4,0.75,0,0,978,-3.01275,-2.65282,-2.65198,15.7007,12.6879,0.200093,69,174,6.1483
+2x3+static r=1,2,0.375,0,0,1089,-3.43963,-2.74384,-2.26699,11.2319,7.79226,0.279703,226,512,8.37376
+2x3+static r=2,2,0.375,0,0,978,-2.84759,-2.50289,-2.49183,10.5054,7.65779,0.299046,268,530,14.8782
+```
+
+#### (k2) Derived quantities and the j_max = 1 truncation shift
+
+**Source:** `data/references.json -> derived`, `-> truncation_2x2`.
+
+**Columns and units:** `quantity` D0 meson-like gap, MB baryon mass, binding = E0(B=2) - E0(B=0) - 2 MB, V1, V2 static potentials at separations 1 and 2 (lattice units); for the truncation rows: E0_half (jmax 1/2), E0_one (jmax 1), shift = E0_one - E0_half, dim_half, dim_one (state counts in the B=0 sector)
+
+```csv
+key,quantity,value
+2x3|g2=4.0,D0,2.714
+2x3|g2=4.0,MB,1.77652
+2x3|g2=4.0,binding,0.0377436
+2x3|g2=4.0,V1,1.38718
+2x3|g2=4.0,V2,2.58985
+2x3|g2=2.0,D0,1.49802
+2x3|g2=2.0,MB,1.135
+2x3|g2=2.0,binding,0.174795
+2x3|g2=2.0,V1,0.781983
+2x3|g2=2.0,V2,1.37403
+2x4|g2=4.0,D0,2.72162
+2x4|g2=4.0,MB,1.78505
+2x4|g2=2.0,D0,1.50282
+2x4|g2=2.0,MB,1.15598
+2x2 truncation|g2=4.0,E0_half,-3.64077
+2x2 truncation|g2=4.0,E0_one,-3.64269
+2x2 truncation|g2=4.0,shift,-0.00192045
+2x2 truncation|g2=4.0,dim_half,38
+2x2 truncation|g2=4.0,dim_one,74
+2x2 truncation|g2=2.0,E0_half,-2.67121
+2x2 truncation|g2=2.0,E0_one,-2.70967
+2x2 truncation|g2=2.0,shift,-0.0384592
+2x2 truncation|g2=2.0,dim_half,38
+2x2 truncation|g2=2.0,dim_one,74
+2x2 truncation|g2=1.0,E0_half,-2.71752
+2x2 truncation|g2=1.0,E0_one,-3.05857
+2x2 truncation|g2=1.0,shift,-0.341051
+2x2 truncation|g2=1.0,dim_half,38
+2x2 truncation|g2=1.0,dim_one,74
+```
+
+#### (l) The 51 plan rows and their status (2x2 hardware campaign)
+
+**Source:** `reports/H0_2x2_full_hardware_report_20261002.md` section 2 (planner scoring); full text in Section 10.1 of this file.
+
+**Columns and units:** `row` the plan-row id used by the report; `group` manual (33 rows) or amendment/decision (18 rows); `status` F fulfilled, FD fulfilled with deviation, ND not done. Tally F 31, FD 12, ND 8
+
+```csv
+row,group,status
+0,manual,F
+1.1,manual,F
+1.2,manual,F
+1.3,manual,F
+1.4,manual,F
+1.5,manual,F
+2.1-2.3,manual,F
+2.4,manual,F
+2.5,manual,F
+3,manual,F
+4.1,manual,F
+4.2,manual,F
+4.3,manual,FD
+4.4,manual,FD
+5.1,manual,F
+5.2,manual,F
+5.3,manual,F
+5.4,manual,F
+6.1-6.2,manual,FD
+6.3,manual,ND
+6.4,manual,ND
+7.1-7.2,manual,FD
+7.3,manual,ND
+7.5,manual,ND
+8.1-8.2,manual,F
+8.3,manual,FD
+9.1,manual,FD
+9.2,manual,ND
+9.3,manual,ND
+10,manual,FD
+10 (error budget),manual,FD
+10 (reporting),manual,FD
+11,manual,FD
+A1,amendment/decision,F
+A2,amendment/decision,FD
+A3,amendment/decision,F
+A4,amendment/decision,ND
+A5,amendment/decision,ND
+M4.4,amendment/decision,F
+D8',amendment/decision,F
+D1',amendment/decision,F
+D3'-f,amendment/decision,F
+D3''-H0,amendment/decision,FD
+D5',amendment/decision,F
+C2',amendment/decision,F
+C3',amendment/decision,F
+H0P-Y',amendment/decision,F
+D9,amendment/decision,F
+prereg,amendment/decision,F
+dry runs,amendment/decision,F
+owner 2026-10-02,amendment/decision,F
+```
+
+#### (m) The 2x2 shot plan actually flown (rule D3' at the adopted f)
+
+**Source:** `validation/H0_2x2.json -> data.shot_plan`.
+
+**Columns and units:** `N4` shots per k=4 circuit; the k=1,2,3 circuits ran at the 267-shot floor; `total_coarse_shots` over all 28 coarse circuits
+
+```csv
+quantity,value
+N4_B=0,13100
+N4_B=1,31400
+total_coarse_shots,133907
+```
+
+#### (n) S2D_levers: Aer clean fraction versus the dephasing ratio r = T2*/T2echo, per lever row (2x2 circuit on the ibm_kingston patch)
+
+**Source:** `validation/S2D_levers.json -> data.rows.<row>.{manifest,compile}` and `data.aer.<row>.<r>` (scheduled Aer at the record of 2026-10-01 with each qubit's dephasing time replaced by r x its echo T2; 4 000 shots, reference-string and mixture estimators). `data.verdict` gives r_crit(0.1) = 0.3302 (Aer interpolated; 0.7261 analytic bound) over all rows and 0.3285 for the signed family; the pilot measured an equivalent r of about 0.172 (`validation/H0_kpilot.json`).
+
+**Columns and units:** `row` lever row (L0_asis = the canary as is, ASAP or ALAP scheduled; L1_seed = re-seeded transpile; L2_order = reordered terms; L3_rx = fractional rx; L4_all = all levers; L1_seed_alap = the signed term family with ALAP, the row the pilot and the full run used); `n_cz`,`n_rzz` two-qubit gates; `duration_us` ASAP/ALAP critical path T_s in microseconds; `twoq_layers` two-qubit layers; `r` dephasing ratio; `f_ref`, `f_ref_lo68`, `f_ref_hi68` reference-string clean fraction with its 68 % interval; `f_mix` mixture estimator; `shots` Aer shots
+
+```csv
+row,schedule,fractional,n_cz,n_rzz,duration_us,twoq_layers,r,f_ref,f_ref_lo68,f_ref_hi68,f_mix,shots
+L0_asis_asap,asap,False,663,0,47.964,455,1.0,0.11771,0.11133,0.124445,0.121716,4000
+L0_asis_asap,asap,False,663,0,47.964,455,0.5,0.0538542,0.0495338,0.0585336,0.0563266,4000
+L0_asis_asap,asap,False,663,0,47.964,455,0.25,0.0117438,0.00971151,0.0141505,0.0125648,4000
+L0_asis_asap,asap,False,663,0,47.964,455,0.174,0.00345976,0.00265646,0.0044541,0.00357271,8000
+L0_asis_alap,alap,False,663,0,47.964,455,1.0,0.165688,0.158121,0.173609,0.164426,4000
+L0_asis_alap,alap,False,663,0,47.964,455,0.5,0.114258,0.107972,0.120899,0.110984,4000
+L0_asis_alap,alap,False,663,0,47.964,455,0.25,0.0345248,0.0310616,0.0383504,0.0323474,4000
+L0_asis_alap,alap,False,663,0,47.964,455,0.174,0.0151955,0.0128886,0.0178733,0.0136954,4000
+L1_seed,asap,False,588,0,44.24,412,1.0,0.146014,0.138909,0.153472,0.14989,4000
+L1_seed,asap,False,588,0,44.24,412,0.5,0.0776707,0.0724855,0.0832127,0.0814008,4000
+L1_seed,asap,False,588,0,44.24,412,0.25,0.0176116,0.0151306,0.0204619,0.0178837,4000
+L1_seed,asap,False,588,0,44.24,412,0.174,0.00829211,0.00657786,0.0103861,0.00814562,4000
+L2_order,asap,False,584,0,37.272,350,1.0,0.18985,0.18175,0.198303,0.190489,4000
+L2_order,asap,False,584,0,37.272,350,0.5,0.124268,0.117713,0.131178,0.127404,4000
+L2_order,asap,False,584,0,37.272,350,0.25,0.0462605,0.0422549,0.0506262,0.0463095,4000
+L2_order,asap,False,584,0,37.272,350,0.174,0.0113986,0.00939587,0.0137762,0.0112632,4000
+L3_rx,asap,True,356,226,34.068,349,1.0,0.216428,0.20778,0.225428,0.213106,4000
+L3_rx,asap,True,356,226,34.068,349,0.5,0.158095,0.150702,0.16584,0.155492,4000
+L3_rx,asap,True,356,226,34.068,349,0.25,0.0586865,0.0541772,0.0635543,0.0579117,4000
+L3_rx,asap,True,356,226,34.068,349,0.174,0.0238246,0.0209436,0.0270715,0.0243143,4000
+L4_all,alap,True,356,226,34.068,349,1.0,0.243696,0.23452,0.253224,0.242642,4000
+L4_all,alap,True,356,226,34.068,349,0.5,0.180531,0.172632,0.188782,0.178805,4000
+L4_all,alap,True,356,226,34.068,349,0.25,0.0683512,0.063486,0.0735739,0.0677443,4000
+L4_all,alap,True,356,226,34.068,349,0.174,0.0290021,0.0258261,0.0325422,0.0278078,4000
+L1_seed_alap,alap,False,588,0,44.24,412,1.0,0.216083,0.207442,0.225076,0.216958,4000
+L1_seed_alap,alap,False,588,0,44.24,412,0.5,0.166034,0.158458,0.173962,0.163942,4000
+L1_seed_alap,alap,False,588,0,44.24,412,0.25,0.0735287,0.0684832,0.0789313,0.0725077,4000
+L1_seed_alap,alap,False,588,0,44.24,412,0.174,0.0334893,0.0300781,0.0372632,0.0311589,4000
+```
+
+#### (n2) Kingston pilot: the day's Aer prediction at r = 1 (echo T2) and r = 0.174 against the measurement
+
+**Source:** `validation/H0_kpilot.json -> data.aer_at.<circuit>` (`r=1`, `r=0.174`) and `data.decision.f_pool`.
+
+**Columns and units:** dimensionless clean fractions per shot; the measured pooled value 0.0413 matches the r = 0.174 end (about 0.041-0.046), not the echo end (about 0.21-0.24)
+
+```csv
+circuit,aer_f_at_r_1,aer_f_at_r_0.174
+B0_ref06_k1,0.211397,0.0413219
+B1_ref07_k1,0.226755,0.0457617
+B0_ref06_k4,0.237881,0.0554602
+"MEASURED pooled (kingston, 2026-10-02)",0.041293,
+```
+
+
+### Suggested plots
+
+| # | plot | block and columns | how |
+|---|---|---|---|
+| 1 | **Timeline of gate verdicts** | (a): `date`, `gate`, `status` | scatter or strip chart, x = date, y = gate name (sorted by first date), colour = PASS / FAIL, marker size = `criteria_total`; annotate FAILs with `criteria_passed/criteria_total` |
+| 2 | **Clean fraction of every hardware measurement (log y)** | (b): `run`, `f`, `lo`, `hi`, `statistic` | error bars on a log axis, x = run in time order, symbol by `statistic`; put the gate-only prediction 0.2195 (canary) and the signed bar 0.1 (and 0.05) as horizontal lines; shows the fall from 0.22 (model) to 6.65e-4 (fez measured) and the rise to 0.127 (kingston with XY4) |
+| 3 | **DD A/B test** | (c): `cell`, `f`, `f_lo95`, `f_hi95`, `R`, `null_ratio` | bar chart of `f` with error bars; second panel `R` with its interval against the pulse-cost null (`null_ratio`) and the adoption threshold R >= 1.25; T1 is the collapsed cell |
+| 4 | **Energy error and certificate for the 2x2 run** | (d): `E_R`, `E0_exact`, `weinstein_lo/hi`, `kato_temple_lo/hi`; (d2) random-basis `E_R_p2.5/p97.5/mean` | for each sector draw the exact E0 as a line, the B_sig E_R as a point with the Weinstein and Kato-Temple intervals as nested bars, and the random-equal-size 2.5-97.5 % band; also plot `abs_error` (log y) for B_sig vs B_all to show that B_all is exact by construction |
+| 5 | **Garbage-only vs hardware** | (d2) `garbage_only` rows | single panel: histogram placeholder (all 100 seeds equal E0), shows that white noise reproduces the B_all energy |
+| 6 | **Per-state counts vs exact weight** | (d3): `n_s`, `mu_s`, `ground_state_weight`, `in_B_sig` | scatter, x = exact weight (log), y = count (log), horizontal line at `mu_s`; colour by `in_B_sig`; shows which states carry signal above the noise expectation |
+| 7 | **Support growth with Krylov order** | (e): `k_max`, `B_all`, `B_sig`, `shots`, `sector_dim` | two panels (one per sector), x = k_max, lines for B_all and B_sig as a fraction of `sector_dim`, secondary axis `shots` (log) to show that growth tracks shots |
+| 8 | **Device landscape for 2x3** | (f): `device`, `f_gate_only_mean`, `f_mem_low/mid/high` | horizontal bar chart on a log x-axis of `f_gate_only_mean`, with a range bar from `f_mem_high` to `f_mem_low` for the Quantinuum rows; vertical lines at 0.1 and 0.05 |
+| 9 | **Cost of a 2x3 campaign vs clean fraction** | (g): rows with `sector` = both: `f`, `hqc`, `shots`, `rule` | log-log lines, x = f, y = hqc, one line per rule; mark D3'-R; secondary y for shots; add the 1/f guide |
+| 10 | **Near-clean correction** | (h): `arm`, `f_hit`, `f_ideal`, `r` with intervals | dot plot of r with error bars per arm and the pooled row, horizontal lines at 1 and r_nc = 1.115; second panel f_hit vs f_ideal vs f0_prime per arm; A5 rows show the opposite sign under idle dephasing |
+| 11 | **QPU budget burn-down** | (i): `submitted_utc`, `cumulative_s`, `remaining_of_600_s` | step plot of cumulative seconds vs time with the 600 s line; label jobs by `what` |
+| 12 | **Idle dephasing prediction vs measurement** | (n): `r`, `f_ref` for `L1_seed_alap`, `L4_all`; (n2) | line plot of Aer f vs r (log y) for each row with 68 % bands; overlay the measured kingston pilot f = 0.0413 and the H0_2x2 f = 0.127 (with XY4) as horizontal lines; mark r_crit = 0.33 |
+| 13 | **Circuit cost by lattice** | (j): rows `coarse_step_*_cz`, `schedule[...]` `duration_us`, `T2_req_over_t_2q_f0.1_T1inf` | grouped bar chart on log y: CZ count (all-to-all vs routed) for 2x2, 2x3, 2x4; second panel the T2/t_2q requirement vs Heron's harmonic mean 1038 (a horizontal line) |
+| 14 | **Per-term gate cost** | (j) rows `per_term_cz_all_to_all`, `per_term_ir_cx_before_transpile_*` | stacked or grouped bars per term for each lattice; shows plaq1 dominating at 2x3 and 2x4 (93 % of the 2x4 IR CX) |
+| 15 | **Exact spectrum** | (k): `lattice`, `twoB`, `E0`, `E1`, `E2`, `support999`, `dt` | bar or table plot of E0 and gaps by sector; scatter of `support999` vs `dim` (log-log) to show sparsity; `PR` vs g2 for the 2x3 B=0 sector |
+| 16 | **Plan fulfilment** | (l): `group`, `status` | stacked bar of F / FD / ND per group (manual 33 rows, amendments 18 rows) and overall (31 / 12 / 8) |
+
+**What a good chart script can add:** a single multi-panel figure "story of the clean fraction" (plots 2, 3, 12 side by side) is the clearest summary of the hardware campaign: model 0.22, measured 6.65e-4 on fez, 0.041 on kingston without DD, 0.113-0.127 with XY4.
 
 ## 12. Glossary
 
-*(section still to be written)*
+Terms in alphabetical order. **(project label)** marks names invented inside this project (mostly by its planner agent), which are not standard terms.
+
+- **$a$ (random acceptance)** *(project symbol)*: the fraction of uniformly random bit strings that the decoder accepts into a sector; $a=\dim/4096$ at 2x2 ($0.00927734375$ for $B=0$, $0.0048828125$ for $B=1$), $0.146\,\%$ at 2x3.
+- **Accepted shot / yield**: a shot whose bit string passes all decoder checks; yield = accepted shots divided by shots. Not the same as a clean shot.
+- **Aer**: Qiskit's classical simulator (`qiskit-aer`); `AerSimulator.from_backend(...)` builds a noise model from a device calibration.
+- **ALAP / ASAP**: "as late as possible" / "as soon as possible" scheduling of gates in a circuit; ALAP writes the idle waits as explicit `delay` instructions and moves qubits' first gates later, so qubits idle in $|0\rangle$ (which does not dephase) rather than in superposition.
+- **Amendment 01**: the project's signed modification of the manual (`proposal/amendment_01_devices_and_budgets.md`): items 1-3 signed 2026-09-23, items 4-5 open.
+- **B (baryon number)**: conserved quark number divided by the number of colours; $B=0$ vacuum sector, $B=1$ one-baryon sector. Project key `twoB` = $2B$. Also, loosely, $B$ or $|B|$ = the support (see **support**).
+- **$B_{\rm all}$, $B_{\rm sig}$** *(project labels, `prompts/24` decision P9)*: $B_{\rm all}$ = every accepted state of the sector; $B_{\rm sig}$ ("signal support") = states whose count exceeds the uniform-noise expectation $\mu_s=Na/\dim$ at the one-sided $3\sigma$ Poisson level.
+- **BFS**: breadth-first neighbour growth; a classical control that adds Hamiltonian neighbours of the current support.
+- **Braket / Azure**: Amazon Braket and Microsoft Azure Quantum, cloud routes to IonQ and Quantinuum devices.
+- **Calibration fingerprint (rule D9)** *(project label)*: a sha256 hash of the calibration-record numbers the prediction reads; submission requires the live hash to equal the preregistered one.
+- **Canary** *(project term)*: the first small QPU job (3 pubs x 267 shots on `ibm_fez`, 2.0 s) whose result decided whether the main run would go ahead.
+- **CF_traj** *(project gate)*: Pauli-trajectory decomposition proving that the reference-hit excess is a near-clean term; also yields $r_{nc}$.
+- **CIPSI**: configuration interaction by perturbation with selection; classical selected-CI method that grows a subspace by scoring Hamiltonian neighbours $|\langle c|H|\psi_R\rangle|^2/(H_{cc}-E_R)$.
+- **Circuit family**: the 28 (2x2) or 44 (2x3) coarse-step circuits = references $\times\ k=1..4$.
+- **Clean fraction $f$**: probability that a shot carries no error at all (manual Step 4.4); see also $f_0$, $f_{\rm hit}$, $f_{\rm ideal}$.
+- **Clifford / T gate / non-Clifford**: gate classes in fault-tolerant quantum computing; non-Clifford gates (such as arbitrary rotations) are expensive to protect by error correction.
+- **Codeword / codec / decoder**: the bit string assigned to a physical basis state; the module that maps states to bit strings; the per-shot checker that rejects non-physical strings.
+- **Coarse step** *(manual term)*: one circuit $\prod_\gamma e^{-iH_\gamma k\Delta t}$ for a reference configuration, order $k=1..4$.
+- **Coarse-step order $k$**: the multiple of $\Delta t$ used in the circuit.
+- **Context-aware DD**: dynamical decoupling in which neighbouring qubits receive mutually orthogonal pulse patterns so that $ZZ$ crosstalk is also cancelled (arXiv:2403.06852).
+- **Corner / interior vertex**: lattice sites with two / three link ends; they use 3 / 4 qubits.
+- **CV0-CV5** *(project criteria, `prompts/30`)*: convergence and weighted-coverage criteria for the 2x3 plan check.
+- **CZ / RZZ / ZZPhase**: two-qubit gates: controlled-Z (IBM native), $e^{-i\varphi Z\otimes Z/2}$ (ion-trap native), and Quantinuum's name for the latter (angle in half-turns).
+- **D3', D3'-R, D3'-S, D3-type union** *(project labels)*: shot-sizing rules. D3': every sector state must get $\lambda^*$ expected clean counts from the $k=4$ circuits at $0.7f$ (used at 2x2, infinite at 2x3); D3'-R ("recall"): $\lambda^*$ on every state of $S_{99}$ plus recall of $S_{999}\ge0.9$ with probability $\ge0.95$ (signed as the minimum 2x3 sizing); D3'-S: $\lambda^*$ on every state of $S_{999}$; D3-type union: the manual's eq. (5) rule scaled by $1/(0.7f)$.
+- **DD (dynamical decoupling)**: sequences of $\pi$-pulses in idle windows that cancel slowly varying phase errors; each pulse costs its own gate error. **XY4**: the four-pulse sequence $X\,Y\,X\,Y$.
+- **Dirac sea**: the vacuum reference configuration (odd sites doubly occupied, even sites empty, no flux).
+- **Dressed-site basis**: the gauge-invariant basis built from local singlets at each vertex (spin-network basis).
+- **Dry run**: running the real submission/analysis path on a simulator before any hardware spend.
+- **$E_0$, $E_R$**: exact ground-state energy; Ritz energy (lowest eigenvalue in the chosen subspace).
+- **echo $T_2$ / free-induction $T_2^*$**: dephasing time measured with one refocusing pulse (the number in IBM calibration records) / of free evolution (what an idle qubit in a circuit feels).
+- **Electric term**: the part of $H$ proportional to $g^2 j(j+1)$.
+- **eHQC**: the Quantinuum credit unit on its emulators.
+- **Executor / planner / reviewer / runner / scribe**: the project's agent roles (Section 4.4).
+- **$f_0, f_0'$**: fault-free fraction (no gate error); $f_0'$ includes correct readout of the reference string.
+- **$f_{\rm hit}$** *(project label)*: reference-string clean fraction: (count of the circuit's most probable ideal string minus accidental hits) / (shots $\times$ ideal probability $\times$ readout factor).
+- **$f_{\rm ideal}$, $\hat f_{\rm ideal}$** *(project labels)*: ideal-sample fraction (shots that sample the ideal output distribution to within TV distance $10^{-3}$: fault-free plus benign-fault shots) and its device estimator $f_{\rm hit}/r_{nc}$.
+- **$f_T$** *(project label, withdrawn)*: tail-class clean fraction; inflated by noise scattering.
+- **Floor theorem** *(project term)*: the effective clean rate of each state is at least $f_{\rm ideal}(1-2\delta/p_c)$.
+- **Gate (project sense)**: a script whose result is recorded in `validation/<GATE>.json`; **validation gate** vs **measurement gate** (Section 4.3).
+- **Garbage-only / random-equal-size baselines** *(project terms)*: control analyses of the 2x2 run: uniformly random bit strings at the same shot counts through the decoder; random subsets of the sector codewords of the same size as $B_{\rm sig}$.
+- **Gauss's law**: the local constraint that colour charge cancels at every site; physical states satisfy $G_a(x)|\psi\rangle=0$.
+- **Gauge theory / SU(2) / staggered quarks / link / plaquette / Kogut-Susskind**: see Section 2.1.
+- **Givens rotation / Gray code / multiplexed rotation**: building blocks of the exact structured circuits (two-level rotations, ordering of control patterns, rotations controlled on many qubits).
+- **Hamiltonian $H$, residual $r_H$**: the energy operator; $r_H=\|(H-E_R)\psi_R\|$.
+- **Heavy-hex, Heron (r2)**: IBM's qubit connectivity pattern and processor generation (156 qubits). **Nighthawk**: IBM's newer square-lattice processor.
+- **HQC**: Hardware Quantum Credit, Quantinuum's billing unit, $\mathrm{HQC}=5+C(N_{1q}+10N_{2q}+5N_m)/5000$ per job ($C$ shots).
+- **Idle window / idle budget $S_{\rm idle}$**: time a qubit waits while others are gated / the resulting relaxation error in nats, $S_{\rm idle}=S_{T_1}+S_{T_2}$.
+- **Intertwiner label $\iota$**: label distinguishing two gauge-singlet combinations at a vertex.
+- **IR (intermediate representation)**: the project's backend-independent circuit gate list.
+- **Iceberg code**: a distance-2 error-detecting code $[[k+2,k,2]]$ for trapped ions.
+- **Kato-Temple / Weinstein**: error-bound formulas for an eigenvalue from a residual (Section 2.7); "gap-assumed" means they assume the nearest exact level to $E_R$ is the ground state.
+- **Krylov space**: the span of $e^{-ik\Delta t H}|b_0\rangle$.
+- **$\lambda^*=6.2958$**: the Poisson mean at which a count of at least 3 has probability 0.95.
+- **Leakage**: weight of a circuit's output outside the valid codeword space (required below $10^{-9}$).
+- **Link consistency**: the decoder check that the two ends of a link agree on its flux bit.
+- **Measurement gate**: see Gate.
+- **Mixture estimator** *(project term)*: fits one weight separating the ideal distribution from uniform noise over all accepted strings.
+- **Near-clean string / near-clean term (rule M4.4)** *(project terms)*: a string with a few errors that still passes all decoder checks; the additional term in the yield model.
+- **NO-GO / GO-A / GO-B / AMBIGUOUS** *(project decision words)*: outcomes of preregistered go rules.
+- **Participation ratio (PR)**: effective number of configurations in a state, $1/\sum_b|c_b|^4$.
+- **Patch**: the set of physical qubits used; **rule R1'** *(project)*: exhaustive embedding search scored by the idle-aware clean fraction.
+- **Pauli twirling**: random Pauli gates around each two-qubit gate, undone afterwards; reshapes errors but does not reduce the average error.
+- **PhasedX**: Quantinuum native one-qubit rotation $R_z(b)R_x(a)R_z(-b)$.
+- **Preregistration**: writing circuits, shots, decision rule and prediction to a committed file before the device data exist.
+- **Pub**: one circuit with its parameters submitted in a Qiskit SamplerV2 job.
+- **QCCD**: quantum charge-coupled device architecture (trapped ions physically moved between zones; all-to-all connectivity). **QCUP**: the DOE/ORNL Quantum Computing User Program. **QPY**: Qiskit's circuit serialization format. **QPU**: quantum processing unit.
+- **QEC**: quantum error correction.
+- **$r_{nc}$** *(project label)*: near-clean correction = upper 95 % bound of the pooled $f_{\rm hit}/f_{\rm ideal}(10^{-3})$ from CF_traj; $1.115$.
+- **$r_{\rm crit}$, $r_{\rm eff}$** *(project labels)*: the break-even ratio $T_2^*/T_2^{\rm echo}$ above which $f\ge0.1$ (0.3285 preregistered) and the ratio the pilot measured (0.0974).
+- **Recall $R_\varepsilon$**: $|B\cap S_\varepsilon|/|S_\varepsilon|$.
+- **Reference configuration**: starting configuration $|b_0\rangle$ of a circuit (Dirac sea, one-meson states, diquark states).
+- **Ritz value / Ritz vector**: eigenvalue / eigenvector of $H$ restricted to a subspace.
+- **Rule C22 (noise saturation)** *(project label)*: once $Na/\dim\gtrsim5$ the sector is filled by noise alone.
+- **S99, S999** *(project notation)*: smallest sets carrying 99 % / 99.9 % of the ground-state weight (the 99.9 % support).
+- **Saturation parameter $Na/\dim$**: expected accidental hits per sector state.
+- **SKQD / SQD**: sample-based Krylov / sample-based quantum diagonalization.
+- **Stage E / Stage P / Stage T / Stage R / Stage A** *(project labels)*: E = emulator run, P = hardware pilot (Quantinuum plan), T = the DD test, R = the full 2x2 run (`prompts/24`), A = the native-gate compilation (`prompts/26`).
+- **Static charge**: an infinitely heavy quark used to probe the potential $V(r)$.
+- **Structured gates**: the exact circuit construction of gate S2.
+- **Support**: the set $B$ of decoded configurations used for the projected diagonalization.
+- **$T_1$, $T_2$**: energy-relaxation and dephasing times. **PTA** (Pauli-twirled approximation) *(project usage)*: the analytic bound that charges every error as fatal.
+- **Tier A / B / C** *(project, `prompts/27`)*: preregistered levels of a 2x3 hardware claim (Section 9.5).
+- **TV distance**: total-variation distance between two probability distributions.
+- **VQE**: variational quantum eigensolver (the older approach in the literature).
+- **Weight $W(B)$**: $\sum_{s\in B}|c_s|^2$ (captured ground-state weight).
+- **Yield model**: $y=0.82f+(1-f)a+$ near-clean term.
+- **0.82 readout factor**: the manual's survival of 20-qubit readout at 1 % error each.
+- **30-minute rule**: the laptop rule of Section 4.3.
