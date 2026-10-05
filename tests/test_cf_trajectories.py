@@ -177,7 +177,8 @@ def _synthetic_arm(p_tau_fn, K=50, dim=6):
     rng = np.random.default_rng(0)
     for i in range(K):
         p = p_tau_fn(pc, rng)
-        trajs.append({"p_ref_post": float(p[0]), "p_ref_pre": float(p[0]), "tail_post": float(p[1:5].sum()),
+        trajs.append({"events": [[0, 0, "2q", [0, 1], "ZI"]],
+                      "p_ref_post": float(p[0]), "p_ref_pre": float(p[0]), "tail_post": float(p[1:5].sum()),
                       "tv_pre": cf.tv_distance(p, pc) if p.sum() > 0 else 1.0, "z_only": bool(i % 3 == 0),
                       "n_2q": 1, "n_1q": 0, "p_sector_post": [float(x) for x in p]})
     base = {"no_error_probability_g0": cf.no_error_probability(10, 10, 0.01, 0.01),
@@ -239,3 +240,86 @@ def test_checkpoint_index_never_skips_the_error_gate():
         ev = [[0, first, "1q", [0], "X"]]
         ir = [("rx", [0], 0.1)] * 40
         cf.insert_paulis(ir, ev, bounds[c])               # must not raise
+
+
+# --------------------------------------------------------------------------- prompts/29 (f_ideal, r_nc, mixture)
+def test_ideal_fraction_limits_and_hand_example():
+    import gate_CF_traj as g
+
+    K, f0, pref = 4, 0.2, 0.9
+    w = np.full(K, 1.0 / K)
+    # every faulty trajectory is an ideal sample: f_hit = f_ideal = 1, r = 1
+    s = g.ideal_fraction(f0, w, np.full(K, pref), np.zeros(K), pref)
+    assert s["f_hit"] == pytest.approx(1.0)
+    for d in g.DELTAS:
+        t = g.delta_tag(d)
+        assert s[f"b_{t}"] == 1.0 and s[f"f_ideal_{t}"] == pytest.approx(1.0) and s[f"r_{t}"] == pytest.approx(1.0)
+    # no faulty trajectory reaches the reference or the ideal: f_hit = f_ideal = f0', r = 1
+    s = g.ideal_fraction(f0, w, np.zeros(K), np.ones(K), pref)
+    assert s["f_hit"] == pytest.approx(f0) and s[f"r_{g.delta_tag(1e-3)}"] == pytest.approx(1.0)
+    # hand example: one benign return (TV 0), one near-ideal (TV 0.02) with h = pref / 2, two garbage
+    h = np.array([pref, pref / 2, 0.0, 0.0])
+    tv = np.array([0.0, 0.02, 0.5, 1.0])
+    s = g.ideal_fraction(f0, w, h, tv, pref)
+    f_hit = f0 + (1 - f0) * (1.5 / 4)
+    assert s["f_hit"] == pytest.approx(f_hit)
+    assert s[f"b_{g.delta_tag(1e-3)}"] == 0.25 and s[f"b_{g.delta_tag(0.03)}"] == 0.5
+    assert s[f"r_{g.delta_tag(1e-3)}"] == pytest.approx(f_hit / (f0 + (1 - f0) * 0.25))
+    assert s[f"r_{g.delta_tag(0.03)}"] == pytest.approx(f_hit / (f0 + (1 - f0) * 0.5))
+
+
+def test_pooled_ratio_weights_and_bootstrap():
+    import gate_CF_traj as g
+
+    rng = np.random.default_rng(3)
+    a = {"id": "a", "f0": 0.17, "p_ref": 0.9, "h": rng.random(40) * 0.9, "tv": rng.random(40) * 0.01, "shots": 800}
+    # two identical arms pool to the single-arm ratio
+    one = g.ideal_fraction(a["f0"], np.full(40, 1 / 40), a["h"], a["tv"], a["p_ref"])
+    res = g.pooled_ratio([a, dict(a, id="b")], n_boot=200, seed=1)
+    t = g.delta_tag(1e-3)
+    assert res[f"r_{t}"]["value"] == pytest.approx(one[f"r_{t}"])
+    assert res[f"r_{t}"]["ci95"][0] <= res[f"r_{t}"]["value"] <= res[f"r_{t}"]["ci95"][1]
+    assert res[f"r_{t}"]["one_sided_upper95"] <= res[f"r_{t}"]["ci95"][1]
+    # f_hit pools with N p_ref weights, f_ideal with N weights
+    b = {"id": "b", "f0": 0.17, "p_ref": 0.3, "h": np.full(10, 0.3), "tv": np.zeros(10), "shots": 800}
+    ob = g.ideal_fraction(b["f0"], np.full(10, 0.1), b["h"], b["tv"], b["p_ref"])
+    res = g.pooled_ratio([a, b], n_boot=50, seed=1)
+    fh = (0.9 * one["f_hit"] + 0.3 * ob["f_hit"]) / 1.2
+    fi = (one[f"f_ideal_{t}"] + ob[f"f_ideal_{t}"]) / 2
+    assert res["f_hit"]["value"] == pytest.approx(fh)
+    assert res[f"r_{t}"]["value"] == pytest.approx(fh / fi)
+
+
+def test_return_classification_counts():
+    import gate_CF_traj as g
+
+    def tr(p, ev):
+        return {"p_ref_post": p, "events": ev}
+
+    trajs = [tr(0.9, [[0, 5, "2q", [0, 1], "ZY"]]), tr(0.8, [[1, 6, "1q", [2], "Z"]]),
+             tr(0.7, [[0, 5, "2q", [0, 1], "ZY"], [1, 6, "1q", [2], "X"]]),
+             tr(0.0, [[1, 6, "1q", [2], "X"]]), tr(0.1, [[0, 5, "2q", [0, 1], "XX"]])]
+    tv = [0.0, 0.02, 1e-4, 1.0, 0.9]
+    c = g.return_classification(trajs, tv)
+    assert c["n_returns"] == 3 and c["n_single_event_returns"] == 2
+    assert c["single_event_returns_by_pauli"] == {"Z": 1, "ZY": 1}
+    assert c["n_single_event_x_type_trajectories"] == 2 and c["n_single_event_x_type_returns"] == 0
+    assert c["n_returns_tv_machine_zero"] == 1 and c["n_returns_tv_below_1e-3"] == 2
+    assert c["n_returns_tv_below_0.04"] == 3
+    assert c["share_of_h_ref_carried_by_returns"] == pytest.approx(2.4 / 2.5)
+
+
+def test_mixture_expectation_limits():
+    import gate_CF_traj as g
+
+    pc = np.array([0.6, 0.25, 0.1, 0.05, 0.0, 0.0])
+    f0 = 0.2
+    # faulty shots reproduce the ideal: the mixture weight is 1 and f = 1
+    r = g.mixture_expectation(f0, pc, pc, 2000)
+    assert r["w"] == pytest.approx(1.0, abs=1e-6) and r["f_clean"] == pytest.approx(1.0, abs=1e-6)
+    # faulty shots spread flat with in-sector mass m: f = f0' (w-implied), at any N
+    m = 0.3
+    flat = np.full(6, m / 6)
+    for N in (200, 2000):
+        r = g.mixture_expectation(f0, pc, flat, N)
+        assert r["f_clean"] == pytest.approx(f0, rel=1e-6)

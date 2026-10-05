@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
-Gate CF_traj (prompts/28 Part A, A3): the decisive trajectory test of the A6 reference-hit excess.
+Gate CF_traj (prompts/28 Part A, A3; completed and re-assembled under prompts/29 Part A'): the decisive
+trajectory test of the A6 reference-hit excess, and the near-clean correction r_nc of the reference-hit
+statistic.
 
 Reads the raw trajectory chunks written by scripts/cf_trajectories.py (data/cf_trajectories/<id>[__xx]/),
 the A4 counting-control counts (data/cf_trajectories/control_xx/), the A0 timing record, the A6 dry-run
@@ -17,6 +19,19 @@ Definitions (prompts/28; planner's labels, not manual terms):
   f_eff(s)   = f0' + (1 - f0') <p_tau(s)> / p_c(s)
   T_c = {s : p_c(s) >= 1e-3, s != ref};  benign = TV(sector-normalised p_tau, p_c) < 1e-3 (pre-readout)
 Intervals: 95 % bootstrap percentile over trajectories (B = 2000, seed 2028); means also with s.e.
+prompts/29 (the ideal-sample fraction; rho_T kept as information, its STOP retired):
+  b(delta)       = fraction of FAULTY trajectories with TV_pre < delta,  delta in {1e-3, 1e-2, 0.03}
+  f_ideal(delta) = f0' + (1 - f0') b(delta),  r(delta) = f_hit^traj / f_ideal(delta)
+  pooled (k = 1 arms B0_ref25_k1 + B1_ref57_k1 at the Stage E/P v3 shots 800 / 800):
+    f_hit^pool = sum_c N_c p_ref,c f_hit,c / sum_c N_c p_ref,c   (the expectation of pooled_reference_string_test
+                 without its garbage term), f_ideal^pool = sum_c N_c f_ideal,c / sum_c N_c,
+    r^pool(delta) = f_hit^pool / f_ideal^pool;  bootstrap stratified by arm (one generator, seed 2028)
+  r_nc = the upper end of the 95 % bootstrap interval (97.5th percentile) of r^pool(1e-3)
+         -> data/cf_trajectories/r_nc.json
+  floor-theorem check: min over S99 of f_eff(s) / f_ideal(1e-3) >= 0.95 on every arm
+  k = 4 mixture bias: clean_fraction_mixture (readout factor 1.0) on N [f0' p_c + (1 - f0') <p_tau>_post]
+         at N = 200 and 2000; bias = (w-implied f) / f_ideal(1e-3) of the same arm
+  return (2.1): post-readout p_tau(ref) > 0.5; TV "machine zero" = TV_pre < 1e-12
 
 Run in the isolated venv (the A6-path audit reads the frozen pytket circuits):
   ~/.local/share/su2qc-quantinuum/venv/bin/python scripts/gate_CF_traj.py [--skip-checks]
@@ -43,12 +58,16 @@ from skqd.report import GateResult, env_block, md_table, write_report  # noqa: E
 import cf_trajectories as cf  # noqa: E402
 
 GATE = "CF_traj"
-TITLE = "Pauli-trajectory decomposition of the A6 reference-hit excess (prompts/28 Part A)"
+TITLE = ("Pauli-trajectory decomposition of the A6 reference-hit excess and the near-clean correction r_nc "
+         "(prompts/28 Part A, re-assembled under prompts/29 Part A')")
 WHAT_PASS_MEANS = (
     "the excess of reference-string hits over the fault-free expectation in the A6 Aer run is reproduced by "
     "an independent Pauli-trajectory decomposition of the same channel on the same circuit, and a bit-flip-only "
     "control gives the fault-free count; the reference-string estimator therefore measures the "
-    "clean-plus-near-clean fraction, not the fault-free fraction.  PASS says nothing about any device.")
+    "clean-plus-near-clean fraction, not the fault-free fraction.  Under prompts/29 the completed run also fixes "
+    "the ratio r_nc of the reference-hit fraction to the ideal-sample fraction f_ideal(1e-3) (A6 gate-noise "
+    "channel only), checks the floor theorem on every arm and measures the k = 4 mixture estimator's bias.  "
+    "PASS says nothing about any device.")
 CIRC = os.path.join(ROOT, "data", "quantinuum", "circuits_2x3")
 DRYRUN = os.path.join(ROOT, "data", "hardware", "Q0P_2x3_dryrun")
 PREDICT = os.path.join(ROOT, "data", "quantinuum", "q0p_stages", "predict.json")
@@ -66,7 +85,21 @@ A6_SHOTS_PER_K1 = 140                 # the A6 dry run (predict.json dryrun.jobs
 PHASE_SHOTS = 40
 CONTROL_SHOTS = 280
 MARGIN = 0.7                          # rule D3'-R margin
-RHO_T_STOP = 1.5                      # prompts/28: STOP (planner) if rho_T > 1.5 on any arm
+RHO_T_STOP = 1.5                      # prompts/28 STOP, retired by prompts/29 (f_T withdrawn): information only
+# prompts/29 Part A'
+DELTAS = (1e-3, 1e-2, 0.03)           # A'2: TV thresholds of b(delta)
+DELTA_BAR = 1e-3                      # 3(1): the bar's referent is f_ideal(1e-3)
+R_NC_STOP = 1.3                       # A'3: STOP (planner) if r_nc > 1.3
+FLOOR_MIN = 0.95                      # A'3 C4': min_S99 f_eff / f_ideal >= 0.95 on every arm
+MIX_BAND = (0.67, 1.5)                # A'3: STOP if the k = 4 mixture bias lies outside
+MIX_N = (200, 2000)                   # A'2: the mixture estimator at N = 200 and N = 2000
+MIX_ARM = "B0_ref25_k4"
+POOL_SHOTS = {"B0_ref25_k1": 800, "B1_ref57_k1": 800}   # 3(3): Stage E/P v3 shots of the two k = 1 circuits
+RETURN_P = 0.5                        # 2.1: a return has p_tau(ref) > 0.5
+TV_ZERO = 1e-12                       # "TV exactly 0" read as machine zero
+R_NC_PATH = os.path.join(ROOT, "data", "cf_trajectories", "r_nc.json")
+A5_ENDS = {"star": ("result.json", "trajectories.json"), "echo": ("result_echo.json", "trajectories_echo.json")}
+A5_K = 2000                           # A'1: K = 2000 at each T2 end
 LOW_SIDE_SIGMAS = 3.0                 # prompts/28 C2: low-side failure by > 3 standard errors -> STOP
 P_MIN = 0.05                          # C2: two-sided Poisson P >= 0.05
 N_BOOT, BOOT_SEED = 2000, 2028
@@ -110,6 +143,124 @@ def ref_hits(counts_rec: dict, ref_int: int) -> int:
     from skqd.reference_sim import bits_to_int, qiskit_key_to_bits
 
     return int(sum(v for k, v in counts_rec["counts"].items() if bits_to_int(qiskit_key_to_bits(k)) == int(ref_int)))
+
+
+# =========================================================================== prompts/29: f_ideal, r, r_nc
+def delta_tag(d: float) -> str:
+    """JSON key suffix of a TV threshold: 1e-3 -> 'd1e-03'."""
+    return f"d{float(d):.0e}"
+
+
+def ideal_fraction(f0: float, w, h, tv, p_ref: float, deltas=DELTAS) -> dict:
+    """prompts/29 2.2 for trajectory weights w (sum 1):
+    b(delta) = sum_tau w_tau [TV_pre(tau) < delta]; f_ideal(delta) = f0' + (1 - f0') b(delta);
+    f_hit = f0' + (1 - f0') <p_tau(ref)>_post / p_ref; r(delta) = f_hit / f_ideal(delta)."""
+    w = np.asarray(w, float)
+    f_hit = f0 + (1.0 - f0) * float(w @ np.asarray(h, float)) / p_ref
+    out = {"f_hit": f_hit}
+    tv = np.asarray(tv, float)
+    for d in deltas:
+        t = delta_tag(d)
+        b = float(w @ (tv < d))
+        fi = f0 + (1.0 - f0) * b
+        out[f"b_{t}"] = b
+        out[f"f_ideal_{t}"] = fi
+        out[f"r_{t}"] = f_hit / fi
+    return out
+
+
+def pooled_ratio(parts: list, deltas=DELTAS, n_boot: int = N_BOOT, seed: int = BOOT_SEED) -> dict:
+    """The pooled r(delta) of the k = 1 arms (prompts/29 3(1)).
+
+    parts = [{"id", "f0", "p_ref", "h", "tv", "shots"}, ...].  The device statistic is
+    pooled_reference_string_test: hits summed over circuits / sum_c N_c p_ref,c, whose expectation is
+    f_hit^pool = sum_c N_c p_ref,c f_hit,c / sum_c N_c p_ref,c; the referent is the pooled shot fraction
+    f_ideal^pool = sum_c N_c f_ideal,c / sum_c N_c.  r^pool = f_hit^pool / f_ideal^pool.
+    Bootstrap: trajectories resampled within each arm (stratified), one generator (seed) drawing the arms'
+    multinomial weights in the order given."""
+    rng = np.random.default_rng(seed)
+    Ws = [rng.multinomial(len(p["h"]), np.full(len(p["h"]), 1.0 / len(p["h"])), size=n_boot) / len(p["h"])
+          for p in parts]
+    Nh = np.array([float(p["shots"]) * float(p["p_ref"]) for p in parts])
+    Nf = np.array([float(p["shots"]) for p in parts])
+
+    def pool(ws):
+        per = [ideal_fraction(p["f0"], w, p["h"], p["tv"], p["p_ref"], deltas) for p, w in zip(parts, ws)]
+        fh = float(Nh @ [q["f_hit"] for q in per]) / Nh.sum()
+        out = {"f_hit": fh}
+        for d in deltas:
+            t = delta_tag(d)
+            fi = float(Nf @ [q[f"f_ideal_{t}"] for q in per]) / Nf.sum()
+            out[f"f_ideal_{t}"] = fi
+            out[f"r_{t}"] = fh / fi
+        return out
+
+    point = pool([np.full(len(p["h"]), 1.0 / len(p["h"])) for p in parts])
+    boots = [pool([W[i] for W in Ws]) for i in range(n_boot)]
+    res = {}
+    for k, v in point.items():
+        arr = np.array([b[k] for b in boots])
+        res[k] = {"value": float(v), "se_boot": float(np.std(arr, ddof=1)),
+                  "ci95": [float(np.percentile(arr, 2.5)), float(np.percentile(arr, 97.5))],
+                  "one_sided_upper95": float(np.percentile(arr, 95.0))}
+    return res
+
+
+def return_classification(trajs: list, tv, p_return: float = RETURN_P, tv_zero: float = TV_ZERO) -> dict:
+    """prompts/29 2.1: returns = faulty trajectories with post-readout p_tau(ref) > p_return; single-event
+    returns by native Pauli label; TV of the returns (machine zero, < 1e-3, < 0.04)."""
+    from collections import Counter
+
+    tv = np.asarray(tv, float)
+    h = np.array([t["p_ref_post"] for t in trajs])
+    ret = h > p_return
+    single = [t for t, r in zip(trajs, ret) if r and len(t["events"]) == 1]
+    single_all = [t for t in trajs if len(t["events"]) == 1]
+    single_x = [t for t in single_all if set(t["events"][0][4]) <= {"I", "X"}]
+    n_ret = int(ret.sum())
+    tvr = tv[ret]
+    return {
+        "definition": f"return = post-readout p_tau(ref) > {p_return}; TV = sector-normalised pre-readout distance",
+        "K": len(trajs), "n_returns": n_ret,
+        "share_of_h_ref_carried_by_returns": float(h[ret].sum() / h.sum()) if h.sum() > 0 else None,
+        "n_single_event_returns": len(single),
+        "single_event_returns_by_pauli": dict(sorted(Counter(t["events"][0][4] for t in single).items())),
+        "single_event_returns_by_site_kind": dict(sorted(Counter(t["events"][0][2] for t in single).items())),
+        "n_single_event_trajectories": len(single_all),
+        "n_single_event_x_type_trajectories": len(single_x),
+        "n_single_event_x_type_returns": int(sum(1 for t in single_x if t["p_ref_post"] > p_return)),
+        "n_returns_tv_machine_zero": int(np.sum(tvr < tv_zero)), "tv_machine_zero_threshold": tv_zero,
+        "n_returns_tv_below_1e-3": int(np.sum(tvr < 1e-3)),
+        "n_returns_tv_below_0.04": int(np.sum(tvr < 0.04)),
+        "fraction_returns_tv_machine_zero": float(np.mean(tvr < tv_zero)) if n_ret else None,
+        "fraction_returns_tv_below_1e-3": float(np.mean(tvr < 1e-3)) if n_ret else None,
+        "tv_of_returns_sorted": [float(x) for x in np.sort(tvr)],
+    }
+
+
+def mixture_expectation(f0: float, pc, P_mean, N: int) -> dict:
+    """prompts/29 A'2: clean_fraction_mixture (readout factor 1.0) on the population mixture
+    N [f0' p_c + (1 - f0') <p_tau>] (expected accepted counts per sector state, not a sample)."""
+    from skqd.skqd import clean_fraction_mixture
+
+    pc = np.asarray(pc, float)
+    n = float(N) * (f0 * pc + (1.0 - f0) * np.asarray(P_mean, float))
+    return clean_fraction_mixture(n, pc, len(pc), int(N), readout_factor=1.0)
+
+
+def floor_theorem_check(feff_S99, pc_S99, point) -> dict:
+    """prompts/29 2.4 (information beside C4'): f_eff(s) >= f_ideal(delta) (1 - 2 delta / p_c(s)) for every
+    state; counted per delta over the S99 states with p_c > 0 (the bound is vacuous where 2 delta >= p_c)."""
+    out = {}
+    feff_S99, pc_S99 = np.asarray(feff_S99, float), np.asarray(pc_S99, float)
+    m = pc_S99 > 0
+    for d in DELTAS:
+        t = delta_tag(d)
+        bound = point[f"f_ideal_{t}"] * (1.0 - 2.0 * d / pc_S99[m])
+        out[t] = {"n_states": int(m.sum()), "n_below_bound": int(np.sum(feff_S99[m] < bound)),
+                  "n_bound_nonvacuous": int(np.sum(bound > 0)),
+                  "min_margin_feff_minus_bound": float(np.min(feff_S99[m] - bound))}
+    return out
 
 
 # =========================================================================== arm statistics
@@ -165,7 +316,7 @@ def arm_statistics(cid: str, arm: dict, man: dict, A6: dict, predict: dict | Non
         r99, r999 = feff[S99] / f0, feff[S999] / f0
         tail99 = [s for s in S99 if pc[s] >= cf.TAIL_P_MIN]
         tail999 = [s for s in S999 if pc[s] >= cf.TAIL_P_MIN]
-        return {"h_ref": hm, "f_hit": f_hit, "rho_ref": f_hit / f0, "tail_mean": tm, "f_T": f_T,
+        out = {"h_ref": hm, "f_hit": f_hit, "rho_ref": f_hit / f0, "tail_mean": tm, "f_T": f_T,
                 "rho_T": f_T / f0, "benign_fraction": float(w @ benign),
                 "min_feff_over_f0_S99": float(np.nanmin(r99)), "min_feff_over_f0_S999": float(np.nanmin(r999)),
                 "median_feff_over_f0_S99": float(np.nanmedian(r99)),
@@ -179,6 +330,15 @@ def arm_statistics(cid: str, arm: dict, man: dict, A6: dict, predict: dict | Non
                 "n_S99_p_c_zero": int(np.sum(pc[S99] <= 0)), "n_S999_p_c_zero": int(np.sum(pc[S999] <= 0)),
                 "n_S99_feff_below_margin_fT": int(np.sum(feff[S99] < MARGIN * f_T)),
                 "_feff": feff}
+        idl = ideal_fraction(f0, w, h, tv, p_ref)
+        if abs(idl["f_hit"] - f_hit) > 1e-12:
+            raise RuntimeError("ideal_fraction's f_hit differs from arm_statistics' f_hit")
+        for d in DELTAS:
+            t = delta_tag(d)
+            for k in ("b", "f_ideal", "r"):
+                out[f"{k}_{t}"] = idl[f"{k}_{t}"]
+            out[f"min_feff_over_fideal_S99_{t}"] = float(np.nanmin(feff[S99]) / idl[f"f_ideal_{t}"])
+        return out
 
     point = derived(np.full(K, 1.0 / K))
     rng = np.random.default_rng(BOOT_SEED)
@@ -198,7 +358,9 @@ def arm_statistics(cid: str, arm: dict, man: dict, A6: dict, predict: dict | Non
     for rank, s in enumerate(S999):
         per_state.append({"pos": int(s), "int": int(sec["ints"][s]), "rank": rank, "in_S99": bool(rank < len(S99)),
                           "p_c": float(pc[s]), "mean_p_tau_post": float(P[:, s].mean()),
-                          "feff_over_f0": float(feff[s] / f0), "in_tail_class": bool(int(s) in set(tail.tolist())),
+                          "feff_over_f0": float(feff[s] / f0),
+                          "feff_over_fideal_1e-3": float(feff[s] / point[f"f_ideal_{delta_tag(DELTA_BAR)}"]),
+                          "in_tail_class": bool(int(s) in set(tail.tolist())),
                           "is_reference": bool(int(s) == int(sec["ref_pos"]))})
     # exact decomposition (information): E[hit]/N = g0 * ideal post-readout p(ref) + (1 - g0) h_ref
     p_ref_post0 = float(base["ideal"]["p_ref_post_readout"])
@@ -253,7 +415,10 @@ def arm_statistics(cid: str, arm: dict, man: dict, A6: dict, predict: dict | Non
                                   "f_hit_exact_decomposition": hit_exact / p_ref},
         "z_stratum": zs, "by_error_type": by_z, "event_counts": events_hist,
         "per_state_S999": per_state,
+        "floor_theorem_S99": floor_theorem_check(feff[S99], pc[S99], point),
+        "returns": return_classification(trajs, tv),
         "_h_se": float(np.std(h, ddof=1) / math.sqrt(K)), "_h_pre_mean": float(h_pre.mean()),
+        "_h": h, "_tv": tv, "_P": P, "_pc": pc,
     }
 
 
@@ -365,6 +530,114 @@ def run_checks():
     return out
 
 
+def write_r_nc(pooled: dict, arms: dict) -> dict:
+    """data/cf_trajectories/r_nc.json: r_nc = the upper end of the 95 % bootstrap interval of the pooled
+    r(1e-3) (prompts/29 3(1)); with the commit, K and seeds per arm."""
+    tb = delta_tag(DELTA_BAR)
+    commit, dirty = cf.git_commit()
+    rec = {"produced_by": "scripts/gate_CF_traj.py", "prompt": "prompts/29_cf_traj_reruling_ideal_sample_fraction.md "
+           "3(1) and A'2", "created": cf.now(), "git_commit": commit, "git_dirty_scripts_src": dirty,
+           "r_nc": pooled[f"r_{tb}"]["ci95"][1],
+           "definition": ("r_nc = upper end (97.5th percentile) of the 95 % bootstrap interval of the pooled "
+                          "f_hit / f_ideal(1e-3) over the k = 1 arms; f_hit^pool = sum_c N_c p_ref,c f_hit,c / "
+                          "sum_c N_c p_ref,c (the expectation of pooled_reference_string_test without its garbage "
+                          "term), f_ideal^pool = sum_c N_c f_ideal,c / sum_c N_c, N_c = the Stage E/P v3 shots"),
+           "delta": DELTA_BAR, "pooled_r_point": pooled[f"r_{tb}"]["value"],
+           "pooled_r_ci95": pooled[f"r_{tb}"]["ci95"],
+           "pooled_r_one_sided_upper95_information": pooled[f"r_{tb}"]["one_sided_upper95"],
+           "pooled_f_hit": pooled["f_hit"]["value"], "pooled_f_ideal": pooled[f"f_ideal_{tb}"]["value"],
+           "pool_weights_shots": POOL_SHOTS, "bootstrap": {"B": N_BOOT, "seed": BOOT_SEED,
+                                                          "scheme": "trajectories resampled within each arm"},
+           "arms": {c: {"K": arms[c]["K"], "seeds": sorted(ch["seed"] for ch in arms[c]["chunks"]),
+                        "chunk_commits": sorted({ch["git_commit"] for ch in arms[c]["chunks"]}),
+                        "f0_prime": arms[c]["f0_prime"], "p_ref": arms[c]["p_ref"],
+                        "f_hit": arms[c]["stats"]["f_hit"], f"f_ideal_{tb}": arms[c]["stats"][f"f_ideal_{tb}"],
+                        f"r_{tb}": arms[c]["stats"][f"r_{tb}"]} for c in POOL_SHOTS},
+           "planned_K": {c: ARMS[c]["K"] for c in POOL_SHOTS},
+           "complete": all(arms[c]["K"] >= ARMS[c]["K"] for c in POOL_SHOTS),
+           "stop_rule": f"prompts/29 A'3: STOP (planner returns) if r_nc > {R_NC_STOP}",
+           "stop": bool(pooled[f"r_{tb}"]["ci95"][1] > R_NC_STOP),
+           "caveat": ("r_nc is a gate-noise (A6 channel) value; on H2-2 the memory term is 5-30 % of the gate term "
+                      "(survey), so the composition stays gate-dominated; on IBM devices (idle dephasing) it is "
+                      "unknown and A5 gives the only model estimate (prompts/29 3(1))")}
+    with open(R_NC_PATH, "w") as fh:
+        json.dump(rec, fh, indent=1)
+    return rec
+
+
+def mixture_bias_block(arm: dict) -> dict:
+    """prompts/29 A'2 / C7: the k = 4 mixture-estimator expectation and its bias against f_ideal(1e-3);
+    95 % bootstrap interval over trajectories (the arm's own bootstrap weights: B = 2000, seed 2028)."""
+    tb = delta_tag(DELTA_BAR)
+    f0, pc, P, tv = arm["f0_prime"], arm["_pc"], arm["_P"], arm["_tv"]
+    K = len(tv)
+    fid = arm["stats"][f"f_ideal_{tb}"]["value"]
+    per_N = {}
+    for N in MIX_N:
+        r = mixture_expectation(f0, pc, P.mean(axis=0), N)
+        per_N[str(N)] = {k: r[k] for k in ("w", "w_68", "accepted", "shots", "f_clean", "f_clean_68", "logL_gain")}
+        per_N[str(N)]["bias_ratio"] = r["f_clean"] / fid
+        per_N[str(N)]["bias_ratio_68_profile"] = [x / fid for x in r["f_clean_68"]]
+    t0 = time.time()
+    W = np.random.default_rng(BOOT_SEED).multinomial(K, np.full(K, 1.0 / K), size=N_BOOT) / K
+    bias, fmix = [], []
+    for w in W:
+        r = mixture_expectation(f0, pc, w @ P, MIX_N[-1])
+        fmix.append(r["f_clean"])
+        bias.append(r["f_clean"] / (f0 + (1.0 - f0) * float(w @ (tv < DELTA_BAR))))
+    point = per_N[str(MIX_N[-1])]
+    return {"arm": arm["id"], "K": K, "f0_prime": f0, "f_ideal_point": fid,
+            "f_hit_point": arm["stats"]["f_hit"]["value"], "per_N": per_N,
+            "w_independent_of_N": abs(per_N[str(MIX_N[0])]["w"] - per_N[str(MIX_N[-1])]["w"]) < 1e-6,
+            "f_mix": ival(point["f_clean"], fmix), "bias_ratio": ival(point["bias_ratio"], bias),
+            "f_mix_over_f0_prime": point["f_clean"] / f0, "f_mix_over_f_hit": point["f_clean"] / arm["stats"]["f_hit"]["value"],
+            "stop_band": list(MIX_BAND), "bootstrap_s": time.time() - t0,
+            "note": ("the population mixture is an expectation (no sampling noise), so w does not depend on N; "
+                     "N sets only the profile-likelihood interval (w_68).  The 95 % interval is the bootstrap over "
+                     "trajectories (the model uncertainty of the population)")}
+
+
+# =========================================================================== A5 (2x2, both T2 ends)
+def a5_block() -> dict:
+    """The A5 2x2 arm at both ends of the T2 bracket (scripts/cf_traj_2x2_arm.py: T2* = Ramsey, echo = record
+    T2), with b(delta), f_ideal(delta), r(delta) recomputed from its trajectory file (bootstrap B = 2000,
+    seed 2028)."""
+    out = {"model_note": ("Markovian Pauli model of the H0_2x2 adopted circuit (cell T3, ALAP + client XY4): "
+                          "depolarizing cz/sx/x from the calibration record, idle Z with probability "
+                          "(1 - exp(-t/T2))/2 per explicit delay; cannot represent DD refocusing of quasi-static "
+                          "dephasing, so the two T2 ends bracket a model number, not a device prediction"),
+           "ends": {}}
+    for tag, (res_name, traj_name) in A5_ENDS.items():
+        rp, tp = os.path.join(cf.OUT, "A5_2x2", res_name), os.path.join(cf.OUT, "A5_2x2", traj_name)
+        if not (os.path.exists(rp) and os.path.exists(tp)):
+            out["ends"][tag] = {"status": "not run", "reason": f"{os.path.relpath(rp, ROOT)} absent"}
+            continue
+        res, trajs = load_json(rp), load_json(tp)
+        f0, p_ref = float(res["f0_prime"]), float(res["p_ref"])
+        h = np.array([t["p_ref_post"] for t in trajs])
+        tv = np.array([t["tv_pre"] for t in trajs])
+        K = len(h)
+        if K != int(res["K"]):
+            raise RuntimeError(f"A5 {tag}: {K} trajectories in {traj_name}, result says {res['K']}")
+        point = ideal_fraction(f0, np.full(K, 1.0 / K), h, tv, p_ref)
+        if abs(point["f_hit"] - float(res["stats"]["f_hit"]["value"])) > 1e-12:
+            raise RuntimeError(f"A5 {tag}: f_hit recomputed {point['f_hit']} != result {res['stats']['f_hit']['value']}")
+        W = np.random.default_rng(BOOT_SEED).multinomial(K, np.full(K, 1.0 / K), size=N_BOOT) / K
+        boots = [ideal_fraction(f0, w, h, tv, p_ref) for w in W]
+        st = {k: ival(v, [b[k] for b in boots]) for k, v in point.items()}
+        st["rho_ref"] = res["stats"]["rho_ref"]
+        st["rho_T"] = res["stats"]["rho_T"]
+        out["ends"][tag] = {
+            "status": res.get("status", "run"), "t2_variant": res["t2_variant"], "K": K, "seed": res["seed"],
+            "git_commit": res["git_commit"], "created": res["created"], "wall_s": res["wall_s"],
+            "files": [os.path.relpath(rp, ROOT), os.path.relpath(tp, ROOT)], "circuit": res["circuit"],
+            "dd_cell": res["dd_cell"], "g0": res["g0"], "readout_survival_reference": res["readout_survival_reference"],
+            "f0_prime": f0, "p_ref": p_ref, "n_sites": res["n_sites"], "z_only_fraction": res["z_only_fraction"],
+            "n_draws": res["n_draws"], "stats": st,
+            "n_benign_tv_below": {delta_tag(d): int(np.sum(tv < d)) for d in DELTAS}}
+    return out
+
+
 # =========================================================================== main
 def fmt(x, nd=4):
     if x is None:
@@ -394,7 +667,9 @@ def main(argv=None):
     predict = load_json(PREDICT)
     phase = load_json(PHASE)
     G = GateResult(GATE, TITLE)
-    data = {"prompt": "prompts/28_2x3_shot_rule_and_clean_fraction_estimator.md Part A",
+    data = {"prompt": ("prompts/28_2x3_shot_rule_and_clean_fraction_estimator.md Part A, completed and re-assembled "
+                       "under prompts/29_cf_traj_reruling_ideal_sample_fraction.md Part A' (C1/C4 replaced by C1/C4', "
+                       "C7 added; C2, C3, C5, C6 unchanged)"),
             "what_pass_means": WHAT_PASS_MEANS, "A6_NOISE": A6,
             "definitions": __doc__.split("Definitions")[1].split("Run in")[0].strip()}
 
@@ -422,9 +697,16 @@ def main(argv=None):
         c1_notes.append(f"{cid}: K {arms[cid]['K']}/{plan['K']}, seeds {seeds}")
         arms[cid]["hamming"] = hamming_block(a)
     data["arms"] = {k: {kk: vv for kk, vv in v.items() if not kk.startswith("_")} for k, v in arms.items()}
-    G.add("C1 A0 timing recorded; planned K per arm reached; every chunk file with seed and git commit",
+    a5 = a5_block()
+    data["A5_2x2_arm"] = a5
+    a5_ok = all(e.get("status") == "run" and e.get("K", 0) >= A5_K for e in a5["ends"].values()) or (
+        all(e.get("status") == "not run" and e.get("reason") for e in a5["ends"].values()))
+    c1_notes.append("A5: " + ", ".join(f"{t} {e.get('status')} K {e.get('K')}" for t, e in a5["ends"].items()))
+    G.add("C1 A0 timing recorded; planned K reached on all four arms (every chunk file with seed and git commit); "
+          "A5 recorded at both T2 ends",
           "; ".join(c1_notes), "B0_ref25_k1 720 (seeds 101-103), B1_ref57_k1 240 (201), B0_ref25_k4 240 (301), "
-          "xx control arm 120 (401)", c1_ok)
+          f"xx control arm 120 (401); A5 K >= {A5_K} at T2* and echo T2 (or both 'not run' with the reason)",
+          c1_ok and a5_ok)
 
     # ---------------------------------------------------------------- C2: the A6 hit prediction + A4
     observed = {}
@@ -522,13 +804,33 @@ def main(argv=None):
            if "predicted" in c3 else "not computed"),
           "observed inside the Poisson 95 % band of 40 [g0 p_ref + (1 - g0) h_Z]", c3_ok)
 
-    # ---------------------------------------------------------------- C4: reported with intervals
-    keys = ["rho_ref", "rho_T", "benign_fraction", "min_feff_over_f0_S99", "min_feff_over_f0_S999",
-            "n_S99_feff_below_margin_fT"]
-    c4_ok = all(cid in arms and all(k in arms[cid]["stats"] for k in keys) for cid in ARMS)
-    G.add("C4 rho_ref, rho_T, b, min f_eff/f0' (S99, S999), #S99 below 0.7 f_T reported with intervals, 3 arms",
-          "; ".join(f"{cid}: rho_ref {fi(arms[cid]['stats']['rho_ref'])}, rho_T {fi(arms[cid]['stats']['rho_T'])}"
-                    for cid in ARMS if cid in arms), "all six quantities with 95 % intervals for all three arms", c4_ok)
+    # ---------------------------------------------------------------- C4' (prompts/29): f_ideal, r, floor, r_nc
+    tb = delta_tag(DELTA_BAR)
+    all_arms = list(ARMS) + [XX_ARM["id"] + "__xx"]
+    keys = [f"{k}_{delta_tag(d)}" for d in DELTAS for k in ("b", "f_ideal", "r")] + [f"min_feff_over_fideal_S99_{tb}"]
+    have_all = all(cid in arms and all(k in arms[cid]["stats"] for k in keys) for cid in all_arms)
+    floor = {cid: arms[cid]["stats"][f"min_feff_over_fideal_S99_{tb}"] for cid in all_arms if cid in arms}
+    floor_ok = bool(floor) and len(floor) == len(all_arms) and all(v["value"] >= FLOOR_MIN for v in floor.values())
+    rnc = None
+    if all(c in arms for c in POOL_SHOTS):
+        parts = [{"id": c, "f0": arms[c]["f0_prime"], "p_ref": arms[c]["p_ref"], "h": arms[c]["_h"],
+                  "tv": arms[c]["_tv"], "shots": POOL_SHOTS[c]} for c in POOL_SHOTS]
+        pooled = pooled_ratio(parts)
+        rnc = write_r_nc(pooled, arms)
+        data["pooled_k1"] = {"weights_shots": POOL_SHOTS, "stats": pooled, "r_nc": rnc["r_nc"],
+                             "r_nc_file": os.path.relpath(R_NC_PATH, ROOT)}
+    data["floor_theorem_check"] = {"criterion": f"min over S99 of f_eff / f_ideal({DELTA_BAR:g}) >= {FLOOR_MIN}",
+                                   "per_arm": floor,
+                                   "theorem_bound_counts": {cid: arms[cid]["floor_theorem_S99"] for cid in arms}}
+    c4_ok = bool(have_all and floor_ok and rnc is not None and math.isfinite(rnc["r_nc"]))
+    G.add("C4' b, f_ideal, r at delta 1e-3/1e-2/0.03 with intervals on all four arms; min_S99 f_eff/f_ideal(1e-3) "
+          ">= 0.95 on every arm (floor theorem); r_nc written",
+          "; ".join(f"{cid}: r(1e-3) {fi(arms[cid]['stats']['r_' + tb])}, min_S99 f_eff/f_ideal "
+                    f"{fi(floor[cid])}" for cid in all_arms if cid in arms)
+          + (f"; r_nc = {fmt(rnc['r_nc'])} (pooled r(1e-3) {fi(data['pooled_k1']['stats']['r_' + tb])}) -> "
+             f"{os.path.relpath(R_NC_PATH, ROOT)}" if rnc else "; r_nc not computed"),
+          f"all quantities present with 95 % bootstrap intervals; every min >= {FLOOR_MIN}; r_nc finite and written",
+          c4_ok)
 
     # ---------------------------------------------------------------- C5: A6-path audit
     audit = a6_path_audit(mans)
@@ -539,12 +841,29 @@ def main(argv=None):
           "rzz = 2158 and rx+ry = the manifest PhasedX count (prompt's typed 3053 matches no frozen circuit: see "
           "data.C5_A6_path_audit.prompt_c5_literal)", audit["ok"])
 
+    # ---------------------------------------------------------------- C7 (prompts/29): k = 4 mixture bias
+    if MIX_ARM in arms:
+        data["C7_k4_mixture"] = mixture_bias_block(arms[MIX_ARM])
+    mix = data.get("C7_k4_mixture", {})
+    c7_ok = bool(mix and all(math.isfinite(x) for x in [mix["bias_ratio"]["value"]] + mix["bias_ratio"]["ci95"]))
+
     # ---------------------------------------------------------------- STOP flags + verdict
     rho_T_max = max((arms[c]["stats"]["rho_T"]["value"] for c in ARMS if c in arms), default=None)
+    mix = data.get("C7_k4_mixture", {})
+    mb = mix.get("bias_ratio", {}).get("value")
     stops = {"C2_low_side": bool(c2.get("prediction_below_observed_by_more_than_3_sd", False)),
              "A4_reproduces_A6_like_count": bool(a4.get("above_band", False)),
-             "rho_T_above_1p5": bool(rho_T_max is not None and rho_T_max > RHO_T_STOP),
-             "rho_T_max_over_arms": rho_T_max}
+             "r_nc_above_1p3": bool(rnc is not None and rnc["r_nc"] > R_NC_STOP),
+             "r_nc": rnc["r_nc"] if rnc else None,
+             "k4_mixture_bias_outside_0p67_1p5": bool(mb is not None and not (MIX_BAND[0] <= mb <= MIX_BAND[1])),
+             "k4_mixture_bias": mb,
+             "retired_rho_T_above_1p5_information_only": bool(rho_T_max is not None and rho_T_max > RHO_T_STOP),
+             "rho_T_max_over_arms": rho_T_max,
+             "note": ("prompts/29 A'3: STOP flags are C2 low side, an A4-like count, r_nc > 1.3 and the k = 4 mixture "
+                      "bias outside [0.67, 1.5]; the prompts/28 rho_T STOP is retired (f_T withdrawn) and kept as "
+                      "information")}
+    stops["any_stop"] = bool(stops["C2_low_side"] or stops["A4_reproduces_A6_like_count"] or stops["r_nc_above_1p3"]
+                             or stops["k4_mixture_bias_outside_0p67_1p5"])
     data["stop_flags"] = stops
     missing = []
     for cid, plan in list(ARMS.items()) + [(XX_ARM["id"] + "__xx", XX_ARM)]:
@@ -554,11 +873,6 @@ def main(argv=None):
                             "seeds_done": sorted(ch["seed"] for ch in arms[cid]["chunks"]) if cid in arms else [],
                             "seeds_planned": plan["seeds"]})
     data["arms_short_of_plan"] = missing
-    if missing and stops["rho_T_above_1p5"]:
-        data["truncated_by_stop"] = (
-            "prompts/28 STOP: rho_T > 1.5 on an arm (return to the planner without BLOCKED).  The executor let the "
-            "batch already queued when the trigger was read finish (B1_ref57_k1, the xx arm, the A4 control) and did "
-            "not launch the remaining planned chunks or the optional A5 arm; see arms_short_of_plan.")
     if stops["C2_low_side"] or stops["A4_reproduces_A6_like_count"]:
         verdict = "bug candidate (Aer path applies fewer error events than modelled, or trajectory model too low)"
     elif c2_ok:
@@ -578,11 +892,14 @@ def main(argv=None):
            f"coding: {checks['pytest_coding']['summary']}; venv: {checks['pytest_venv']['summary']}; "
            f"check_package rc {checks['check_package']['returncode']}; pins_ok {checks['pins_ok']}"),
           "all pass, pins = " + json.dumps(PINS_EXPECTED), checks.get("ok", False))
+    G.add("C7 k = 4 mixture estimator (clean_fraction_mixture, readout factor 1.0) on the B0_ref25_k4 population "
+          "mixture: bias ratio (w-implied f) / f_ideal(1e-3) reported with its interval",
+          (f"bias {fi(mix['bias_ratio'])} (N = {MIX_N[0]}: f {fmt(mix['per_N'][str(MIX_N[0])]['f_clean'])}, "
+           f"N = {MIX_N[1]}: f {fmt(mix['per_N'][str(MIX_N[1])]['f_clean'])}; f_ideal(1e-3) "
+           f"{fmt(mix['f_ideal_point'])})") if mix else "not computed",
+          f"reported with a 95 % bootstrap interval (STOP flag, not the criterion: outside [{MIX_BAND[0]}, {MIX_BAND[1]}])",
+          c7_ok)
 
-    a5p = os.path.join(cf.OUT, "A5_2x2", "result.json")
-    data["A5_2x2_arm"] = load_json(a5p) if os.path.exists(a5p) else {
-        "status": "not run", "reason": ("STOP (rho_T > 1.5) read before the optional arm was started"
-                                        if stops["rho_T_above_1p5"] else "optional arm not run")}
     G.data = data
     G.runtime_s = time.time() - t_start
     path = G.save()
@@ -595,20 +912,86 @@ def main(argv=None):
     return 0 if G.passed else 1
 
 
+def render_ideal(data, arms) -> list:
+    """Report sections of prompts/29 (every number read from `data` / `arms`)."""
+    tb = delta_tag(DELTA_BAR)
+    L = ["## prompts/29: the ideal-sample fraction per arm (95 % bootstrap intervals, B = 2000, seed 2028)", ""]
+    rows = []
+    for cid, s in arms.items():
+        st = s["stats"]
+        for d in DELTAS:
+            t = delta_tag(d)
+            rows.append([cid, s["K"], fmt(s["f0_prime"], 6), fi(st["f_hit"]), f"{d:g}", fi(st[f"b_{t}"]),
+                         fi(st[f"f_ideal_{t}"]), fi(st[f"r_{t}"]), fi(st[f"min_feff_over_fideal_S99_{t}"])])
+    L += [md_table(["arm", "K", "f0'", "f_hit", "delta", "b(delta)", "f_ideal(delta)", "r(delta) = f_hit/f_ideal",
+                    "min_S99 f_eff/f_ideal"], rows), ""]
+    pk = data.get("pooled_k1")
+    if pk:
+        rows = []
+        for d in DELTAS:
+            t = delta_tag(d)
+            v = pk["stats"][f"r_{t}"]
+            rows.append([f"{d:g}", fmt(pk["stats"][f"f_ideal_{t}"]["value"]), fi(v), fmt(v["one_sided_upper95"])])
+        L += [f"Pooled k = 1 (weights: shots {pk['weights_shots']}; pooled f_hit {fi(pk['stats']['f_hit'])}):", "",
+              md_table(["delta", "pooled f_ideal", "pooled r [95 %]", "one-sided 95 % upper (information)"], rows), "",
+              f"**r_nc = {fmt(pk['r_nc'])}** (upper end of the 95 % interval of the pooled r({DELTA_BAR:g})), written to "
+              f"`{pk['r_nc_file']}`.", ""]
+    fl = data["floor_theorem_check"]
+    L += ["### Floor theorem check (prompts/29 2.4)", "", f"Criterion: {fl['criterion']}.", "",
+          md_table(["arm", "min_S99 f_eff/f_ideal(1e-3)"] + [f"#S99 below f_ideal(1 - 2 delta/p_c), delta {d:g}"
+                                                             for d in DELTAS],
+                   [[cid, fi(v)] + [f"{fl['theorem_bound_counts'][cid][delta_tag(d)]['n_below_bound']} of "
+                                    f"{fl['theorem_bound_counts'][cid][delta_tag(d)]['n_states']}" for d in DELTAS]
+                    for cid, v in fl["per_arm"].items()]), ""]
+    L += ["### Returns to the reference (prompts/29 2.1)", "",
+          md_table(["arm", "K", "returns", "share of h_ref", "single-event returns", "by Pauli",
+                    "TV machine 0", "TV < 1e-3", "TV < 0.04", "single-event X-type: returns / all"],
+                   [[cid, r["K"], r["n_returns"], fmt(r["share_of_h_ref_carried_by_returns"], 3),
+                     r["n_single_event_returns"], json.dumps(r["single_event_returns_by_pauli"]),
+                     r["n_returns_tv_machine_zero"], r["n_returns_tv_below_1e-3"], r["n_returns_tv_below_0.04"],
+                     f"{r['n_single_event_x_type_returns']} / {r['n_single_event_x_type_trajectories']}"]
+                    for cid, r in ((c, arms[c]["returns"]) for c in arms)]), ""]
+    mx = data.get("C7_k4_mixture")
+    if mx:
+        L += ["### C7: the k = 4 mixture estimator against f_ideal", "",
+              md_table(["N", "w", "w 68 % (profile)", "w-implied f", "bias = f / f_ideal(1e-3)", "bias 68 % (profile)"],
+                       [[N, fmt(v["w"]), [fmt(x) for x in v["w_68"]], fmt(v["f_clean"]), fmt(v["bias_ratio"]),
+                         [fmt(x) for x in v["bias_ratio_68_profile"]]] for N, v in mx["per_N"].items()]), "",
+              f"Arm {mx['arm']} (K = {mx['K']}): f0' {fmt(mx['f0_prime'])}, f_ideal(1e-3) {fmt(mx['f_ideal_point'])}, "
+              f"f_hit {fmt(mx['f_hit_point'])}; mixture f {fi(mx['f_mix'])}; **bias ratio {fi(mx['bias_ratio'])}** "
+              f"(95 % bootstrap); f_mix/f0' = {fmt(mx['f_mix_over_f0_prime'])}.  {mx['note']}.", ""]
+    a5 = data["A5_2x2_arm"]
+    rows = []
+    for tag, e in a5["ends"].items():
+        if e.get("status") != "run":
+            rows.append([tag, e.get("status"), e.get("reason", ""), "", "", "", "", ""])
+            continue
+        st = e["stats"]
+        rows.append([tag, e["K"], fmt(e["f0_prime"]), fi(st["f_hit"]), fi(st[f"f_ideal_{tb}"]), fi(st[f"r_{tb}"]),
+                     fi(st[f"f_ideal_{delta_tag(0.03)}"]), fi(st[f"r_{delta_tag(0.03)}"])])
+    L += ["### A5: the 2x2 arm at both ends of the T2 bracket (model numbers, information)", "", a5["model_note"] + ".", "",
+          md_table(["T2 end", "K", "f0'", "f_hit", "f_ideal(1e-3)", "r(1e-3)", "f_ideal(0.03)", "r(0.03)"], rows), ""]
+    return L
+
+
 def render(G, data, arms):
     L = [f"# Gate {GATE}: {TITLE}", "",
-         f"Status: **{'PASS' if G.passed else 'FAIL'}**.  Prompt: `prompts/28_2x3_shot_rule_and_clean_fraction_estimator.md` "
-         "Part A.  Generated by `scripts/gate_CF_traj.py` from `validation/CF_traj.json`; every number below is read "
+         f"Status: **{'PASS' if G.passed else 'FAIL'}**.  Prompt: {data['prompt']}.  Generated by "
+         "`scripts/gate_CF_traj.py` from `validation/CF_traj.json`; every number below is read "
          "from that file.  0 QPU s, 0 HQC.", "",
          f"What PASS means: {WHAT_PASS_MEANS}", "",
          f"Physics verdict: **{data['physics_verdict']}**.", "",
-         *( [f"**Truncated by a STOP:** {data['truncated_by_stop']}", "",
+         f"STOP flags (prompts/29 A'3): any STOP = **{data['stop_flags']['any_stop']}**; r_nc = "
+         f"{fmt(data['stop_flags']['r_nc'])} (STOP above {R_NC_STOP}); k = 4 mixture bias "
+         f"{fmt(data['stop_flags']['k4_mixture_bias'])} (STOP outside [{MIX_BAND[0]}, {MIX_BAND[1]}]).", "",
+         *( ["Arms short of plan:", "",
              md_table(["arm", "K done", "K planned", "seeds done", "seeds planned"],
                       [[m["arm"], m["K_done"], m["K_planned"], m["seeds_done"], m["seeds_planned"]]
-                       for m in data["arms_short_of_plan"]]), ""] if data.get("truncated_by_stop") else []),
+                       for m in data["arms_short_of_plan"]]), ""] if data.get("arms_short_of_plan") else []),
          "## Criteria", "", G.criteria_table(), "",
-         "## Definitions (the planner's labels, prompts/28; not manual terms)", "", "```", data["definitions"], "```", "",
-         "## Per-arm results (95 % bootstrap intervals over trajectories)", ""]
+         "## Definitions (the planner's labels, prompts/28 and prompts/29; not manual terms)", "", "```",
+         data["definitions"], "```", "", *render_ideal(data, arms),
+         "## Per-arm results of prompts/28 (95 % bootstrap intervals over trajectories; rho_T information only)", ""]
     rows = []
     for cid, s in arms.items():
         st = s["stats"]
@@ -673,7 +1056,7 @@ def render(G, data, arms):
         rows.append([cid] + [fmt(x, 3) for x in w[:7]] + [fmt(sum(w[7:]), 3)])
     L += [md_table(hdr, rows), ""]
     L += ["## STOP flags", "", "```", json.dumps(data["stop_flags"], indent=1), "```", "",
-          "## A5 (optional 2x2 arm)", "", "```", json.dumps(data["A5_2x2_arm"], indent=1)[:3000], "```", "",
+
           "## Timing (A0)", "", "```", json.dumps(data["A0_timing"], indent=1), "```", "", env_block(), ""]
     return "\n".join(L)
 
