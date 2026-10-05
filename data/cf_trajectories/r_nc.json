@@ -1,0 +1,110 @@
+{
+ "produced_by": "scripts/gate_CF_traj.py",
+ "prompt": "prompts/29_cf_traj_reruling_ideal_sample_fraction.md 3(1) and A'2",
+ "created": "2026-10-05 19:27:44 UTC",
+ "git_commit": "a8ebbaa",
+ "git_dirty_scripts_src": false,
+ "r_nc": 1.1151352098004452,
+ "definition": "r_nc = upper end (97.5th percentile) of the 95 % bootstrap interval of the pooled f_hit / f_ideal(1e-3) over the k = 1 arms; f_hit^pool = sum_c N_c p_ref,c f_hit,c / sum_c N_c p_ref,c (the expectation of pooled_reference_string_test without its garbage term), f_ideal^pool = sum_c N_c f_ideal,c / sum_c N_c, N_c = the Stage E/P v3 shots",
+ "delta": 0.001,
+ "pooled_r_point": 1.0692744966002825,
+ "pooled_r_ci95": [
+  1.0285934561902321,
+  1.1151352098004452
+ ],
+ "pooled_r_one_sided_upper95_information": 1.1078940954178347,
+ "pooled_f_hit": 0.24807954876330926,
+ "pooled_f_ideal": 0.23200735597086503,
+ "pool_weights_shots": {
+  "B0_ref25_k1": 800,
+  "B1_ref57_k1": 800
+ },
+ "bootstrap": {
+  "B": 2000,
+  "seed": 2028,
+  "scheme": "trajectories resampled within each arm"
+ },
+ "arms": {
+  "B0_ref25_k1": {
+   "K": 720,
+   "seeds": [
+    101,
+    102,
+    103
+   ],
+   "chunk_commits": [
+    "9dc94c2",
+    "c6fa789"
+   ],
+   "f0_prime": 0.17208700946729633,
+   "p_ref": 0.9150208913052346,
+   "f_hit": {
+    "value": 0.23873294687795368,
+    "se_boot": 0.007910572026072126,
+    "ci95": [
+     0.22407341330147623,
+     0.2549043479847897
+    ]
+   },
+   "f_ideal_d1e-03": {
+    "value": 0.21923205476151972,
+    "se_boot": 0.007022622318556099,
+    "ci95": [
+     0.20658338407282564,
+     0.2341804837572491
+    ]
+   },
+   "r_d1e-03": {
+    "value": 1.0889509161315256,
+    "se_boot": 0.021888382868079623,
+    "ci95": [
+     1.0496867269307035,
+     1.1361281448503657
+    ]
+   }
+  },
+  "B1_ref57_k1": {
+   "K": 240,
+   "seeds": [
+    201
+   ],
+   "chunk_commits": [
+    "9dc94c2"
+   ],
+   "f0_prime": 0.17236455581392915,
+   "p_ref": 0.9121993484563078,
+   "f_hit": {
+    "value": 0.2574550608180877,
+    "se_boot": 0.015546861551593478,
+    "ci95": [
+     0.22847708660125635,
+     0.29002600847962395
+    ]
+   },
+   "f_ideal_d1e-03": {
+    "value": 0.24478265718021036,
+    "se_boot": 0.01519606098862335,
+    "ci95": [
+     0.21719480904067465,
+     0.275818986337188
+    ]
+   },
+   "r_d1e-03": {
+    "value": 1.0517700223694681,
+    "se_boot": 0.035730660546149165,
+    "ci95": [
+     0.9870277445570882,
+     1.1260010991981764
+    ]
+   }
+  }
+ },
+ "planned_K": {
+  "B0_ref25_k1": 720,
+  "B1_ref57_k1": 240
+ },
+ "complete": true,
+ "stop_rule": "prompts/29 A'3: STOP (planner returns) if r_nc > 1.3",
+ "stop": false,
+ "caveat": "r_nc is a gate-noise (A6 channel) value; on H2-2 the memory term is 5-30 % of the gate term (survey), so the composition stays gate-dominated; on IBM devices (idle dephasing) it is unknown and A5 gives the only model estimate (prompts/29 3(1))"
+}
