@@ -546,6 +546,19 @@ def main(argv=None):
              "rho_T_above_1p5": bool(rho_T_max is not None and rho_T_max > RHO_T_STOP),
              "rho_T_max_over_arms": rho_T_max}
     data["stop_flags"] = stops
+    missing = []
+    for cid, plan in list(ARMS.items()) + [(XX_ARM["id"] + "__xx", XX_ARM)]:
+        have = arms[cid]["K"] if cid in arms else 0
+        if have < plan["K"]:
+            missing.append({"arm": cid, "K_done": have, "K_planned": plan["K"],
+                            "seeds_done": sorted(ch["seed"] for ch in arms[cid]["chunks"]) if cid in arms else [],
+                            "seeds_planned": plan["seeds"]})
+    data["arms_short_of_plan"] = missing
+    if missing and stops["rho_T_above_1p5"]:
+        data["truncated_by_stop"] = (
+            "prompts/28 STOP: rho_T > 1.5 on an arm (return to the planner without BLOCKED).  The executor let the "
+            "batch already queued when the trigger was read finish (B1_ref57_k1, the xx arm, the A4 control) and did "
+            "not launch the remaining planned chunks or the optional A5 arm; see arms_short_of_plan.")
     if stops["C2_low_side"] or stops["A4_reproduces_A6_like_count"]:
         verdict = "bug candidate (Aer path applies fewer error events than modelled, or trajectory model too low)"
     elif c2_ok:
@@ -566,8 +579,10 @@ def main(argv=None):
            f"check_package rc {checks['check_package']['returncode']}; pins_ok {checks['pins_ok']}"),
           "all pass, pins = " + json.dumps(PINS_EXPECTED), checks.get("ok", False))
 
-    data["A5_2x2_arm"] = load_json(os.path.join(cf.OUT, "A5_2x2", "result.json")) if os.path.exists(
-        os.path.join(cf.OUT, "A5_2x2", "result.json")) else {"status": "not run"}
+    a5p = os.path.join(cf.OUT, "A5_2x2", "result.json")
+    data["A5_2x2_arm"] = load_json(a5p) if os.path.exists(a5p) else {
+        "status": "not run", "reason": ("STOP (rho_T > 1.5) read before the optional arm was started"
+                                        if stops["rho_T_above_1p5"] else "optional arm not run")}
     G.data = data
     G.runtime_s = time.time() - t_start
     path = G.save()
@@ -587,6 +602,10 @@ def render(G, data, arms):
          "from that file.  0 QPU s, 0 HQC.", "",
          f"What PASS means: {WHAT_PASS_MEANS}", "",
          f"Physics verdict: **{data['physics_verdict']}**.", "",
+         *( [f"**Truncated by a STOP:** {data['truncated_by_stop']}", "",
+             md_table(["arm", "K done", "K planned", "seeds done", "seeds planned"],
+                      [[m["arm"], m["K_done"], m["K_planned"], m["seeds_done"], m["seeds_planned"]]
+                       for m in data["arms_short_of_plan"]]), ""] if data.get("truncated_by_stop") else []),
          "## Criteria", "", G.criteria_table(), "",
          "## Definitions (the planner's labels, prompts/28; not manual terms)", "", "```", data["definitions"], "```", "",
          "## Per-arm results (95 % bootstrap intervals over trajectories)", ""]
