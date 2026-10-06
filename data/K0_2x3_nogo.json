@@ -1,0 +1,94 @@
+{
+ "source": "validation/K0_2x3_2x4.json",
+ "k0_status": "PASS",
+ "verdict_record": "committed",
+ "record_path": "data/hardware/H0_ddtest_prep/ibm_kingston_full_20261002T1906Z.json",
+ "record_label": "committed",
+ "record_fingerprint": "e4ecac386f4a73277113ce72a82cdf04fe18d97349b04fa751338fea34f6c73e",
+ "record_last_update_date": "2026-10-02T13:06:57-06:00",
+ "circuit": {
+  "lattice": "2x3",
+  "twoB": 0,
+  "reference": 25,
+  "k": 1,
+  "dt": 0.15644331744992473,
+  "id": "B0_ref25_k1",
+  "n_logical_qubits": 20
+ },
+ "routed_cz": 5659,
+ "active_qubits": 21,
+ "alap_duration_s": 0.0004102560000000165,
+ "f_ceiling_2q": 0.00983329099417368,
+ "eps2_min": 0.0008164153781107242,
+ "f_gates_best_patch_bound": 0.002966901648761571,
+ "f_gates_layout": 6.068839922437884e-06,
+ "S_idle_echo": 24.774020718431363,
+ "f_idle_aware_echo": 1.0565381653512918e-16,
+ "t2_ratio_transferred": 0.174,
+ "S_idle_transferred": 74.16901618482065,
+ "f_idle_aware_transferred": 3.7317386879515765e-38,
+ "f_idle_aware_xy4_echo": 2.978505491054678e-16,
+ "f_idle_aware_xy4_echo_95": [
+  2.6361549905378886e-16,
+  3.3653161487415827e-16
+ ],
+ "f_idle_aware_xy4_transferred": 1.0520210757885198e-37,
+ "f_idle_aware_xy4_transferred_95": [
+  9.311013920974618e-38,
+  1.1886442800929541e-37
+ ],
+ "xy4_transfer": {
+  "R": 2.8191177457979903,
+  "R_95": [
+   2.4950873304812275,
+   3.1852291371061243
+  ],
+  "source": "validation/H0_ddtest.json data.decision.cells.T3",
+  "label": "a TRANSFER of the 2x2-measured XY4 gain (cell T3, client XY4 in windows >= 1.024 us) applied multiplicatively to the idle part and capped by the gate-only value -- not a 2x3 measurement"
+ },
+ "eps2_needed_for_f_0.05": 0.0005293748495412601,
+ "best_edge_misses_by_factor": 1.5422254737228345,
+ "verdict_flags": {
+  "f_ceiling_2q": {
+   "meets_mean_0.1": false,
+   "meets_worst_0.05": false
+  },
+  "f_gates_layout": {
+   "meets_mean_0.1": false,
+   "meets_worst_0.05": false
+  },
+  "f_gates_best_patch_bound": {
+   "meets_mean_0.1": false,
+   "meets_worst_0.05": false
+  },
+  "f_idle_aware[echo]": {
+   "meets_mean_0.1": false,
+   "meets_worst_0.05": false
+  },
+  "f_idle_aware[transferred_0.174]": {
+   "meets_mean_0.1": false,
+   "meets_worst_0.05": false
+  },
+  "f_idle_aware_xy4[echo]": {
+   "meets_mean_0.1": false,
+   "meets_worst_0.05": false
+  },
+  "f_idle_aware_xy4[transferred_0.174]": {
+   "meets_mean_0.1": false,
+   "meets_worst_0.05": false
+  }
+ },
+ "garbage_reference_hits_per_circuit": {
+  "shots": 100000,
+  "n_logical_qubits": 20,
+  "value": 0.095367431640625,
+  "formula": "shots x 2^-n: the expected number of uniform-garbage strings equal to the circuit's reference string",
+  "shots_source": "data/K1_2x3_fpilot/rehearsal_committed_record/prep/prereg_38012b45ebcd2366.json shots_per_coarse_pub"
+ },
+ "verdict": "NO-GO for 2x3 on IBM Heron (ibm_kingston) on the K0 analysis: a model verdict, not a measurement",
+ "any_estimate_meets_worst_0.05": false,
+ "closing": "Every number above is computed from the calibration record named; none is a measurement on the device.  Option B (prompts/32) is the one measurement this verdict allows: the K1 pilot as an upper limit.",
+ "created": "2026-10-06 06:03:27 UTC",
+ "script": "scripts/k0_nogo_note.py",
+ "qpu_seconds": 0
+}

@@ -44,6 +44,7 @@ GATES = [  # gate, description (manual Step 10), where it runs
     ("CV_2x2_info", "note under H0_2x2 (prompts/30 section 5): the convergence/coverage curves on the H0_2x2 counts; not a device test (saturation); CV0 only", "laptop"),
     ("Q0P_2x3_plan", "prompts/28 B3 / prompts/29 B' / prompts/30 P7: rule D3'-R (minimum 2x3 sizing), GO rule v3 on f_hat_ideal, Stage E/P v3, prereg v2, the emulated convergence check (0 HQC)", "laptop"),
     ("CV_2x3_plan", "prompts/30 (owner decision 2a): energy convergence vs shots and Krylov k and weighted coverage of the D3'-R plan in the S1 proxy emulation; re-sizing rule s in {2,4,8}", "laptop"),
+    ("H0_ddrep", "one-job replication of the XY4 gain (T0 vs T3) and of the context-aware collapse (T1) with four mechanism cells (CA+/-, XX, X(-X), CA minus two qubits) and four pulse-train pubs on the two k = 1 circuits; preregistered classes and reading rule (measurement gate)", "QPU"),
 ]
 
 
