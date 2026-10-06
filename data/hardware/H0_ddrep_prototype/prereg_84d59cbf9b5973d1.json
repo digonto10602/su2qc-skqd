@@ -1,0 +1,1065 @@
+{
+ "gate": "H0_ddrep",
+ "script": "scripts/gate_H0_ddrep.py --stage predict",
+ "created": "2026-10-06 06:13:58 UTC",
+ "commit": "61d5e6a",
+ "versions": {
+  "qiskit": "2.5.2",
+  "qiskit_aer": "0.17.2",
+  "qiskit_ibm_runtime": "0.49.0"
+ },
+ "qpu_seconds": 0,
+ "prep": "data/hardware/H0_ddrep_prototype",
+ "prep_created": "2026-10-06 06:08:42 UTC",
+ "offline_prototype": true,
+ "calibration": {
+  "backend": "ibm_kingston",
+  "fingerprint": "84d59cbf9b5973d11d2c4be496f8d55da0d6f06d3dd8a33265fb47832dd432c9",
+  "path": "data/hardware/H0_ddtest_prep/calibration_20261002T1906Z.json",
+  "last_update_date": "2026-10-02T13:06:57-06:00",
+  "stamp": "20261002T1906Z",
+  "full_record_path": "data/hardware/H0_ddtest_prep/ibm_kingston_full_20261002T1906Z.json",
+  "full_record_fingerprint": "e4ecac386f4a73277113ce72a82cdf04fe18d97349b04fa751338fea34f6c73e",
+  "live_fingerprint_at_predict": null,
+  "live_match_at_predict": null
+ },
+ "patch": [
+  59,
+  71,
+  72,
+  73,
+  74,
+  75,
+  79,
+  91,
+  92,
+  93,
+  94,
+  95
+ ],
+ "patch_reproduced": true,
+ "patch_note": "the committed H0_ddtest patch is kept (P2): T0/T1/T3 are the H0_ddtest QPYs byte for byte",
+ "selection": {
+  "rule": "P2 (prompts/32): run the R1'-pilot embedding search on the day's full record (information); keep the committed H0_ddtest patch unless (a) a qubit or edge of it is uncalibrated or (b) its f_dd_off < 0.5 x the winner's; in case (a)/(b) the winner is used and patch_reproduced is false",
+  "decision": {
+   "keep_committed": true,
+   "reasons": [],
+   "patch_reproduced": true,
+   "score_ratio_committed_over_winner": 1.0
+  },
+  "winner_f_dd_off": 0.07182598839256858,
+  "committed_f_dd_off": 0.07182598839256858,
+  "committed_rank": 1,
+  "n_scored": 750
+ },
+ "pubs": [
+  {
+   "id": "B0_ref06_k1_M1",
+   "kind": "coarse_step",
+   "cell": "M1",
+   "test": null,
+   "shots": 6000
+  },
+  {
+   "id": "B0_ref06_k1_M2",
+   "kind": "coarse_step",
+   "cell": "M2",
+   "test": null,
+   "shots": 6000
+  },
+  {
+   "id": "B0_ref06_k1_M3",
+   "kind": "coarse_step",
+   "cell": "M3",
+   "test": null,
+   "shots": 6000
+  },
+  {
+   "id": "B0_ref06_k1_M4",
+   "kind": "coarse_step",
+   "cell": "M4",
+   "test": null,
+   "shots": 6000
+  },
+  {
+   "id": "B0_ref06_k1_T0",
+   "kind": "coarse_step",
+   "cell": "T0",
+   "test": null,
+   "shots": 6000
+  },
+  {
+   "id": "B0_ref06_k1_T1",
+   "kind": "coarse_step",
+   "cell": "T1",
+   "test": null,
+   "shots": 6000
+  },
+  {
+   "id": "B0_ref06_k1_T3",
+   "kind": "coarse_step",
+   "cell": "T3",
+   "test": null,
+   "shots": 6000
+  },
+  {
+   "id": "B1_ref07_k1_M1",
+   "kind": "coarse_step",
+   "cell": "M1",
+   "test": null,
+   "shots": 6000
+  },
+  {
+   "id": "B1_ref07_k1_M2",
+   "kind": "coarse_step",
+   "cell": "M2",
+   "test": null,
+   "shots": 6000
+  },
+  {
+   "id": "B1_ref07_k1_M3",
+   "kind": "coarse_step",
+   "cell": "M3",
+   "test": null,
+   "shots": 6000
+  },
+  {
+   "id": "B1_ref07_k1_M4",
+   "kind": "coarse_step",
+   "cell": "M4",
+   "test": null,
+   "shots": 6000
+  },
+  {
+   "id": "B1_ref07_k1_T0",
+   "kind": "coarse_step",
+   "cell": "T0",
+   "test": null,
+   "shots": 6000
+  },
+  {
+   "id": "B1_ref07_k1_T1",
+   "kind": "coarse_step",
+   "cell": "T1",
+   "test": null,
+   "shots": 6000
+  },
+  {
+   "id": "B1_ref07_k1_T3",
+   "kind": "coarse_step",
+   "cell": "T3",
+   "test": null,
+   "shots": 6000
+  },
+  {
+   "id": "cal_patch_all0",
+   "kind": "readout_calibration",
+   "cell": null,
+   "test": null,
+   "shots": 6000
+  },
+  {
+   "id": "cal_patch_all1",
+   "kind": "readout_calibration",
+   "cell": null,
+   "test": null,
+   "shots": 6000
+  },
+  {
+   "id": "train_XX_128",
+   "kind": "idle_test",
+   "cell": null,
+   "test": "pulse_train",
+   "shots": 6000
+  },
+  {
+   "id": "train_XX_32",
+   "kind": "idle_test",
+   "cell": null,
+   "test": "pulse_train",
+   "shots": 6000
+  },
+  {
+   "id": "train_XX_8",
+   "kind": "idle_test",
+   "cell": null,
+   "test": "pulse_train",
+   "shots": 6000
+  },
+  {
+   "id": "train_XpXm_128",
+   "kind": "idle_test",
+   "cell": null,
+   "test": "pulse_train",
+   "shots": 6000
+  }
+ ],
+ "n_pubs": 20,
+ "shots_per_pub": 6000,
+ "total_shots": 120000,
+ "sampler_options": "--dd off --twirling off (runtime DD off: the pulses are in the circuits); raw bit strings",
+ "execution_estimate": {
+  "total_execution_s": 34.04016000000003,
+  "total_shots": 120000,
+  "rep_delay_s": 0.00025,
+  "groups": [
+   {
+    "group": "r=1",
+    "circuits": 14,
+    "shots_per_circuit": 6000,
+    "total_shots": 84000,
+    "execution_s": 24.904656000000028,
+    "duration_mean_s": 4.648400000000044e-05,
+    "duration_min_s": 4.642000000000043e-05,
+    "duration_max_s": 4.654800000000044e-05
+   },
+   {
+    "group": "idle test",
+    "circuits": 4,
+    "shots_per_circuit": 6000,
+    "total_shots": 24000,
+    "execution_s": 6.109152,
+    "duration_mean_s": 4.547999999999996e-06,
+    "duration_min_s": 2.436e-06,
+    "duration_max_s": 6.275999999999992e-06
+   },
+   {
+    "group": "readout calibration",
+    "circuits": 2,
+    "shots_per_circuit": 6000,
+    "total_shots": 12000,
+    "execution_s": 3.026352,
+    "duration_mean_s": 2.196e-06,
+    "duration_min_s": 2.18e-06,
+    "duration_max_s": 2.2119999999999997e-06
+   }
+  ],
+  "per_circuit": [
+   {
+    "id": "B0_ref06_k1_M1",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 4.642000000000043e-05,
+    "shots": 6000,
+    "execution_s": 1.7785200000000025
+   },
+   {
+    "id": "B0_ref06_k1_M2",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 4.642000000000045e-05,
+    "shots": 6000,
+    "execution_s": 1.7785200000000028
+   },
+   {
+    "id": "B0_ref06_k1_M3",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 4.642000000000045e-05,
+    "shots": 6000,
+    "execution_s": 1.7785200000000028
+   },
+   {
+    "id": "B0_ref06_k1_M4",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 4.642000000000043e-05,
+    "shots": 6000,
+    "execution_s": 1.7785200000000025
+   },
+   {
+    "id": "B0_ref06_k1_T0",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 4.642000000000044e-05,
+    "shots": 6000,
+    "execution_s": 1.7785200000000028
+   },
+   {
+    "id": "B0_ref06_k1_T1",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 4.642000000000043e-05,
+    "shots": 6000,
+    "execution_s": 1.7785200000000025
+   },
+   {
+    "id": "B0_ref06_k1_T3",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 4.642000000000043e-05,
+    "shots": 6000,
+    "execution_s": 1.7785200000000025
+   },
+   {
+    "id": "B1_ref07_k1_M1",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 4.6548000000000436e-05,
+    "shots": 6000,
+    "execution_s": 1.7792880000000026
+   },
+   {
+    "id": "B1_ref07_k1_M2",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 4.654800000000044e-05,
+    "shots": 6000,
+    "execution_s": 1.7792880000000026
+   },
+   {
+    "id": "B1_ref07_k1_M3",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 4.654800000000044e-05,
+    "shots": 6000,
+    "execution_s": 1.7792880000000026
+   },
+   {
+    "id": "B1_ref07_k1_M4",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 4.6548000000000436e-05,
+    "shots": 6000,
+    "execution_s": 1.7792880000000026
+   },
+   {
+    "id": "B1_ref07_k1_T0",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 4.654800000000044e-05,
+    "shots": 6000,
+    "execution_s": 1.7792880000000026
+   },
+   {
+    "id": "B1_ref07_k1_T1",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 4.6548000000000436e-05,
+    "shots": 6000,
+    "execution_s": 1.7792880000000026
+   },
+   {
+    "id": "B1_ref07_k1_T3",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 4.6548000000000436e-05,
+    "shots": 6000,
+    "execution_s": 1.7792880000000026
+   },
+   {
+    "id": "train_XX_128",
+    "kind": "idle_test",
+    "group": "idle test",
+    "duration_s": 6.275999999999992e-06,
+    "shots": 6000,
+    "execution_s": 1.537656
+   },
+   {
+    "id": "train_XX_32",
+    "kind": "idle_test",
+    "group": "idle test",
+    "duration_s": 3.2039999999999997e-06,
+    "shots": 6000,
+    "execution_s": 1.519224
+   },
+   {
+    "id": "train_XX_8",
+    "kind": "idle_test",
+    "group": "idle test",
+    "duration_s": 2.436e-06,
+    "shots": 6000,
+    "execution_s": 1.514616
+   },
+   {
+    "id": "train_XpXm_128",
+    "kind": "idle_test",
+    "group": "idle test",
+    "duration_s": 6.275999999999992e-06,
+    "shots": 6000,
+    "execution_s": 1.537656
+   },
+   {
+    "id": "cal_patch_all0",
+    "kind": "readout_calibration",
+    "group": "readout calibration",
+    "duration_s": 2.18e-06,
+    "shots": 6000,
+    "execution_s": 1.51308
+   },
+   {
+    "id": "cal_patch_all1",
+    "kind": "readout_calibration",
+    "group": "readout calibration",
+    "duration_s": 2.2119999999999997e-06,
+    "shots": 6000,
+    "execution_s": 1.5132720000000002
+   }
+  ],
+  "cap_s": 36.0,
+  "within_cap": true,
+  "billed_cap_s": 45.0
+ },
+ "cells": {
+  "T0": {
+   "description": "baseline: no DD (the pilot's configuration)",
+   "pass": null,
+   "parameters": {},
+   "per_circuit": {
+    "B0_ref06_k1": {
+     "id": "B0_ref06_k1_T0",
+     "n_pulses": 0,
+     "n_rz_inserted": 0,
+     "pulse_cost_nats": 0.0,
+     "null_ratio": 1.0,
+     "pulses_per_physical_qubit": {},
+     "qpy_gz_sha256": "c72b1a7b5e8b79ae2829858f1f7407130f8803da05f96c23ea89e52de00c72ea",
+     "scheduled_duration_s": 4.642000000000044e-05,
+     "p_reference": 0.8832760485718513,
+     "garbage_acceptance": 0.00927734375,
+     "dim": 38,
+     "expected_reference_hits_at_f_T0": 173.96555458710543,
+     "expected_reference_hits_from_garbage": 1.46484375,
+     "expected_reference_hits_at_f_T0_x_null": 173.96555458710543
+    },
+    "B1_ref07_k1": {
+     "id": "B1_ref07_k1_T0",
+     "n_pulses": 0,
+     "n_rz_inserted": 0,
+     "pulse_cost_nats": 0.0,
+     "null_ratio": 1.0,
+     "pulses_per_physical_qubit": {},
+     "qpy_gz_sha256": "2f25adc6aea182a4341365348bfaecb5dd96e150d64e9d9bd1f3eea123ee109d",
+     "scheduled_duration_s": 4.654800000000044e-05,
+     "p_reference": 0.8890601304523768,
+     "garbage_acceptance": 0.0048828125,
+     "dim": 20,
+     "expected_reference_hits_at_f_T0": 175.10475791289446,
+     "expected_reference_hits_from_garbage": 1.46484375,
+     "expected_reference_hits_at_f_T0_x_null": 175.10475791289446
+    }
+   },
+   "null_ratio_pooled": 1.0,
+   "expected_excess_hits_at_f_T0_x_null": 349.0703124999999
+  },
+  "T1": {
+   "description": "context-aware staggered X-DD (qiskit ContextAwareDynamicalDecoupling, min_duration 128 dt)",
+   "pass": "qiskit.transpiler.passes.ALAPScheduleAnalysis(target) + ContextAwareDynamicalDecoupling(target, ...)",
+   "parameters": {
+    "min_duration_dt": 128,
+    "skip_reset_qubits": true,
+    "pulse_alignment": 1
+   },
+   "per_circuit": {
+    "B0_ref06_k1": {
+     "id": "B0_ref06_k1_T1",
+     "n_pulses": 862,
+     "n_rz_inserted": 0,
+     "pulse_cost_nats": 0.2030620601373947,
+     "null_ratio": 0.816227584657694,
+     "pulses_per_physical_qubit": {
+      "59": 70,
+      "71": 48,
+      "72": 24,
+      "73": 42,
+      "74": 90,
+      "75": 72,
+      "79": 30,
+      "91": 118,
+      "92": 90,
+      "93": 52,
+      "94": 96,
+      "95": 130
+     },
+     "qpy_gz_sha256": "10eeea87423513809ac9a01e5dacff8cfa1bffbe71f06f8acbcf662d4b473bbf",
+     "scheduled_duration_s": 4.642000000000043e-05,
+     "p_reference": 0.8832760485718513,
+     "garbage_acceptance": 0.00927734375,
+     "dim": 38,
+     "expected_reference_hits_at_f_T0": 173.96555458710543,
+     "expected_reference_hits_from_garbage": 1.46484375,
+     "expected_reference_hits_at_f_T0_x_null": 141.9954844342693
+    },
+    "B1_ref07_k1": {
+     "id": "B1_ref07_k1_T1",
+     "n_pulses": 862,
+     "n_rz_inserted": 0,
+     "pulse_cost_nats": 0.2030620601373947,
+     "null_ratio": 0.816227584657694,
+     "pulses_per_physical_qubit": {
+      "59": 70,
+      "71": 48,
+      "72": 24,
+      "73": 42,
+      "74": 90,
+      "75": 72,
+      "79": 30,
+      "91": 118,
+      "92": 90,
+      "93": 52,
+      "94": 96,
+      "95": 130
+     },
+     "qpy_gz_sha256": "f8c920f58d1c399fc09d03524208b6a5b5e72585a290272559fd60294ed0791a",
+     "scheduled_duration_s": 4.6548000000000436e-05,
+     "p_reference": 0.8890601304523768,
+     "garbage_acceptance": 0.0048828125,
+     "dim": 20,
+     "expected_reference_hits_at_f_T0": 175.10475791289446,
+     "expected_reference_hits_from_garbage": 1.46484375,
+     "expected_reference_hits_at_f_T0_x_null": 142.92533361331206
+    }
+   },
+   "null_ratio_pooled": 0.816227584657694,
+   "expected_excess_hits_at_f_T0_x_null": 284.92081804758135
+  },
+  "T3": {
+   "description": "XY4 in windows >= 8 x the sequence only (ratio 8.0, >= 1.024 us)",
+   "pass": "qiskit_ibm_runtime.transpiler.passes.scheduling.ALAPScheduleAnalysis(durations) + PadDynamicalDecoupling(durations, [X, Y, X, Y], ...); Y -> rz(-pi/2) x rz(pi/2)",
+   "parameters": {
+    "sequence": "XY4",
+    "sequence_min_length_ratios": [
+     8.0
+    ],
+    "pulse_alignment": 1,
+    "skip_reset_qubits": true,
+    "durations_from": "20261002T1906Z"
+   },
+   "per_circuit": {
+    "B0_ref06_k1": {
+     "id": "B0_ref06_k1_T3",
+     "n_pulses": 244,
+     "n_rz_inserted": 0,
+     "pulse_cost_nats": 0.05721777415270082,
+     "null_ratio": 0.9443883835907565,
+     "pulses_per_physical_qubit": {
+      "59": 12,
+      "71": 28,
+      "72": 20,
+      "73": 20,
+      "74": 24,
+      "75": 24,
+      "79": 8,
+      "91": 32,
+      "92": 16,
+      "93": 24,
+      "94": 20,
+      "95": 16
+     },
+     "qpy_gz_sha256": "1fc357184b38264c96cd7bf05904711a7328fb38f3b67faeede5ae778d62ccd1",
+     "scheduled_duration_s": 4.642000000000043e-05,
+     "p_reference": 0.8832760485718513,
+     "garbage_acceptance": 0.00927734375,
+     "dim": 38,
+     "expected_reference_hits_at_f_T0": 173.96555458710543,
+     "expected_reference_hits_from_garbage": 1.46484375,
+     "expected_reference_hits_at_f_T0_x_null": 164.291048896986
+    },
+    "B1_ref07_k1": {
+     "id": "B1_ref07_k1_T3",
+     "n_pulses": 244,
+     "n_rz_inserted": 0,
+     "pulse_cost_nats": 0.05721777415270082,
+     "null_ratio": 0.9443883835907565,
+     "pulses_per_physical_qubit": {
+      "59": 12,
+      "71": 28,
+      "72": 20,
+      "73": 20,
+      "74": 24,
+      "75": 24,
+      "79": 8,
+      "91": 32,
+      "92": 16,
+      "93": 24,
+      "94": 20,
+      "95": 16
+     },
+     "qpy_gz_sha256": "0b1656d9c7403a52b48a2bec84cbb85f65d56cfd10b23b519bec544420eb3ba1",
+     "scheduled_duration_s": 4.6548000000000436e-05,
+     "p_reference": 0.8890601304523768,
+     "garbage_acceptance": 0.0048828125,
+     "dim": 20,
+     "expected_reference_hits_at_f_T0": 175.10475791289446,
+     "expected_reference_hits_from_garbage": 1.46484375,
+     "expected_reference_hits_at_f_T0_x_null": 165.36689928440913
+    }
+   },
+   "null_ratio_pooled": 0.9443883835907564,
+   "expected_excess_hits_at_f_T0_x_null": 329.6579481813951
+  },
+  "M1": {
+   "description": "CA +/-: T1's pulse trains with alternating signs (every 2nd inserted x per qubit -> rz(-pi) x rz(pi) = -X); timing identical to T1",
+   "pass": "alternate_signs(T1, T0)",
+   "parameters": {
+    "rule": "every 2nd inserted x per qubit -> rz(-pi) x rz(+pi)"
+   },
+   "per_circuit": {
+    "B0_ref06_k1": {
+     "id": "B0_ref06_k1_M1",
+     "n_pulses": 862,
+     "n_rz_inserted": 862,
+     "pulse_cost_nats": 0.2030620601373947,
+     "null_ratio": 0.816227584657694,
+     "pulses_per_physical_qubit": {
+      "59": 70,
+      "71": 48,
+      "72": 24,
+      "73": 42,
+      "74": 90,
+      "75": 72,
+      "79": 30,
+      "91": 118,
+      "92": 90,
+      "93": 52,
+      "94": 96,
+      "95": 130
+     },
+     "qpy_gz_sha256": "3d950b468acd145bcaf9c8abdb4ad14d9d44604abf0f6af0fe6e78ecccdf664b",
+     "scheduled_duration_s": 4.642000000000043e-05,
+     "p_reference": 0.8832760485718513,
+     "garbage_acceptance": 0.00927734375,
+     "dim": 38,
+     "expected_reference_hits_at_f_T0": 173.96555458710543,
+     "expected_reference_hits_from_garbage": 1.46484375,
+     "expected_reference_hits_at_f_T0_x_null": 141.9954844342693
+    },
+    "B1_ref07_k1": {
+     "id": "B1_ref07_k1_M1",
+     "n_pulses": 862,
+     "n_rz_inserted": 862,
+     "pulse_cost_nats": 0.2030620601373947,
+     "null_ratio": 0.816227584657694,
+     "pulses_per_physical_qubit": {
+      "59": 70,
+      "71": 48,
+      "72": 24,
+      "73": 42,
+      "74": 90,
+      "75": 72,
+      "79": 30,
+      "91": 118,
+      "92": 90,
+      "93": 52,
+      "94": 96,
+      "95": 130
+     },
+     "qpy_gz_sha256": "03a79d05948419d93c4374ed31d73ffcefe20469433f9f9d09610a708516b8cd",
+     "scheduled_duration_s": 4.6548000000000436e-05,
+     "p_reference": 0.8890601304523768,
+     "garbage_acceptance": 0.0048828125,
+     "dim": 20,
+     "expected_reference_hits_at_f_T0": 175.10475791289446,
+     "expected_reference_hits_from_garbage": 1.46484375,
+     "expected_reference_hits_at_f_T0_x_null": 142.92533361331206
+    }
+   },
+   "null_ratio_pooled": 0.816227584657694,
+   "expected_excess_hits_at_f_T0_x_null": 284.92081804758135
+  },
+  "M2": {
+   "description": "XX: X-only CPMG pairs (qiskit_ibm_runtime PadDynamicalDecoupling [X, X], ratio 4.0) on T2's window set",
+   "pass": "qiskit_ibm_runtime.transpiler.passes.scheduling.ALAPScheduleAnalysis(durations) + PadDynamicalDecoupling(durations, [X, X], ...)",
+   "parameters": {
+    "sequence": "XX",
+    "sequence_min_length_ratios": [
+     4.0
+    ],
+    "pulse_alignment": 1,
+    "skip_reset_qubits": true,
+    "durations_from": "20261002T1906Z"
+   },
+   "per_circuit": {
+    "B0_ref06_k1": {
+     "id": "B0_ref06_k1_M2",
+     "n_pulses": 388,
+     "n_rz_inserted": 0,
+     "pulse_cost_nats": 0.08631318031860735,
+     "null_ratio": 0.9173069037614662,
+     "pulses_per_physical_qubit": {
+      "59": 14,
+      "71": 20,
+      "72": 28,
+      "73": 48,
+      "74": 42,
+      "75": 26,
+      "79": 54,
+      "91": 24,
+      "92": 36,
+      "93": 38,
+      "94": 50,
+      "95": 8
+     },
+     "qpy_gz_sha256": "7d9c5f8d3433d75d5597b2190070414fc4f05a706cad0c70f6ccea4756f640c4",
+     "scheduled_duration_s": 4.642000000000045e-05,
+     "p_reference": 0.8832760485718513,
+     "garbage_acceptance": 0.00927734375,
+     "dim": 38,
+     "expected_reference_hits_at_f_T0": 173.96555458710543,
+     "expected_reference_hits_from_garbage": 1.46484375,
+     "expected_reference_hits_at_f_T0_x_null": 159.579804239444
+    },
+    "B1_ref07_k1": {
+     "id": "B1_ref07_k1_M2",
+     "n_pulses": 390,
+     "n_rz_inserted": 0,
+     "pulse_cost_nats": 0.08678000994167577,
+     "null_ratio": 0.9168787776640926,
+     "pulses_per_physical_qubit": {
+      "59": 14,
+      "71": 20,
+      "72": 28,
+      "73": 48,
+      "74": 42,
+      "75": 26,
+      "79": 56,
+      "91": 24,
+      "92": 36,
+      "93": 38,
+      "94": 50,
+      "95": 8
+     },
+     "qpy_gz_sha256": "015a0d70f04c505de791e17d1d7e64e1255fd6bd448c8847c16ddbedb1e2ea32",
+     "scheduled_duration_s": 4.654800000000044e-05,
+     "p_reference": 0.8890601304523768,
+     "garbage_acceptance": 0.0048828125,
+     "dim": 20,
+     "expected_reference_hits_at_f_T0": 175.10475791289446,
+     "expected_reference_hits_from_garbage": 1.46484375,
+     "expected_reference_hits_at_f_T0_x_null": 160.5498363983415
+    }
+   },
+   "null_ratio_pooled": 0.9170921421104399,
+   "expected_excess_hits_at_f_T0_x_null": 320.12964063778554
+  },
+  "M3": {
+   "description": "X(-X): M2 with alternating signs; timing identical to M2",
+   "pass": "alternate_signs(M2, T0)",
+   "parameters": {
+    "rule": "every 2nd inserted x per qubit -> rz(-pi) x rz(+pi)"
+   },
+   "per_circuit": {
+    "B0_ref06_k1": {
+     "id": "B0_ref06_k1_M3",
+     "n_pulses": 388,
+     "n_rz_inserted": 388,
+     "pulse_cost_nats": 0.08631318031860735,
+     "null_ratio": 0.9173069037614662,
+     "pulses_per_physical_qubit": {
+      "59": 14,
+      "71": 20,
+      "72": 28,
+      "73": 48,
+      "74": 42,
+      "75": 26,
+      "79": 54,
+      "91": 24,
+      "92": 36,
+      "93": 38,
+      "94": 50,
+      "95": 8
+     },
+     "qpy_gz_sha256": "ec543867337a236d9f2b52d002870afdafa56ab6b4c7746672e8f40ebeea3656",
+     "scheduled_duration_s": 4.642000000000045e-05,
+     "p_reference": 0.8832760485718513,
+     "garbage_acceptance": 0.00927734375,
+     "dim": 38,
+     "expected_reference_hits_at_f_T0": 173.96555458710543,
+     "expected_reference_hits_from_garbage": 1.46484375,
+     "expected_reference_hits_at_f_T0_x_null": 159.579804239444
+    },
+    "B1_ref07_k1": {
+     "id": "B1_ref07_k1_M3",
+     "n_pulses": 390,
+     "n_rz_inserted": 390,
+     "pulse_cost_nats": 0.08678000994167577,
+     "null_ratio": 0.9168787776640926,
+     "pulses_per_physical_qubit": {
+      "59": 14,
+      "71": 20,
+      "72": 28,
+      "73": 48,
+      "74": 42,
+      "75": 26,
+      "79": 56,
+      "91": 24,
+      "92": 36,
+      "93": 38,
+      "94": 50,
+      "95": 8
+     },
+     "qpy_gz_sha256": "206e477deb3f16cd8a9996766dfe41a8f7373838e8b110d6ce4dacbf9c8dcede",
+     "scheduled_duration_s": 4.654800000000044e-05,
+     "p_reference": 0.8890601304523768,
+     "garbage_acceptance": 0.0048828125,
+     "dim": 20,
+     "expected_reference_hits_at_f_T0": 175.10475791289446,
+     "expected_reference_hits_from_garbage": 1.46484375,
+     "expected_reference_hits_at_f_T0_x_null": 160.5498363983415
+    }
+   },
+   "null_ratio_pooled": 0.9170921421104399,
+   "expected_excess_hits_at_f_T0_x_null": 320.12964063778554
+  },
+  "M4": {
+   "description": "CA minus the two hottest qubits: T1 with every inserted pulse removed from the two qubits that carry the most T1 pulses (x -> delay of the x duration)",
+   "pass": "strip_pulses_on(T1, T0, hot)",
+   "parameters": {
+    "hot_qubits": [
+     91,
+     95
+    ],
+    "replacement": "delay of the op's duration"
+   },
+   "per_circuit": {
+    "B0_ref06_k1": {
+     "id": "B0_ref06_k1_M4",
+     "n_pulses": 614,
+     "n_rz_inserted": 0,
+     "pulse_cost_nats": 0.1317506534592792,
+     "null_ratio": 0.8765595349199325,
+     "pulses_per_physical_qubit": {
+      "59": 70,
+      "71": 48,
+      "72": 24,
+      "73": 42,
+      "74": 90,
+      "75": 72,
+      "79": 30,
+      "92": 90,
+      "93": 52,
+      "94": 96
+     },
+     "qpy_gz_sha256": "5e207c0c948647f1acc21dcd3206181f54317f6e2a2b1b04a4044700e9367b93",
+     "scheduled_duration_s": 4.642000000000043e-05,
+     "p_reference": 0.8832760485718513,
+     "garbage_acceptance": 0.00927734375,
+     "dim": 38,
+     "expected_reference_hits_at_f_T0": 173.96555458710543,
+     "expected_reference_hits_from_garbage": 1.46484375,
+     "expected_reference_hits_at_f_T0_x_null": 152.49116562096128
+    },
+    "B1_ref07_k1": {
+     "id": "B1_ref07_k1_M4",
+     "n_pulses": 614,
+     "n_rz_inserted": 0,
+     "pulse_cost_nats": 0.1317506534592792,
+     "null_ratio": 0.8765595349199325,
+     "pulses_per_physical_qubit": {
+      "59": 70,
+      "71": 48,
+      "72": 24,
+      "73": 42,
+      "74": 90,
+      "75": 72,
+      "79": 30,
+      "92": 90,
+      "93": 52,
+      "94": 96
+     },
+     "qpy_gz_sha256": "fe3e4f04c15f1e8129974ac5ffd099e9b96135020beb80fddd455846c988e28c",
+     "scheduled_duration_s": 4.6548000000000436e-05,
+     "p_reference": 0.8890601304523768,
+     "garbage_acceptance": 0.0048828125,
+     "dim": 20,
+     "expected_reference_hits_at_f_T0": 175.10475791289446,
+     "expected_reference_hits_from_garbage": 1.46484375,
+     "expected_reference_hits_at_f_T0_x_null": 153.48974515839416
+    }
+   },
+   "null_ratio_pooled": 0.8765595349199327,
+   "expected_excess_hits_at_f_T0_x_null": 305.98091077935544
+  }
+ },
+ "power": {
+  "X_per_cell_at_f_T0": 349.0703124999999,
+  "f_T0": 0.04003148575751112,
+  "f_T0_source": "validation/H0_ddtest.json data.decision.cells.T0.f_pool",
+  "sigma_lnR": 0.07569349186802506,
+  "factor_95": [
+   0.8621236975932959,
+   1.1599263571939846
+  ],
+  "lower_bound_of_a_true_1.25": 1.0776546219916199,
+  "decidable_at_1.25": true,
+  "R2_tolerance_expected": 0.1726758282640809,
+  "note": "X = sum_c 6000 x 0.82 x f_T0 x p_ref,c; sigma_lnR = sqrt(1/X + 1/X); R2 tolerance at R_T3 = R_old"
+ },
+ "ddtest_reference": {
+  "T0": {
+   "R": 1.0,
+   "R_95": null,
+   "f_pool": 0.04003148575751112,
+   "excess_hits": 349.0703125
+  },
+  "T1": {
+   "R": 0.011660437322351783,
+   "R_95": [
+    0.004388876946226437,
+    0.03097963333544772
+   ],
+   "f_pool": 0.00046678463059607653,
+   "excess_hits": 4.0703125
+  },
+  "T2": {
+   "R": 2.7933349745977036,
+   "R_95": [
+    2.4719035118768797,
+    3.1565634511301224
+   ],
+   "f_pool": 0.11182134925156569,
+   "excess_hits": 975.0703125
+  },
+  "T3": {
+   "R": 2.8191177457979903,
+   "R_95": [
+    2.4950873304812275,
+    3.1852291371061243
+   ],
+   "f_pool": 0.11285347188965912,
+   "excess_hits": 984.0703125
+  }
+ },
+ "class_rule": "Classes per circuit cell on R_i = X_i / X_0 (gate_H0_ddtest.ratio_interval, Poisson 95 %): COLLAPSED iff R_hi95 < 0.25; INTACT iff R_lo95 > 1; INTERMEDIATE otherwise.  If X_i <= 0 (no excess reference hits) the interval is [0, U_i / L_0] with U_i = the Garwood 97.5 % upper limit of the cell's pooled reference count minus its garbage expectation and L_0 = the Garwood 2.5 % lower limit of T0's count minus T0's garbage expectation (executor addition fixed before data: the ratio_interval of gate_H0_ddtest is undefined there).",
+ "class_thresholds": {
+  "COLLAPSED_hi95_below": 0.25,
+  "INTACT_lo95_above": 1.0
+ },
+ "prediction_table": {
+  "T1": {
+   "H_A": "COLLAPSED",
+   "H_B": "COLLAPSED",
+   "H_D": "COLLAPSED"
+  },
+  "M1": {
+   "H_A": "INTACT",
+   "H_B": "COLLAPSED",
+   "H_D": "COLLAPSED"
+  },
+  "M2": {
+   "H_A": "not INTACT, and R_M2 < R_M3",
+   "H_B": "INTACT",
+   "H_D": "INTACT"
+  },
+  "M3": {
+   "H_A": "INTACT",
+   "H_B": "INTACT",
+   "H_D": "INTACT"
+  },
+  "M4": {
+   "H_A": "not INTACT",
+   "H_B": "not INTACT",
+   "H_D": "INTACT"
+  },
+  "P4 trains": {
+   "H_A": "epsilon_q >= 0.01 rad on >= 6 of 12 qubits, XX-128 above XpXm-128 by > 0.05",
+   "H_B": "all four at the floor (readout + n c_q)",
+   "H_D": "c_95 or c_91 > 3 x_error, the others at x_error"
+  }
+ },
+ "reading_rule": "M1 INTACT -> H_A; M1 COLLAPSED and M4 INTACT -> H_D; M1 COLLAPSED and M4 not INTACT -> H_B; any other pattern -> 'no single hypothesis' (reported as the table of classes).  The P4 trains are read beside it as the independent measurement of H_A's parameter: the pair (circuit reading, epsilon reading) is the result.  M2/M3: ln(R_M3 / R_M2) with sigma sqrt(1/X_M3 + 1/X_M2); one-sided z > 1.645 = 'compensation matters'.  M3 against T3: information.",
+ "train_reading_rule": "Executor operationalisation of P4's table (fixed before data): per qubit P1 = readout-corrected P(1) (p - (1 - P00)) / (P00 + P11 - 1) with the job's own confusion diagonal; c_q = (P1(XpXm-128) - P1(XX-8)) / 120; floor_n = P1(XX-8) + (n - 8) c_q; epsilon_q = argmin over [0, pi/8] (grid 1e-4 rad) of sum_{n in 8, 32, 128} (P1(XX-n) - floor_n - sin^2(n epsilon / 2))^2; 68 % intervals by a parametric bootstrap (2000 draws, seed 32: binomial train and confusion counts).  H_A pattern: epsilon_q >= 0.01 on >= 6 of 12 qubits AND P1(XX-128) - P1(XpXm-128) > 0.05 on >= 6 of 12 qubits.  H_B pattern ('all four at the floor'): on every qubit P1(XX-128) - P1(XpXm-128) <= 0.05 and P1(XX-32) - floor_32 <= 0.05.  H_D pattern: c_q > 3 x_error_q on at least one of the two hot qubits and c_q <= 3 x_error_q on every other qubit (x_error of the preregistered patch record).",
+ "train_constants": {
+  "eps_HA": 0.01,
+  "n_qubits_HA": 6,
+  "train_excess_HA": 0.05,
+  "c_factor_HD": 3.0
+ },
+ "replication_verdicts": "R1 gain replicated: T3 qualifies under the H0_ddtest adoption rule (R_T3,lo95 > 1 and R_T3 >= 1.25).  R2 magnitude consistent: |ln R_T3,new - ln R_T3,old| <= 1.96 sqrt(sigma_new^2 + sigma_old^2), sigma_new = sqrt(1/X_T3 + 1/X_T0), sigma_old from H0_ddtest's T3 interval.  C1 collapse replicated: T1 is COLLAPSED.  The signed bar is read on T3 (information) on f_hit and on f_hat_ideal = f_hit / r_nc (owner decision 1a).",
+ "R2": {
+  "lnR_old": 1.0364239799003394,
+  "sigma_old": 0.06229719019106805,
+  "source": "validation/H0_ddtest.json data.decision.cells.T3 (R, R_95)",
+  "sigma_old_rule": "(ln hi - ln lo) / (2 x 1.959964)"
+ },
+ "adoption_rule_reused": "A cell i in {T1, T2, T3} qualifies iff R_i,lo95 > 1 and R_i >= 1.25.  Among qualifying cells the one with the largest point R_i is adopted for Stage R; if none qualifies, Stage R runs the baseline (T0).  Signed bar on the adopted cell: GO iff f_adopted,lo95 >= 0.1, NO-GO iff f_adopted,hi95 < 0.1, AMBIGUOUS otherwise (information for the owner; Stage R proceeds in every case under the owner's decision).",
+ "ratio_rule_reused": "R_i = f_i / f_0 = X_i / X_0 (pooled excess reference counts over the two k = 1 circuits: same shots, same p_ref, same readout factor); 95 % interval exp(ln R_i +- 1.96 sqrt(1/X_i + 1/X_0)) (Poisson on the excess counts, the garbage expectation subtracted as in the pilot); a parametric bootstrap (10 000 draws, seed 11) beside it as a cross-check, never as the verdict.",
+ "H_A_bounds_T1": {
+  "per_circuit": {
+   "B0_ref06_k1": {
+    "per_window_coherent_8_pulse_windows": 0.0865353640036593,
+    "fully_coherent_linear": 3.4277084871866835e-09,
+    "eps_rule": "eps_q = sqrt(6 x_error_q) on the record; coherent inside 8-pulse windows and random-walk across them (first) / coherent over the whole circuit (second)"
+   },
+   "B1_ref07_k1": {
+    "per_window_coherent_8_pulse_windows": 0.0865353640036593,
+    "fully_coherent_linear": 3.4277084871866835e-09,
+    "eps_rule": "eps_q = sqrt(6 x_error_q) on the record; coherent inside 8-pulse windows and random-walk across them (first) / coherent over the whole circuit (second)"
+   }
+  },
+  "ddtest_measured_R_T1": 0.011660437322351783,
+  "ddtest_null_T1": 0.816227584657694,
+  "x_error_equals_sx_error_on_patch": true
+ },
+ "hot_qubits": [
+  91,
+  95
+ ],
+ "identities": {
+  "B0_ref06_k1": {
+   "M1_x_starts_equal_T1": true,
+   "M1_wrapped": 431,
+   "M3_x_starts_equal_M2": true,
+   "M3_wrapped": 194,
+   "M2_windows_equal_T2_rebuilt": true,
+   "M2_windows_equal_T2_committed": true,
+   "M2_n_windows": 194,
+   "T2_n_windows": 194,
+   "M2_pulses": 388,
+   "T2_pulses": 776,
+   "M2_pulses_equal_half_T2": true,
+   "M4_inserted_equal_T1_minus_hot": true,
+   "M4_removed": 248,
+   "hot": [
+    91,
+    95
+   ],
+   "ok": true
+  },
+  "B1_ref07_k1": {
+   "M1_x_starts_equal_T1": true,
+   "M1_wrapped": 431,
+   "M3_x_starts_equal_M2": true,
+   "M3_wrapped": 195,
+   "M2_windows_equal_T2_rebuilt": true,
+   "M2_windows_equal_T2_committed": true,
+   "M2_n_windows": 195,
+   "T2_n_windows": 195,
+   "M2_pulses": 390,
+   "T2_pulses": 780,
+   "M2_pulses_equal_half_T2": true,
+   "M4_inserted_equal_T1_minus_hot": true,
+   "M4_removed": 248,
+   "hot": [
+    91,
+    95
+   ],
+   "ok": true
+  }
+ },
+ "reserve": null,
+ "K1_estimate_s": 182.44880000000325,
+ "K1_estimate_source": "data/K1_2x3_fpilot/rehearsal_committed_record/prep/prereg_38012b45ebcd2366.json",
+ "planner_expectation": "T3 replicates (R about 2.8); T1 collapses again; the mechanism reading is open -- the planner's own bound shows H_A at the RB-level epsilon cannot reach 0.012 unless the errors are coherent across windows or the x pulse is worse than its aliased record value, which the trains measure.",
+ "no_aer_prediction": "no Aer prediction of a DD gain (P10 of prompts/24: Aer cannot show one)",
+ "runtime_s": 2.840191602706909,
+ "readout_expected_live": {
+  "per_qubit": {
+   "59": 0.995849609375,
+   "71": 0.9952392578125,
+   "72": 0.9525146484375,
+   "73": 0.985595703125,
+   "74": 0.990478515625,
+   "75": 0.9893798828125,
+   "79": 0.9942626953125,
+   "91": 0.9932861328125,
+   "92": 0.969482421875,
+   "93": 0.9970703125,
+   "94": 0.9881591796875,
+   "95": 0.9873046875
+  },
+  "min": 0.9525146484375,
+  "min_qubit": 72,
+  "source": "1 - measure_error of the preregistered patch record (prompts/21a item 2)"
+ }
+}
