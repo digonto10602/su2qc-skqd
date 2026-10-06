@@ -1,0 +1,137 @@
+{
+ "created": "2026-10-06 08:06:07 UTC",
+ "script": "scripts/h0_submit.py",
+ "arguments": {
+  "prep": "data/hardware/K1_2x3_prep",
+  "out": "data/hardware/K1_2x3_dryrun",
+  "shots": 1,
+  "shots_by_rep": null,
+  "shots_plan": null,
+  "cal_shots": 2000,
+  "dd": "off",
+  "twirling": "off",
+  "job_tags": null,
+  "prereg": null,
+  "dry_run": true,
+  "backend": null,
+  "submit": false,
+  "retrieve": false,
+  "status": false,
+  "record_calibration": false,
+  "resume": false,
+  "wait": 0.0,
+  "reps": null,
+  "only": [
+   "cal_patch_all0",
+   "cal_patch_all1"
+  ],
+  "no_calibration": false,
+  "max_pubs_per_job": 4,
+  "max_qpu_seconds": 120.0,
+  "predict_from": null,
+  "seed": 11
+ },
+ "commit": "f8df126",
+ "dry_run": true,
+ "backend": "AerSimulator.from_backend(FakeKingston) [local testing mode]",
+ "calibration_last_update_date": null,
+ "prediction": null,
+ "prep": "data/hardware/K1_2x3_prep",
+ "prep_created": "2026-10-06 08:05:14 UTC",
+ "sampler": "qiskit_ibm_runtime.SamplerV2",
+ "sampler_options": {
+  "default_shots": 1,
+  "dynamical_decoupling": {
+   "enable": false
+  },
+  "twirling": {
+   "enable_gates": false,
+   "enable_measure": false
+  },
+  "error_mitigation": "none: SamplerV2 returns raw bit strings; no resilience level, no readout mitigation of expectation values (prompts/07 step 2)"
+ },
+ "job_tags": null,
+ "prereg": null,
+ "prereg_calibration_fingerprint": null,
+ "prereg_fingerprint_match": null,
+ "sampler_options_effective": false,
+ "sampler_options_note": "qiskit-ibm-runtime local testing mode ignores dynamical decoupling and twirling ('Options ... have no effect in local testing mode'): the dry run exercises the submission path and the data format, not the pulse-level options, which apply only on the real backend",
+ "shots_by_repetition": {
+  "all": 1
+ },
+ "shots_plan": null,
+ "shots_plan_calibration_last_update_date": null,
+ "shots_plan_stamp": null,
+ "calibration_fingerprint": null,
+ "prediction_calibration_fingerprint": null,
+ "shots_plan_calibration_fingerprint": null,
+ "fingerprint_match": null,
+ "stamp_match": null,
+ "f_live_vs_plan_max_abs_diff": null,
+ "f_live_vs_prediction_max_abs_diff": null,
+ "calibration_at_submission_file": null,
+ "shots_by_circuit": null,
+ "calibration_shots": 2000,
+ "n_circuits": 2,
+ "circuits": [
+  {
+   "id": "cal_patch_all0",
+   "kind": "readout_calibration",
+   "shots": 2000
+  },
+  {
+   "id": "cal_patch_all1",
+   "kind": "readout_calibration",
+   "shots": 2000
+  }
+ ],
+ "preflight": null,
+ "jobs": [
+  {
+   "group_shots": 2000,
+   "chunk_index": 0,
+   "n_pubs": 2,
+   "circuit_ids": [
+    "cal_patch_all0",
+    "cal_patch_all1"
+   ],
+   "job_id": "335eb128-df53-4173-9e74-f13e7bb0f3a1",
+   "submitted": "2026-10-06 08:06:07 UTC",
+   "status": "DONE",
+   "usage_s": 0.0,
+   "usage_raw": 0,
+   "metrics": {
+    "repr": "{'bss': {'seconds': 0}, 'usage': {'quantum_seconds': 0, 'seconds': 0}, 'timestamps': {'created': datetime.datetime(2026, 10, 6, 2, 6, 10, 790031), 'running': datetime.datetime(2026, 10, 6, 2, 6, 10, 790035), 'finished': datetime.datetime(2026, 10, 6, 2, 6, 10, 790036)}}"
+   },
+   "retrieved": "2026-10-06 08:12:39 UTC",
+   "counts_written": true,
+   "counts_files_written": 2,
+   "counts_files_skipped_existing": 0
+  }
+ ],
+ "total_usage_s": 0.0,
+ "runtime_s": 401.614501953125,
+ "noiseless_coarse_path_check": {
+  "added_by": "scripts/gate_K1_2x3_fpilot.py --stage dryrun",
+  "created": "2026-10-06 08:13:17 UTC",
+  "entries": [
+   {
+    "circuit_id": "B0_ref117_k1",
+    "shots": 400,
+    "seed": 111,
+    "norm": 0.9999999999998068,
+    "seconds": 19.15494155883789
+   },
+   {
+    "circuit_id": "B1_ref29_k1",
+    "shots": 400,
+    "seed": 112,
+    "norm": 0.9999999999997935,
+    "seconds": 17.92764973640442
+   }
+  ],
+  "readout_pubs_through_h0_submit_s": 403.0651071071625,
+  "design": "The 2x2 dry runs sent every pub through h0_submit.py --dry-run (Aer on the FakeKingston snapshot noise).  At 2x3 the routed circuits occupy 21-25 active qubits and every gate and delay carries a non-unitary noise op that breaks Aer's gate fusion: one noisy shot of one coarse pub costs minutes on this laptop (measured: noisy_cost_measured), so the few hundred shots a path check of the statistic needs are many hours, and at the device f ~ 1e-5 a noisy run would contain no reference hit anyway.  The path check is therefore split: the readout pubs go through h0_submit.py --dry-run unchanged (the submission path, session.json, the raw counts format, the dry-run K3); the coarse pubs are sampled noiselessly from their exact output distribution (a few hundred shots), which checks that the decoder and the reference-string statistic find the reference string with probability p_ref (bit order, measurement map, sector) and return 0.82 f_hit = 1 for a clean run.  A noisy dry run of the coarse pubs at a few hundred shots needs a GPU (RTX 3070 desktop or the Slurm GPU cluster); Perlmutter is not available for this gate.",
+  "noisy_cost_measured": null
+ }
+}

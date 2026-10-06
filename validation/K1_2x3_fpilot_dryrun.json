@@ -1,0 +1,1024 @@
+{
+ "gate": "K1_2x3_fpilot_dryrun",
+ "title": "the 2x3 clean-fraction pilot on ibm_kingston: two signed k = 1 circuits (largest p_ref per sector), routed as gate K0, ALAP + client XY4 (T3), 1e5 shots each, read by the preregistered GO-B / GO-A / NO-GO rule on f_hat_ideal = f_hit / r_nc (measurement gate) -- DRY RUN (path check)",
+ "status": "PASS",
+ "criteria": [
+  {
+   "name": "K1 preregistration before data",
+   "value": "n/a (dry run)",
+   "threshold": "device run only",
+   "passed": true
+  },
+  {
+   "name": "K2 one job DONE, usage <= 300 s, estimate <= 300 s, 4 counts files x 1e5 shots, DD/twirling off",
+   "value": "n/a (dry run)",
+   "threshold": "device run only",
+   "passed": true
+  },
+  {
+   "name": "K3 readout (dry run: agreement with the snapshot's readout model within 3 binomial sigma, the prompts/21a form; the device criterion >= 0.9 is evaluated only on device counts)",
+   "value": "20/20 qubits within 3 sigma; min diagonal 0.8470 (information)",
+   "threshold": "all within 3 sigma",
+   "passed": true
+  },
+  {
+   "name": "K4 decoder round trip over every accepted string of the coarse pubs",
+   "value": "0 mismatches over 12 strings",
+   "threshold": "0",
+   "passed": true
+  },
+  {
+   "name": "K5 circuits: exactness vs the exact Krylov state (< 1e-10, leakage < 1e-9) before and after T3, ALAP with no moved op and duration = unscheduled T_total, DD statevector = base, no pulses in leading / trailing windows, kingston basis",
+   "value": "2/2; max |d| 2.3e-12, max leak 2.1e-13",
+   "threshold": "all hold",
+   "passed": true
+  },
+  {
+   "name": "K6 dry-run gate PASS",
+   "value": "n/a (this is the dry run)",
+   "threshold": "device run only",
+   "passed": true
+  },
+  {
+   "name": "KD noiseless path check of the coarse pubs: every shot accepted into its sector, reference hits within 3 binomial sigma of N p_ref, pooled 0.82 x f_hit 95 % interval contains 1 (a clean run)",
+   "value": "B0_ref117_k1: z 0.90, all accepted True; B1_ref29_k1: z 1.29, all accepted True; 0.82 f_hit 95 % [0.944, 1.090]",
+   "threshold": "all hold",
+   "passed": true
+  },
+  {
+   "name": "K7 data.decision complete and the decision recomputed from the recorded rows",
+   "value": "complete True; decision GO-B (recomputed GO-B)",
+   "threshold": "complete and equal",
+   "passed": true
+  },
+  {
+   "name": "K8 pytest -q tests and scripts/check_package.py",
+   "value": "pytest: 342 passed, 19 skipped, 62 warnings in 416.75s (0:06:56); check_package rc 0",
+   "threshold": "all pass",
+   "passed": true
+  }
+ ],
+ "data": {
+  "what_pass_means": "preregistered, measured, verified, consistent; there is no criterion on f or on the decision (a NO-GO pilot is a PASS gate)",
+  "dry_run": true,
+  "versions": {
+   "qiskit": "2.5.2",
+   "qiskit_aer": "0.17.2",
+   "qiskit_ibm_runtime": "0.49.0",
+   "numpy": "2.5.2"
+  },
+  "prereg": "data/hardware/K1_2x3_prep/prereg_99035ef05c36019e.json",
+  "prereg_created": "2026-10-06 08:05:40 UTC",
+  "prereg_commit": "c5b3a6c",
+  "prereg_keys_missing": [],
+  "calibration_prereg": {
+   "backend": "ibm_kingston",
+   "fingerprint": "99035ef05c36019ead98e761383b6e11c3988cf88cc4ebf470cdd8feba3a76bd",
+   "path": "data/hardware/K1_2x3_prep/calibration_20261006T0745Z.json",
+   "last_update_date": "2026-10-06T01:45:47-06:00",
+   "stamp": "20261006T0745Z",
+   "full_record_path": "data/hardware/K0_prep/ibm_kingston_full_20261006T0652Z.json",
+   "full_record_fingerprint": "b948ddc86b1c4696121e377bd2c751b889705006bd1abb685eeee303398a44d9",
+   "live_fingerprint_at_predict": "99035ef05c36019ead98e761383b6e11c3988cf88cc4ebf470cdd8feba3a76bd",
+   "live_match_at_predict": true
+  },
+  "patch": [
+   50,
+   51,
+   52,
+   53,
+   54,
+   58,
+   59,
+   68,
+   69,
+   70,
+   71,
+   72,
+   73,
+   74,
+   75,
+   79,
+   92,
+   93,
+   94,
+   95
+  ],
+  "pubs": [
+   {
+    "id": "B0_ref117_k1",
+    "kind": "coarse_step",
+    "shots": 100000
+   },
+   {
+    "id": "B1_ref29_k1",
+    "kind": "coarse_step",
+    "shots": 100000
+   },
+   {
+    "id": "cal_patch_all0",
+    "kind": "readout_calibration",
+    "shots": 100000
+   },
+   {
+    "id": "cal_patch_all1",
+    "kind": "readout_calibration",
+    "shots": 100000
+   }
+  ],
+  "execution_estimate_prereg_s": 182.63120000000325,
+  "counts_dir": "data/hardware/K1_2x3_dryrun/counts",
+  "session_file": "data/hardware/K1_2x3_dryrun/session.json",
+  "live": {
+   "job_ids": [
+    "335eb128-df53-4173-9e74-f13e7bb0f3a1"
+   ],
+   "statuses": [
+    "DONE"
+   ],
+   "usage_s": 0.0,
+   "submission_fingerprint": null,
+   "prereg_fingerprint_match": null,
+   "retrieval_fingerprint": null,
+   "retrieval_diff": null,
+   "preflight_estimate_s": null,
+   "sampler_options": {
+    "default_shots": 1,
+    "dynamical_decoupling": {
+     "enable": false
+    },
+    "twirling": {
+     "enable_gates": false,
+     "enable_measure": false
+    },
+    "error_mitigation": "none: SamplerV2 returns raw bit strings; no resilience level, no readout mitigation of expectation values (prompts/07 step 2)"
+   },
+   "account": {
+    "at_prediction": {
+     "usage": {
+      "usage_consumed_seconds": 139,
+      "usage_limit_seconds": 600,
+      "usage_remaining_seconds": 461,
+      "usage_limit_reached": false,
+      "usage_period": {
+       "start_time": "2026-09-08T08:05:38.144Z",
+       "end_time": "2026-10-06T08:05:38.144Z"
+      }
+     },
+     "backend": {
+      "name": "ibm_kingston",
+      "operational": true,
+      "pending_jobs": 3,
+      "status_msg": "active",
+      "num_qubits": 156
+     },
+     "read": "2026-10-06 08:05:37 UTC"
+    }
+   },
+   "K1": {}
+  },
+  "readout": {
+   "qubits": [
+    50,
+    51,
+    52,
+    53,
+    54,
+    58,
+    59,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    92,
+    93,
+    94,
+    95
+   ],
+   "P_0_given_0": [
+    0.998,
+    0.9805,
+    0.9695,
+    0.993,
+    0.9665,
+    0.9915,
+    0.9935,
+    0.997,
+    0.988,
+    0.977,
+    0.9965,
+    0.9395,
+    0.963,
+    0.9925,
+    0.981,
+    0.992,
+    0.851,
+    0.995,
+    0.978,
+    0.995
+   ],
+   "P_1_given_1": [
+    0.997,
+    0.9745,
+    0.9725,
+    0.991,
+    0.962,
+    0.988,
+    0.991,
+    0.9975,
+    0.988,
+    0.962,
+    0.9925,
+    0.9465,
+    0.962,
+    0.9925,
+    0.986,
+    0.995,
+    0.847,
+    0.996,
+    0.978,
+    0.997
+   ],
+   "shots": [
+    2000,
+    2000
+   ],
+   "min_diagonal": 0.847,
+   "min_qubit": 92,
+   "survival_product": 0.6122696869504427
+  },
+  "dry_run_K3": {
+   "ok": true,
+   "per_qubit": {
+    "50": {
+     "d00": {
+      "expected": 0.9981689453125,
+      "measured": 0.998,
+      "sigma": 0.0009559555236075014,
+      "z": -0.17672926023006877
+     },
+     "d11": {
+      "expected": 0.9981689453125,
+      "measured": 0.997,
+      "sigma": 0.0009559555236075014,
+      "z": -1.2228030317652636
+     }
+    },
+    "51": {
+     "d00": {
+      "expected": 0.975830078125,
+      "measured": 0.9805,
+      "sigma": 0.003434074602535332,
+      "z": 1.359877817317159
+     },
+     "d11": {
+      "expected": 0.975830078125,
+      "measured": 0.9745,
+      "sigma": 0.003434074602535332,
+      "z": -0.38731777230989334
+     }
+    },
+    "52": {
+     "d00": {
+      "expected": 0.9713134765625,
+      "measured": 0.9695,
+      "sigma": 0.0037325331083976846,
+      "z": -0.4858567921125467
+     },
+     "d11": {
+      "expected": 0.9713134765625,
+      "measured": 0.9725,
+      "sigma": 0.0037325331083976846,
+      "z": 0.3178869156794663
+     }
+    },
+    "53": {
+     "d00": {
+      "expected": 0.9918212890625,
+      "measured": 0.993,
+      "sigma": 0.0020139289492061055,
+      "z": 0.5852793058884445
+     },
+     "d11": {
+      "expected": 0.9918212890625,
+      "measured": 0.991,
+      "sigma": 0.0020139289492061055,
+      "z": -0.4078043879471327
+     }
+    },
+    "54": {
+     "d00": {
+      "expected": 0.9625244140625,
+      "measured": 0.9665,
+      "sigma": 0.004246832136789789,
+      "z": 0.9361297572983893
+     },
+     "d11": {
+      "expected": 0.9625244140625,
+      "measured": 0.962,
+      "sigma": 0.004246832136789789,
+      "z": -0.1234835862611801
+     }
+    },
+    "58": {
+     "d00": {
+      "expected": 0.988037109375,
+      "measured": 0.9915,
+      "sigma": 0.0024310265190752535,
+      "z": 1.424456129058316
+     },
+     "d11": {
+      "expected": 0.988037109375,
+      "measured": 0.988,
+      "sigma": 0.0024310265190752535,
+      "z": -0.01526489929617338
+     }
+    },
+    "59": {
+     "d00": {
+      "expected": 0.9937744140625,
+      "measured": 0.9935,
+      "sigma": 0.0017588103958691515,
+      "z": -0.1560225383841577
+     },
+     "d11": {
+      "expected": 0.9937744140625,
+      "measured": 0.991,
+      "sigma": 0.0017588103958691515,
+      "z": -1.5774378346956357
+     }
+    },
+    "68": {
+     "d00": {
+      "expected": 0.99658203125,
+      "measured": 0.997,
+      "sigma": 0.0013050452558482453,
+      "z": 0.3202714604163888
+     },
+     "d11": {
+      "expected": 0.99658203125,
+      "measured": 0.9975,
+      "sigma": 0.0013050452558482453,
+      "z": 0.7033999364285629
+     }
+    },
+    "69": {
+     "d00": {
+      "expected": 0.9908447265625,
+      "measured": 0.988,
+      "sigma": 0.0021297246777206447,
+      "z": -1.3357250316245584
+     },
+     "d11": {
+      "expected": 0.9908447265625,
+      "measured": 0.988,
+      "sigma": 0.0021297246777206447,
+      "z": -1.3357250316245584
+     }
+    },
+    "70": {
+     "d00": {
+      "expected": 0.9696044921875,
+      "measured": 0.977,
+      "sigma": 0.0038387251085041404,
+      "z": 1.9265531142400119
+     },
+     "d11": {
+      "expected": 0.9696044921875,
+      "measured": 0.962,
+      "sigma": 0.0038387251085041404,
+      "z": -1.9809942031674477
+     }
+    },
+    "71": {
+     "d00": {
+      "expected": 0.9935302734375,
+      "measured": 0.9965,
+      "sigma": 0.0017927449903299803,
+      "z": 1.656524814470926
+     },
+     "d11": {
+      "expected": 0.9935302734375,
+      "measured": 0.9925,
+      "sigma": 0.0017927449903299803,
+      "z": -0.5746904568453512
+     }
+    },
+    "72": {
+     "d00": {
+      "expected": 0.9466552734375,
+      "measured": 0.9395,
+      "sigma": 0.005024891377456438,
+      "z": -1.4239657934898373
+     },
+     "d11": {
+      "expected": 0.9466552734375,
+      "measured": 0.9465,
+      "sigma": 0.005024891377456438,
+      "z": -0.030900854533215852
+     }
+    },
+    "73": {
+     "d00": {
+      "expected": 0.9593505859375,
+      "measured": 0.963,
+      "sigma": 0.004415712807626614,
+      "z": 0.8264609184267756
+     },
+     "d11": {
+      "expected": 0.9593505859375,
+      "measured": 0.962,
+      "sigma": 0.004415712807626614,
+      "z": 0.5999969150901349
+     }
+    },
+    "74": {
+     "d00": {
+      "expected": 0.9921875,
+      "measured": 0.9925,
+      "sigma": 0.0019686879950553365,
+      "z": 0.15873515802653382
+     },
+     "d11": {
+      "expected": 0.9921875,
+      "measured": 0.9925,
+      "sigma": 0.0019686879950553365,
+      "z": 0.15873515802653382
+     }
+    },
+    "75": {
+     "d00": {
+      "expected": 0.9853515625,
+      "measured": 0.981,
+      "sigma": 0.0026864345123982264,
+      "z": -1.6198282444321719
+     },
+     "d11": {
+      "expected": 0.9853515625,
+      "measured": 0.986,
+      "sigma": 0.0026864345123982264,
+      "z": 0.24137476532830732
+     }
+    },
+    "79": {
+     "d00": {
+      "expected": 0.991455078125,
+      "measured": 0.992,
+      "sigma": 0.0020581431176123475,
+      "z": 0.2647638399569399
+     },
+     "d11": {
+      "expected": 0.991455078125,
+      "measured": 0.995,
+      "sigma": 0.0020581431176123475,
+      "z": 1.7223884212252745
+     }
+    },
+    "92": {
+     "d00": {
+      "expected": 0.850830078125,
+      "measured": 0.851,
+      "sigma": 0.007966123783961884,
+      "z": 0.02133055920397329
+     },
+     "d11": {
+      "expected": 0.850830078125,
+      "measured": 0.847,
+      "sigma": 0.007966123783961884,
+      "z": -0.4807957080344499
+     }
+    },
+    "93": {
+     "d00": {
+      "expected": 0.994384765625,
+      "measured": 0.995,
+      "sigma": 0.0016708835264484803,
+      "z": 0.3682090135317194
+     },
+     "d11": {
+      "expected": 0.994384765625,
+      "measured": 0.996,
+      "sigma": 0.0016708835264484803,
+      "z": 0.9666947752086777
+     }
+    },
+    "94": {
+     "d00": {
+      "expected": 0.97412109375,
+      "measured": 0.978,
+      "sigma": 0.00355029494981077,
+      "z": 1.0925588732301594
+     },
+     "d11": {
+      "expected": 0.97412109375,
+      "measured": 0.978,
+      "sigma": 0.00355029494981077,
+      "z": 1.0925588732301594
+     }
+    },
+    "95": {
+     "d00": {
+      "expected": 0.9945068359375,
+      "measured": 0.995,
+      "sigma": 0.0016527233905107139,
+      "z": 0.2983947981444137
+     },
+     "d11": {
+      "expected": 0.9945068359375,
+      "measured": 0.997,
+      "sigma": 0.0016527233905107139,
+      "z": 1.5085186527974146
+     }
+    }
+   },
+   "shots": 2000,
+   "sigma_k": 3.0,
+   "model": "NoiseModel.from_backend(FakeKingston) local readout errors"
+  },
+  "circuits": {
+   "B0_ref117_k1": {
+    "reference_hits": 376,
+    "accepted": 400,
+    "shots": 400,
+    "distinct_accepted_strings": 7,
+    "roundtrip_mismatches": 0,
+    "roundtrip_examples": [],
+    "p_reference": 0.9283570199234927,
+    "dim": 677,
+    "garbage_acceptance": 0.0006456375122070312,
+    "expected_from_garbage": 0.0003814697265625,
+    "z": 19251.18046875,
+    "P_ge": 0.0,
+    "f_hit": 1.2348054420826666,
+    "f_hit_68": [
+     1.1711521080645209,
+     1.3018277251399564
+    ],
+    "f_hit_95": [
+     1.1131333816867102,
+     1.3661472891072515
+    ],
+    "f_hat_ideal": 1.1073145491510725,
+    "f_hat_ideal_95": [
+     0.9982048561500508,
+     1.2250956449951258
+    ],
+    "f_hat_ideal_68": [
+     1.0502332791322229,
+     1.1674169317754033
+    ],
+    "accepted_yield": 1.0,
+    "row": [
+     376,
+     400,
+     0.9283570199234927,
+     0.0006456375122070312,
+     677
+    ],
+    "prediction": {
+     "sector": "B=0",
+     "reference": 117,
+     "p_reference": 0.9283570199234927,
+     "dim": 677,
+     "garbage_acceptance": 0.0006456375122070312,
+     "reference_int": 526624,
+     "cz": 5659,
+     "scheduled_duration_s": 0.0004111520000000163,
+     "n_pulses": 2408,
+     "pulse_cost_nats": 0.45783377696946775,
+     "null_ratio": 0.632652628904972,
+     "f_bracket": {
+      "f_gates_layout (no idle)": 1.6711313059249913e-05,
+      "f_idle_aware_xy4 echo (2x2 transfer)": 4.686771173379436e-15,
+      "f_idle_aware echo": 1.6624957153227314e-15,
+      "f_idle_aware_xy4 0.174 (2x2 transfer)": 1.4665818196058057e-34,
+      "f_idle_aware 0.174": 5.202272313002199e-35
+     },
+     "f_ceiling_2q": 0.00671723133743146,
+     "S_idle": {
+      "echo": 23.031031839420407,
+      "transferred_0.174": 67.94195810218874
+     },
+     "expected_reference_hits_from_garbage": 0.095367431640625,
+     "expected_reference_hits": {
+      "f_gates_layout (no idle)": 1.3675207444775161,
+      "f_idle_aware_xy4 echo (2x2 transfer)": 0.09536743199740676,
+      "f_idle_aware echo": 0.09536743176718294,
+      "f_idle_aware_xy4 0.174 (2x2 transfer)": 0.095367431640625,
+      "f_idle_aware 0.174": 0.095367431640625
+     },
+     "f_hit_for_one_excess_hit": 1.3136241434598653e-05,
+     "qpy_gz_sha256": "eb3973a4cee8d3ed55de0d85422de27b494391e415845afad3bade84bba70e94",
+     "physical_qubits": [
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      58,
+      59,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75,
+      79,
+      92,
+      93,
+      94,
+      95
+     ],
+     "logical_to_physical": [
+      92,
+      69,
+      54,
+      52,
+      53,
+      68,
+      73,
+      94,
+      50,
+      72,
+      71,
+      79,
+      51,
+      74,
+      70,
+      93,
+      75,
+      58,
+      95,
+      59
+     ]
+    }
+   },
+   "B1_ref29_k1": {
+    "reference_hits": 378,
+    "accepted": 400,
+    "shots": 400,
+    "distinct_accepted_strings": 5,
+    "roundtrip_mismatches": 0,
+    "roundtrip_examples": [],
+    "p_reference": 0.928308035585111,
+    "dim": 426,
+    "garbage_acceptance": 0.0004062652587890625,
+    "expected_from_garbage": 0.0003814697265625,
+    "z": 19353.58046875,
+    "P_ge": 0.0,
+    "f_hit": 1.2414390667709834,
+    "f_hit_68": [
+     1.1776131483392769,
+     1.3086338871391299
+    ],
+    "f_hit_95": [
+     1.1194289905766883,
+     1.3731190070147519
+    ],
+    "f_hat_ideal": 1.1132632669657525,
+    "f_hat_ideal_95": [
+     1.0038504575395941,
+     1.2313475486622587
+    ],
+    "f_hat_ideal_68": [
+     1.0560272314870338,
+     1.1735203728104966
+    ],
+    "accepted_yield": 1.0,
+    "row": [
+     378,
+     400,
+     0.928308035585111,
+     0.0004062652587890625,
+     426
+    ],
+    "prediction": {
+     "sector": "B=1",
+     "reference": 29,
+     "p_reference": 0.928308035585111,
+     "dim": 426,
+     "garbage_acceptance": 0.0004062652587890625,
+     "reference_int": 533024,
+     "cz": 5659,
+     "scheduled_duration_s": 0.00041076800000001615,
+     "n_pulses": 2404,
+     "pulse_cost_nats": 0.4572827961480506,
+     "null_ratio": 0.6330013044180571,
+     "f_bracket": {
+      "f_gates_layout (no idle)": 1.674291113473057e-05,
+      "f_idle_aware_xy4 echo (2x2 transfer)": 4.773451357296776e-15,
+      "f_idle_aware echo": 1.6932429886661525e-15,
+      "f_idle_aware_xy4 0.174 (2x2 transfer)": 1.5520837174629551e-34,
+      "f_idle_aware 0.174": 5.505565419452235e-35
+     },
+     "f_ceiling_2q": 0.00671723133743146,
+     "S_idle": {
+      "echo": 23.014595171450367,
+      "transferred_0.174": 67.88718317461611
+     },
+     "expected_reference_hits_from_garbage": 0.095367431640625,
+     "expected_reference_hits": {
+      "f_gates_layout (no idle)": 1.369858905168166,
+      "f_idle_aware_xy4 echo (2x2 transfer)": 0.09536743200398612,
+      "f_idle_aware echo": 0.0953674317695168,
+      "f_idle_aware_xy4 0.174 (2x2 transfer)": 0.095367431640625,
+      "f_idle_aware 0.174": 0.095367431640625
+     },
+     "f_hit_for_one_excess_hit": 1.3136934599012653e-05,
+     "qpy_gz_sha256": "bd1049d8daba5e42003eb574948d0c290aefdbad2a437af206c680a18ffad6d1",
+     "physical_qubits": [
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      58,
+      59,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75,
+      79,
+      92,
+      93,
+      94,
+      95
+     ],
+     "logical_to_physical": [
+      92,
+      69,
+      54,
+      52,
+      53,
+      68,
+      73,
+      94,
+      50,
+      72,
+      71,
+      79,
+      51,
+      74,
+      70,
+      93,
+      75,
+      58,
+      95,
+      59
+     ]
+    }
+   }
+  },
+  "pooled": {
+   "reference_hits": 754,
+   "shots": 800,
+   "expected_from_garbage": 0.000762939453125,
+   "P_hits_ge_observed_from_garbage_alone": 0.0,
+   "z": 27297.68824499179,
+   "excess": 753.9992370605469,
+   "clean_denominator": 742.6660222034415,
+   "f_hit": 1.2381221669194646,
+   "f_hit_68": [
+    1.1930413995578228,
+    1.2848749853109827
+   ],
+   "f_hit_95": [
+    1.1513132187522188,
+    1.3297420726018936
+   ],
+   "f_hat_ideal": 1.1102888295859907,
+   "f_hat_ideal_68": [
+    1.0698625503640218,
+    1.152214524318457
+   ],
+   "f_hat_ideal_95": [
+    1.0324427106541167,
+    1.1924491854578356
+   ],
+   "readout_factor": 0.82,
+   "r_nc": 1.1151352098004452
+  },
+  "decision": {
+   "dry_run": true,
+   "statistic": "f_hat_ideal = f_hit / r_nc",
+   "decision": "GO-B",
+   "classes": {
+    "point": "GO-B",
+    "lo95": "GO-B",
+    "hi95": "GO-B"
+   },
+   "firm": true,
+   "f_hat_ideal": 1.1102888295859907,
+   "f_hat_ideal_95": [
+    1.0324427106541167,
+    1.1924491854578356
+   ],
+   "f_hit": 1.2381221669194646,
+   "f_hit_95": [
+    1.1513132187522188,
+    1.3297420726018936
+   ],
+   "thresholds": {
+    "GO-B": 0.001,
+    "GO-A": 0.0003
+   },
+   "r_nc": 1.1151352098004452,
+   "r_nc_note": "r_nc is a gate-noise value (gate CF_traj, the A6 gate-only channel).  Under IBM idle dephasing the A5 model gives f_hit < f_ideal (r < 1 at both T2 ends), so dividing f_hit by r_nc = 1.115 can only LOWER the estimate there: the correction is conservative on this device.",
+   "rule": "Statistic: f_hat_ideal = f_hit / r_nc (owner decision 1a, 2026-10-05), f_hit = the pooled reference-string clean fraction of the two k = 1 circuits (pooled_reference_string_test, readout factor 0.82, garbage expectation N a / dim subtracted), r_nc read from data/cf_trajectories/r_nc.json. GO-B if f_hat_ideal >= 1e-3 (a Tier-B 2x3 run costs <= 2e7 shots per sector); GO-A if 3e-4 <= f_hat_ideal < 1e-3 (Tier A only); NO-GO below 3e-4 (prompts/27 stage 0b).  The class is read on the point value; the classes of the 95 % (Garwood) interval ends are reported beside it and the decision is called firm when all three agree.  f_hit is reported beside f_hat_ideal."
+  },
+  "prediction_prereg": {
+   "B0_ref117_k1": {
+    "sector": "B=0",
+    "reference": 117,
+    "p_reference": 0.9283570199234927,
+    "dim": 677,
+    "garbage_acceptance": 0.0006456375122070312,
+    "reference_int": 526624,
+    "cz": 5659,
+    "scheduled_duration_s": 0.0004111520000000163,
+    "n_pulses": 2408,
+    "pulse_cost_nats": 0.45783377696946775,
+    "null_ratio": 0.632652628904972,
+    "f_bracket": {
+     "f_gates_layout (no idle)": 1.6711313059249913e-05,
+     "f_idle_aware_xy4 echo (2x2 transfer)": 4.686771173379436e-15,
+     "f_idle_aware echo": 1.6624957153227314e-15,
+     "f_idle_aware_xy4 0.174 (2x2 transfer)": 1.4665818196058057e-34,
+     "f_idle_aware 0.174": 5.202272313002199e-35
+    },
+    "f_ceiling_2q": 0.00671723133743146,
+    "S_idle": {
+     "echo": 23.031031839420407,
+     "transferred_0.174": 67.94195810218874
+    },
+    "expected_reference_hits_from_garbage": 0.095367431640625,
+    "expected_reference_hits": {
+     "f_gates_layout (no idle)": 1.3675207444775161,
+     "f_idle_aware_xy4 echo (2x2 transfer)": 0.09536743199740676,
+     "f_idle_aware echo": 0.09536743176718294,
+     "f_idle_aware_xy4 0.174 (2x2 transfer)": 0.095367431640625,
+     "f_idle_aware 0.174": 0.095367431640625
+    },
+    "f_hit_for_one_excess_hit": 1.3136241434598653e-05,
+    "qpy_gz_sha256": "eb3973a4cee8d3ed55de0d85422de27b494391e415845afad3bade84bba70e94",
+    "physical_qubits": [
+     50,
+     51,
+     52,
+     53,
+     54,
+     55,
+     58,
+     59,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     79,
+     92,
+     93,
+     94,
+     95
+    ],
+    "logical_to_physical": [
+     92,
+     69,
+     54,
+     52,
+     53,
+     68,
+     73,
+     94,
+     50,
+     72,
+     71,
+     79,
+     51,
+     74,
+     70,
+     93,
+     75,
+     58,
+     95,
+     59
+    ]
+   },
+   "B1_ref29_k1": {
+    "sector": "B=1",
+    "reference": 29,
+    "p_reference": 0.928308035585111,
+    "dim": 426,
+    "garbage_acceptance": 0.0004062652587890625,
+    "reference_int": 533024,
+    "cz": 5659,
+    "scheduled_duration_s": 0.00041076800000001615,
+    "n_pulses": 2404,
+    "pulse_cost_nats": 0.4572827961480506,
+    "null_ratio": 0.6330013044180571,
+    "f_bracket": {
+     "f_gates_layout (no idle)": 1.674291113473057e-05,
+     "f_idle_aware_xy4 echo (2x2 transfer)": 4.773451357296776e-15,
+     "f_idle_aware echo": 1.6932429886661525e-15,
+     "f_idle_aware_xy4 0.174 (2x2 transfer)": 1.5520837174629551e-34,
+     "f_idle_aware 0.174": 5.505565419452235e-35
+    },
+    "f_ceiling_2q": 0.00671723133743146,
+    "S_idle": {
+     "echo": 23.014595171450367,
+     "transferred_0.174": 67.88718317461611
+    },
+    "expected_reference_hits_from_garbage": 0.095367431640625,
+    "expected_reference_hits": {
+     "f_gates_layout (no idle)": 1.369858905168166,
+     "f_idle_aware_xy4 echo (2x2 transfer)": 0.09536743200398612,
+     "f_idle_aware echo": 0.0953674317695168,
+     "f_idle_aware_xy4 0.174 (2x2 transfer)": 0.095367431640625,
+     "f_idle_aware 0.174": 0.095367431640625
+    },
+    "f_hit_for_one_excess_hit": 1.3136934599012653e-05,
+    "qpy_gz_sha256": "bd1049d8daba5e42003eb574948d0c290aefdbad2a437af206c680a18ffad6d1",
+    "physical_qubits": [
+     50,
+     51,
+     52,
+     53,
+     54,
+     55,
+     58,
+     59,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     79,
+     92,
+     93,
+     94,
+     95
+    ],
+    "logical_to_physical": [
+     92,
+     69,
+     54,
+     52,
+     53,
+     68,
+     73,
+     94,
+     50,
+     72,
+     71,
+     79,
+     51,
+     74,
+     70,
+     93,
+     75,
+     58,
+     95,
+     59
+    ]
+   }
+  },
+  "dry_run_note": "a PATH CHECK, not a prediction: local Aer on the FakeKingston snapshot (AerSimulator.from_backend through h0_submit.py's dry-run path) at a few shots per coarse pub under the 30-minute rule; its f numbers carry no information about the device",
+  "checks": {
+   "pytest_returncode": 0,
+   "pytest_summary": "342 passed, 19 skipped, 62 warnings in 416.75s (0:06:56)",
+   "check_package_returncode": 0,
+   "check_package_tail": "gate S1: PASS (12 criteria, 0 failing), computed 2026-09-14 16:48:20 MDT\nreport/data consistency: E0(2x3, g2=4, B=0) = -5.6026 appears in reports/E3_exact_references.md\nPACKAGE OK",
+   "seconds": 418.2813744544983,
+   "ok": true
+  }
+ },
+ "runtime_s": 429.5762643814087,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.2",
+  "scipy": "1.18.0",
+  "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+  "cpu_count": 12,
+  "git_commit": "f8df126",
+  "timestamp": "2026-10-06 02:20:48 MDT"
+ }
+}
