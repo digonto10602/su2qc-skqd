@@ -17,25 +17,25 @@
   },
   {
    "name": "K0.3 f_ceiling_2q = (1-eps2_min)^n_CZ from the JSON's own fields to 1e-12; f_gates_layout <= best-patch bound <= ceiling (every record)",
-   "value": "1/1 records",
+   "value": "2/2 records",
    "threshold": "all",
    "passed": true
   },
   {
    "name": "K0.4 the ALAP schedule moves no non-delay operation (per-qubit order) and its duration equals the unscheduled T_total (h0_qpu_time.circuit_duration_s vs idle.schedule_asap) to 1e-12",
-   "value": "committed: moved False, |dT| 3.6e-17 s",
+   "value": "committed: moved False, |dT| 3.6e-17 s; live: moved False, |dT| 3.6e-17 s",
    "threshold": "no move, <= 1e-12 s",
    "passed": true
   },
   {
    "name": "K0.5 f_idle_aware_xy4 <= f_gates_layout (the cap applied, both T2 ends, R's 95 % ends)",
-   "value": "1/1 records",
+   "value": "2/2 records",
    "threshold": "all",
    "passed": true
   },
   {
    "name": "K0.6 pytest -q tests and scripts/check_package.py",
-   "value": "pytest: 321 passed, 19 skipped, 10 warnings in 412.91s (0:06:52); check_package rc 0",
+   "value": "pytest: 342 passed, 19 skipped, 62 warnings in 414.95s (0:06:54); check_package rc 0",
    "threshold": "all pass",
    "passed": true
   }
@@ -86,17 +86,46 @@
     }
    },
    "live": {
-    "path": "data/hardware/K0_prep/ibm_kingston_full_20261006T0042Z.json",
-    "fingerprint": "d9548aefcaf4a08ecf902554f94574fb3deb5227c01d235bd27be4ad1d156e80",
-    "last_update_date": "2026-10-05T18:42:52-06:00",
-    "stamp": "20261006T0042Z",
-    "usable": false,
-    "n_missing_errors": 352,
-    "missing_by_instruction": {
-     "cz": 352
-    },
-    "edge_source": "backend.configuration().coupling_map (backend.coupling_map is None: the live target has no cz entries)",
-    "reason": "the record carries entries with no error (missing_errors): f, the D9 fingerprint and the routing cannot be evaluated on it (prompts/15 A1 hard stop)"
+    "path": "data/hardware/K0_prep/ibm_kingston_full_20261006T0652Z.json",
+    "fingerprint": "b948ddc86b1c4696121e377bd2c751b889705006bd1abb685eeee303398a44d9",
+    "last_update_date": "2026-10-06T00:52:19-06:00",
+    "stamp": "20261006T0652Z",
+    "usable": true,
+    "stats": {
+     "n_cz_keys": 352,
+     "n_calibrated": 342,
+     "n_uncalibrated": 10,
+     "uncalibrated_keys": [
+      "112-113",
+      "113-112",
+      "130-131",
+      "131-130",
+      "145-146",
+      "146-145",
+      "146-147",
+      "147-146",
+      "16-3",
+      "3-16"
+     ],
+     "cz_error_min": 0.000883701762151079,
+     "cz_error_p10": 0.0012528120440546409,
+     "cz_error_median": 0.0018841631925820834,
+     "cz_error_mean": 0.005762942991916267,
+     "cz_error_min_key": "55-59",
+     "sx_error_median": 0.00024295139952237963,
+     "measure_error_median": 0.00836181640625,
+     "T1_s_median": 0.00022085869664692867,
+     "T2_s_median": 0.00013705385508171986,
+     "sx_error_min": 9.807542159364159e-05,
+     "x_error_min": 9.807542159364159e-05,
+     "measure_error_min": 0.00244140625,
+     "cz_duration_s_values": [
+      6.8e-08,
+      8e-08,
+      1.08e-07
+     ],
+     "percentile_method": "numpy.percentile, linear interpolation (numpy default)"
+    }
    }
   },
   "2x3": {
@@ -217,7 +246,7 @@
         59
        ],
        "measurement_consistent": true,
-       "transpile_s": 0.6100172996520996,
+       "transpile_s": 0.587148904800415,
        "exactness": null
       },
       "L3|1": {
@@ -282,7 +311,7 @@
         89
        ],
        "measurement_consistent": true,
-       "transpile_s": 0.4946308135986328,
+       "transpile_s": 0.4772467613220215,
        "exactness": {
         "max_abs_delta_up_to_phase": 4.705666871488321e-05,
         "max_abs_delta_raw_phase": 4.771399833927329e-05,
@@ -355,7 +384,7 @@
         38
        ],
        "measurement_consistent": true,
-       "transpile_s": 0.5278162956237793,
+       "transpile_s": 0.5380723476409912,
        "exactness": null
       },
       "L3|3": {
@@ -418,7 +447,7 @@
         122
        ],
        "measurement_consistent": true,
-       "transpile_s": 0.5215601921081543,
+       "transpile_s": 0.5051648616790771,
        "exactness": {
         "max_abs_delta_up_to_phase": 4.809213803659724e-05,
         "max_abs_delta_raw_phase": 5.772618869663703e-05,
@@ -492,7 +521,7 @@
         55
        ],
        "measurement_consistent": true,
-       "transpile_s": 0.5022664070129395,
+       "transpile_s": 0.5062143802642822,
        "exactness": null
       },
       "L3|5": {
@@ -559,7 +588,7 @@
         42
        ],
        "measurement_consistent": true,
-       "transpile_s": 0.4582388401031494,
+       "transpile_s": 0.48088979721069336,
        "exactness": null
       },
       "L3|6": {
@@ -627,7 +656,7 @@
         33
        ],
        "measurement_consistent": true,
-       "transpile_s": 0.487027645111084,
+       "transpile_s": 0.5245330333709717,
        "exactness": {
         "max_abs_delta_up_to_phase": 4.876805327181827e-05,
         "max_abs_delta_raw_phase": 4.8400587287441284e-05,
@@ -698,7 +727,7 @@
         59
        ],
        "measurement_consistent": true,
-       "transpile_s": 0.44721293449401855,
+       "transpile_s": 0.46372318267822266,
        "exactness": {
         "max_abs_delta_up_to_phase": 1.470191864899737e-12,
         "max_abs_delta_raw_phase": 1.4126021052210124e-11,
@@ -905,7 +934,814 @@
       "meets_worst_0.05": false
      }
     },
-    "runtime_s": 260.9187216758728
+    "runtime_s": 260.84925985336304
+   },
+   "live": {
+    "record_label": "live",
+    "record_fingerprint": "b948ddc86b1c4696121e377bd2c751b889705006bd1abb685eeee303398a44d9",
+    "record_last_update_date": "2026-10-06T00:52:19-06:00",
+    "circuit": {
+     "lattice": "2x3",
+     "twoB": 0,
+     "reference": 25,
+     "k": 1,
+     "dt": 0.15644331744992473,
+     "id": "B0_ref25_k1",
+     "n_logical_qubits": 20
+    },
+    "routing": {
+     "target": "backend_from_record(record, FakeKingston()) minus the uncalibrated cz keys",
+     "cz_keys_removed": 10,
+     "uncalibrated_pairs": [
+      [
+       3,
+       16
+      ],
+      [
+       112,
+       113
+      ],
+      [
+       130,
+       131
+      ],
+      [
+       145,
+       146
+      ],
+      [
+       146,
+       147
+      ]
+     ],
+     "optimization_level": 3,
+     "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "chosen": "L3|7",
+     "variant": "L3",
+     "seed": 7,
+     "per_seed": {
+      "L3|0": {
+       "variant": "L3",
+       "seed": 0,
+       "cz": 5826,
+       "n_1q": 11922,
+       "n_rz": 5460,
+       "ops": {
+        "sx": 11648,
+        "cz": 5826,
+        "rz": 5460,
+        "x": 274,
+        "measure": 20,
+        "barrier": 1
+       },
+       "depth": 11613,
+       "physical_qubits": [
+        51,
+        52,
+        53,
+        54,
+        55,
+        58,
+        59,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        78,
+        79,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        98
+       ],
+       "logical_to_physical": [
+        89,
+        51,
+        69,
+        75,
+        78,
+        98,
+        91,
+        74,
+        90,
+        79,
+        94,
+        95,
+        58,
+        92,
+        73,
+        71,
+        70,
+        93,
+        72,
+        59
+       ],
+       "measurement_consistent": true,
+       "transpile_s": 0.46366143226623535,
+       "exactness": null
+      },
+      "L3|1": {
+       "variant": "L3",
+       "seed": 1,
+       "cz": 5655,
+       "n_1q": 11677,
+       "n_rz": 5665,
+       "ops": {
+        "sx": 11361,
+        "rz": 5665,
+        "cz": 5655,
+        "x": 316,
+        "measure": 20,
+        "barrier": 1
+       },
+       "depth": 11546,
+       "physical_qubits": [
+        51,
+        52,
+        53,
+        54,
+        55,
+        58,
+        59,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        78,
+        79,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94
+       ],
+       "logical_to_physical": [
+        91,
+        59,
+        94,
+        51,
+        90,
+        55,
+        79,
+        69,
+        70,
+        74,
+        72,
+        71,
+        92,
+        93,
+        75,
+        78,
+        52,
+        73,
+        58,
+        89
+       ],
+       "measurement_consistent": true,
+       "transpile_s": 0.4895799160003662,
+       "exactness": {
+        "max_abs_delta_up_to_phase": 4.705025936487649e-05,
+        "max_abs_delta_raw_phase": 4.771271854453734e-05,
+        "leakage": 2.509171093123541e-09,
+        "measurement_consistent": true,
+        "n_active": 22,
+        "ok": false
+       }
+      },
+      "L3|2": {
+       "variant": "L3",
+       "seed": 2,
+       "cz": 5774,
+       "n_1q": 11794,
+       "n_rz": 5427,
+       "ops": {
+        "sx": 11541,
+        "cz": 5774,
+        "rz": 5427,
+        "x": 253,
+        "measure": 20,
+        "barrier": 1
+       },
+       "depth": 11478,
+       "physical_qubits": [
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        58,
+        59,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        78,
+        79,
+        89,
+        90,
+        91,
+        92,
+        93
+       ],
+       "logical_to_physical": [
+        53,
+        59,
+        55,
+        75,
+        54,
+        93,
+        58,
+        79,
+        52,
+        70,
+        72,
+        69,
+        68,
+        51,
+        71,
+        78,
+        89,
+        73,
+        74,
+        50
+       ],
+       "measurement_consistent": true,
+       "transpile_s": 0.5394623279571533,
+       "exactness": null
+      },
+      "L3|3": {
+       "variant": "L3",
+       "seed": 3,
+       "cz": 5581,
+       "n_1q": 11375,
+       "n_rz": 5403,
+       "ops": {
+        "sx": 11115,
+        "cz": 5581,
+        "rz": 5403,
+        "x": 260,
+        "measure": 20,
+        "barrier": 1
+       },
+       "depth": 11381,
+       "physical_qubits": [
+        97,
+        104,
+        105,
+        106,
+        107,
+        108,
+        109,
+        117,
+        118,
+        122,
+        123,
+        124,
+        125,
+        126,
+        127,
+        128,
+        129,
+        136,
+        137,
+        147
+       ],
+       "logical_to_physical": [
+        109,
+        97,
+        147,
+        104,
+        106,
+        108,
+        117,
+        128,
+        129,
+        124,
+        125,
+        123,
+        118,
+        105,
+        127,
+        107,
+        136,
+        126,
+        137,
+        122
+       ],
+       "measurement_consistent": true,
+       "transpile_s": 0.5121750831604004,
+       "exactness": {
+        "max_abs_delta_up_to_phase": 4.809213802394108e-05,
+        "max_abs_delta_raw_phase": 5.772617397916894e-05,
+        "leakage": 2.601756698972224e-09,
+        "measurement_consistent": true,
+        "n_active": 20,
+        "ok": false
+       }
+      },
+      "L3|4": {
+       "variant": "L3",
+       "seed": 4,
+       "cz": 5660,
+       "n_1q": 11675,
+       "n_rz": 5502,
+       "ops": {
+        "sx": 11421,
+        "cz": 5660,
+        "rz": 5502,
+        "x": 254,
+        "measure": 20,
+        "barrier": 1
+       },
+       "depth": 11650,
+       "physical_qubits": [
+        51,
+        52,
+        53,
+        54,
+        55,
+        58,
+        59,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        78,
+        79,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        98
+       ],
+       "logical_to_physical": [
+        90,
+        78,
+        98,
+        69,
+        89,
+        95,
+        74,
+        94,
+        91,
+        79,
+        73,
+        93,
+        70,
+        75,
+        71,
+        58,
+        59,
+        72,
+        92,
+        55
+       ],
+       "measurement_consistent": true,
+       "transpile_s": 0.5103721618652344,
+       "exactness": null
+      },
+      "L3|5": {
+       "variant": "L3",
+       "seed": 5,
+       "cz": 5769,
+       "n_1q": 11763,
+       "n_rz": 5285,
+       "ops": {
+        "sx": 11481,
+        "cz": 5769,
+        "rz": 5285,
+        "x": 282,
+        "measure": 20,
+        "barrier": 1
+       },
+       "depth": 11147,
+       "physical_qubits": [
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        57,
+        58,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        78,
+        79,
+        89,
+        90,
+        91,
+        92,
+        93
+       ],
+       "logical_to_physical": [
+        52,
+        50,
+        92,
+        89,
+        90,
+        47,
+        58,
+        74,
+        68,
+        71,
+        73,
+        70,
+        78,
+        69,
+        72,
+        51,
+        67,
+        79,
+        75,
+        57
+       ],
+       "measurement_consistent": true,
+       "transpile_s": 0.45906734466552734,
+       "exactness": null
+      },
+      "L3|6": {
+       "variant": "L3",
+       "seed": 6,
+       "cz": 5527,
+       "n_1q": 11441,
+       "n_rz": 5753,
+       "ops": {
+        "sx": 11212,
+        "rz": 5753,
+        "cz": 5527,
+        "x": 229,
+        "measure": 20,
+        "barrier": 1
+       },
+       "depth": 11867,
+       "physical_qubits": [
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        57,
+        58,
+        59,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        78,
+        79,
+        89,
+        93
+       ],
+       "logical_to_physical": [
+        52,
+        49,
+        93,
+        78,
+        67,
+        57,
+        70,
+        74,
+        69,
+        51,
+        58,
+        50,
+        59,
+        73,
+        72,
+        75,
+        68,
+        71,
+        79,
+        89
+       ],
+       "measurement_consistent": true,
+       "transpile_s": 0.5227446556091309,
+       "exactness": {
+        "max_abs_delta_up_to_phase": 4.876805333456323e-05,
+        "max_abs_delta_raw_phase": 4.840058772901325e-05,
+        "leakage": 2.7236328747903826e-09,
+        "measurement_consistent": true,
+        "n_active": 25,
+        "ok": false
+       }
+      },
+      "L3|7": {
+       "variant": "L3",
+       "seed": 7,
+       "cz": 5659,
+       "n_1q": 11650,
+       "n_rz": 5486,
+       "ops": {
+        "sx": 11401,
+        "cz": 5659,
+        "rz": 5486,
+        "x": 249,
+        "measure": 20,
+        "barrier": 1
+       },
+       "depth": 11488,
+       "physical_qubits": [
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        58,
+        59,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        79,
+        92,
+        93,
+        94,
+        95
+       ],
+       "logical_to_physical": [
+        92,
+        69,
+        54,
+        52,
+        53,
+        68,
+        73,
+        94,
+        50,
+        72,
+        71,
+        79,
+        51,
+        74,
+        70,
+        93,
+        75,
+        58,
+        95,
+        59
+       ],
+       "measurement_consistent": true,
+       "transpile_s": 0.44164419174194336,
+       "exactness": {
+        "max_abs_delta_up_to_phase": 1.612971061940284e-12,
+        "max_abs_delta_raw_phase": 1.4063714046539354e-11,
+        "leakage": 2.015054789694659e-13,
+        "measurement_consistent": true,
+        "n_active": 21,
+        "ok": true
+       }
+      }
+     },
+     "plain_l3_fewest_cz": {
+      "key": "L3|6",
+      "cz": 5527,
+      "exactness": {
+       "max_abs_delta_up_to_phase": 4.876805333456323e-05,
+       "max_abs_delta_raw_phase": 4.840058772901325e-05,
+       "leakage": 2.7236328747903826e-09,
+       "measurement_consistent": true,
+       "n_active": 25,
+       "ok": false
+      }
+     },
+     "rule": "transpile with each variant in order (L3 first) for seeds 0..7; among the seeds of the first variant that has any EXACT circuit (max |dpsi| < 1e-10 up to a global phase against the exact Krylov state, leakage < 1e-9), keep the fewest CZ (ties: the lower seed).  Exactness is checked in increasing CZ order and stops at the first exact seed.  Measured reason (2026-10-05, qiskit 2.5.2): the level-3 optimization loop's TwoQubitPeepholeOptimization is not exact on routed 2x3 circuits at approximation_degree 1.0 (B0_ref117_k1, seed 6: max |dpsi| 1.6e-5, leakage 6e-9), so the fewest-CZ seed alone can fail the exactness bar of every submitted circuit; the plain fewest-CZ level-3 count is recorded beside the chosen one",
+     "variants": {
+      "L3": "qiskit level-3 preset pass manager on the target (= transpile(qc, target, optimization_level=3, seed))",
+      "L3_peephole_replaced": "the level-3 preset with TwoQubitPeepholeOptimization replaced by ConsolidateBlocks + UnitarySynthesis (approximation_degree 1.0) in the optimization loop"
+     },
+     "best_seed": 7
+    },
+    "n_cz": 5659,
+    "n_1q": 11650,
+    "n_rz": 5486,
+    "n_meas": 20,
+    "ops": {
+     "sx": 11401,
+     "cz": 5659,
+     "rz": 5486,
+     "x": 249,
+     "measure": 20,
+     "barrier": 1
+    },
+    "depth": 11488,
+    "physical_qubits": [
+     50,
+     51,
+     52,
+     53,
+     54,
+     55,
+     58,
+     59,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     79,
+     92,
+     93,
+     94,
+     95
+    ],
+    "n_active_qubits": 21,
+    "exactness": {
+     "max_abs_delta_up_to_phase": 1.612971061940284e-12,
+     "max_abs_delta_raw_phase": 1.4063714046539354e-11,
+     "leakage": 2.015054789694659e-13,
+     "measurement_consistent": true,
+     "n_active": 21,
+     "ok": true
+    },
+    "f_ceiling_2q": 0.00671723133743146,
+    "f_ceiling_2q_formula": "(1 - eps2_min)^n_cz, eps2_min = the record's best calibrated cz key",
+    "eps2_min": 0.000883701762151079,
+    "eps1_min": 9.807542159364159e-05,
+    "eps_ro_min": 0.00244140625,
+    "f_gates_layout": 1.670777586413233e-05,
+    "f_gates_layout_formula": "gate_S2D.analyse_on_backend(tq, backend_from_record(record)): prod over the circuit's cz (per key), sx/x (per qubit) and measure (per qubit) of (1 - error)",
+    "f_gates_layout_cz_and_readout_only": 0.00014222270052335323,
+    "layout_mean_edge_error": 0.0015130714564894469,
+    "layout_mean_readout_error": 0.014263916015625,
+    "f_gates_best_patch_bound": 0.0020404156656509843,
+    "f_gates_best_patch_bound_formula": "(1-eps2_min)^n_cz (1-eps1_min)^n_1q (1-eps_ro_min)^n_meas, n_1q = sx + x",
+    "schedule": {
+     "schedule_info": {
+      "method": "alap",
+      "n_delays": 3323,
+      "ops_non_delay": {
+       "barrier": 1,
+       "cz": 5659,
+       "measure": 20,
+       "rz": 5486,
+       "sx": 11401,
+       "x": 249
+      },
+      "seed_transpiler": 7,
+      "idle_register_delays_removed": 135
+     },
+     "scheduled_duration_s": 0.00041115200000001656,
+     "unscheduled_T_total_s": 0.0004111519999999808,
+     "unscheduled_T_s": 0.00040897199999998077,
+     "duration_delta_s": 3.5778671692021646e-17,
+     "non_delay_ops_moved": false,
+     "k0_4_ok": true
+    },
+    "idle": {
+     "windows": {
+      "n_windows": 3168,
+      "idle_s_total": 0.0065582240000000005,
+      "active": [
+       50,
+       51,
+       52,
+       53,
+       54,
+       55,
+       58,
+       59,
+       68,
+       69,
+       70,
+       71,
+       72,
+       73,
+       74,
+       75,
+       79,
+       92,
+       93,
+       94,
+       95
+      ]
+     },
+     "echo": {
+      "t2_ratio": 1.0,
+      "S_T1": 5.786975896675456,
+      "S_T2": 17.24391911658921,
+      "S_idle": 23.03089501326467,
+      "f_idle_aware": 1.6623712639699076e-15,
+      "f_idle_aware_xy4": 4.686420330362202e-15,
+      "f_idle_aware_xy4_95": [
+       4.147761479287381e-15,
+       5.295033386684886e-15
+      ],
+      "xy4_cap_binding": false
+     },
+     "transferred_0.174": {
+      "t2_ratio": 0.174,
+      "S_T1": 5.786975896675456,
+      "S_T2": 62.15435723068167,
+      "S_idle": 67.94133312735713,
+      "f_idle_aware": 5.204422792640675e-35,
+      "f_idle_aware_xy4": 1.4671880651368863e-34,
+      "f_idle_aware_xy4_95": [
+       1.2985489372385478e-34,
+       1.6577279120938304e-34
+      ],
+      "xy4_cap_binding": false
+     }
+    },
+    "xy4_gain": {
+     "R": 2.8191177457979903,
+     "R_95": [
+      2.4950873304812275,
+      3.1852291371061243
+     ],
+     "source": "validation/H0_ddtest.json data.decision.cells.T3",
+     "label": "a TRANSFER of the 2x2-measured XY4 gain (cell T3, client XY4 in windows >= 1.024 us) applied multiplicatively to the idle part and capped by the gate-only value -- not a 2x3 measurement"
+    },
+    "eps2_needed_for_f_0.05_nothing_else_wrong": 0.0005293748495412601,
+    "eps2_needed_for_f_0.05_exact": 0.0005292347553974563,
+    "eps2_needed_for_f_0.1_nothing_else_wrong": 0.00040688904276268696,
+    "best_edge_misses_by_factor": 1.669330839795029,
+    "verdict": {
+     "f_ceiling_2q": {
+      "meets_mean_0.1": false,
+      "meets_worst_0.05": false
+     },
+     "f_gates_layout": {
+      "meets_mean_0.1": false,
+      "meets_worst_0.05": false
+     },
+     "f_gates_best_patch_bound": {
+      "meets_mean_0.1": false,
+      "meets_worst_0.05": false
+     },
+     "f_idle_aware[echo]": {
+      "meets_mean_0.1": false,
+      "meets_worst_0.05": false
+     },
+     "f_idle_aware[transferred_0.174]": {
+      "meets_mean_0.1": false,
+      "meets_worst_0.05": false
+     },
+     "f_idle_aware_xy4[echo]": {
+      "meets_mean_0.1": false,
+      "meets_worst_0.05": false
+     },
+     "f_idle_aware_xy4[transferred_0.174]": {
+      "meets_mean_0.1": false,
+      "meets_worst_0.05": false
+     }
+    },
+    "runtime_s": 256.6312415599823
    }
   },
   "2x4": {
@@ -960,6 +1796,58 @@
       }
      }
     }
+   },
+   "live": {
+    "routed_fakefez": {
+     "n_cz": 148726,
+     "n_1q": 332830,
+     "n_meas": 28,
+     "source": "validation/S2_2x4.json data.compile.compile_4_exact_routed_k1.circuits.B0_ref0_k1.maps['fakefez|measured']",
+     "f_ceiling_2q": 7.86482803958732e-58,
+     "f_gates_best_patch_bound": 4.884689063847709e-72,
+     "log10_f_ceiling_2q": -57.104310768561966,
+     "eps2_needed_for_f_0.05_nothing_else_wrong": 2.0142626531702534e-05,
+     "eps2_needed_for_f_0.05_exact": 2.014242367032182e-05,
+     "best_edge_misses_by_factor": 43.872220971789275,
+     "f_gates_layout": null,
+     "f_idle_aware": null,
+     "not_computed": "no 2x4 circuit is re-routed on the laptop (prompts/25 A5); the 2x4 transpile is recorded in validation/S2_2x4.json",
+     "verdict": {
+      "f_ceiling_2q": {
+       "meets_mean_0.1": false,
+       "meets_worst_0.05": false
+      },
+      "f_gates_best_patch_bound": {
+       "meets_mean_0.1": false,
+       "meets_worst_0.05": false
+      }
+     }
+    },
+    "all_to_all": {
+     "n_cz": 69688,
+     "n_1q": 138711,
+     "n_meas": 28,
+     "source": "validation/S2_2x4.json data.schedule.schedule_4_exact.rows['2x4|exact|B0_ref0_k1|all_to_all']",
+     "f_ceiling_2q": 1.749206725434598e-27,
+     "f_gates_best_patch_bound": 2.0166203610152364e-33,
+     "log10_f_ceiling_2q": -26.757158861527547,
+     "eps2_needed_for_f_0.05_nothing_else_wrong": 4.298777800416127e-05,
+     "eps2_needed_for_f_0.05_exact": 4.298685404291458e-05,
+     "best_edge_misses_by_factor": 20.55704675095176,
+     "f_gates_layout": null,
+     "f_idle_aware": null,
+     "not_computed": "no 2x4 circuit is re-routed on the laptop (prompts/25 A5); the 2x4 transpile is recorded in validation/S2_2x4.json",
+     "verdict": {
+      "f_ceiling_2q": {
+       "meets_mean_0.1": false,
+       "meets_worst_0.05": false
+      },
+      "f_gates_best_patch_bound": {
+       "meets_mean_0.1": false,
+       "meets_worst_0.05": false
+      }
+     }
+    }
    }
   },
   "qpu_seconds": 0,
@@ -997,23 +1885,23 @@
   },
   "checks": {
    "pytest_returncode": 0,
-   "pytest_summary": "321 passed, 19 skipped, 10 warnings in 412.91s (0:06:52)",
+   "pytest_summary": "342 passed, 19 skipped, 62 warnings in 414.95s (0:06:54)",
    "check_package_returncode": 0,
    "check_package_tail": "gate S1: PASS (12 criteria, 0 failing), computed 2026-09-14 16:48:20 MDT\nreport/data consistency: E0(2x3, g2=4, B=0) = -5.6026 appears in reports/E3_exact_references.md\nPACKAGE OK",
-   "seconds": 414.4366772174835,
+   "seconds": 416.4756336212158,
    "ok": true
   },
   "stop": [],
   "verdict_record": "committed"
  },
- "runtime_s": 683.8858635425568,
+ "runtime_s": 942.7389063835144,
  "environment": {
   "python": "3.12.14",
   "numpy": "2.5.2",
   "scipy": "1.18.0",
   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
   "cpu_count": 12,
-  "git_commit": "b6d51a5",
-  "timestamp": "2026-10-05 19:24:49 MDT"
+  "git_commit": "880961d",
+  "timestamp": "2026-10-06 01:38:10 MDT"
  }
 }
