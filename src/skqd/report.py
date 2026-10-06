@@ -14,7 +14,11 @@ import time
 from dataclasses import dataclass, field
 
 import numpy as np
-import scipy
+
+try:                              # the C3_SEL env (selene-sim, numpy~=2.0) has no scipy; nothing here needs it
+    import scipy
+except ImportError:               # pragma: no cover
+    scipy = None
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -28,7 +32,7 @@ def environment() -> dict:
     return {
         "python": sys.version.split()[0],
         "numpy": np.__version__,
-        "scipy": scipy.__version__,
+        "scipy": scipy.__version__ if scipy is not None else None,
         "platform": platform.platform(),
         "cpu_count": os.cpu_count(),
         "git_commit": commit,
