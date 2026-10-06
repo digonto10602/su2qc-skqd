@@ -1,0 +1,1019 @@
+{
+ "gate": "K0_2x3_2x4",
+ "title": "ibm_kingston readiness of 2x3 and 2x4 on a calibration record: routed CZ, gate-only, idle-aware and XY4-transfer f (prompts/25 Part A)",
+ "status": "PASS",
+ "criteria": [
+  {
+   "name": "K0.1 all-to-all 2x3 CZ count reproduces validation/S2.json",
+   "value": 2164,
+   "threshold": "== 2164",
+   "passed": true
+  },
+  {
+   "name": "K0.2 committed-record statistics: min / p10 / median of cz_error two ways to 1e-12 and = the planner's printed values; 342 calibrated / 10 uncalibrated keys",
+   "value": "two-path max diff 0.0e+00; planner rel diff max 8.9e-05; counts 342/10",
+   "threshold": "<= 1e-12; <= 0.0005; 342/10",
+   "passed": true
+  },
+  {
+   "name": "K0.3 f_ceiling_2q = (1-eps2_min)^n_CZ from the JSON's own fields to 1e-12; f_gates_layout <= best-patch bound <= ceiling (every record)",
+   "value": "1/1 records",
+   "threshold": "all",
+   "passed": true
+  },
+  {
+   "name": "K0.4 the ALAP schedule moves no non-delay operation (per-qubit order) and its duration equals the unscheduled T_total (h0_qpu_time.circuit_duration_s vs idle.schedule_asap) to 1e-12",
+   "value": "committed: moved False, |dT| 3.6e-17 s",
+   "threshold": "no move, <= 1e-12 s",
+   "passed": true
+  },
+  {
+   "name": "K0.5 f_idle_aware_xy4 <= f_gates_layout (the cap applied, both T2 ends, R's 95 % ends)",
+   "value": "1/1 records",
+   "threshold": "all",
+   "passed": true
+  },
+  {
+   "name": "K0.6 pytest -q tests and scripts/check_package.py",
+   "value": "pytest: 321 passed, 19 skipped, 10 warnings in 412.91s (0:06:52); check_package rc 0",
+   "threshold": "all pass",
+   "passed": true
+  }
+ ],
+ "data": {
+  "what_pass_means": "the counts, statistics and formulas are reproduced and self-consistent; the verdict fields carry no criterion -- they are the result",
+  "records": {
+   "committed": {
+    "path": "data/hardware/H0_ddtest_prep/ibm_kingston_full_20261002T1906Z.json",
+    "fingerprint": "e4ecac386f4a73277113ce72a82cdf04fe18d97349b04fa751338fea34f6c73e",
+    "last_update_date": "2026-10-02T13:06:57-06:00",
+    "stamp": "20261002T1906Z",
+    "usable": true,
+    "stats": {
+     "n_cz_keys": 352,
+     "n_calibrated": 342,
+     "n_uncalibrated": 10,
+     "uncalibrated_keys": [
+      "112-113",
+      "113-112",
+      "130-131",
+      "131-130",
+      "145-146",
+      "146-145",
+      "146-147",
+      "147-146",
+      "16-3",
+      "3-16"
+     ],
+     "cz_error_min": 0.0008164153781107242,
+     "cz_error_p10": 0.0011459083801726722,
+     "cz_error_median": 0.001804161318577524,
+     "cz_error_mean": 0.005493035681365332,
+     "cz_error_min_key": "0-1",
+     "sx_error_median": 0.0002467095419555265,
+     "measure_error_median": 0.00897216796875,
+     "T1_s_median": 0.0002288972240009413,
+     "T2_s_median": 0.0001472645914509097,
+     "sx_error_min": 9.990906468884253e-05,
+     "x_error_min": 9.990906468884253e-05,
+     "measure_error_min": 0.0018310546875,
+     "cz_duration_s_values": [
+      6.8e-08,
+      8e-08,
+      1.08e-07
+     ],
+     "percentile_method": "numpy.percentile, linear interpolation (numpy default)"
+    }
+   },
+   "live": {
+    "path": "data/hardware/K0_prep/ibm_kingston_full_20261006T0042Z.json",
+    "fingerprint": "d9548aefcaf4a08ecf902554f94574fb3deb5227c01d235bd27be4ad1d156e80",
+    "last_update_date": "2026-10-05T18:42:52-06:00",
+    "stamp": "20261006T0042Z",
+    "usable": false,
+    "n_missing_errors": 352,
+    "missing_by_instruction": {
+     "cz": 352
+    },
+    "edge_source": "backend.configuration().coupling_map (backend.coupling_map is None: the live target has no cz entries)",
+    "reason": "the record carries entries with no error (missing_errors): f, the D9 fingerprint and the routing cannot be evaluated on it (prompts/15 A1 hard stop)"
+   }
+  },
+  "2x3": {
+   "committed": {
+    "record_label": "committed",
+    "record_fingerprint": "e4ecac386f4a73277113ce72a82cdf04fe18d97349b04fa751338fea34f6c73e",
+    "record_last_update_date": "2026-10-02T13:06:57-06:00",
+    "circuit": {
+     "lattice": "2x3",
+     "twoB": 0,
+     "reference": 25,
+     "k": 1,
+     "dt": 0.15644331744992473,
+     "id": "B0_ref25_k1",
+     "n_logical_qubits": 20
+    },
+    "routing": {
+     "target": "backend_from_record(record, FakeKingston()) minus the uncalibrated cz keys",
+     "cz_keys_removed": 10,
+     "uncalibrated_pairs": [
+      [
+       3,
+       16
+      ],
+      [
+       112,
+       113
+      ],
+      [
+       130,
+       131
+      ],
+      [
+       145,
+       146
+      ],
+      [
+       146,
+       147
+      ]
+     ],
+     "optimization_level": 3,
+     "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "chosen": "L3|7",
+     "variant": "L3",
+     "seed": 7,
+     "per_seed": {
+      "L3|0": {
+       "variant": "L3",
+       "seed": 0,
+       "cz": 5826,
+       "n_1q": 11999,
+       "n_rz": 5388,
+       "ops": {
+        "sx": 11672,
+        "cz": 5826,
+        "rz": 5388,
+        "x": 327,
+        "measure": 20,
+        "barrier": 1
+       },
+       "depth": 11565,
+       "physical_qubits": [
+        51,
+        52,
+        53,
+        54,
+        55,
+        58,
+        59,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        78,
+        79,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        98
+       ],
+       "logical_to_physical": [
+        89,
+        51,
+        69,
+        75,
+        78,
+        98,
+        91,
+        74,
+        90,
+        79,
+        94,
+        95,
+        58,
+        92,
+        73,
+        71,
+        70,
+        93,
+        72,
+        59
+       ],
+       "measurement_consistent": true,
+       "transpile_s": 0.6100172996520996,
+       "exactness": null
+      },
+      "L3|1": {
+       "variant": "L3",
+       "seed": 1,
+       "cz": 5655,
+       "n_1q": 11655,
+       "n_rz": 5611,
+       "ops": {
+        "sx": 11383,
+        "cz": 5655,
+        "rz": 5611,
+        "x": 272,
+        "measure": 20,
+        "barrier": 1
+       },
+       "depth": 11548,
+       "physical_qubits": [
+        51,
+        52,
+        53,
+        54,
+        55,
+        58,
+        59,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        78,
+        79,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94
+       ],
+       "logical_to_physical": [
+        91,
+        59,
+        94,
+        51,
+        90,
+        55,
+        79,
+        69,
+        70,
+        74,
+        72,
+        71,
+        92,
+        93,
+        75,
+        78,
+        52,
+        73,
+        58,
+        89
+       ],
+       "measurement_consistent": true,
+       "transpile_s": 0.4946308135986328,
+       "exactness": {
+        "max_abs_delta_up_to_phase": 4.705666871488321e-05,
+        "max_abs_delta_raw_phase": 4.771399833927329e-05,
+        "leakage": 2.5091829725099046e-09,
+        "measurement_consistent": true,
+        "n_active": 22,
+        "ok": false
+       }
+      },
+      "L3|2": {
+       "variant": "L3",
+       "seed": 2,
+       "cz": 5774,
+       "n_1q": 11707,
+       "n_rz": 5522,
+       "ops": {
+        "sx": 11467,
+        "cz": 5774,
+        "rz": 5522,
+        "x": 240,
+        "measure": 20,
+        "barrier": 1
+       },
+       "depth": 11528,
+       "physical_qubits": [
+        38,
+        39,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        57,
+        58,
+        59,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75
+       ],
+       "logical_to_physical": [
+        47,
+        68,
+        67,
+        69,
+        57,
+        73,
+        50,
+        72,
+        48,
+        52,
+        58,
+        53,
+        39,
+        49,
+        51,
+        54,
+        55,
+        71,
+        70,
+        38
+       ],
+       "measurement_consistent": true,
+       "transpile_s": 0.5278162956237793,
+       "exactness": null
+      },
+      "L3|3": {
+       "variant": "L3",
+       "seed": 3,
+       "cz": 5579,
+       "n_1q": 11451,
+       "n_rz": 5376,
+       "ops": {
+        "sx": 11151,
+        "cz": 5579,
+        "rz": 5376,
+        "x": 300,
+        "measure": 20,
+        "barrier": 1
+       },
+       "depth": 11411,
+       "physical_qubits": [
+        97,
+        104,
+        105,
+        106,
+        107,
+        108,
+        109,
+        117,
+        118,
+        122,
+        123,
+        124,
+        125,
+        126,
+        127,
+        128,
+        129,
+        136,
+        137,
+        147
+       ],
+       "logical_to_physical": [
+        109,
+        97,
+        147,
+        104,
+        106,
+        108,
+        117,
+        128,
+        129,
+        124,
+        125,
+        123,
+        118,
+        105,
+        127,
+        107,
+        136,
+        126,
+        137,
+        122
+       ],
+       "measurement_consistent": true,
+       "transpile_s": 0.5215601921081543,
+       "exactness": {
+        "max_abs_delta_up_to_phase": 4.809213803659724e-05,
+        "max_abs_delta_raw_phase": 5.772618869663703e-05,
+        "leakage": 2.601777571165087e-09,
+        "measurement_consistent": true,
+        "n_active": 20,
+        "ok": false
+       }
+      },
+      "L3|4": {
+       "variant": "L3",
+       "seed": 4,
+       "cz": 5660,
+       "n_1q": 11595,
+       "n_rz": 5645,
+       "ops": {
+        "sx": 11314,
+        "cz": 5660,
+        "rz": 5645,
+        "x": 281,
+        "measure": 20,
+        "barrier": 1
+       },
+       "depth": 11693,
+       "physical_qubits": [
+        51,
+        52,
+        53,
+        54,
+        55,
+        58,
+        59,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        78,
+        79,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        98
+       ],
+       "logical_to_physical": [
+        90,
+        78,
+        98,
+        69,
+        89,
+        95,
+        74,
+        94,
+        91,
+        79,
+        73,
+        93,
+        70,
+        75,
+        71,
+        58,
+        59,
+        72,
+        92,
+        55
+       ],
+       "measurement_consistent": true,
+       "transpile_s": 0.5022664070129395,
+       "exactness": null
+      },
+      "L3|5": {
+       "variant": "L3",
+       "seed": 5,
+       "cz": 5769,
+       "n_1q": 11759,
+       "n_rz": 5404,
+       "ops": {
+        "sx": 11412,
+        "cz": 5769,
+        "rz": 5404,
+        "x": 347,
+        "measure": 20,
+        "barrier": 1
+       },
+       "depth": 11194,
+       "physical_qubits": [
+        7,
+        16,
+        17,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        36,
+        37,
+        38,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49
+       ],
+       "logical_to_physical": [
+        16,
+        22,
+        38,
+        47,
+        48,
+        41,
+        24,
+        17,
+        44,
+        25,
+        27,
+        37,
+        46,
+        45,
+        26,
+        23,
+        43,
+        28,
+        7,
+        42
+       ],
+       "measurement_consistent": true,
+       "transpile_s": 0.4582388401031494,
+       "exactness": null
+      },
+      "L3|6": {
+       "variant": "L3",
+       "seed": 6,
+       "cz": 5527,
+       "n_1q": 11533,
+       "n_rz": 5724,
+       "ops": {
+        "sx": 11259,
+        "rz": 5724,
+        "cz": 5527,
+        "x": 274,
+        "measure": 20,
+        "barrier": 1
+       },
+       "depth": 11879,
+       "physical_qubits": [
+        29,
+        33,
+        38,
+        39,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        57,
+        58,
+        59,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75
+       ],
+       "logical_to_physical": [
+        70,
+        73,
+        29,
+        39,
+        55,
+        59,
+        52,
+        48,
+        53,
+        71,
+        58,
+        72,
+        57,
+        49,
+        50,
+        47,
+        54,
+        51,
+        38,
+        33
+       ],
+       "measurement_consistent": true,
+       "transpile_s": 0.487027645111084,
+       "exactness": {
+        "max_abs_delta_up_to_phase": 4.876805327181827e-05,
+        "max_abs_delta_raw_phase": 4.8400587287441284e-05,
+        "leakage": 2.7236289890097964e-09,
+        "measurement_consistent": true,
+        "n_active": 25,
+        "ok": false
+       }
+      },
+      "L3|7": {
+       "variant": "L3",
+       "seed": 7,
+       "cz": 5659,
+       "n_1q": 11626,
+       "n_rz": 5596,
+       "ops": {
+        "sx": 11327,
+        "cz": 5659,
+        "rz": 5596,
+        "x": 299,
+        "measure": 20,
+        "barrier": 1
+       },
+       "depth": 11523,
+       "physical_qubits": [
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        58,
+        59,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        79,
+        92,
+        93,
+        94,
+        95
+       ],
+       "logical_to_physical": [
+        92,
+        69,
+        54,
+        52,
+        53,
+        68,
+        73,
+        94,
+        50,
+        72,
+        71,
+        79,
+        51,
+        74,
+        70,
+        93,
+        75,
+        58,
+        95,
+        59
+       ],
+       "measurement_consistent": true,
+       "transpile_s": 0.44721293449401855,
+       "exactness": {
+        "max_abs_delta_up_to_phase": 1.470191864899737e-12,
+        "max_abs_delta_raw_phase": 1.4126021052210124e-11,
+        "leakage": 2.042810365310288e-13,
+        "measurement_consistent": true,
+        "n_active": 21,
+        "ok": true
+       }
+      }
+     },
+     "plain_l3_fewest_cz": {
+      "key": "L3|6",
+      "cz": 5527,
+      "exactness": {
+       "max_abs_delta_up_to_phase": 4.876805327181827e-05,
+       "max_abs_delta_raw_phase": 4.8400587287441284e-05,
+       "leakage": 2.7236289890097964e-09,
+       "measurement_consistent": true,
+       "n_active": 25,
+       "ok": false
+      }
+     },
+     "rule": "transpile with each variant in order (L3 first) for seeds 0..7; among the seeds of the first variant that has any EXACT circuit (max |dpsi| < 1e-10 up to a global phase against the exact Krylov state, leakage < 1e-9), keep the fewest CZ (ties: the lower seed).  Exactness is checked in increasing CZ order and stops at the first exact seed.  Measured reason (2026-10-05, qiskit 2.5.2): the level-3 optimization loop's TwoQubitPeepholeOptimization is not exact on routed 2x3 circuits at approximation_degree 1.0 (B0_ref117_k1, seed 6: max |dpsi| 1.6e-5, leakage 6e-9), so the fewest-CZ seed alone can fail the exactness bar of every submitted circuit; the plain fewest-CZ level-3 count is recorded beside the chosen one",
+     "variants": {
+      "L3": "qiskit level-3 preset pass manager on the target (= transpile(qc, target, optimization_level=3, seed))",
+      "L3_peephole_replaced": "the level-3 preset with TwoQubitPeepholeOptimization replaced by ConsolidateBlocks + UnitarySynthesis (approximation_degree 1.0) in the optimization loop"
+     },
+     "best_seed": 7
+    },
+    "n_cz": 5659,
+    "n_1q": 11626,
+    "n_rz": 5596,
+    "n_meas": 20,
+    "ops": {
+     "sx": 11327,
+     "cz": 5659,
+     "rz": 5596,
+     "x": 299,
+     "measure": 20,
+     "barrier": 1
+    },
+    "depth": 11523,
+    "physical_qubits": [
+     50,
+     51,
+     52,
+     53,
+     54,
+     55,
+     58,
+     59,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     79,
+     92,
+     93,
+     94,
+     95
+    ],
+    "n_active_qubits": 21,
+    "exactness": {
+     "max_abs_delta_up_to_phase": 1.470191864899737e-12,
+     "max_abs_delta_raw_phase": 1.4126021052210124e-11,
+     "leakage": 2.042810365310288e-13,
+     "measurement_consistent": true,
+     "n_active": 21,
+     "ok": true
+    },
+    "f_ceiling_2q": 0.00983329099417368,
+    "f_ceiling_2q_formula": "(1 - eps2_min)^n_cz, eps2_min = the record's best calibrated cz key",
+    "eps2_min": 0.0008164153781107242,
+    "eps1_min": 9.990906468884253e-05,
+    "eps_ro_min": 0.0018310546875,
+    "f_gates_layout": 6.068839922437884e-06,
+    "f_gates_layout_formula": "gate_S2D.analyse_on_backend(tq, backend_from_record(record)): prod over the circuit's cz (per key), sx/x (per qubit) and measure (per qubit) of (1 - error)",
+    "f_gates_layout_cz_and_readout_only": 8.727253093339745e-05,
+    "layout_mean_edge_error": 0.0015959512983070817,
+    "layout_mean_readout_error": 0.01512451171875,
+    "f_gates_best_patch_bound": 0.002966901648761571,
+    "f_gates_best_patch_bound_formula": "(1-eps2_min)^n_cz (1-eps1_min)^n_1q (1-eps_ro_min)^n_meas, n_1q = sx + x",
+    "schedule": {
+     "schedule_info": {
+      "method": "alap",
+      "n_delays": 3322,
+      "ops_non_delay": {
+       "barrier": 1,
+       "cz": 5659,
+       "measure": 20,
+       "rz": 5596,
+       "sx": 11327,
+       "x": 299
+      },
+      "seed_transpiler": 7,
+      "idle_register_delays_removed": 135
+     },
+     "scheduled_duration_s": 0.0004102560000000165,
+     "unscheduled_T_total_s": 0.00041025599999998066,
+     "unscheduled_T_s": 0.00040807599999998065,
+     "duration_delta_s": 3.583288180064592e-17,
+     "non_delay_ops_moved": false,
+     "k0_4_ok": true
+    },
+    "idle": {
+     "windows": {
+      "n_windows": 3167,
+      "idle_s_total": 0.006541904,
+      "active": [
+       50,
+       51,
+       52,
+       53,
+       54,
+       55,
+       58,
+       59,
+       68,
+       69,
+       70,
+       71,
+       72,
+       73,
+       74,
+       75,
+       79,
+       92,
+       93,
+       94,
+       95
+      ]
+     },
+     "echo": {
+      "t2_ratio": 1.0,
+      "S_T1": 5.946191343343144,
+      "S_T2": 18.827829375088218,
+      "S_idle": 24.774020718431363,
+      "f_idle_aware": 1.0565381653512918e-16,
+      "f_idle_aware_xy4": 2.978505491054678e-16,
+      "f_idle_aware_xy4_95": [
+       2.6361549905378886e-16,
+       3.3653161487415827e-16
+      ],
+      "xy4_cap_binding": false
+     },
+     "transferred_0.174": {
+      "t2_ratio": 0.174,
+      "S_T1": 5.946191343343144,
+      "S_T2": 68.2228248414775,
+      "S_idle": 74.16901618482065,
+      "f_idle_aware": 3.7317386879515765e-38,
+      "f_idle_aware_xy4": 1.0520210757885198e-37,
+      "f_idle_aware_xy4_95": [
+       9.311013920974618e-38,
+       1.1886442800929541e-37
+      ],
+      "xy4_cap_binding": false
+     }
+    },
+    "xy4_gain": {
+     "R": 2.8191177457979903,
+     "R_95": [
+      2.4950873304812275,
+      3.1852291371061243
+     ],
+     "source": "validation/H0_ddtest.json data.decision.cells.T3",
+     "label": "a TRANSFER of the 2x2-measured XY4 gain (cell T3, client XY4 in windows >= 1.024 us) applied multiplicatively to the idle part and capped by the gate-only value -- not a 2x3 measurement"
+    },
+    "eps2_needed_for_f_0.05_nothing_else_wrong": 0.0005293748495412601,
+    "eps2_needed_for_f_0.05_exact": 0.0005292347553974563,
+    "eps2_needed_for_f_0.1_nothing_else_wrong": 0.00040688904276268696,
+    "best_edge_misses_by_factor": 1.5422254737228345,
+    "verdict": {
+     "f_ceiling_2q": {
+      "meets_mean_0.1": false,
+      "meets_worst_0.05": false
+     },
+     "f_gates_layout": {
+      "meets_mean_0.1": false,
+      "meets_worst_0.05": false
+     },
+     "f_gates_best_patch_bound": {
+      "meets_mean_0.1": false,
+      "meets_worst_0.05": false
+     },
+     "f_idle_aware[echo]": {
+      "meets_mean_0.1": false,
+      "meets_worst_0.05": false
+     },
+     "f_idle_aware[transferred_0.174]": {
+      "meets_mean_0.1": false,
+      "meets_worst_0.05": false
+     },
+     "f_idle_aware_xy4[echo]": {
+      "meets_mean_0.1": false,
+      "meets_worst_0.05": false
+     },
+     "f_idle_aware_xy4[transferred_0.174]": {
+      "meets_mean_0.1": false,
+      "meets_worst_0.05": false
+     }
+    },
+    "runtime_s": 260.9187216758728
+   }
+  },
+  "2x4": {
+   "committed": {
+    "routed_fakefez": {
+     "n_cz": 148726,
+     "n_1q": 332830,
+     "n_meas": 28,
+     "source": "validation/S2_2x4.json data.compile.compile_4_exact_routed_k1.circuits.B0_ref0_k1.maps['fakefez|measured']",
+     "f_ceiling_2q": 1.7598418321195048e-53,
+     "f_gates_best_patch_bound": 6.03930276314909e-68,
+     "log10_f_ceiling_2q": -52.75452636316567,
+     "eps2_needed_for_f_0.05_nothing_else_wrong": 2.0142626531702534e-05,
+     "eps2_needed_for_f_0.05_exact": 2.014242367032182e-05,
+     "best_edge_misses_by_factor": 40.53172394502603,
+     "f_gates_layout": null,
+     "f_idle_aware": null,
+     "not_computed": "no 2x4 circuit is re-routed on the laptop (prompts/25 A5); the 2x4 transpile is recorded in validation/S2_2x4.json",
+     "verdict": {
+      "f_ceiling_2q": {
+       "meets_mean_0.1": false,
+       "meets_worst_0.05": false
+      },
+      "f_gates_best_patch_bound": {
+       "meets_mean_0.1": false,
+       "meets_worst_0.05": false
+      }
+     }
+    },
+    "all_to_all": {
+     "n_cz": 69688,
+     "n_1q": 138711,
+     "n_meas": 28,
+     "source": "validation/S2_2x4.json data.schedule.schedule_4_exact.rows['2x4|exact|B0_ref0_k1|all_to_all']",
+     "f_ceiling_2q": 1.909869840743561e-25,
+     "f_gates_best_patch_bound": 1.7368107200152835e-31,
+     "log10_f_ceiling_2q": -24.718996229282634,
+     "eps2_needed_for_f_0.05_nothing_else_wrong": 4.298777800416127e-05,
+     "eps2_needed_for_f_0.05_exact": 4.298685404291458e-05,
+     "best_edge_misses_by_factor": 18.99180222880313,
+     "f_gates_layout": null,
+     "f_idle_aware": null,
+     "not_computed": "no 2x4 circuit is re-routed on the laptop (prompts/25 A5); the 2x4 transpile is recorded in validation/S2_2x4.json",
+     "verdict": {
+      "f_ceiling_2q": {
+       "meets_mean_0.1": false,
+       "meets_worst_0.05": false
+      },
+      "f_gates_best_patch_bound": {
+       "meets_mean_0.1": false,
+       "meets_worst_0.05": false
+      }
+     }
+    }
+   }
+  },
+  "qpu_seconds": 0,
+  "a2a_2x3": {
+   "cz": 2164,
+   "expected": 2164,
+   "source": "validation/S2.json data.2x3.coarse_step.all_to_all.cz",
+   "transpile": "basis rz/sx/x/cz, coupling_map None, optimization_level 3, seed 0"
+  },
+  "k0_2": {
+   "numpy": {
+    "min": 0.0008164153781107242,
+    "p10": 0.0011459083801726722,
+    "median": 0.001804161318577524
+   },
+   "by_hand": {
+    "min": 0.0008164153781107242,
+    "p10": 0.0011459083801726722,
+    "median": 0.001804161318577524
+   },
+   "two_path_max_abs_diff": 0.0,
+   "planner": {
+    "min": 0.0008164,
+    "p10": 0.001146,
+    "median": 0.001804,
+    "n_calibrated": 342,
+    "n_uncalibrated": 10
+   },
+   "planner_relative_diff": {
+    "min": 1.883649035298098e-05,
+    "p10": 7.99474933053592e-05,
+    "median": 8.942271481374416e-05
+   },
+   "note": "the planner's values are printed to 4 significant figures, so the 1e-12 identity is checked between two independent computations on the record (numpy and a hand-written linear percentile) and the planner's printed values to half a unit in their 4th figure"
+  },
+  "checks": {
+   "pytest_returncode": 0,
+   "pytest_summary": "321 passed, 19 skipped, 10 warnings in 412.91s (0:06:52)",
+   "check_package_returncode": 0,
+   "check_package_tail": "gate S1: PASS (12 criteria, 0 failing), computed 2026-09-14 16:48:20 MDT\nreport/data consistency: E0(2x3, g2=4, B=0) = -5.6026 appears in reports/E3_exact_references.md\nPACKAGE OK",
+   "seconds": 414.4366772174835,
+   "ok": true
+  },
+  "stop": [],
+  "verdict_record": "committed"
+ },
+ "runtime_s": 683.8858635425568,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.2",
+  "scipy": "1.18.0",
+  "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+  "cpu_count": 12,
+  "git_commit": "b6d51a5",
+  "timestamp": "2026-10-05 19:24:49 MDT"
+ }
+}

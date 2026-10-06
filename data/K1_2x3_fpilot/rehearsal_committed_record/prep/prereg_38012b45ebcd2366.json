@@ -1,0 +1,414 @@
+{
+ "gate": "K1_2x3_fpilot",
+ "script": "scripts/gate_K1_2x3_fpilot.py --stage predict",
+ "created": "2026-10-06 01:03:41 UTC",
+ "commit": "b6d51a5",
+ "versions": {
+  "qiskit": "2.5.2",
+  "qiskit_aer": "0.17.2",
+  "qiskit_ibm_runtime": "0.49.0",
+  "numpy": "2.5.2"
+ },
+ "qpu_seconds": 0,
+ "prep": "/tmp/claude-1000/-home-digimonk-Projects-su2qc-skqd-v0-1-0/75c713a1-f3d1-426c-9cbd-0d1bee19756d/scratchpad/k1dev",
+ "prep_created": "2026-10-06 01:02:40 UTC",
+ "owner_decision": "data/owner_decision_20261005_k1_2x3_fpilot.md",
+ "owner_decision_1a": "data/owner_decision_20261005_partB.md",
+ "calibration": {
+  "backend": "ibm_kingston",
+  "fingerprint": "38012b45ebcd2366fb251d07d73e7baac7493afe3f67f41e4bef901437100583",
+  "path": "../../../../tmp/claude-1000/-home-digimonk-Projects-su2qc-skqd-v0-1-0/75c713a1-f3d1-426c-9cbd-0d1bee19756d/scratchpad/k1dev/calibration_20260415T0715Z.json",
+  "last_update_date": "2026-04-15T09:15:15+02:00",
+  "stamp": "20260415T0715Z",
+  "full_record_path": "data/hardware/H0_ddtest_prep/ibm_kingston_full_20261002T1906Z.json",
+  "full_record_fingerprint": "e4ecac386f4a73277113ce72a82cdf04fe18d97349b04fa751338fea34f6c73e",
+  "live_fingerprint_at_predict": "38012b45ebcd2366fb251d07d73e7baac7493afe3f67f41e4bef901437100583",
+  "live_match_at_predict": true
+ },
+ "k0": {
+  "path": "validation/K0_2x3_2x4.json",
+  "status": "FAIL",
+  "live_fingerprint": null,
+  "commit": "c29a402"
+ },
+ "selection": {
+  "rule": "prompts/27 stage 0b: per sector, the signed k = 1 circuit with the largest ideal reference-string probability p_ref (exact Krylov state, normalised on the sector; ties: the lower basis index)",
+  "chosen": {
+   "B=0": "B0_ref117_k1",
+   "B=1": "B1_ref29_k1"
+  },
+  "p_reference": {
+   "B0_ref117_k1": 0.9283570199234927,
+   "B1_ref29_k1": 0.928308035585111
+  }
+ },
+ "patch": [
+  50,
+  51,
+  52,
+  53,
+  54,
+  58,
+  59,
+  68,
+  69,
+  70,
+  71,
+  72,
+  73,
+  74,
+  75,
+  79,
+  92,
+  93,
+  94,
+  95
+ ],
+ "pubs": [
+  {
+   "id": "B0_ref117_k1",
+   "kind": "coarse_step",
+   "shots": 100000
+  },
+  {
+   "id": "B1_ref29_k1",
+   "kind": "coarse_step",
+   "shots": 100000
+  },
+  {
+   "id": "cal_patch_all0",
+   "kind": "readout_calibration",
+   "shots": 100000
+  },
+  {
+   "id": "cal_patch_all1",
+   "kind": "readout_calibration",
+   "shots": 100000
+  }
+ ],
+ "shots_per_coarse_pub": 100000,
+ "shots_per_readout_pub": 100000,
+ "total_shots": 400000,
+ "one_job": "all four pubs at the same shot count, so h0_submit.plan_groups makes ONE group = one job (--max-pubs-per-job 4)",
+ "sampler_options": "--dd off --twirling off (runtime DD off: the XY4 pulses are in the circuits); raw bit strings",
+ "execution_estimate": {
+  "total_execution_s": 182.44880000000325,
+  "total_shots": 400000,
+  "rep_delay_s": 0.00025,
+  "groups": [
+   {
+    "group": "r=1",
+    "circuits": 2,
+    "shots_per_circuit": 100000,
+    "total_shots": 200000,
+    "execution_s": 132.00960000000325,
+    "duration_mean_s": 0.00041004800000001625,
+    "duration_min_s": 0.00040984000000001634,
+    "duration_max_s": 0.0004102560000000162
+   },
+   {
+    "group": "readout calibration",
+    "circuits": 2,
+    "shots_per_circuit": 100000,
+    "total_shots": 200000,
+    "execution_s": 50.4392,
+    "duration_mean_s": 2.196e-06,
+    "duration_min_s": 2.18e-06,
+    "duration_max_s": 2.2119999999999997e-06
+   }
+  ],
+  "per_circuit": [
+   {
+    "id": "B0_ref117_k1",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 0.0004102560000000162,
+    "shots": 100000,
+    "execution_s": 66.02560000000162
+   },
+   {
+    "id": "B1_ref29_k1",
+    "kind": "coarse_step",
+    "group": "r=1",
+    "duration_s": 0.00040984000000001634,
+    "shots": 100000,
+    "execution_s": 65.98400000000163
+   },
+   {
+    "id": "cal_patch_all0",
+    "kind": "readout_calibration",
+    "group": "readout calibration",
+    "duration_s": 2.18e-06,
+    "shots": 100000,
+    "execution_s": 25.218
+   },
+   {
+    "id": "cal_patch_all1",
+    "kind": "readout_calibration",
+    "group": "readout calibration",
+    "duration_s": 2.2119999999999997e-06,
+    "shots": 100000,
+    "execution_s": 25.221200000000003
+   }
+  ],
+  "last_update_date": "2026-04-15T09:15:15+02:00",
+  "cap_s": 300.0,
+  "within_cap": true,
+  "estimator": "scripts/h0_qpu_time.estimate on the live target"
+ },
+ "billed": {
+  "history": [
+   {
+    "gate": "H0_kpilot",
+    "estimate_s": 9.042240000000005,
+    "billed_s": 12.0,
+    "ratio": 1.3271047881940752
+   },
+   {
+    "gate": "H0_ddtest",
+    "estimate_s": 17.257584000000023,
+    "billed_s": 20.0,
+    "ratio": 1.1589107722146954
+   },
+   {
+    "gate": "H0_2x2",
+    "estimate_s": 41.71489022000006,
+    "billed_s": 53.0,
+    "ratio": 1.270529533231022
+   }
+  ],
+  "ratio_min": 1.1589107722146954,
+  "ratio_max": 1.3271047881940752,
+  "expected_billed_s_range": [
+   211.4418796976483,
+   242.1286760802675
+  ],
+  "cap_billed_s": 300.0,
+  "note": "information: billed / estimate of the earlier kingston jobs; the binding precondition is estimate <= 300 s"
+ },
+ "account": {
+  "usage": {
+   "usage_remaining_seconds": 498,
+   "usage_consumed_seconds": 102,
+   "usage_limit_seconds": 600
+  },
+  "backend": {
+   "operational": true
+  },
+  "read": "2026-10-06 01:03:41 UTC"
+ },
+ "circuits": {
+  "B0_ref117_k1": {
+   "sector": "B=0",
+   "reference": 117,
+   "p_reference": 0.9283570199234927,
+   "dim": 677,
+   "garbage_acceptance": 0.0006456375122070312,
+   "reference_int": 526624,
+   "cz": 5659,
+   "scheduled_duration_s": 0.0004102560000000162,
+   "n_pulses": 2396,
+   "pulse_cost_nats": 0.5038818467213233,
+   "null_ratio": 0.6041807645770376,
+   "f_bracket": {
+    "f_gates_layout (no idle)": 6.0672357128985775e-06,
+    "f_idle_aware_xy4 echo (2x2 transfer)": 2.9781335201723304e-16,
+    "f_idle_aware echo": 1.0564062195030199e-16,
+    "f_idle_aware_xy4 0.174 (2x2 transfer)": 1.0524061399711249e-37,
+    "f_idle_aware 0.174": 3.7331045911075515e-38
+   },
+   "f_ceiling_2q": 0.00983329099417368,
+   "S_idle": {
+    "echo": 24.773881240911393,
+    "transferred_0.174": 74.16838585813791
+   },
+   "expected_reference_hits_from_garbage": 0.095367431640625,
+   "expected_reference_hits": {
+    "f_gates_layout (no idle)": 0.5572374226198177,
+    "f_idle_aware_xy4 echo (2x2 transfer)": 0.09536743166329613,
+    "f_idle_aware echo": 0.09536743164866693,
+    "f_idle_aware_xy4 0.174 (2x2 transfer)": 0.095367431640625,
+    "f_idle_aware 0.174": 0.095367431640625
+   },
+   "f_hit_for_one_excess_hit": 1.3136241434598653e-05,
+   "qpy_gz_sha256": "a7a0e78041abe44287da47672b200410c4cc57c8cba9dd65820320b50784549f",
+   "physical_qubits": [
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    58,
+    59,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    92,
+    69,
+    54,
+    52,
+    53,
+    68,
+    73,
+    94,
+    50,
+    72,
+    71,
+    79,
+    51,
+    74,
+    70,
+    93,
+    75,
+    58,
+    95,
+    59
+   ]
+  },
+  "B1_ref29_k1": {
+   "sector": "B=1",
+   "reference": 29,
+   "p_reference": 0.928308035585111,
+   "dim": 426,
+   "garbage_acceptance": 0.0004062652587890625,
+   "reference_int": 533024,
+   "cz": 5659,
+   "scheduled_duration_s": 0.00040984000000001634,
+   "n_pulses": 2392,
+   "pulse_cost_nats": 0.503353140877642,
+   "null_ratio": 0.6045002829360782,
+   "f_bracket": {
+    "f_gates_layout (no idle)": 6.087896475217576e-06,
+    "f_idle_aware_xy4 echo (2x2 transfer)": 3.044386076467983e-16,
+    "f_idle_aware echo": 1.0799073862756404e-16,
+    "f_idle_aware_xy4 0.174 (2x2 transfer)": 1.1169965808059882e-37,
+    "f_idle_aware 0.174": 3.962220387817845e-38
+   },
+   "f_ceiling_2q": 0.00983329099417368,
+   "S_idle": {
+    "echo": 24.75527826161692,
+    "transferred_0.174": 74.11222101937149
+   },
+   "expected_reference_hits_from_garbage": 0.095367431640625,
+   "expected_reference_hits": {
+    "f_gates_layout (no idle)": 0.5587857754965145,
+    "f_idle_aware_xy4 echo (2x2 transfer)": 0.09536743166379925,
+    "f_idle_aware echo": 0.0953674316488454,
+    "f_idle_aware_xy4 0.174 (2x2 transfer)": 0.095367431640625,
+    "f_idle_aware 0.174": 0.095367431640625
+   },
+   "f_hit_for_one_excess_hit": 1.3136934599012653e-05,
+   "qpy_gz_sha256": "7c431588a54a2587975d835aa2f285e42e6207fb3cc84c3b01af2fb387e20f9c",
+   "physical_qubits": [
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    58,
+    59,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    92,
+    93,
+    94,
+    95
+   ],
+   "logical_to_physical": [
+    92,
+    69,
+    54,
+    52,
+    53,
+    68,
+    73,
+    94,
+    50,
+    72,
+    71,
+    79,
+    51,
+    74,
+    70,
+    93,
+    75,
+    58,
+    95,
+    59
+   ]
+  }
+ },
+ "pooled": {
+  "clean_denominator_N_p_ref_rf": 152246.5345517055,
+  "expected_from_garbage": 0.19073486328125,
+  "reference_hit_counts_at_thresholds": {
+   "GO-B": 169.9662061119881,
+   "GO-A": 51.123376237893304
+  },
+  "note": "pooled hits needed (garbage included) for f_hat_ideal to reach each threshold"
+ },
+ "r_nc": 1.1151352098004452,
+ "r_nc_source": "data/cf_trajectories/r_nc.json",
+ "r_nc_definition": "r_nc = upper end (97.5th percentile) of the 95 % bootstrap interval of the pooled f_hit / f_ideal(1e-3) over the k = 1 arms; f_hit^pool = sum_c N_c p_ref,c f_hit,c / sum_c N_c p_ref,c (the expectation of pooled_reference_string_test without its garbage term), f_ideal^pool = sum_c N_c f_ideal,c / sum_c N_c, N_c = the Stage E/P v3 shots",
+ "r_nc_note": "r_nc is a gate-noise value (gate CF_traj, the A6 gate-only channel).  Under IBM idle dephasing the A5 model gives f_hit < f_ideal (r < 1 at both T2 ends), so dividing f_hit by r_nc = 1.115 can only LOWER the estimate there: the correction is conservative on this device.",
+ "decision_rule": {
+  "text": "Statistic: f_hat_ideal = f_hit / r_nc (owner decision 1a, 2026-10-05), f_hit = the pooled reference-string clean fraction of the two k = 1 circuits (pooled_reference_string_test, readout factor 0.82, garbage expectation N a / dim subtracted), r_nc read from data/cf_trajectories/r_nc.json. GO-B if f_hat_ideal >= 1e-3 (a Tier-B 2x3 run costs <= 2e7 shots per sector); GO-A if 3e-4 <= f_hat_ideal < 1e-3 (Tier A only); NO-GO below 3e-4 (prompts/27 stage 0b).  The class is read on the point value; the classes of the 95 % (Garwood) interval ends are reported beside it and the decision is called firm when all three agree.  f_hit is reported beside f_hat_ideal.",
+  "thresholds": {
+   "GO-B": 0.001,
+   "GO-A": 0.0003
+  },
+  "statistic": "f_hat_ideal = pooled_reference_string_test(rows, conf).f_clean / r_nc",
+  "interval": "Garwood 95 % on the pooled reference count, propagated (and divided by r_nc)",
+  "readout_factor": 0.82
+ },
+ "planner_expectation": "prompts/27: at f = 1e-4 and p_ref ~ 0.5 the expected reference hits are ~8 against ~0.1 from garbage; gate K0 / prompts/25 expect f_gates ~1e-5-1e-4 and far less with idle time",
+ "runtime_s": 1.3320238590240479,
+ "readout_expected_live": {
+  "per_qubit": {
+   "50": 0.9959716796875,
+   "51": 0.981689453125,
+   "52": 0.9854736328125,
+   "53": 0.99609375,
+   "54": 0.9449462890625,
+   "58": 0.9921875,
+   "59": 0.995849609375,
+   "68": 0.98779296875,
+   "69": 0.9837646484375,
+   "70": 0.9842529296875,
+   "71": 0.9952392578125,
+   "72": 0.9525146484375,
+   "73": 0.985595703125,
+   "74": 0.990478515625,
+   "75": 0.9893798828125,
+   "79": 0.9942626953125,
+   "92": 0.969482421875,
+   "93": 0.9970703125,
+   "94": 0.9881591796875,
+   "95": 0.9873046875
+  },
+  "min": 0.9449462890625,
+  "min_qubit": 54,
+  "source": "1 - measure_error of the patch record"
+ }
+}

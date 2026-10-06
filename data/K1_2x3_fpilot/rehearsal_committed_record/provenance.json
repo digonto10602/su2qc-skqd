@@ -1,0 +1,12 @@
+{
+ "what": "REHEARSAL of the K1 chain (select, record, build, patchcal, predict, prereg-md, noisy-timing, dryrun, assemble --dry-run) on the COMMITTED kingston record data/hardware/H0_ddtest_prep/ibm_kingston_full_20261002T1906Z.json with a FakeKingston backend carrying that record's numbers standing in for the live device (rehearse_harness.py.txt (a copy of the scratch script) monkeypatches h0_backends.resolve_backend / fresh_calibration and the account snapshot for patchcal and predict only).  NOT a preregistration, NOT a gate artefact, never usable for a submission: the live ibm_kingston target published no cz calibration on 2026-10-05/06, so the real chain could not run.",
+ "ran_in": "/tmp scratchpad of the executor session; paths inside the JSON files point there",
+ "copied": "2026-10-06 01:26:04 UTC",
+ "files": {
+  "prep/": "the K1 prep built by gate_K1_2x3_fpilot.py --stage build (two coarse pubs + readout pubs, QPY + manifests)",
+  "prep/prereg_38012b45ebcd2366.json": "stage predict output on the stand-in backend (estimate, bracket, decision rule)",
+  "prep/noisy_shot_timing_rehearsal.json": "stage noisy-timing: one noisy shot of B0_ref117_k1 on h0_submit's dry-run sampler",
+  "dryrun/": "stage dryrun output (readout pubs through h0_submit --dry-run, coarse pubs sampled noiselessly)",
+  "dryrun/K1_rehearsal_dryrun.json": "stage assemble --dry-run --gate-name K1_rehearsal_dryrun output"
+ }
+}

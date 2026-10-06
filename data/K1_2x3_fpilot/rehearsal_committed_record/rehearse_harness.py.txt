@@ -1,0 +1,23 @@
+"""Scratch rehearsal of K1 patchcal + predict on the COMMITTED record (FakeKingston base with the record's
+numbers standing in for the live backend).  Not a gate artefact; never used for a submission."""
+import sys, types, argparse
+sys.path.insert(0, 'scripts'); sys.path.insert(0, 'src')
+import gate_K0_2x3_2x4 as K0
+import h0_backends as HB
+import h0_kpilot_circuits as KP
+import gate_K1_2x3_fpilot as K1
+rec = K0.load_json(K0.COMMITTED_RECORD)
+base, _ = K0.kingston_backend(rec)
+base.name_override = 'ibm_kingston'
+HB.resolve_backend = lambda name: base
+_orig = HB.fresh_calibration
+HB.fresh_calibration = lambda b, q, e: HB.calibration_record(base, q, e)
+import h0_ddtest_circuits as DC
+KP.account_snapshot = lambda: {"created": K0.now(), "usage": {"usage_remaining_seconds": 498, "usage_consumed_seconds": 102, "usage_limit_seconds": 600}, "backend": {"operational": True}}
+prep = sys.argv[1]
+stage = sys.argv[2]
+args = argparse.Namespace(prep=prep, prereg=None, after=False, min_remaining=0, diff_against=None)
+if stage == 'patchcal':
+    sys.exit(DC.stage_patchcal(args))
+if stage == 'predict':
+    sys.exit(K1.stage_predict(args))
