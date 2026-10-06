@@ -1,0 +1,762 @@
+{
+ "gate": "K1_2x3_fpilot",
+ "title": "the 2x3 clean-fraction pilot on ibm_kingston: two signed k = 1 circuits (largest p_ref per sector), routed as gate K0, ALAP + client XY4 (T3), 1e5 shots each, read by the preregistered GO-B / GO-A / NO-GO rule on f_hat_ideal = f_hit / r_nc (measurement gate)",
+ "status": "PASS",
+ "criteria": [
+  {
+   "name": "K1 preregistration committed before the submission; prereg = session = submission fingerprint; retrieval fingerprint recorded (a move is information)",
+   "value": "prereg added f8df126 2026-10-06T02:05:51-06:00, submitted 2026-10-06 08:22:03 UTC; fingerprints equal True; retrieval match True",
+   "threshold": "commit < submission, equal fingerprints, retrieval recorded",
+   "passed": true
+  },
+  {
+   "name": "K2 one job DONE, usage_s <= 300, preflight estimate <= 300 s, 4 counts files x 1e5 shots, DD off and twirling off",
+   "value": "jobs ['db2avbe8v0ts73c2i8b0'] ['DONE'], usage 188.0 s, estimate 182.63 s, counts ok True, options off True",
+   "threshold": "all hold",
+   "passed": true
+  },
+  {
+   "name": "K3 readout confusion of the measured qubits (all-0 / all-1 pubs): smallest diagonal",
+   "value": 0.9358,
+   "threshold": ">= 0.9",
+   "passed": true
+  },
+  {
+   "name": "K4 decoder round trip over every accepted string of the coarse pubs",
+   "value": "0 mismatches over 99 strings",
+   "threshold": "0",
+   "passed": true
+  },
+  {
+   "name": "K5 circuits: exactness vs the exact Krylov state (< 1e-10, leakage < 1e-9) before and after T3, ALAP with no moved op and duration = unscheduled T_total, DD statevector = base, no pulses in leading / trailing windows, kingston basis",
+   "value": "2/2; max |d| 2.3e-12, max leak 2.1e-13",
+   "threshold": "all hold",
+   "passed": true
+  },
+  {
+   "name": "K6 dry-run gate validation/K1_2x3_fpilot_dryrun.json PASS",
+   "value": "PASS",
+   "threshold": "PASS",
+   "passed": true
+  },
+  {
+   "name": "K7 data.decision complete and the decision recomputed from the recorded rows",
+   "value": "complete True; decision NO-GO (recomputed NO-GO)",
+   "threshold": "complete and equal",
+   "passed": true
+  },
+  {
+   "name": "K8 pytest -q tests and scripts/check_package.py",
+   "value": "pytest: 342 passed, 19 skipped, 62 warnings in 414.53s (0:06:54); check_package rc 0",
+   "threshold": "all pass",
+   "passed": true
+  }
+ ],
+ "data": {
+  "what_pass_means": "preregistered, measured, verified, consistent; there is no criterion on f or on the decision (a NO-GO pilot is a PASS gate)",
+  "dry_run": false,
+  "versions": {
+   "qiskit": "2.5.2",
+   "qiskit_aer": "0.17.2",
+   "qiskit_ibm_runtime": "0.49.0",
+   "numpy": "2.5.2"
+  },
+  "prereg": "data/hardware/K1_2x3_prep/prereg_99035ef05c36019e.json",
+  "prereg_created": "2026-10-06 08:05:40 UTC",
+  "prereg_commit": "c5b3a6c",
+  "prereg_keys_missing": [],
+  "calibration_prereg": {
+   "backend": "ibm_kingston",
+   "fingerprint": "99035ef05c36019ead98e761383b6e11c3988cf88cc4ebf470cdd8feba3a76bd",
+   "path": "data/hardware/K1_2x3_prep/calibration_20261006T0745Z.json",
+   "last_update_date": "2026-10-06T01:45:47-06:00",
+   "stamp": "20261006T0745Z",
+   "full_record_path": "data/hardware/K0_prep/ibm_kingston_full_20261006T0652Z.json",
+   "full_record_fingerprint": "b948ddc86b1c4696121e377bd2c751b889705006bd1abb685eeee303398a44d9",
+   "live_fingerprint_at_predict": "99035ef05c36019ead98e761383b6e11c3988cf88cc4ebf470cdd8feba3a76bd",
+   "live_match_at_predict": true
+  },
+  "patch": [
+   50,
+   51,
+   52,
+   53,
+   54,
+   58,
+   59,
+   68,
+   69,
+   70,
+   71,
+   72,
+   73,
+   74,
+   75,
+   79,
+   92,
+   93,
+   94,
+   95
+  ],
+  "pubs": [
+   {
+    "id": "B0_ref117_k1",
+    "kind": "coarse_step",
+    "shots": 100000
+   },
+   {
+    "id": "B1_ref29_k1",
+    "kind": "coarse_step",
+    "shots": 100000
+   },
+   {
+    "id": "cal_patch_all0",
+    "kind": "readout_calibration",
+    "shots": 100000
+   },
+   {
+    "id": "cal_patch_all1",
+    "kind": "readout_calibration",
+    "shots": 100000
+   }
+  ],
+  "execution_estimate_prereg_s": 182.63120000000325,
+  "counts_dir": "data/hardware/K1_2x3_ibm_kingston/counts",
+  "session_file": "data/hardware/K1_2x3_ibm_kingston/session.json",
+  "live": {
+   "job_ids": [
+    "db2avbe8v0ts73c2i8b0"
+   ],
+   "statuses": [
+    "DONE"
+   ],
+   "usage_s": 188.0,
+   "submission_fingerprint": "99035ef05c36019ead98e761383b6e11c3988cf88cc4ebf470cdd8feba3a76bd",
+   "prereg_fingerprint_match": true,
+   "retrieval_fingerprint": "99035ef05c36019ead98e761383b6e11c3988cf88cc4ebf470cdd8feba3a76bd",
+   "retrieval_diff": null,
+   "preflight_estimate_s": 182.63120000000325,
+   "sampler_options": {
+    "default_shots": 100000,
+    "dynamical_decoupling": {
+     "enable": false
+    },
+    "twirling": {
+     "enable_gates": false,
+     "enable_measure": false
+    },
+    "error_mitigation": "none: SamplerV2 returns raw bit strings; no resilience level, no readout mitigation of expectation values (prompts/07 step 2)"
+   },
+   "account": {
+    "after": {
+     "file": "data/hardware/K1_2x3_ibm_kingston/account_check_after_20261006T0826Z.json",
+     "usage": {
+      "usage_consumed_seconds": 327,
+      "usage_limit_seconds": 600,
+      "usage_remaining_seconds": 273,
+      "usage_limit_reached": false,
+      "usage_period": {
+       "start_time": "2026-09-08T08:26:34.891Z",
+       "end_time": "2026-10-06T08:26:34.891Z"
+      }
+     },
+     "backend": {
+      "name": "ibm_kingston",
+      "operational": true,
+      "pending_jobs": 0,
+      "status_msg": "active",
+      "num_qubits": 156
+     }
+    },
+    "at_prediction": {
+     "usage": {
+      "usage_consumed_seconds": 139,
+      "usage_limit_seconds": 600,
+      "usage_remaining_seconds": 461,
+      "usage_limit_reached": false,
+      "usage_period": {
+       "start_time": "2026-09-08T08:05:38.144Z",
+       "end_time": "2026-10-06T08:05:38.144Z"
+      }
+     },
+     "backend": {
+      "name": "ibm_kingston",
+      "operational": true,
+      "pending_jobs": 3,
+      "status_msg": "active",
+      "num_qubits": 156
+     },
+     "read": "2026-10-06 08:05:37 UTC"
+    }
+   },
+   "K1": {
+    "prereg_commit": "c5b3a6c",
+    "prereg_commit_full": "c5b3a6c027b9d58b904945c8b415d63b8432922d",
+    "prereg_commit_time": "2026-10-06T01:44:16-06:00",
+    "prereg_added_in": "f8df126bdb37f05da090a38e607bed877bbd642e",
+    "prereg_added_time": "2026-10-06T02:05:51-06:00",
+    "submitted": "2026-10-06 08:22:03 UTC",
+    "fingerprints_equal": true,
+    "retrieval_fingerprint": "99035ef05c36019ead98e761383b6e11c3988cf88cc4ebf470cdd8feba3a76bd",
+    "retrieval_match": true,
+    "retrieval_diff": null
+   }
+  },
+  "readout": {
+   "qubits": [
+    50,
+    51,
+    52,
+    53,
+    54,
+    58,
+    59,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    79,
+    92,
+    93,
+    94,
+    95
+   ],
+   "P_0_given_0": [
+    0.9983,
+    0.99122,
+    0.9967,
+    0.99913,
+    0.97001,
+    0.98848,
+    0.99131,
+    0.99514,
+    0.98012,
+    0.98969,
+    0.99615,
+    0.9655,
+    0.99687,
+    0.99544,
+    0.99034,
+    0.98849,
+    0.93578,
+    0.99545,
+    0.96608,
+    0.99571
+   ],
+   "P_1_given_1": [
+    0.99473,
+    0.97445,
+    0.97509,
+    0.99007,
+    0.9704,
+    0.98714,
+    0.98818,
+    0.98944,
+    0.98024,
+    0.98011,
+    0.993,
+    0.94956,
+    0.94451,
+    0.98762,
+    0.98222,
+    0.98902,
+    0.96112,
+    0.99251,
+    0.9791,
+    0.99113
+   ],
+   "shots": [
+    100000,
+    100000
+   ],
+   "min_diagonal": 0.93578,
+   "min_qubit": 92,
+   "survival_product": 0.7104940623856612
+  },
+  "dry_run_K3": null,
+  "circuits": {
+   "B0_ref117_k1": {
+    "reference_hits": 0,
+    "accepted": 58,
+    "shots": 100000,
+    "distinct_accepted_strings": 57,
+    "roundtrip_mismatches": 0,
+    "roundtrip_examples": [],
+    "p_reference": 0.9283570199234927,
+    "dim": 677,
+    "garbage_acceptance": 0.0006456375122070312,
+    "expected_from_garbage": 0.095367431640625,
+    "z": -0.30881617775081827,
+    "P_ge": 1.0,
+    "f_hit": -1.2527696070288326e-06,
+    "f_hit_68": [
+     -1.2527696070288326e-06,
+     2.2931770227166197e-05
+    ],
+    "f_hit_95": [
+     -1.2527696070288326e-06,
+     4.72052415253423e-05
+    ],
+    "f_hat_ideal": -1.12342395434991e-06,
+    "f_hat_ideal_95": [
+     -1.12342395434991e-06,
+     4.2331406192249756e-05
+    ],
+    "f_hat_ideal_68": [
+     -1.12342395434991e-06,
+     2.0564116374076166e-05
+    ],
+    "accepted_yield": 0.00058,
+    "row": [
+     0,
+     100000,
+     0.9283570199234927,
+     0.0006456375122070312,
+     677
+    ],
+    "prediction": {
+     "sector": "B=0",
+     "reference": 117,
+     "p_reference": 0.9283570199234927,
+     "dim": 677,
+     "garbage_acceptance": 0.0006456375122070312,
+     "reference_int": 526624,
+     "cz": 5659,
+     "scheduled_duration_s": 0.0004111520000000163,
+     "n_pulses": 2408,
+     "pulse_cost_nats": 0.45783377696946775,
+     "null_ratio": 0.632652628904972,
+     "f_bracket": {
+      "f_gates_layout (no idle)": 1.6711313059249913e-05,
+      "f_idle_aware_xy4 echo (2x2 transfer)": 4.686771173379436e-15,
+      "f_idle_aware echo": 1.6624957153227314e-15,
+      "f_idle_aware_xy4 0.174 (2x2 transfer)": 1.4665818196058057e-34,
+      "f_idle_aware 0.174": 5.202272313002199e-35
+     },
+     "f_ceiling_2q": 0.00671723133743146,
+     "S_idle": {
+      "echo": 23.031031839420407,
+      "transferred_0.174": 67.94195810218874
+     },
+     "expected_reference_hits_from_garbage": 0.095367431640625,
+     "expected_reference_hits": {
+      "f_gates_layout (no idle)": 1.3675207444775161,
+      "f_idle_aware_xy4 echo (2x2 transfer)": 0.09536743199740676,
+      "f_idle_aware echo": 0.09536743176718294,
+      "f_idle_aware_xy4 0.174 (2x2 transfer)": 0.095367431640625,
+      "f_idle_aware 0.174": 0.095367431640625
+     },
+     "f_hit_for_one_excess_hit": 1.3136241434598653e-05,
+     "qpy_gz_sha256": "eb3973a4cee8d3ed55de0d85422de27b494391e415845afad3bade84bba70e94",
+     "physical_qubits": [
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      58,
+      59,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75,
+      79,
+      92,
+      93,
+      94,
+      95
+     ],
+     "logical_to_physical": [
+      92,
+      69,
+      54,
+      52,
+      53,
+      68,
+      73,
+      94,
+      50,
+      72,
+      71,
+      79,
+      51,
+      74,
+      70,
+      93,
+      75,
+      58,
+      95,
+      59
+     ]
+    }
+   },
+   "B1_ref29_k1": {
+    "reference_hits": 0,
+    "accepted": 45,
+    "shots": 100000,
+    "distinct_accepted_strings": 42,
+    "roundtrip_mismatches": 0,
+    "roundtrip_examples": [],
+    "p_reference": 0.928308035585111,
+    "dim": 426,
+    "garbage_acceptance": 0.0004062652587890625,
+    "expected_from_garbage": 0.095367431640625,
+    "z": -0.30881617775081827,
+    "P_ge": 1.0,
+    "f_hit": -1.2528357123387008e-06,
+    "f_hit_68": [
+     -1.2528357123387008e-06,
+     2.2932980275500848e-05
+    ],
+    "f_hit_95": [
+     -1.2528357123387008e-06,
+     4.720773241999756e-05
+    ],
+    "f_hat_ideal": -1.1234832344347707e-06,
+    "f_hat_ideal_95": [
+     -1.1234832344347707e-06,
+     4.233363990761752e-05
+    ],
+    "f_hat_ideal_68": [
+     -1.1234832344347707e-06,
+     2.0565201487633714e-05
+    ],
+    "accepted_yield": 0.00045,
+    "row": [
+     0,
+     100000,
+     0.928308035585111,
+     0.0004062652587890625,
+     426
+    ],
+    "prediction": {
+     "sector": "B=1",
+     "reference": 29,
+     "p_reference": 0.928308035585111,
+     "dim": 426,
+     "garbage_acceptance": 0.0004062652587890625,
+     "reference_int": 533024,
+     "cz": 5659,
+     "scheduled_duration_s": 0.00041076800000001615,
+     "n_pulses": 2404,
+     "pulse_cost_nats": 0.4572827961480506,
+     "null_ratio": 0.6330013044180571,
+     "f_bracket": {
+      "f_gates_layout (no idle)": 1.674291113473057e-05,
+      "f_idle_aware_xy4 echo (2x2 transfer)": 4.773451357296776e-15,
+      "f_idle_aware echo": 1.6932429886661525e-15,
+      "f_idle_aware_xy4 0.174 (2x2 transfer)": 1.5520837174629551e-34,
+      "f_idle_aware 0.174": 5.505565419452235e-35
+     },
+     "f_ceiling_2q": 0.00671723133743146,
+     "S_idle": {
+      "echo": 23.014595171450367,
+      "transferred_0.174": 67.88718317461611
+     },
+     "expected_reference_hits_from_garbage": 0.095367431640625,
+     "expected_reference_hits": {
+      "f_gates_layout (no idle)": 1.369858905168166,
+      "f_idle_aware_xy4 echo (2x2 transfer)": 0.09536743200398612,
+      "f_idle_aware echo": 0.0953674317695168,
+      "f_idle_aware_xy4 0.174 (2x2 transfer)": 0.095367431640625,
+      "f_idle_aware 0.174": 0.095367431640625
+     },
+     "f_hit_for_one_excess_hit": 1.3136934599012653e-05,
+     "qpy_gz_sha256": "bd1049d8daba5e42003eb574948d0c290aefdbad2a437af206c680a18ffad6d1",
+     "physical_qubits": [
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      58,
+      59,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75,
+      79,
+      92,
+      93,
+      94,
+      95
+     ],
+     "logical_to_physical": [
+      92,
+      69,
+      54,
+      52,
+      53,
+      68,
+      73,
+      94,
+      50,
+      72,
+      71,
+      79,
+      51,
+      74,
+      70,
+      93,
+      75,
+      58,
+      95,
+      59
+     ]
+    }
+   }
+  },
+  "pooled": {
+   "reference_hits": 0,
+   "shots": 200000,
+   "expected_from_garbage": 0.19073486328125,
+   "P_hits_ge_observed_from_garbage_alone": 1.0,
+   "z": -0.43673202685542767,
+   "excess": -0.19073486328125,
+   "clean_denominator": 185666.50555086037,
+   "f_hit": -1.2528026588117394e-06,
+   "f_hit_68": [
+    -1.2528026588117394e-06,
+    1.0839786288279724e-05
+   ],
+   "f_hit_95": [
+    -1.2528026588117394e-06,
+    2.29768421404998e-05
+   ],
+   "f_hat_ideal": -1.1234535936103478e-06,
+   "f_hat_ideal_68": [
+    -1.1234535936103478e-06,
+    9.720602661465166e-06
+   ],
+   "f_hat_ideal_95": [
+    -1.1234535936103478e-06,
+    2.0604534713428637e-05
+   ],
+   "readout_factor": 0.82,
+   "r_nc": 1.1151352098004452
+  },
+  "decision": {
+   "dry_run": false,
+   "statistic": "f_hat_ideal = f_hit / r_nc",
+   "decision": "NO-GO",
+   "classes": {
+    "point": "NO-GO",
+    "lo95": "NO-GO",
+    "hi95": "NO-GO"
+   },
+   "firm": true,
+   "f_hat_ideal": -1.1234535936103478e-06,
+   "f_hat_ideal_95": [
+    -1.1234535936103478e-06,
+    2.0604534713428637e-05
+   ],
+   "f_hit": -1.2528026588117394e-06,
+   "f_hit_95": [
+    -1.2528026588117394e-06,
+    2.29768421404998e-05
+   ],
+   "thresholds": {
+    "GO-B": 0.001,
+    "GO-A": 0.0003
+   },
+   "r_nc": 1.1151352098004452,
+   "r_nc_note": "r_nc is a gate-noise value (gate CF_traj, the A6 gate-only channel).  Under IBM idle dephasing the A5 model gives f_hit < f_ideal (r < 1 at both T2 ends), so dividing f_hit by r_nc = 1.115 can only LOWER the estimate there: the correction is conservative on this device.",
+   "rule": "Statistic: f_hat_ideal = f_hit / r_nc (owner decision 1a, 2026-10-05), f_hit = the pooled reference-string clean fraction of the two k = 1 circuits (pooled_reference_string_test, readout factor 0.82, garbage expectation N a / dim subtracted), r_nc read from data/cf_trajectories/r_nc.json. GO-B if f_hat_ideal >= 1e-3 (a Tier-B 2x3 run costs <= 2e7 shots per sector); GO-A if 3e-4 <= f_hat_ideal < 1e-3 (Tier A only); NO-GO below 3e-4 (prompts/27 stage 0b).  The class is read on the point value; the classes of the 95 % (Garwood) interval ends are reported beside it and the decision is called firm when all three agree.  f_hit is reported beside f_hat_ideal."
+  },
+  "prediction_prereg": {
+   "B0_ref117_k1": {
+    "sector": "B=0",
+    "reference": 117,
+    "p_reference": 0.9283570199234927,
+    "dim": 677,
+    "garbage_acceptance": 0.0006456375122070312,
+    "reference_int": 526624,
+    "cz": 5659,
+    "scheduled_duration_s": 0.0004111520000000163,
+    "n_pulses": 2408,
+    "pulse_cost_nats": 0.45783377696946775,
+    "null_ratio": 0.632652628904972,
+    "f_bracket": {
+     "f_gates_layout (no idle)": 1.6711313059249913e-05,
+     "f_idle_aware_xy4 echo (2x2 transfer)": 4.686771173379436e-15,
+     "f_idle_aware echo": 1.6624957153227314e-15,
+     "f_idle_aware_xy4 0.174 (2x2 transfer)": 1.4665818196058057e-34,
+     "f_idle_aware 0.174": 5.202272313002199e-35
+    },
+    "f_ceiling_2q": 0.00671723133743146,
+    "S_idle": {
+     "echo": 23.031031839420407,
+     "transferred_0.174": 67.94195810218874
+    },
+    "expected_reference_hits_from_garbage": 0.095367431640625,
+    "expected_reference_hits": {
+     "f_gates_layout (no idle)": 1.3675207444775161,
+     "f_idle_aware_xy4 echo (2x2 transfer)": 0.09536743199740676,
+     "f_idle_aware echo": 0.09536743176718294,
+     "f_idle_aware_xy4 0.174 (2x2 transfer)": 0.095367431640625,
+     "f_idle_aware 0.174": 0.095367431640625
+    },
+    "f_hit_for_one_excess_hit": 1.3136241434598653e-05,
+    "qpy_gz_sha256": "eb3973a4cee8d3ed55de0d85422de27b494391e415845afad3bade84bba70e94",
+    "physical_qubits": [
+     50,
+     51,
+     52,
+     53,
+     54,
+     55,
+     58,
+     59,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     79,
+     92,
+     93,
+     94,
+     95
+    ],
+    "logical_to_physical": [
+     92,
+     69,
+     54,
+     52,
+     53,
+     68,
+     73,
+     94,
+     50,
+     72,
+     71,
+     79,
+     51,
+     74,
+     70,
+     93,
+     75,
+     58,
+     95,
+     59
+    ]
+   },
+   "B1_ref29_k1": {
+    "sector": "B=1",
+    "reference": 29,
+    "p_reference": 0.928308035585111,
+    "dim": 426,
+    "garbage_acceptance": 0.0004062652587890625,
+    "reference_int": 533024,
+    "cz": 5659,
+    "scheduled_duration_s": 0.00041076800000001615,
+    "n_pulses": 2404,
+    "pulse_cost_nats": 0.4572827961480506,
+    "null_ratio": 0.6330013044180571,
+    "f_bracket": {
+     "f_gates_layout (no idle)": 1.674291113473057e-05,
+     "f_idle_aware_xy4 echo (2x2 transfer)": 4.773451357296776e-15,
+     "f_idle_aware echo": 1.6932429886661525e-15,
+     "f_idle_aware_xy4 0.174 (2x2 transfer)": 1.5520837174629551e-34,
+     "f_idle_aware 0.174": 5.505565419452235e-35
+    },
+    "f_ceiling_2q": 0.00671723133743146,
+    "S_idle": {
+     "echo": 23.014595171450367,
+     "transferred_0.174": 67.88718317461611
+    },
+    "expected_reference_hits_from_garbage": 0.095367431640625,
+    "expected_reference_hits": {
+     "f_gates_layout (no idle)": 1.369858905168166,
+     "f_idle_aware_xy4 echo (2x2 transfer)": 0.09536743200398612,
+     "f_idle_aware echo": 0.0953674317695168,
+     "f_idle_aware_xy4 0.174 (2x2 transfer)": 0.095367431640625,
+     "f_idle_aware 0.174": 0.095367431640625
+    },
+    "f_hit_for_one_excess_hit": 1.3136934599012653e-05,
+    "qpy_gz_sha256": "bd1049d8daba5e42003eb574948d0c290aefdbad2a437af206c680a18ffad6d1",
+    "physical_qubits": [
+     50,
+     51,
+     52,
+     53,
+     54,
+     55,
+     58,
+     59,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     79,
+     92,
+     93,
+     94,
+     95
+    ],
+    "logical_to_physical": [
+     92,
+     69,
+     54,
+     52,
+     53,
+     68,
+     73,
+     94,
+     50,
+     72,
+     71,
+     79,
+     51,
+     74,
+     70,
+     93,
+     75,
+     58,
+     95,
+     59
+    ]
+   }
+  },
+  "dry_run_note": null,
+  "checks": {
+   "pytest_returncode": 0,
+   "pytest_summary": "342 passed, 19 skipped, 62 warnings in 414.53s (0:06:54)",
+   "check_package_returncode": 0,
+   "check_package_tail": "gate S1: PASS (12 criteria, 0 failing), computed 2026-09-14 16:48:20 MDT\nreport/data consistency: E0(2x3, g2=4, B=0) = -5.6026 appears in reports/E3_exact_references.md\nPACKAGE OK",
+   "seconds": 416.0333471298218,
+   "ok": true
+  }
+ },
+ "runtime_s": 421.57281017303467,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.2",
+  "scipy": "1.18.0",
+  "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+  "cpu_count": 12,
+  "git_commit": "504d452",
+  "timestamp": "2026-10-06 02:33:45 MDT"
+ }
+}
