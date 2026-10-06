@@ -10,19 +10,36 @@ REPO="$(git rev-parse --show-toplevel)"
 CI="$HOME/skqd-ci"
 RUNS="$SCRATCH/skqd-ci-runs"
 
-mkdir -p "$CI" "$RUNS"
+# Which poller to install: ci/poll.sh by default; POLLER=ci/poll_concurrent.sh installs the
+# concurrent-jobs poller of prompts/33 section 7c without moving it over ci/poll.sh first.
+POLLER="${POLLER:-ci/poll.sh}"
+
+mkdir -p "$CI" "$RUNS" "$CI/running"
 [ -e "$CI/poll.sh" ] && cp "$CI/poll.sh" "$CI/poll.sh.bak.$(date +%s)"
-cp "$REPO/ci/poll.sh" "$CI/poll.sh"
+cp "$REPO/$POLLER" "$CI/poll.sh"
 chmod 700 "$CI/poll.sh"
+echo "installed $POLLER as $CI/poll.sh"
 
 # Absolute paths resolved now: scrontab jobs may not have $SCRATCH set.
-cat > "$CI/ci.conf" <<CONF
-REPO="$REPO"
-RUNS="$RUNS"
-ACCOUNT_GPU="$ACCOUNT_GPU"
-BRANCH="master"
-MAX_JOBS_PER_DAY=6
-CONF
+# ci.conf is created only if it does not exist, so a re-install never resets the owner's values
+# (MAX_JOBS_PER_DAY, MAX_CONCURRENT); a key the existing file lacks is printed, never added.
+CONF_DEFAULT="REPO=\"$REPO\"
+RUNS=\"$RUNS\"
+ACCOUNT_GPU=\"$ACCOUNT_GPU\"
+BRANCH=\"master\"
+MAX_JOBS_PER_DAY=6"
+if [ ! -e "$CI/ci.conf" ]; then
+  printf '%s\n' "$CONF_DEFAULT" > "$CI/ci.conf"
+  echo "created $CI/ci.conf"
+else
+  echo "kept the existing $CI/ci.conf"
+  while IFS= read -r line; do
+    key="${line%%=*}"
+    grep -q "^${key}=" "$CI/ci.conf" || echo "  ci.conf has no $key; the default would be: $line"
+  done <<< "$CONF_DEFAULT"
+  grep -q "^MAX_CONCURRENT=" "$CI/ci.conf" || \
+    echo "  ci.conf has no MAX_CONCURRENT (the poller then runs 1 job at a time); prompts/33 7b proposes MAX_CONCURRENT=4"
+fi
 
 # Allowlist: TOKEN  MAX_WALLTIME  GPUS(1 or 2, shared QOS)  -- edit only here, never in the repo
 if [ ! -e "$CI/allowed_jobs" ]; then

@@ -1,0 +1,432 @@
+{
+ "_comment": "prompts/33 section 1.5: one Perlmutter job per token (1 GPU, shared QOS). scripts/run_gate.py runs <script> <args> for a token that has no scripts/gate_<T>.py; ci/allowed_jobs.campaign33 is generated from this file (skqd.campaign33.tokens.allowlist_text). The token index (order of this file, comment excluded) fixes the base seed 33000000 + 1e5 x index (prompts/33 2.3).",
+ "C1_IDEAL": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C1_IDEAL"
+  ],
+  "class": 1,
+  "walltime": "00:30:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 12,
+  "content": "IR-L0, NAT-O0, IBM-U/T0/T3 exactness vs the exact Krylov states; noiseless sampling at the f=0.10 plan and 2e5 per sector; the f=1 SKQD reference"
+ },
+ "C2_CAL": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C2_CAL"
+  ],
+  "class": 2,
+  "walltime": "00:45:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 30,
+  "content": "21-qubit timing ladder {8,32,128,512} on B0_ref117_k1 (IBM-T0), Kraus vs PTA, cuStateVec vs batched; sizes C2_*"
+ },
+ "C2_GATE": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C2_GATE"
+  ],
+  "class": 2,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 50,
+  "content": "I-GATE on IBM-U, both K1 circuits"
+ },
+ "C2_ECHO": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C2_ECHO"
+  ],
+  "class": 2,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 50,
+  "content": "I-ECHO on IBM-T0"
+ },
+ "C2_STAR": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C2_STAR"
+  ],
+  "class": 2,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 50,
+  "content": "I-STAR on IBM-T0"
+ },
+ "C2_XY4": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C2_XY4"
+  ],
+  "class": 2,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 50,
+  "content": "I-XY4 on IBM-T3, echo and star halves (information)"
+ },
+ "C2_COH": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C2_COH"
+  ],
+  "class": 2,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 50,
+  "content": "I-COH on IBM-T0"
+ },
+ "C3_AER": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C3_AER"
+  ],
+  "class": 3,
+  "walltime": "00:30:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 12,
+  "content": "NAT-O0 noiseless on Aer: per-state agreement; f=1 SKQD reference of the native family"
+ },
+ "C3_LE": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C3_LE"
+  ],
+  "class": 3,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd-pecos",
+  "estimate_minutes": 50,
+  "content": "pytket-pecos H2-1LE local emulator (noiseless, CPU) on the 4 Stage-E circuits"
+ },
+ "C3_SEL": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C3_SEL"
+  ],
+  "class": 3,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd-selene",
+  "estimate_minutes": 50,
+  "content": "optional: Selene (QuEST, IdealErrorModel) on the QIR export of the 4 Stage-E circuits"
+ },
+ "C4_FCELLS_A": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_FCELLS_A"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 38,
+  "content": "10-min ladder then f-cells E1,E2,E3,E4,E5a/b/c x O0-O4 (+O6 info)"
+ },
+ "C4_FCELLS_B": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_FCELLS_B"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 36,
+  "content": "f-cells E6a/b/c, E7(0.05/0.07/0.10/0.15) x O0-O4; faithful S3 redo (IR-L3-RZZ, E8, 32 x 100, seed 11)"
+ },
+ "C4_F1_B0": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_F1_B0"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 16,
+  "content": "E1 x O0 plan-of-record run, B=0"
+ },
+ "C4_F1_B1": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_F1_B1"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 33,
+  "content": "E1 x O0 plan-of-record run, B=1"
+ },
+ "C4_F2_B0": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_F2_B0"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 16,
+  "content": "E2 x O0, B=0"
+ },
+ "C4_F2_B1": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_F2_B1"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 33,
+  "content": "E2 x O0, B=1"
+ },
+ "C4_F3_B0": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_F3_B0"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 16,
+  "content": "E3 x O0, B=0"
+ },
+ "C4_F3_B1": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_F3_B1"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 33,
+  "content": "E3 x O0, B=1"
+ },
+ "C4_F4_B0a": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_F4_B0a"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 46,
+  "content": "E7(0.10) x O0, S3-quota half a, B=0 (1e5)"
+ },
+ "C4_F4_B0b": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_F4_B0b"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 46,
+  "content": "E7(0.10) x O0, S3-quota half b, B=0 (1e5)"
+ },
+ "C4_F4_B1a": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_F4_B1a"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 46,
+  "content": "E7(0.10) x O0, S3-quota half a, B=1 (1e5)"
+ },
+ "C4_F4_B1b": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_F4_B1b"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 46,
+  "content": "E7(0.10) x O0, S3-quota half b, B=1 (1e5)"
+ },
+ "C4_F5_B0": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_F5_B0"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 19,
+  "content": "E7(0.07) x O0 at the f=0.10 plan, B=0"
+ },
+ "C4_F5_B1": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_F5_B1"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 46,
+  "content": "E7(0.07) x O0 at the f=0.10 plan, B=1"
+ },
+ "C4_F6_B0": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_F6_B0"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 16,
+  "content": "E5b (memory mid) x O0, B=0"
+ },
+ "C4_F6_B1": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_F6_B1"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 33,
+  "content": "E5b (memory mid) x O0, B=1"
+ },
+ "C4_F7_B0": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_F7_B0"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 16,
+  "content": "E1 x the chosen exact variant, B=0"
+ },
+ "C4_F7_B1": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_F7_B1"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 33,
+  "content": "E1 x the chosen exact variant, B=1"
+ },
+ "C4_F8_B0a": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_F8_B0a"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 46,
+  "content": "E8, S3-quota half a, B=0: the S3 recall criterion"
+ },
+ "C4_F8_B0b": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_F8_B0b"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 46,
+  "content": "E8, S3-quota half b, B=0"
+ },
+ "C4_F8_B1a": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_F8_B1a"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 46,
+  "content": "E8, S3-quota half a, B=1"
+ },
+ "C4_F8_B1b": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_F8_B1b"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 46,
+  "content": "E8, S3-quota half b, B=1"
+ },
+ "C4_CF": {
+  "script": "scripts/campaign33.py",
+  "args": [
+   "--token",
+   "C4_CF"
+  ],
+  "class": 4,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 45,
+  "content": "CF_traj redo on the GPU: K=2000 faulty Pauli trajectories per arm"
+ }
+}

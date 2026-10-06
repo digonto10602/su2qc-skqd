@@ -6,7 +6,16 @@
 # -n 1 -c $((32*GPUS)) --gpus-per-task=$GPUS and exports CI_GATE, CI_CODE_SHA, CI_REQUEST_SHA.
 set -uo pipefail
 module load python
-conda activate skqd
+# Conda env per token (prompts/33 A1): jobs/env/<CI_GATE> holds one line, the env name (C3_LE ->
+# skqd-pecos, C3_SEL -> skqd-selene); every other token uses skqd.  Resources are unchanged: they
+# stay on the poller's sbatch line.
+CI_ENV=skqd
+if [ -f "jobs/env/${CI_GATE:-}" ]; then
+  CI_ENV=$(head -1 "jobs/env/${CI_GATE}" | tr -cd 'A-Za-z0-9_.-')
+  [ -n "$CI_ENV" ] || CI_ENV=skqd
+fi
+echo "conda env: $CI_ENV"
+conda activate "$CI_ENV"
 
 # --- CPU binding and threading: one threaded process per task, never oversubscribed -----------
 export SLURM_CPU_BIND=cores
