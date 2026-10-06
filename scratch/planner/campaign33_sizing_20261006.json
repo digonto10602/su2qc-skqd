@@ -1,0 +1,354 @@
+{
+ "inputs": {
+  "s_per_shot_S3_best_ladder": 0.0198662576555204,
+  "s_per_shot_S3_batched_32x14": 0.0467854905128479,
+  "S3_gpu_util_pct": 30.04,
+  "S3_peak_mem_mib": 1783.0,
+  "s_per_shot_L4_12q": 0.0010457677841186524,
+  "counts_mean_circuit": {
+   "n_2q": 2158,
+   "n_1q_phasedx": 3053,
+   "n_meas": 20
+  },
+  "H2-2": {
+   "eps2": 0.00083,
+   "eps1": 2.8e-05,
+   "eps_ro": 0.000935,
+   "f_gate_only_mean": 0.15015667326456225,
+   "eps2_for_mean_f_0.1": 0.001018198978420911
+  },
+  "Helios-1": {
+   "eps2": 0.00079,
+   "eps1": 3e-05,
+   "eps_ro": 0.00048,
+   "f_gate_only_mean": 0.16419744294849906
+  },
+  "plan_of_record_shots": {
+   "f=0.05": {
+    "B=0": 63875,
+    "B=1": 193600
+   },
+   "f=0.10": {
+    "B=0": 34909,
+    "B=1": 99000
+   },
+   "f=0.15": {
+    "B=0": 27309,
+    "B=1": 67600
+   }
+  },
+  "r_nc": 1.1151352098004452
+ },
+ "matched_f": {
+  "check_H2-2_formula_vs_table": {
+   "formula": 0.15015642736680454,
+   "table": 0.15015667326456225,
+   "abs_diff": 2.4589775771133304e-07
+  },
+  "check_eps2_for_0.1_vs_table": {
+   "formula": 0.0010181982203384399,
+   "table": 0.001018198978420911,
+   "abs_diff": 7.580824711462403e-10
+  },
+  "f=0.05": {
+   "eps2": 0.0013390185287425194,
+   "scale_vs_H2-2": 1.6132753358343606,
+   "f_check": 0.050000000000001266
+  },
+  "f=0.07": {
+   "eps2": 0.0011832966142700796,
+   "scale_vs_H2-2": 1.4256585714097345,
+   "f_check": 0.06999999999999633
+  },
+  "f=0.10": {
+   "eps2": 0.0010181982203384399,
+   "scale_vs_H2-2": 1.226744843781253,
+   "f_check": 0.1000000000000116
+  },
+  "f=0.15": {
+   "eps2": 0.0008304825951609418,
+   "scale_vs_H2-2": 1.000581439952942,
+   "f_check": 0.1500000000000106
+  },
+  "A6_g0_no_fault_before_readout_mean_counts": 0.17482652653917682
+ },
+ "jobs": [
+  {
+   "token": "C1_IDEAL",
+   "walltime_min": 30,
+   "estimate_min": 12.0,
+   "shots": "n/a (statevector + sampling; cost independent of shots)",
+   "what": "noiseless: IR level-0, native O0, IBM-routed; exactness + sampling checks; f=1 SKQD reference",
+   "class": 1
+  },
+  {
+   "token": "C2_CAL",
+   "walltime_min": 45,
+   "estimate_min": 30.0,
+   "shots": "ladder 8..512 x 2 models",
+   "what": "21-q ladder: Kraus from_backend-equivalent vs Pauli-twirled relaxation; batched vs cuStateVec; sizes C2_*",
+   "class": 2
+  },
+  {
+   "token": "C2_GATE",
+   "walltime_min": 60,
+   "estimate_min": 50.0,
+   "shots": "sized by C2_CAL to 50 min (target 1e5 per circuit)",
+   "what": "gate-only (unscheduled), 2 K1 circuits",
+   "class": 2
+  },
+  {
+   "token": "C2_ECHO",
+   "walltime_min": 60,
+   "estimate_min": 50.0,
+   "shots": "sized by C2_CAL to 50 min (target 1e5 per circuit)",
+   "what": "ALAP delays, relaxation at echo T2",
+   "class": 2
+  },
+  {
+   "token": "C2_STAR",
+   "walltime_min": 60,
+   "estimate_min": 50.0,
+   "shots": "sized by C2_CAL to 50 min (target 1e5 per circuit)",
+   "what": "ALAP delays, T2* = 0.174 T2echo",
+   "class": 2
+  },
+  {
+   "token": "C2_XY4",
+   "walltime_min": 60,
+   "estimate_min": 50.0,
+   "shots": "sized by C2_CAL to 50 min (target 1e5 per circuit)",
+   "what": "T3 circuits as flown (XY4 pulses), echo T2 and T2*",
+   "class": 2
+  },
+  {
+   "token": "C2_COH",
+   "walltime_min": 60,
+   "estimate_min": 50.0,
+   "shots": "sized by C2_CAL to 50 min (target 1e5 per circuit)",
+   "what": "C2_ECHO + coherent x over-rotation 0.018 rad",
+   "class": 2
+  },
+  {
+   "token": "C3_AER",
+   "walltime_min": 30,
+   "estimate_min": 12.0,
+   "shots": "plan f=0.10 (133 909) + 2e5/sector",
+   "what": "frozen native O0 family, Aer GPU noiseless (qiskit path); TVD vs exact",
+   "class": 3
+  },
+  {
+   "token": "C3_LE",
+   "walltime_min": 60,
+   "estimate_min": 50.0,
+   "shots": "ladder 2..64 then fill to 50 min, 4 Stage-E circuits",
+   "what": "pytket-pecos H2-1LE local emulator (noiseless, CPU, env skqd-pecos); TVD vs C3_AER",
+   "class": 3
+  },
+  {
+   "token": "C3_SEL",
+   "walltime_min": 60,
+   "estimate_min": 50.0,
+   "shots": "ladder then fill to 50 min (optional)",
+   "what": "Selene QuEST ideal model via QIR (optional, env skqd-selene)",
+   "class": 3
+  },
+  {
+   "token": "C4_FCELLS_A",
+   "walltime_min": 60,
+   "estimate_min": 38.1,
+   "shots": 80000,
+   "what": "f-cells 800/800/200/200: scenarios E1,E2,E3,E4,E5x3 x variants O0-O4 (+ladder)",
+   "class": 4
+  },
+  {
+   "token": "C4_FCELLS_B",
+   "walltime_min": 60,
+   "estimate_min": 36.0,
+   "shots": 73200,
+   "what": "f-cells: E6x3,E7x4 x O0-O4; + faithful S3 3200-shot redo (seed 11, level-3 IR)",
+   "class": 4
+  },
+  {
+   "token": "C4_F1_B0",
+   "walltime_min": 60,
+   "estimate_min": 16.3,
+   "shots": 27309,
+   "what": "H2-2 PV rates x O0; plan-of-record shots f=0.15 B=0; order-kept sequence; CV0-CV5, certificates, recall",
+   "class": 4
+  },
+  {
+   "token": "C4_F1_B1",
+   "walltime_min": 60,
+   "estimate_min": 33.0,
+   "shots": 67600,
+   "what": "H2-2 PV rates x O0; plan-of-record shots f=0.15 B=1; order-kept sequence; CV0-CV5, certificates, recall",
+   "class": 4
+  },
+  {
+   "token": "C4_F2_B0",
+   "walltime_min": 60,
+   "estimate_min": 16.3,
+   "shots": 27309,
+   "what": "Helios-1 PV rates x O0; plan-of-record shots f=0.15 B=0; order-kept sequence; CV0-CV5, certificates, recall",
+   "class": 4
+  },
+  {
+   "token": "C4_F2_B1",
+   "walltime_min": 60,
+   "estimate_min": 33.0,
+   "shots": 67600,
+   "what": "Helios-1 PV rates x O0; plan-of-record shots f=0.15 B=1; order-kept sequence; CV0-CV5, certificates, recall",
+   "class": 4
+  },
+  {
+   "token": "C4_F3_B0",
+   "walltime_min": 60,
+   "estimate_min": 16.3,
+   "shots": 27309,
+   "what": "H2-2E emulator set 2025-07-16 (angle-scaled ZZ) x O0; plan-of-record shots f=0.15 B=0; order-kept sequence; CV0-CV5, certificates, recall",
+   "class": 4
+  },
+  {
+   "token": "C4_F3_B1",
+   "walltime_min": 60,
+   "estimate_min": 33.0,
+   "shots": 67600,
+   "what": "H2-2E emulator set 2025-07-16 (angle-scaled ZZ) x O0; plan-of-record shots f=0.15 B=1; order-kept sequence; CV0-CV5, certificates, recall",
+   "class": 4
+  },
+  {
+   "token": "C4_F5_B0",
+   "walltime_min": 60,
+   "estimate_min": 19.4,
+   "shots": 34909,
+   "what": "matched f=0.07 x O0 (like-for-like CV_2x3_plan f=0.10 at 0.7 f); plan-of-record shots f=0.10 B=0; order-kept sequence; CV0-CV5, certificates, recall",
+   "class": 4
+  },
+  {
+   "token": "C4_F5_B1",
+   "walltime_min": 60,
+   "estimate_min": 46.0,
+   "shots": 99000,
+   "what": "matched f=0.07 x O0 (like-for-like CV_2x3_plan f=0.10 at 0.7 f); plan-of-record shots f=0.10 B=1; order-kept sequence; CV0-CV5, certificates, recall",
+   "class": 4
+  },
+  {
+   "token": "C4_F6_B0",
+   "walltime_min": 60,
+   "estimate_min": 16.3,
+   "shots": 27309,
+   "what": "H2-2 PV + memory mid (t_round 1.1 ms) x O0; plan-of-record shots f=0.15 B=0; order-kept sequence; CV0-CV5, certificates, recall",
+   "class": 4
+  },
+  {
+   "token": "C4_F6_B1",
+   "walltime_min": 60,
+   "estimate_min": 33.0,
+   "shots": 67600,
+   "what": "H2-2 PV + memory mid (t_round 1.1 ms) x O0; plan-of-record shots f=0.15 B=1; order-kept sequence; CV0-CV5, certificates, recall",
+   "class": 4
+  },
+  {
+   "token": "C4_F7_B0",
+   "walltime_min": 60,
+   "estimate_min": 16.3,
+   "shots": 27309,
+   "what": "H2-2 PV x best exact optimisation; plan-of-record shots f=0.15 B=0; order-kept sequence; CV0-CV5, certificates, recall",
+   "class": 4
+  },
+  {
+   "token": "C4_F7_B1",
+   "walltime_min": 60,
+   "estimate_min": 33.0,
+   "shots": 67600,
+   "what": "H2-2 PV x best exact optimisation; plan-of-record shots f=0.15 B=1; order-kept sequence; CV0-CV5, certificates, recall",
+   "class": 4
+  },
+  {
+   "token": "C4_F4_B0a",
+   "walltime_min": 60,
+   "estimate_min": 46.4,
+   "shots": 100000,
+   "what": "matched f=0.10 x O0, 2e5 per sector (S1 redo; CV prefix at the f=0.10 plan); batch a of 2 x 1e5, B0",
+   "class": 4
+  },
+  {
+   "token": "C4_F4_B0b",
+   "walltime_min": 60,
+   "estimate_min": 46.4,
+   "shots": 100000,
+   "what": "matched f=0.10 x O0, 2e5 per sector (S1 redo; CV prefix at the f=0.10 plan); batch b of 2 x 1e5, B0",
+   "class": 4
+  },
+  {
+   "token": "C4_F4_B1a",
+   "walltime_min": 60,
+   "estimate_min": 46.4,
+   "shots": 100000,
+   "what": "matched f=0.10 x O0, 2e5 per sector (S1 redo; CV prefix at the f=0.10 plan); batch a of 2 x 1e5, B1",
+   "class": 4
+  },
+  {
+   "token": "C4_F4_B1b",
+   "walltime_min": 60,
+   "estimate_min": 46.4,
+   "shots": 100000,
+   "what": "matched f=0.10 x O0, 2e5 per sector (S1 redo; CV prefix at the f=0.10 plan); batch b of 2 x 1e5, B1",
+   "class": 4
+  },
+  {
+   "token": "C4_F8_B0a",
+   "walltime_min": 60,
+   "estimate_min": 46.4,
+   "shots": 100000,
+   "what": "S3 declared model (eps2 1e-3, eps1 1e-4 on rz/rx/ry, ro 2e-3) x O0, 2e5 per sector (S3 criterion); batch a of 2 x 1e5, B0",
+   "class": 4
+  },
+  {
+   "token": "C4_F8_B0b",
+   "walltime_min": 60,
+   "estimate_min": 46.4,
+   "shots": 100000,
+   "what": "S3 declared model (eps2 1e-3, eps1 1e-4 on rz/rx/ry, ro 2e-3) x O0, 2e5 per sector (S3 criterion); batch b of 2 x 1e5, B0",
+   "class": 4
+  },
+  {
+   "token": "C4_F8_B1a",
+   "walltime_min": 60,
+   "estimate_min": 46.4,
+   "shots": 100000,
+   "what": "S3 declared model (eps2 1e-3, eps1 1e-4 on rz/rx/ry, ro 2e-3) x O0, 2e5 per sector (S3 criterion); batch a of 2 x 1e5, B1",
+   "class": 4
+  },
+  {
+   "token": "C4_F8_B1b",
+   "walltime_min": 60,
+   "estimate_min": 46.4,
+   "shots": 100000,
+   "what": "S3 declared model (eps2 1e-3, eps1 1e-4 on rz/rx/ry, ro 2e-3) x O0, 2e5 per sector (S3 criterion); batch b of 2 x 1e5, B1",
+   "class": 4
+  },
+  {
+   "token": "C4_CF",
+   "walltime_min": 60,
+   "estimate_min": 45.0,
+   "shots": "K=2000 trajectories x 4 arms (statevector runs)",
+   "what": "CF_traj redo on GPU: r per arm, pooled r, r_nc",
+   "class": 4
+  }
+ ],
+ "totals": {
+  "n_jobs": 33,
+  "sum_estimate_h": 20.103333333333335,
+  "sum_walltime_cap_h": 31.75,
+  "gpu_node_hours_estimate_G_over_4": 5.025833333333334,
+  "gpu_node_hours_cap_G_over_4": 7.9375,
+  "days_at_concurrent4_cap16_per_day": 3,
+  "days_at_concurrent4_cap24_per_day": 2,
+  "days_at_current_1_job_6_per_day": 6,
+  "shots_total_noisy_gpu": 1561654,
+  "minutes_2e5_shots_at_measured_rate_no_contingency": 66.22085885173468,
+  "minutes_plan_f0.10_B1_no_contingency": 32.77932513160866
+ }
+}
