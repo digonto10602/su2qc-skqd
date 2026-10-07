@@ -1,0 +1,26 @@
+conda env: skqd
+[    9.2 s] C3_AER: device GPU (available ['CPU', 'GPU']), budget 20.0 min, shots x 1.0, chunk <= 476, s0 33700000
+Traceback (most recent call last):
+  File "/pscratch/sd/d/digonto/skqd-ci-runs/7a8f7f1ec19d-20261007160614-C3_AER/scripts/campaign33.py", line 400, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/pscratch/sd/d/digonto/skqd-ci-runs/7a8f7f1ec19d-20261007160614-C3_AER/scripts/campaign33.py", line 396, in main
+    return run_token(args, ci)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/pscratch/sd/d/digonto/skqd-ci-runs/7a8f7f1ec19d-20261007160614-C3_AER/scripts/campaign33.py", line 359, in run_token
+    TR.run_ideal(ctx)
+  File "/pscratch/sd/d/digonto/skqd-ci-runs/7a8f7f1ec19d-20261007160614-C3_AER/src/skqd/campaign33/tokens_run.py", line 202, in run_ideal
+    P = A.Physics()
+        ^^^^^^^^^^^
+  File "/pscratch/sd/d/digonto/skqd-ci-runs/7a8f7f1ec19d-20261007160614-C3_AER/src/skqd/campaign33/analysis.py", line 53, in __init__
+    self.S[sec] = CV.Sector(self.M, "2x3", sec, tb, acc[sec]["fraction"])
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/pscratch/sd/d/digonto/skqd-ci-runs/7a8f7f1ec19d-20261007160614-C3_AER/scripts/gate_CV.py", line 114, in __init__
+    from threadpoolctl import threadpool_limits
+ModuleNotFoundError: No module named 'threadpoolctl'
+gate C3_AER: status UNKNOWN, exit code 1, 15 s
+srun: error: nid008317: task 0: Exited with exit code 1
+srun: Terminating StepId=59491462.0
+/var/spool/slurmd/job59491462/slurm_script: line 56: 254277 Terminated              ( while true; do
+    nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader,nounits | sed "s/^/$(date +%s),/"; sleep 10;
+done ) > "$SKQD_GPU_TELEMETRY" 2> /dev/null
