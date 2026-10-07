@@ -1,0 +1,25 @@
+conda env: skqd
+[    9.3 s] C2_CAL: device GPU (available ['CPU', 'GPU']), budget 35.0 min, shots x 1.0, chunk <= 476, s0 33100000
+/global/homes/d/digonto/.conda/envs/skqd/lib/python3.12/site-packages/qiskit/qpy/interface.py:346: UserWarning: The qiskit version used to generate the provided QPY file, 2.5.2, is newer than the current qiskit version 1.4.3. This may result in an error if the QPY file uses instructions not present in this current qiskit version
+  warnings.warn(
+[  186.6 s] C2_CAL: kraus|custatevec: [(8, 6.8798), (32, 3.1769), (128, -1), (512, -1)]
+[  289.6 s] C2_CAL: kraus|batched: [(8, 10.5263), (32, -1), (128, -1), (512, -1)]
+[  545.1 s] C2_CAL: pta|custatevec: [(8, 1.8376), (32, 0.7941), (128, 0.3738), (512, 0.2697)]
+[  779.0 s] C2_CAL: pta|batched: [(8, 2.2868), (32, 1.4475), (128, 1.1062), (512, -1)]
+| check | value | criterion | result |
+|---|---|---|---|
+| P4 Kraus vs PTA accepted fractions within 3 sigma at >= 512 shots (else kraus_only, still PASS) | {'custatevec': None, 'batched': None} | <= 3 sigma, or representation kraus_only | PASS |
+| P5 timing ladder >= 2 points per mode | {'kraus|custatevec': 2, 'kraus|batched': 1, 'pta|custatevec': 4, 'pta|batched': 3} | >= 2 per (representation, mode) | FAIL |
+| S1 the run happened on the requested device (GPU under the CI) | GPU (available ['CPU', 'GPU']) | GPU | PASS |
+| S2 wall time inside the walltime budget | 779 s | <= min(walltime 2700 s, 3600 s) and <= 1.1 x budget + 120 s | PASS |
+| S3 telemetry and run block present (policy fields non-null on the CI) | {'engine': True, 'device': True, 'wall_seconds': True, 'seconds_per_shot': True, 'gpus': True} | every policy field non-null on the CI; present on the laptop | PASS |
+| S4 every seed and every chunk recorded | True | true | PASS |
+| S5 no out-of-memory retry left unrecorded | 0 recorded | each OOM split recorded | PASS |
+| S6 shots >= the token's minimum | full | no reduction below the minimum | PASS |
+C2_CAL: FAIL (779 s)
+gate C2_CAL: status FAIL, exit code 1, 783 s
+srun: error: nid008544: task 0: Exited with exit code 1
+srun: Terminating StepId=59491475.0
+/var/spool/slurmd/job59491475/slurm_script: line 56: 2075885 Terminated              ( while true; do
+    nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader,nounits | sed "s/^/$(date +%s),/"; sleep 10;
+done ) > "$SKQD_GPU_TELEMETRY" 2> /dev/null
