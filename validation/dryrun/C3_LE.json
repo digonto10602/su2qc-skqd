@@ -1,0 +1,245 @@
+{
+ "gate": "dryrun/C3_LE",
+ "title": "DRY RUN (laptop path check, reduced size): Campaign 33 token C3_LE (class 3): pytket-pecos H2-1LE local emulator (noiseless, CPU) on the 4 Stage-E circuits",
+ "status": "PASS",
+ "criteria": [
+  {
+   "name": "S1 the run happened on the requested engine (CPU, its own env)",
+   "value": "pytket-quantinuum H2-1LE local emulator (pytket-pecos / quantum-pecos), state-vector, noiseless (CPU)",
+   "threshold": "the engine ran",
+   "passed": true
+  },
+  {
+   "name": "S2 wall time inside the walltime budget",
+   "value": "169 s",
+   "threshold": "<= min(walltime 3600 s, 3600 s) and <= 1.1 x budget + 120 s",
+   "passed": true
+  },
+  {
+   "name": "S3 telemetry and run block present",
+   "value": {
+    "engine": true,
+    "device": true,
+    "wall_seconds": true,
+    "seconds_per_shot": true,
+    "gpus": false
+   },
+   "threshold": "every policy field non-null on the CI; present on the laptop",
+   "passed": true
+  },
+  {
+   "name": "S4 every seed and every chunk recorded",
+   "value": true,
+   "threshold": "true",
+   "passed": true
+  },
+  {
+   "name": "S5 no out-of-memory retry left unrecorded",
+   "value": "0 recorded",
+   "threshold": "each OOM split recorded",
+   "passed": true
+  },
+  {
+   "name": "S6 (dry run) every unit sampled; any budget reduction recorded (the full-plan check is the CI's)",
+   "value": "full",
+   "threshold": "shots > 0 on every unit",
+   "passed": true
+  }
+ ],
+ "data": {
+  "token": "C3_LE",
+  "class": 3,
+  "prompt": "prompts/33_2x3_four_class_perlmutter_campaign.md",
+  "content": "pytket-pecos H2-1LE local emulator (noiseless, CPU) on the 4 Stage-E circuits",
+  "dry_run": true,
+  "created": "2026-10-06 23:46:10 UTC",
+  "seeds": {
+   "s0": 33800000,
+   "rule": "aer seed of chunk i of circuit c = s0 * 1e4 + c * 1e6 + i * stride, stride = chunk size, s0 = 33 000 000 + 1e5 x token index (prompts/33 2.3 s0; the circuit/chunk offsets are widened from 1e3 c so that circuits, chunks, tokens and the a/b halves are disjoint for <= 1e6 shots per circuit: the literal s0 + 1e3 c + i stride overlaps above 1000 shots per circuit)",
+   "per_circuit": {
+    "B0_ref25_k1": 338000000000,
+    "B1_ref57_k1": 338001000000
+   }
+  },
+  "dry_run_reductions": {
+   "shots_scale": 0.01,
+   "max_shots_per_run": 16,
+   "max_circuits_per_sector": 4,
+   "max_shots_per_circuit": 32,
+   "budget_minutes": 8.0,
+   "reason": "a laptop path check, not a result: shots x 0.01 (prompts/33 A4), <= 16 shots per run() call, at most 4 circuits per sector, and at most 32 shots per circuit / unit -- noisy 20-21-qubit Aer runs at several seconds per shot on this CPU (the 1-shot warm-up of C4_F8_B0a took 52 s under load), so a 0.01-scaled plan of record (up to 676 shots for C4_F1_B1) would not fit the 10-minute dry-run bound"
+  },
+  "engines_json_decision": {
+   "decision": "keep",
+   "reason": "measured 51.9 s per shot at 20 qubits on the H2-1LE state-vector emulator (2 shots of B0_ref117_k1, load average [9.48388671875, 23.2041015625, 25.93701171875]); <= 60 s/shot: 57 shots fit a 50-minute job",
+   "source": "data/campaign33/engines.json"
+  },
+  "engine": "pytket-quantinuum H2-1LE local emulator (pytket-pecos / quantum-pecos), state-vector, noiseless (CPU)",
+  "engine_versions": {
+   "pytket": "2.18.4",
+   "pytket-quantinuum": "0.59.3",
+   "pytket-pecos": "0.3.3",
+   "quantum-pecos": "0.8.0.dev8",
+   "numpy": "2.5.3"
+  },
+  "inputs_sha256": {
+   "B0_ref25_k1": "59c73b7b7a08b197fba6a31cd1f7e48d5c5dbc481b4a8dcca16ed0b62faee38d",
+   "B1_ref57_k1": "2aa7defb6289eacd441d1b1171d54ee7b3226bb7e96869deb9aeb95fc98e7a26",
+   "B0_ref25_k4": "fd88ef62ad697841bd20faeab811cfe792b821e8eb2c1b2bc39e031808bb09a6",
+   "B1_ref57_k4": "0e8ff1899cfe64d6931dba337bef1a7070b8e0646590bde8e45b6e332e5b8752"
+  },
+  "seconds_per_shot": 55.21754336357117,
+  "ladder": [
+   {
+    "shots": 1,
+    "seconds": 55.01406788825989,
+    "seconds_per_shot": 55.01406788825989,
+    "distinct": 1
+   }
+  ],
+  "shots_per_circuit": 1,
+  "per_state": {
+   "B0_ref25_k1": {
+    "n_shots": 1,
+    "n_sigma": 3.0,
+    "p_min": 0.001,
+    "tested_states": 10,
+    "max_z": 9.337936376794625,
+    "failures": [
+     {
+      "state": 524832,
+      "p": 0.9150208913052891,
+      "observed": 0,
+      "z": 3.281401853377902
+     },
+     {
+      "state": 526624,
+      "p": 0.01133824696515607,
+      "observed": 1,
+      "z": 9.337936376794625
+     }
+    ],
+    "ok": false,
+    "fraction_outside_exact_support": 0.0
+   },
+   "B1_ref57_k1": {
+    "n_shots": 1,
+    "n_sigma": 3.0,
+    "p_min": 0.001,
+    "tested_states": 8,
+    "max_z": 0.3102444281394301,
+    "failures": [],
+    "ok": true,
+    "fraction_outside_exact_support": 0.0
+   }
+  },
+  "decode": {
+   "B0_ref25_k1": {
+    "shots": 1,
+    "not_a_sector_codeword": 0,
+    "ok": true,
+    "reference_hits": 0
+   },
+   "B1_ref57_k1": {
+    "shots": 1,
+    "not_a_sector_codeword": 0,
+    "ok": true,
+    "reference_hits": 1
+   }
+  },
+  "counts": {
+   "B0_ref25_k1": {
+    "526624": 1
+   },
+   "B1_ref57_k1": {
+    "524836": 1
+   }
+  },
+  "gpu_mode_used": null,
+  "run": {
+   "engine": "pytket-quantinuum H2-1LE local emulator (pytket-pecos / quantum-pecos), state-vector, noiseless (CPU)",
+   "device": "CPU",
+   "device_requested": "CPU",
+   "available_devices": [
+    "CPU"
+   ],
+   "gpu_mode": null,
+   "ci": null,
+   "slurm": {
+    "gpus_per_task": null,
+    "gpus": null,
+    "gpus_on_node": null,
+    "cuda_visible_devices": null,
+    "tasks": null,
+    "rank": null,
+    "cpus_per_task": null,
+    "nodelist": null
+   },
+   "gpus": null,
+   "tasks": null,
+   "rank": null,
+   "wall_seconds": 168.66856050491333,
+   "gpu_node_hours": null,
+   "node_hours_charged_shared_qos": null,
+   "parallel_efficiency_Ep": null,
+   "parallel_efficiency_note": "one task: E(p) needs T_1 and T_p from two task counts (not measured)",
+   "phases_s": {
+    "engine_setup_s": 3.169844627380371,
+    "ladder_s": 55.0141122341156,
+    "sampling_s": 110.43508672714233
+   },
+   "gpu_telemetry": {
+    "source": "gpu_telemetry.csv",
+    "samples": 0,
+    "peak_memory_mib": null,
+    "mean_utilization_pct": null,
+    "max_utilization_pct": null
+   },
+   "versions": {
+    "qiskit": "unavailable: ModuleNotFoundError",
+    "qiskit_aer": "unavailable: ModuleNotFoundError",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "python": "3.12.14"
+   },
+   "seconds_per_shot": 55.21754336357117,
+   "budget_minutes": 8.0,
+   "shots_scale": 0.01,
+   "max_shots_per_run": 16,
+   "oom_retries": []
+  },
+  "physics_criteria_information_dry_run": [
+   {
+    "name": "P8 per-state agreement with the exact distribution at 3 sigma (p_s >= 1e-3); the TV distance to C3_AER is computed at assembly",
+    "value": {
+     "failures": 2,
+     "max_z": 9.337936376794625
+    },
+    "threshold": "0 failures",
+    "passed": false,
+    "gating": false
+   },
+   {
+    "name": "P9 every observed string decodes into the circuit's sector",
+    "value": {
+     "B0_ref25_k1": 0,
+     "B1_ref57_k1": 0
+    },
+    "threshold": "0 outside",
+    "passed": true,
+    "gating": false
+   }
+  ],
+  "notes": []
+ },
+ "runtime_s": 168.66856050491333,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.3",
+  "scipy": "1.18.1",
+  "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+  "cpu_count": 12,
+  "git_commit": "cb7753f",
+  "timestamp": "2026-10-06 17:48:58 MDT"
+ }
+}

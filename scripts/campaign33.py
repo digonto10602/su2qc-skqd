@@ -53,7 +53,11 @@ FCELL_SOURCE = "validation/Q0P_2x3_plan.json data.stage_E_v3.shots_by_circuit"
 K1_IDS = ("B0_ref117_k1", "B1_ref29_k1")
 CI_CHUNK = 476                       # shot_chunk_for(20, 1, 8e9): gate S3's one-call memory bound
 DRY = {"shots_scale": 0.01, "max_shots_per_run": 16, "budget_minutes": 8.0, "bootstrap": 20,
-       "max_circuits": 4, "threads": 6}
+       "max_circuits": 4, "threads": 6, "max_shots": 32}
+DRY_REASON = ("a laptop path check, not a result: shots x 0.01 (prompts/33 A4), <= 16 shots per run() call, at most 4 "
+              "circuits per sector, and at most 32 shots per circuit / unit -- noisy 20-21-qubit Aer runs at several "
+              "seconds per shot on this CPU (the 1-shot warm-up of C4_F8_B0a took 52 s under load), so a 0.01-scaled "
+              "plan of record (up to 676 shots for C4_F1_B1) would not fit the 10-minute dry-run bound")
 TIERS = (0.05, 0.10, 0.15)
 DEFAULT_TIER = 0.15
 
@@ -116,7 +120,13 @@ class Ctx:
         self.device, self.available = self._device()
         self.gpu_mode = args.gpu_mode
         self.min_shots_ok = True
+        self.no_shots = False            # a dry run that sampled nothing at all on some unit
         self.shots_reduced_to = None
+        if self.dry:
+            self.data["dry_run_reductions"] = {"shots_scale": args.shots_scale, "max_shots_per_run": args.max_shots_per_run,
+                                               "max_circuits_per_sector": args.max_circuits,
+                                               "max_shots_per_circuit": DRY["max_shots"],
+                                               "budget_minutes": args.budget_minutes, "reason": DRY_REASON}
         self.oom = []
         self.seeds_recorded = True
 
@@ -151,7 +161,8 @@ class Ctx:
         return time.time() + share * max(0.0, self.deadline - time.time())
 
     def scaled(self, n):
-        return max(1, int(math.ceil(float(n) * self.args.shots_scale)))
+        v = max(1, int(math.ceil(float(n) * self.args.shots_scale)))
+        return min(v, DRY["max_shots"]) if self.dry else v
 
     def physics(self, name, value, threshold, passed):
         """A physics criterion: gating on a real run, information in a dry run."""
@@ -227,9 +238,14 @@ def finish(ctx, extra_run=None):
     tele = gpu_telemetry()
     gpus = gpu_count(layout)
     want_gpu = bool(ctx.ci) and ctx.entry["env"] == "skqd"
-    ctx.R.add("S1 the run happened on the requested device" + (" (GPU under the CI)" if want_gpu else ""),
-              f"{ctx.device} (available {ctx.available})", "GPU" if want_gpu else "as requested",
-              (ctx.device == "GPU") if want_gpu else True)
+    if ctx.entry["env"] != "skqd":
+        ok = not ctx.data.get("dropped")
+        ctx.R.add("S1 the run happened on the requested engine (CPU, its own env)", ctx.data.get("engine"),
+                  "the engine ran", ok)
+    else:
+        ctx.R.add("S1 the run happened on the requested device" + (" (GPU under the CI)" if want_gpu else ""),
+                  f"{ctx.device} (available {ctx.available})", "GPU" if want_gpu else "as requested",
+                  (ctx.device == "GPU") if want_gpu else True)
     budget_s = 60.0 * ctx.args.budget_minutes if ctx.args.budget_minutes > 0 else None
     wall_limit = TK.walltime_seconds(ctx.entry["walltime"])
     ok_wall = wall <= min(wall_limit, 3600.0) and (budget_s is None or wall <= budget_s * 1.10 + 120.0)
@@ -262,11 +278,16 @@ def finish(ctx, extra_run=None):
     oom_ok = all("split" in o for o in ctx.oom)
     ctx.R.add("S5 no out-of-memory retry left unrecorded", f"{len(ctx.oom)} recorded", "each OOM split recorded",
               oom_ok)
-    ctx.R.add("S6 shots >= the token's minimum" + (" (C4_F*: the plan of record in full)"
-                                                   if ctx.token.startswith("C4_F") and "CELLS" not in ctx.token else ""),
-              ctx.shots_reduced_to or "full", "no reduction below the minimum", ctx.min_shots_ok)
+    if ctx.dry:
+        ctx.R.add("S6 (dry run) every unit sampled; any budget reduction recorded (the full-plan check is the CI's)",
+                  ctx.shots_reduced_to or "full", "shots > 0 on every unit", not ctx.no_shots)
+    else:
+        ctx.R.add("S6 shots >= the token's minimum" + (" (C4_F*: the plan of record in full)"
+                                                       if ctx.token.startswith("C4_F") and "CELLS" not in ctx.token else ""),
+                  ctx.shots_reduced_to or "full", "no reduction below the minimum", ctx.min_shots_ok)
     ctx.data["physics_criteria_information_dry_run"] = ctx.physics_criteria if ctx.dry else None
     ctx.data["notes"] = ctx.notes
+    ctx.tables = ctx.data.pop("_tables", [])          # report-only: the JSON carries the numbers themselves
     ctx.R.data = ctx.data
     ctx.R.runtime_s = wall
     ctx.R.save()
@@ -309,7 +330,7 @@ def report_text(ctx):
              f"{_fmt(tele['peak_memory_mib'])} MiB; mean GPU utilisation {_fmt(tele['mean_utilization_pct'])} %; "
              f"versions {run['versions']}.  Phases (s): "
              + ", ".join(f"{k} {v:.1f}" for k, v in run["phases_s"].items()) + ".", ""]
-    for title, rows, header in d.get("_tables", []):
+    for title, rows, header in getattr(ctx, "tables", []):
         lines += [f"## {title}", "", md_table(header, [[_fmt(x) for x in r] for r in rows]), ""]
     if ctx.dry and ctx.physics_criteria:
         lines += ["## Physics criteria (information in a dry run)", "",
@@ -350,10 +371,7 @@ def run_token(args, ci):
         TR.run_frun(ctx)
     else:
         raise SystemExit(f"unknown token {t}")
-    ctx.data.pop("_tables_rendered", None)
-    rc = finish(ctx)
-    ctx.data.pop("_tables", None)
-    return rc
+    return finish(ctx)
 
 
 def main(argv=None):

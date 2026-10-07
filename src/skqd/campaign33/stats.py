@@ -92,6 +92,9 @@ def per_state_test(counts: dict, probs: dict, n_shots: int, n_sigma: float = 5.0
     """|n_s/N - p_s| <= n_sigma sqrt(p_s (1-p_s)/N) for every state with p_s >= p_min (prompts/33 2.4).
     counts / probs keyed by the same state labels (ints)."""
     tested, worst, fails = 0, 0.0, []
+    if n_shots <= 0:
+        return {"n_shots": 0, "n_sigma": n_sigma, "p_min": p_min, "tested_states": 0, "max_z": 0.0,
+                "failures": [], "ok": True, "fraction_outside_exact_support": 0.0, "note": "no shots"}
     for s, p in probs.items():
         if p < p_min:
             continue

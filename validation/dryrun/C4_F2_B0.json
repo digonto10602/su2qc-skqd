@@ -1,0 +1,498 @@
+{
+ "gate": "dryrun/C4_F2_B0",
+ "title": "DRY RUN (laptop path check, reduced size): Campaign 33 token C4_F2_B0 (class 4): E2 x O0, B=0",
+ "status": "PASS",
+ "criteria": [
+  {
+   "name": "S1 the run happened on the requested device",
+   "value": "CPU (available ['CPU'])",
+   "threshold": "as requested",
+   "passed": true
+  },
+  {
+   "name": "S2 wall time inside the walltime budget",
+   "value": "212 s",
+   "threshold": "<= min(walltime 3600 s, 3600 s) and <= 1.1 x budget + 120 s",
+   "passed": true
+  },
+  {
+   "name": "S3 telemetry and run block present",
+   "value": {
+    "engine": true,
+    "device": true,
+    "wall_seconds": true,
+    "seconds_per_shot": true,
+    "gpus": false
+   },
+   "threshold": "every policy field non-null on the CI; present on the laptop",
+   "passed": true
+  },
+  {
+   "name": "S4 every seed and every chunk recorded",
+   "value": true,
+   "threshold": "true",
+   "passed": true
+  },
+  {
+   "name": "S5 no out-of-memory retry left unrecorded",
+   "value": "0 recorded",
+   "threshold": "each OOM split recorded",
+   "passed": true
+  },
+  {
+   "name": "S6 (dry run) every unit sampled; any budget reduction recorded (the full-plan check is the CI's)",
+   "value": {
+    "B0_ref25_k4": 7
+   },
+   "threshold": "shots > 0 on every unit",
+   "passed": true
+  }
+ ],
+ "data": {
+  "token": "C4_F2_B0",
+  "class": 4,
+  "prompt": "prompts/33_2x3_four_class_perlmutter_campaign.md",
+  "content": "E2 x O0, B=0",
+  "dry_run": true,
+  "created": "2026-10-06 23:21:29 UTC",
+  "seeds": {
+   "s0": 34400000,
+   "rule": "aer seed of chunk i of circuit c = s0 * 1e4 + c * 1e6 + i * stride, stride = chunk size, s0 = 33 000 000 + 1e5 x token index (prompts/33 2.3 s0; the circuit/chunk offsets are widened from 1e3 c so that circuits, chunks, tokens and the a/b halves are disjoint for <= 1e6 shots per circuit: the literal s0 + 1e3 c + i stride overlaps above 1000 shots per circuit)"
+  },
+  "dry_run_reductions": {
+   "shots_scale": 0.01,
+   "max_shots_per_run": 16,
+   "max_circuits_per_sector": 4,
+   "max_shots_per_circuit": 32,
+   "budget_minutes": 8.0,
+   "reason": "a laptop path check, not a result: shots x 0.01 (prompts/33 A4), <= 16 shots per run() call, at most 4 circuits per sector, and at most 32 shots per circuit / unit -- noisy 20-21-qubit Aer runs at several seconds per shot on this CPU (the 1-shot warm-up of C4_F8_B0a took 52 s under load), so a 0.01-scaled plan of record (up to 676 shots for C4_F1_B1) would not fit the 10-minute dry-run bound"
+  },
+  "gpu_mode_used": "cpu",
+  "seconds_per_shot": 12.333806663751602,
+  "frun": {
+   "scenario": "E2",
+   "family": "NAT-O0",
+   "family_rule": "prompts/33 1.5",
+   "kind": "plan",
+   "half": null,
+   "sector": "B=0",
+   "plan_tier": 0.15,
+   "plan_tier_reason": "default 0.15: no f-cell result for E2 in validation/C4_FCELLS_A.json or C4_FCELLS_B.json at run time",
+   "shots_requested": {
+    "B0_ref25_k1": 3,
+    "B0_ref25_k4": 14,
+    "B0_ref117_k1": 3,
+    "B0_ref117_k2": 3
+   },
+   "shots_done": {
+    "B0_ref25_k1": 3,
+    "B0_ref25_k4": 7,
+    "B0_ref117_k1": 3,
+    "B0_ref117_k2": 3
+   },
+   "full": false,
+   "E_tol": {
+    "value": 0.014225245965891808,
+    "cv_2x3_plan": 0.014225245965891808,
+    "abs_diff": 0.0,
+    "ok": true
+   },
+   "cv3_status": "not_evaluated: the equal-shots (6 per circuit) and k = 5 samples need 36 shots ~ 444 s, more than the 202 s left (budget)",
+   "noise": {
+    "id": "E2",
+    "class": "depolarizing + readout",
+    "channel_classes": [
+     "2q depolarizing on rzz",
+     "1q depolarizing on rx/ry (= native PhasedX)",
+     "asymmetric readout",
+     "rz virtual (noiseless)"
+    ],
+    "parameters": {
+     "p2": 0.00079,
+     "p1": 3e-05,
+     "p10": 0.00048,
+     "p01": 0.00048
+    },
+    "source": "data/quantinuum/devices_20261002.json rows.2x3|quantinuum_helios_1 (eps2, eps1, eps_ro)",
+    "not_modelled": [
+     "memory / transport dephasing",
+     "leakage",
+     "crosstalk",
+     "initialisation error"
+    ],
+    "aer_convention": "depolarizing_error(p, n): rho -> (1-p) rho + p I/2^n; fault probability 15p/16 (n=2), 3p/4 (n=1); the published number is Aer's p (the A6 / CF_traj convention).  The vendor emulator's p is the probability of a non-identity Pauli (16/15 resp. 4/3 times larger fault rate in Aer's convention): not converted."
+   },
+   "chunks": {
+    "B0_ref25_k1": [
+     {
+      "start": 0,
+      "shots": 1,
+      "seed": 344000000000
+     },
+     {
+      "start": 1,
+      "shots": 1,
+      "seed": 344000000007
+     },
+     {
+      "start": 2,
+      "shots": 1,
+      "seed": 344000000014
+     }
+    ],
+    "B0_ref25_k4": [
+     {
+      "start": 0,
+      "shots": 1,
+      "seed": 344001000000
+     },
+     {
+      "start": 1,
+      "shots": 1,
+      "seed": 344001000007
+     },
+     {
+      "start": 2,
+      "shots": 2,
+      "seed": 344001000014
+     },
+     {
+      "start": 4,
+      "shots": 3,
+      "seed": 344001000021
+     }
+    ],
+    "B0_ref117_k1": [
+     {
+      "start": 0,
+      "shots": 1,
+      "seed": 344002000000
+     },
+     {
+      "start": 1,
+      "shots": 1,
+      "seed": 344002000007
+     },
+     {
+      "start": 2,
+      "shots": 1,
+      "seed": 344002000014
+     }
+    ],
+    "B0_ref117_k2": [
+     {
+      "start": 0,
+      "shots": 1,
+      "seed": 344003000000
+     },
+     {
+      "start": 1,
+      "shots": 1,
+      "seed": 344003000007
+     },
+     {
+      "start": 2,
+      "shots": 1,
+      "seed": 344003000014
+     }
+    ]
+   },
+   "sampling": {
+    "calls": 13,
+    "oom_retries": [],
+    "stride": 7,
+    "max_chunk": 16,
+    "chunk_rule": "boundaries at round(phi N_c) for phi in (1/16, 1/8, 1/4, 1/2, 1) (gate_CV prefixes) and every chunk <= max_chunk shots; the prefix curves are exact sums of chunks",
+    "rounds": 5,
+    "stopped": {
+     "round": 4,
+     "reason": "deadline",
+     "predicted_round_s": 86.33664268255234,
+     "rate_s_per_shot": 12.333806097507477
+    },
+    "wall_s": 197.34090662002563,
+    "shots_done": 16,
+    "seconds_per_shot": 12.333806663751602,
+    "warmup": {
+     "shots": 1,
+     "seconds": 10.371992111206055,
+     "discarded": true,
+     "seed": 344999000000
+    },
+    "seed_rule": "aer seed of chunk i of circuit c = s0 * 1e4 + c * 1e6 + i * stride, stride = chunk size, s0 = 33 000 000 + 1e5 x token index (prompts/33 2.3 s0; the circuit/chunk offsets are widened from 1e3 c so that circuits, chunks, tokens and the a/b halves are disjoint for <= 1e6 shots per circuit: the literal s0 + 1e3 c + i stride overlaps above 1000 shots per circuit)"
+   },
+   "cv": null,
+   "plan_prefix": "incomplete: the budget cut the plan of record (shots_reduced_to); the CV reading is not evaluated on a partial plan",
+   "at_N": {
+    "shots": 16,
+    "certificate": {
+     "type": "kato_temple_exact_E1",
+     "interval": [
+      -5.8221295699113895,
+      -5.39791576165636
+     ],
+     "width": 0.42421380825502997,
+     "E0_inside": true,
+     "variational_ok": true,
+     "E_R_minus_E0": 0.20468469622540653,
+     "recall_S999": 0.09302325581395349,
+     "recall_S99": 0.25806451612903225,
+     "W": 0.9573296325545284,
+     "B_all_size": 8
+    },
+    "B_all_size": 8,
+    "accepted": 3,
+    "n_distinct": 2
+   },
+   "clean_fraction": {
+    "per_circuit": {
+     "B0_ref25_k1": {
+      "shots": 3,
+      "accepted": 0,
+      "accepted_fraction": 0.0,
+      "accepted_fraction_wilson95": [
+       5.551115123125783e-17,
+       0.5614970317550454
+      ],
+      "reference_hits": 0,
+      "p_reference": 0.9150208913052891,
+      "garbage_acceptance": 0.0006456375122070312,
+      "dim": 677,
+      "distinct_accepted": 0,
+      "rejected": 3,
+      "f0": null,
+      "f_hit": -1.0422432159399348e-06,
+      "f_hit_ci95": [
+       -1.0422432159399348e-06,
+       1.3438223571882082
+      ]
+     },
+     "B0_ref25_k4": {
+      "shots": 7,
+      "accepted": 2,
+      "accepted_fraction": 0.2857142857142857,
+      "accepted_fraction_wilson95": [
+       0.08221892400405678,
+       0.6410655481673808
+      ],
+      "reference_hits": 0,
+      "p_reference": 0.2362919631589407,
+      "garbage_acceptance": 0.0006456375122070312,
+      "dim": 677,
+      "distinct_accepted": 2,
+      "rejected": 5,
+      "f0": null,
+      "f_hit": -4.035999801503047e-06,
+      "f_hit_ci95": [
+       -4.035999801503047e-06,
+       2.230214766679751
+      ]
+     },
+     "B0_ref117_k1": {
+      "shots": 3,
+      "accepted": 1,
+      "accepted_fraction": 0.3333333333333333,
+      "accepted_fraction_wilson95": [
+       0.06149194472039621,
+       0.7923403991979522
+      ],
+      "reference_hits": 1,
+      "p_reference": 0.9283570199234932,
+      "garbage_acceptance": 0.0006456375122070312,
+      "dim": 677,
+      "distinct_accepted": 1,
+      "rejected": 2,
+      "f0": null,
+      "f_hit": 0.3590562386079519,
+      "f_hit_ci95": [
+       0.009089515641811634,
+       2.000538015132409
+      ]
+     },
+     "B0_ref117_k2": {
+      "shots": 3,
+      "accepted": 0,
+      "accepted_fraction": 0.0,
+      "accepted_fraction_wilson95": [
+       5.551115123125783e-17,
+       0.5614970317550454
+      ],
+      "reference_hits": 0,
+      "p_reference": 0.7414122458253507,
+      "garbage_acceptance": 0.0006456375122070312,
+      "dim": 677,
+      "distinct_accepted": 0,
+      "rejected": 3,
+      "f0": null,
+      "f_hit": -1.286294260414604e-06,
+      "f_hit_ci95": [
+       -1.286294260414604e-06,
+       1.6584909919602042
+      ]
+     }
+    },
+    "pooled_k1": {
+     "n_reference": 1,
+     "shots": 6,
+     "circuits": 2,
+     "expected_from_garbage": 5.7220458984375e-06,
+     "kappa": 1.0,
+     "confidence": 0.95,
+     "f_hit": 0.1808264186926837,
+     "f_hit_ci": [
+      0.0045771200403717195,
+      1.007505050909318
+     ],
+     "estimator": "(sum n_ref - sum N a / dim) / (sum N p_ref readout_factor); Poisson (Garwood) interval on the pooled count",
+     "r_nc": 1.1151352098004452,
+     "f_hat_ideal": 0.16215649645305596,
+     "f_hat_ideal_ci": [
+      0.004104542660069715,
+      0.9034824136614
+     ],
+     "r_nc_95": [
+      1.0285934561902321,
+      1.1151352098004452
+     ]
+    },
+    "go_rule_v3_information": "AMBIGUOUS",
+    "r_nc_source": "data/cf_trajectories/r_nc.json",
+    "kappa": 1.0
+   },
+   "accepted_counts_by_circuit": {
+    "B0_ref25_k1": {},
+    "B0_ref25_k4": {
+     "117": 1,
+     "525": 1
+    },
+    "B0_ref117_k1": {
+     "117": 1
+    },
+    "B0_ref117_k2": {}
+   },
+   "rejected_by_circuit": {
+    "B0_ref25_k1": 3,
+    "B0_ref25_k4": 5,
+    "B0_ref117_k1": 2,
+    "B0_ref117_k2": 3
+   },
+   "reference_hits_by_circuit": {
+    "B0_ref25_k1": 0,
+    "B0_ref25_k4": 0,
+    "B0_ref117_k1": 1,
+    "B0_ref117_k2": 0
+   },
+   "bootstrap_at_N": {
+    "err": {
+     "ci95": [
+      0.20468469622540653,
+      0.20468469622540653
+     ],
+     "mean": 0.20468469622540653
+    },
+    "recall_S999": {
+     "ci95": [
+      0.09302325581395349,
+      0.09302325581395349
+     ],
+     "mean": 0.09302325581395347
+    },
+    "W": {
+     "ci95": [
+      0.9573296325545284,
+      0.9573296325545284
+     ],
+     "mean": 0.9573296325545286
+    },
+    "B": 20,
+    "seed": 33,
+    "scheme": "shots resampled within each circuit (multinomial)"
+   },
+   "results_npz": "results/campaign33/dryrun/C4_F2_B0/chunks.npz",
+   "P14_information": {
+    "recall_S999": 0.09302325581395349,
+    "reason": "P14 recall of S999 >= 0.9 on B_all at N (information: f_hat_ideal lower end 0.004104542660069715 vs tier 0.15)"
+   },
+   "CV1_CV5": {}
+  },
+  "run": {
+   "engine": "Qiskit Aer statevector (double precision)",
+   "device": "CPU",
+   "device_requested": "CPU",
+   "available_devices": [
+    "CPU"
+   ],
+   "gpu_mode": "cpu",
+   "ci": null,
+   "slurm": {
+    "gpus_per_task": null,
+    "gpus": null,
+    "gpus_on_node": null,
+    "cuda_visible_devices": null,
+    "tasks": null,
+    "rank": null,
+    "cpus_per_task": null,
+    "nodelist": null
+   },
+   "gpus": null,
+   "tasks": null,
+   "rank": null,
+   "wall_seconds": 212.31100177764893,
+   "gpu_node_hours": null,
+   "node_hours_charged_shared_qos": null,
+   "parallel_efficiency_Ep": null,
+   "parallel_efficiency_note": "one task: E(p) needs T_1 and T_p from two task counts (not measured)",
+   "phases_s": {
+    "sampling_s": 207.71305108070374,
+    "bootstrap_s": 0.03398466110229492,
+    "analysis_s": 1.3909902572631836
+   },
+   "gpu_telemetry": {
+    "source": "gpu_telemetry.csv",
+    "samples": 0,
+    "peak_memory_mib": null,
+    "mean_utilization_pct": null,
+    "max_utilization_pct": null
+   },
+   "versions": {
+    "qiskit": "2.5.2",
+    "qiskit_aer": "0.17.2",
+    "numpy": "2.5.2",
+    "scipy": "1.18.0",
+    "python": "3.12.14"
+   },
+   "seconds_per_shot": 12.333806663751602,
+   "budget_minutes": 8.0,
+   "shots_scale": 0.01,
+   "max_shots_per_run": 16,
+   "oom_retries": []
+  },
+  "physics_criteria_information_dry_run": [
+   {
+    "name": "P13 E_R >= E0 - 1e-9 everywhere, prefixes nested (CV0), E0 inside the certificate of ruling 2 at N",
+    "value": {
+     "variational": true,
+     "cv0": true,
+     "E0_inside": true,
+     "certificate": "kato_temple_exact_E1"
+    },
+    "threshold": "all true",
+    "passed": true,
+    "gating": false
+   }
+  ],
+  "notes": [
+   "dry run: 4 of 32 circuits used (['B0_ref117_k1', 'B0_ref117_k2', 'B0_ref25_k1', 'B0_ref25_k4'])"
+  ]
+ },
+ "runtime_s": 212.31100177764893,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.2",
+  "scipy": "1.18.0",
+  "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+  "cpu_count": 12,
+  "git_commit": "cb7753f",
+  "timestamp": "2026-10-06 17:25:01 MDT"
+ }
+}

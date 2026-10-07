@@ -23,3 +23,14 @@ Perlmutter pulls this repo every hour at :07 UTC and runs at most one allowliste
 - request more than 3 jobs in a row without a passing result in between: stop and write
   prompts/BLOCKED_<gate>.md for the planner / the user instead
 - run anything long on the laptop to "save queue time"; 30-minute rule from the package still holds
+
+## After the owner installs the concurrent poller (prompts/33 section 7c)
+The new poller is `ci/poll_concurrent.sh` (agents may not edit `ci/poll.sh`; the owner moves it over or installs
+it with `POLLER=ci/poll_concurrent.sh bash ci/install_skqd_ci.sh`).  Until the owner says it is installed, use
+`scripts/ci_request.sh --legacy TOKEN` (the one-job `ci/request.txt` path).  Afterwards:
+- `scripts/ci_request.sh T1 T2 ...` writes one `ci/requests/<NNN>-<TOKEN>.txt` per token in ONE commit and pushes;
+  each request runs once, up to `MAX_CONCURRENT` at a time and `MAX_JOBS_PER_DAY` per UTC day (`~/skqd-ci/ci.conf`).
+- `scripts/ci_check.sh` lists every request (pending / submitted / done / refused / error);
+  `scripts/ci_check.sh TOKEN` shows the latest request of one token in full.  Per-token states are in
+  `ci/status/<TOKEN>.json` (written by the CI only, like `ci/status.json`).
+- The prompts/33 campaign tokens are listed in `scripts/gate_tokens.json` and `ci/allowed_jobs.campaign33`.
