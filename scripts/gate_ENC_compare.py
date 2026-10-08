@@ -563,7 +563,7 @@ def stage_native(args):
                                 "qiskit preset level 1: both are recorded, the verdict uses compile_native "
                                 "level 2 as the prompt specifies")})
     out.pop("skipped", None)
-    _prebuild(3, names)
+    model(3)                                        # each worker builds only its own circuit's terms
     jobs = []
     for name in names:
         for cid, twoB, r, k, dt in family(3):
@@ -572,6 +572,8 @@ def stage_native(args):
     if args.part:
         i, m = (int(x) for x in args.part.split("/"))
         jobs = jobs[i - 1::m]                       # one of m interleaved parts (30-minute rule)
+    if args.max_circuits:
+        jobs = jobs[:args.max_circuits]             # one chunk of the remaining circuits (30-minute rule)
     log(f"native: {len(jobs)} circuits on {args.workers} workers")
     tl = time.time()
     import multiprocessing as mp
@@ -634,7 +636,7 @@ def stage_kingston(args):
             files = {}
             for tag, circ in (("routed", tq), ("scheduled", sched)):
                 fn = os.path.join(d, f"dedup_{cid}_{tag}.qpy.gz")
-                with gzip.open(fn, "wb", mtime=0) as fh:
+                with open(fn, "wb") as raw, gzip.GzipFile(fileobj=raw, mode="wb", mtime=0) as fh:
                     qpy.dump(circ, fh, version=13)
                 with open(fn, "rb") as fh:
                     files[tag] = {"path": os.path.relpath(fn, ROOT),
@@ -1432,6 +1434,15 @@ def report_text(saved):
                       ["quick (subsampled)", _f(aa.get("quick"))]]), "",
                   "The diagonal term is excluded on both sides of the ratio: its gate is written for the current bit "
                   "polarities (prompts/34 step 8 changes no production code).", ""]
+        st = aa.get("step", {})
+        if st.get("current") and st.get("best"):
+            tt = list(st["current"]["per_term"])
+            lines += ["Per term, CZ a2a seed 7 (current assignment -> best by the prompt's score sets).  The score sets "
+                      "are {hop4, plaq1} (interior) and {hop0, hop1, plaq0} (corner); the interior assignment also "
+                      "changes every other term that touches an interior vertex, which the score does not see:", "",
+                      md_table(["term"] + tt + ["step"],
+                               [["current"] + [st["current"]["per_term"][t] for t in tt] + [st["current"]["cz_a2a_seed7"]],
+                                ["best"] + [st["best"]["per_term"][t] for t in tt] + [st["best"]["cz_a2a_seed7"]]]), ""]
     e4 = d.get("e4")
     if e4:
         er = []
@@ -1473,6 +1484,7 @@ def main():
     ap.add_argument("--sector", choices=["B0", "B1"], default=None)
     ap.add_argument("--kingston-circuit", choices=list(KINGSTON_CIRCUITS), default="B0_ref117_k1")
     ap.add_argument("--part", default=None, help="native stage: 'i/m' runs every m-th remaining circuit from i")
+    ap.add_argument("--max-circuits", type=int, default=None, help="native stage: at most this many circuits")
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--skip-tests", action="store_true")

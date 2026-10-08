@@ -1,0 +1,29 @@
+[20:35:20]     L3|6: cz 5527, |dpsi| 1.6e-05, leak 6.1e-09 -> NOT exact
+[20:36:40]     L3|3: cz 5581, |dpsi| 5.4e-06, leak 5.0e-09 -> NOT exact
+[20:40:11]     L3|1: cz 5655, |dpsi| 5.4e-06, leak 4.8e-09 -> NOT exact
+[20:41:19]     L3|7: cz 5659, |dpsi| 1.6e-12, leak 2.0e-13 -> exact
+[20:41:23] [enc_current] 2x3 B0_ref117_k1: L3|7 cz 5659 (plain L3 fewest 5527), 1q 11649, active 21, ceiling 6.717e-03, f_gates_layout 1.671e-05, bound 2.041e-03, T 411.2 us, f_idle echo 1.662e-15 / 0.174 5.202e-35 (955 s)
+[20:42:08]     L3|7: cz 4729, |dpsi| 6.2e-06, leak 4.7e-13 -> NOT exact
+[20:42:19]     L3|1: cz 4777, |dpsi| 5.4e-06, leak 5.0e-09 -> NOT exact
+[20:42:22]     L3|6: cz 4796, |dpsi| 9.8e-06, leak 1.1e-09 -> NOT exact
+[20:42:28]     L3|2: cz 4816, |dpsi| 6.2e-06, leak 1.2e-09 -> NOT exact
+[20:42:32]     L3|3: cz 4843, |dpsi| 6.2e-06, leak 4.7e-13 -> NOT exact
+[20:42:36]     L3|4: cz 4873, |dpsi| 2.7e-06, leak 1.2e-09 -> NOT exact
+[20:42:40]     L3|5: cz 4930, |dpsi| 8.6e-06, leak 9.3e-13 -> NOT exact
+[20:42:45]     L3|0: cz 5091, |dpsi| 2.5e-12, leak -2.4e-14 -> exact
+[20:42:53] [enc_dedup] 2x3 B0_ref117_k1: L3|0 cz 5091 (plain L3 fewest 4729), 1q 10268, active 13, ceiling 1.110e-02, f_gates_layout 1.365e-04, bound 3.927e-03, T 387.8 us, f_idle echo 1.900e-10 / 0.174 2.472e-24 (90 s)
+Traceback (most recent call last):
+  File "/home/digimonk/Projects/su2qc-skqd-v0.1.0/scripts/gate_ENC_compare.py", line 1492, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/digimonk/Projects/su2qc-skqd-v0.1.0/scripts/gate_ENC_compare.py", line 1487, in main
+    r = stages[args.stage](args)
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/digimonk/Projects/su2qc-skqd-v0.1.0/scripts/gate_ENC_compare.py", line 637, in stage_kingston
+    with gzip.open(fn, "wb", mtime=0) as fh:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: open() got an unexpected keyword argument 'mtime'
+
+real	17m28.478s
+user	49m17.318s
+sys	0m19.674s
