@@ -62,9 +62,11 @@ def qiskit_key_to_bits(key: str) -> tuple:
 @dataclass
 class CodewordEmbedding:
     model: Model
+    codec: object = None        # None = the current Codec (the default everywhere); prompts/34
 
     def __post_init__(self):
-        self.codec = Codec(self.model.basis)
+        if self.codec is None:
+            self.codec = Codec(self.model.basis)
         self.n = self.codec.n_qubits
         self.codewords = self.codec.all_codewords()
         self.ints = np.array([bits_to_int(row) for row in self.codewords], dtype=np.int64)
@@ -83,10 +85,15 @@ class CodewordEmbedding:
 
 
 # ------------------------------------------------------------------ local gates
-def term_support(model: Model, kind: str, index: int) -> list:
-    """Sorted list of qubits on which the term acts (touched vertices + JW flux bits)."""
+def term_support(model: Model, kind: str, index: int, codec=None) -> list:
+    """Sorted list of qubits on which the term acts (touched vertices + JW flux bits).
+    `codec=None` is the current Codec; a codec object with its own `support(kind, index)`
+    rule (skqd.codec_dedup.DedupCodec) answers through that rule (prompts/34)."""
     lat = model.lat
-    codec = Codec(model.basis)
+    if codec is None:
+        codec = Codec(model.basis)
+    elif hasattr(codec, "support"):
+        return sorted(int(q) for q in codec.support(kind, index))
     ends = lat.ends()
     qubits = set()
     if kind == "hop":
@@ -104,15 +111,17 @@ def term_support(model: Model, kind: str, index: int) -> list:
     return sorted(qubits)
 
 
-def localize(model: Model, O, support: list):
+def localize(model: Model, O, support: list, codec=None):
     """Restrict a term matrix O (dressed basis) to its local support.  Returns
     (local_states as sorted int list, h as dense matrix over them, local index map).
 
     Locality is CHECKED, not assumed: the global states are grouped by their
     environment (the bits outside the support); O must connect only states of the
     same environment, and within every environment the block of O must equal h on
-    the local states present (including the zeros).  Any violation raises."""
-    codec = Codec(model.basis)
+    the local states present (including the zeros).  Any violation raises.
+    `codec=None` is the current Codec (prompts/34 adds the argument)."""
+    if codec is None:
+        codec = Codec(model.basis)
     cw = codec.all_codewords()
     env_qubits = [q for q in range(codec.n_qubits) if q not in set(support)]
     loc_int = np.array([bits_to_int(cw[k][support]) for k in range(model.basis.dim)])
@@ -138,9 +147,9 @@ def localize(model: Model, O, support: list):
     return states, h, pos
 
 
-def local_unitary(model: Model, O, support: list, theta: float) -> np.ndarray:
+def local_unitary(model: Model, O, support: list, theta: float, codec=None) -> np.ndarray:
     """Dense 2^k x 2^k unitary exp(-i theta O_loc) on the support qubits (k = len(support))."""
-    states, h, pos = localize(model, O, support)
+    states, h, pos = localize(model, O, support, codec=codec)
     k = len(support)
     U = np.eye(2 ** k, dtype=complex)
     u = sla.expm(-1j * theta * h)
