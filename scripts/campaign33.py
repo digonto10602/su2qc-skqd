@@ -288,6 +288,8 @@ def build_parser(ci: dict = None):
     ap.add_argument("--bootstrap", type=int, default=2000)
     ap.add_argument("--max-circuits", type=int, default=0, help="per family/sector (0 = all; dry run 4)")
     ap.add_argument("--min-shots", type=int, default=1)
+    ap.add_argument("--c2cal-dry-shots", default=None,
+                    help="C2_CAL dry run only: 'pta,rm,kraus,chunk' (default 4,8,4,2; a reduced check under the 30-minute rule)")
     ap.add_argument("--parts-file", default=None,
                     help="C4_PART_NN: the slot content (default ci/parts/<TOKEN>.json; prompts/33a step D)")
     if ci:
@@ -474,7 +476,7 @@ def run_token(args, ci, pre=None):
         TR.run_frun(ctx)
     else:
         raise SystemExit(f"unknown token {t}")
-    rc = finish(ctx)
+    rc = finish(ctx, getattr(ctx, "extra_run", None))
     if ctx.copy_to:
         import shutil
         sub = "dryrun" if ctx.dry else ""

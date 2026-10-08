@@ -453,12 +453,20 @@ def run_c2_cal(ctx):
               "0 kraus; SuperOp / readout diff <= 1e-12 on unchanged sites", rm_chk["ok"])
     # ---- the arms, in order PTA, RM, Kraus (deadline-stopped last)
     dry = ctx.dry
-    chunk = C2_CAL_DRY["chunk"] if dry else C2_CAL_CHUNK
-    kmin = C2_CAL_DRY["kraus_min"] if dry else C2_CAL_KRAUS_MIN
+    dry_tab = dict(C2_CAL_DRY)
+    over = getattr(ctx.args, "c2cal_dry_shots", None)
+    if dry and over:
+        # 30-minute rule: a reduced laptop path check (recorded); the prompt's 4 / 8 / 4 stays the default
+        a = [int(x) for x in over.split(",")]
+        dry_tab.update(pta=a[0], rm=a[1], kraus=a[2], chunk=a[3], kraus_min=a[2])
+        ctx.notes.append(f"dry run re-parametrized by --c2cal-dry-shots {over} (30-minute rule): the prompt's 4/8/4 "
+                         f"shots, chunk 2, did not finish in 29 min on this laptop CPU under load")
+    chunk = dry_tab["chunk"] if dry else C2_CAL_CHUNK
+    kmin = dry_tab["kraus_min"] if dry else C2_CAL_KRAUS_MIN
     arms, rows = {}, []
     t_all = time.time()
     for i, (rep, target, stopped) in enumerate(C2_CAL_ARMS):
-        n = C2_CAL_DRY[rep] if dry else int(math.ceil(target * ctx.args.shots_scale))
+        n = dry_tab[rep] if dry else int(math.ceil(target * ctx.args.shots_scale))
         spec = specs[rep]
         ct = spec.apply(circ)
         sim, kw = simulator(ctx, spec.noise_model, mode)
@@ -533,7 +541,8 @@ def run_c2_cal(ctx):
     ctx.no_shots = any(arms[rep]["shots_done"] == 0 for rep in arms)
     if not ctx.min_shots_ok or kdone < arms["kraus"]["target_shots"]:
         ctx.shots_reduced_to = {rep: arms[rep]["shots_done"] for rep in arms}
-    ctx.data.update({"run": 2, "supersedes": supersedes, "arms": arms, "rm_check": rm_chk,
+    ctx.extra_run = {"calibration_run": 2}       # data.run is the run block (finish): run 2 is recorded there too
+    ctx.data.update({"calibration_run": 2, "supersedes": supersedes, "arms": arms, "rm_check": rm_chk,
                      "comparisons": {"P4a_rm_vs_kraus": p4a, "P4b_pta_vs_kraus": p4b, "P4c_vs_K1": p4c},
                      "K1_device_structure": device, "decision": decision,
                      "circuit": f"IBM-T0 {cid}", "model": "I-ECHO (record T2 echo)",
@@ -541,7 +550,8 @@ def run_c2_cal(ctx):
                                                                                     for i, (rep, _t, _s) in enumerate(C2_CAL_ARMS)},
                      "design": {"arms": [list(a) for a in C2_CAL_ARMS], "chunk": chunk, "kraus_minimum": kmin,
                                 "kraus_share_of_remaining": C2_CAL_KRAUS_SHARE, "fixed_arm_guard": C2_CAL_FIXED_GUARD,
-                                "dry_run_shots": C2_CAL_DRY if dry else None,
+                                "dry_run_shots": dry_tab if dry else None,
+                                "dry_run_shots_prompt": C2_CAL_DRY,
                                 "source": "prompts/33a section 2"},
                      "record": {"path": os.path.relpath(RECORD, ROOT), "fingerprint": rec["fingerprint"]}})
     add_table(ctx, "C2_CAL run 2 arms (I-ECHO on IBM-T0 B0_ref117_k1, cuStateVec)",
@@ -578,7 +588,7 @@ def c2_cal_decision(ctx):
     dec = d.get("decision", {})
     rates = dec.get("seconds_per_shot", {})
     src = os.path.relpath(calp, ROOT)
-    if d.get("run") != 2:
+    if d.get("calibration_run") != 2:
         return "kraus", mode_default, rates, (f"{src} is the run-1 record (no P4a): kraus; the run-1 mode decision is "
                                               "superseded by prompts/33a R1 (cuStateVec)")
     rep = "rm" if dec.get("p4a_pass") else "kraus"
