@@ -43,6 +43,7 @@ import scipy.sparse as sp
 import scipy.sparse.csgraph as csgraph
 
 from .codec import Codec
+from .codec_dedup import DedupCodec
 from .exact import Model, mass_default
 from .krylov import references
 from .reference_sim import (apply_local, bits_to_int, local_unitary, localize,
@@ -638,7 +639,7 @@ def _fixed_angle_rotations(states, Aop, theta, valid, k, stats=None):
 
 
 def structured_term_gates(model: Model, O, support: list, theta: float, stats: list | None = None,
-                          angle_mode: str = "exact") -> list:
+                          angle_mode: str = "exact", codec=None) -> list:
     """Basic-gate IR for exp(-i theta O_loc) on `support` (global qubit indices).
     `angle_mode="exact"` (default) reproduces the local exponential to machine precision;
     `angle_mode="fixed"` keeps the same codeword pairs and the same validity controls but
@@ -650,10 +651,12 @@ def structured_term_gates(model: Model, O, support: list, theta: float, stats: l
     the block generator real, so every rotation is an Ry) and `block_rounds_fallback`
     (`_block_rounds` had to fall back to a generic Givens elimination of expm for at least one
     block, because that block was not bipartite or had a nonzero diagonal).  Both keys are
-    additive: nothing that read `stats` before reads them."""
+    additive: nothing that read `stats` before reads them.
+    `codec=None` is the current Codec; another codec (skqd.codec_dedup.DedupCodec, prompts/34)
+    changes only which codewords `localize` reads."""
     assert angle_mode in ("exact", "fixed"), angle_mode
     n_stats0 = len(stats) if stats is not None else 0
-    states, h, pos = localize(model, O, support)
+    states, h, pos = localize(model, O, support, codec=codec)
     k = len(support)
     A = np.abs(h) > 1e-12
     np.fill_diagonal(A, False)
@@ -730,12 +733,15 @@ def term_structure(model: Model, O, support: list) -> dict:
 # ---------------------------------------------------------------------- term gates
 class CircuitFactory:
     def __init__(self, model: Model, g2: float, m: float | None = None, structured_hopping: bool = True,
-                 angle_mode: str = "exact"):
+                 angle_mode: str = "exact", codec=None):
         assert angle_mode in ("exact", "fixed"), angle_mode
         self.model = model
         self.g2 = g2
         self.m = mass_default(g2) if m is None else m
-        self.codec = Codec(model.basis)
+        # codec=None: the current Codec (the default of every signed circuit).  Any other codec
+        # (skqd.codec_dedup.DedupCodec, prompts/34) gives UNSIGNED candidate circuits.
+        self._codec_arg = codec
+        self.codec = Codec(model.basis) if codec is None else codec
         self.n = self.codec.n_qubits
         self.lat = model.lat
         self.ends = self.lat.ends()
@@ -750,7 +756,8 @@ class CircuitFactory:
         if key not in self._struct_cache:
             st = []
             self._struct_cache[key] = structured_term_gates(self.model, O, sup, theta, stats=st,
-                                                            angle_mode=self.angle_mode)
+                                                            angle_mode=self.angle_mode,
+                                                            codec=self._codec_arg)
             self.fixed_stats[(name, round(theta, 12))] = st
         return self._struct_cache[key]
 
@@ -761,6 +768,8 @@ class CircuitFactory:
 
     # ----- diagonal term
     def diag_gates(self, theta: float) -> list:
+        if isinstance(self.codec, DedupCodec):
+            return self._diag_gates_dedup(theta)
         gates = []
         lat, codec = self.lat, self.codec
         for s in range(lat.n_sites):
@@ -786,20 +795,47 @@ class CircuitFactory:
             gates.append(("p", [q], -theta * self.g2 * 0.375))
         return gates
 
+    def _diag_gates_dedup(self, theta: float) -> list:
+        """Diagonal term in the dedup layout: exp(-i phi n_x) with n_x = f_x + 2 b_x (1 - f_x),
+        f_x the XOR of the vertex's link bits (computed into its last link bit by CX and
+        uncomputed), b_x the vertex bit; the corner and interior gate sequences are the ones of
+        the current codec with the vertex's link qubits in place of its flux copies (the corner
+        omits the (1 - f) factor exactly as the current corner gate does: b = 1 with f = 1 is a
+        flag, not a codeword).  Electric phase -theta g2 3/8 once per link bit."""
+        gates = []
+        lat, codec = self.lat, self.codec
+        for s in range(lat.n_sites):
+            sgn = 1.0 if lat.parity(s) == 0 else -1.0
+            phi = theta * self.m * sgn
+            lq = codec.link_qubits(s)
+            b = codec.vertex_qubit(s)
+            if len(lq) == 2:
+                q1, q2 = lq
+                gates += [("cx", [q1, q2], None), ("p", [q2], -phi), ("cx", [q1, q2], None), ("p", [b], -2 * phi)]
+            else:
+                q1, q2, q3 = lq
+                gates += [("cx", [q1, q3], None), ("cx", [q2, q3], None),
+                          ("p", [q3], -phi), ("p", [b], -2 * phi), ("cp", [q3, b], 2 * phi),
+                          ("cx", [q2, q3], None), ("cx", [q1, q3], None)]
+        for l in range(lat.n_links):
+            gates.append(("p", [l], -theta * self.g2 * 0.375))
+        return gates
+
     # ----- hopping terms
     def hop_gates_dense(self, l: int, theta: float) -> list:
         """The exact local block unitary as one dense `unitary` gate (the L3 baseline)."""
-        sup = term_support(self.model, "hop", l)
+        sup = term_support(self.model, "hop", l, codec=self._codec_arg)
         key = (l, round(theta, 12))
         if key not in self._hop_cache:
-            self._hop_cache[key] = local_unitary(self.model, self.model.terms.hop[l], sup, theta)
+            self._hop_cache[key] = local_unitary(self.model, self.model.terms.hop[l], sup, theta,
+                                                 codec=self._codec_arg)
         return [("unitary", sup, self._hop_cache[key])]
 
     def hop_gates_structured(self, l: int, theta: float) -> list:
         """Controlled-Givens-chain decomposition of exp(-i theta H_hop_l) (gate S2); with
         angle_mode="fixed" the same pairs with one angle per flip pattern (prompts/11)."""
         return self._structured(f"hop{l}", self.model.terms.hop[l],
-                                term_support(self.model, "hop", l), theta)
+                                term_support(self.model, "hop", l, codec=self._codec_arg), theta)
 
     def hop_gates(self, l: int, theta: float) -> list:
         if self.structured_hopping:
@@ -810,7 +846,10 @@ class CircuitFactory:
     def plaq_gates(self, P: int, theta: float, structured: bool = True) -> list:
         pl = self.lat.plaquettes[P]
         corners = [pl["c00"], pl["c10"], pl["c11"], pl["c01"]]
-        if structured and all(self.codec.widths[s] == 3 for s in corners):
+        # the corner-only Gray-code gate is tied to the current layout: a DedupCodec always takes
+        # the generic structured path (prompts/34)
+        if (structured and not isinstance(self.codec, DedupCodec)
+                and all(self.codec.widths[s] == 3 for s in corners)):
             table = plaquette_pair_amplitudes(self.model, P)
             q1 = [self.codec.offsets[s] for s in corners]
             q2 = [self.codec.offsets[s] + 1 for s in corners]
@@ -841,7 +880,7 @@ class CircuitFactory:
             gates += [("h", [a], None) for a in q1]
             gates += [("cx", [a, b], None) for a, b in zip(q1, q2)]
             return gates
-        sup = term_support(self.model, "plaq", P)
+        sup = term_support(self.model, "plaq", P, codec=self._codec_arg)
         O = -self.model.terms.plaq[P] / (2 * self.g2)
         if structured:
             # interior corners (2x3 and larger): the generic controlled-Givens-chain gates
@@ -852,7 +891,7 @@ class CircuitFactory:
             raise NotImplementedError(
                 f"plaquette {P} acts on {len(sup)} qubits (interior corners): the dense local unitary would need "
                 f"{(2 ** len(sup)) ** 2 * 16 / 2 ** 30:.1f} GiB; use the structured gates (structured=True).")
-        U = local_unitary(self.model, O, sup, theta)
+        U = local_unitary(self.model, O, sup, theta, codec=self._codec_arg)
         return [("unitary", sup, U)]
 
     # ----- circuits
