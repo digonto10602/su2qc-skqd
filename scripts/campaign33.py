@@ -35,7 +35,6 @@ import os
 import sys
 import time
 
-import numpy as np
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(ROOT, "src"))
@@ -78,13 +77,109 @@ def rel(p):
 
 def versions() -> dict:
     out = {}
-    for m in ("qiskit", "qiskit_aer", "numpy", "scipy"):
+    for m in ("qiskit", "qiskit_aer", "numpy", "scipy", "threadpoolctl"):
         try:
             out[m] = __import__(m).__version__
         except Exception as exc:
             out[m] = f"unavailable: {type(exc).__name__}"
     out["python"] = sys.version.split()[0]
     return out
+
+
+# =========================================================================== preflight (prompts/33a step A)
+# The pip package that provides each top-level module the campaign imports (prompts/33a R5: no silent
+# fallback -- a missing package stops the job in the first seconds, before any GPU or QPY work).
+PIP_PACKAGE = {"threadpoolctl": "threadpoolctl", "qiskit": "qiskit==1.4.3", "qiskit_aer": "qiskit-aer-gpu==0.15.1",
+               "numpy": "numpy", "scipy": "scipy"}
+# skqd env: everything a sampling token touches.  The class-3 engine envs (skqd-pecos, skqd-selene; jobs/env/)
+# carry no qiskit (and skqd-selene no scipy): their tokens import only what run_c3_engine reaches; the engine
+# package itself is checked by engines.run, which records an unavailable engine as DROPPED.
+PREFLIGHT_MODULES = {
+    "skqd": ("threadpoolctl", "numpy", "scipy", "qiskit", "qiskit_aer",
+             "skqd.campaign33.tokens", "skqd.campaign33.stats", "skqd.campaign33.sampling",
+             "skqd.campaign33.circuits", "skqd.campaign33.noise", "skqd.campaign33.analysis",
+             "skqd.campaign33.tokens_run", "skqd.campaign33.assemble", "skqd.campaign33.cf_gpu",
+             "skqd.campaign33.engines", "gate_CV"),
+    "engine": ("numpy", "skqd.report", "skqd.campaign33.tokens", "skqd.campaign33.stats", "skqd.campaign33.engines"),
+}
+PREFLIGHT_EXIT = 3
+
+
+def _peek_args(argv):
+    """(token, stage, dry) from a raw argument list, without argparse (the preflight runs before anything)."""
+    tok, stage = None, "run"
+    for i, a in enumerate(argv):
+        if a == "--token" and i + 1 < len(argv):
+            tok = argv[i + 1]
+        elif a.startswith("--token="):
+            tok = a.split("=", 1)[1]
+        elif a == "--stage" and i + 1 < len(argv):
+            stage = argv[i + 1]
+        elif a.startswith("--stage="):
+            stage = a.split("=", 1)[1]
+    return tok or os.environ.get("CI_GATE"), stage, "--dry-run" in argv
+
+
+def preflight_modules(token, tokens=None):
+    tokens = TK.load_tokens() if tokens is None else tokens
+    env = tokens[token]["env"] if token in tokens else "skqd"
+    return PREFLIGHT_MODULES["skqd" if env == "skqd" else "engine"], env
+
+
+def preflight(token, dry=False, root=None, write=True):
+    """prompts/33a step A: import every module the token needs, before ci_context, QPY or AerSimulator.
+    On a missing module: print `preflight: missing <module>; install: pip install <package> (env <env>)`,
+    write validation/<TOKEN>.json (status FAIL, criterion `S0 preflight imports`) and sys.exit(3).
+    Returns {"modules", "versions", "seconds", "env"} on success."""
+    import importlib
+    t0 = time.time()
+    mods, env = preflight_modules(token)
+    loaded = []
+    for m in mods:
+        try:
+            importlib.import_module(m)
+            loaded.append(m)
+        except ImportError as exc:
+            missing = (getattr(exc, "name", None) or m).split(".")[0]
+            pkg = PIP_PACKAGE.get(missing, missing)
+            msg = f"preflight: missing {missing}; install: pip install {pkg} (env {env})"
+            print(msg, flush=True)
+            if write:
+                _write_preflight_fail(token, dry, root or ROOT, m, missing, pkg, env, msg, loaded, time.time() - t0)
+            sys.exit(PREFLIGHT_EXIT)
+    out = {"modules": list(mods), "env": env, "versions": versions(), "seconds": time.time() - t0}
+    print(f"preflight: {len(mods)} modules imported in {out['seconds']:.2f} s (env {env}; threadpoolctl "
+          f"{out['versions'].get('threadpoolctl')})", flush=True)
+    return out
+
+
+def _write_preflight_fail(token, dry, root, module, missing, pkg, env, msg, loaded, seconds):
+    """The token JSON of a preflight failure (GateResult's schema, written with json only: the failure may be
+    numpy itself), so the CI harvest has a record instead of `status UNKNOWN`."""
+    import platform
+    gate = f"dryrun/{token}" if dry else token
+    try:
+        from skqd.report import environment
+        envblk = environment()
+    except Exception as exc:          # numpy missing: skqd.report cannot import; record why
+        envblk = {"python": sys.version.split()[0], "platform": platform.platform(),
+                  "timestamp": time.strftime("%Y-%m-%d %H:%M:%S %Z"),
+                  "note": f"skqd.report.environment unavailable: {type(exc).__name__}"}
+    rec = {"gate": gate, "title": f"Campaign 33 token {token}: preflight failed (missing {missing})",
+           "status": "FAIL",
+           "criteria": [{"name": "S0 preflight imports", "value": f"missing {missing} (importing {module})",
+                         "threshold": "every module of the token's env imports", "passed": False}],
+           "data": {"token": token, "prompt": "prompts/33a_campaign33_first_wave_reruling.md step A",
+                    "dry_run": bool(dry), "preflight": {"ok": False, "module": module, "missing": missing,
+                                                        "install": f"pip install {pkg}", "env": env, "message": msg,
+                                                        "imported_before_failure": loaded, "seconds": seconds},
+                    "run": {"versions": versions()}},
+           "runtime_s": seconds, "environment": envblk}
+    path = os.path.join(root, "validation", gate + ".json")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as fh:
+        json.dump(rec, fh, indent=1)
+    return path
 
 
 def token_class(token):
@@ -129,6 +224,7 @@ class Ctx:
                                                "budget_minutes": args.budget_minutes, "reason": DRY_REASON}
         self.oom = []
         self.seeds_recorded = True
+        self.copy_to = None              # a C4_PART_NN slot: the content-named copy of its JSON (prompts/33a D1)
 
     def title(self):
         base = f"Campaign 33 token {self.token} (class {token_class(self.token)}): {self.entry['content']}"
@@ -192,6 +288,8 @@ def build_parser(ci: dict = None):
     ap.add_argument("--bootstrap", type=int, default=2000)
     ap.add_argument("--max-circuits", type=int, default=0, help="per family/sector (0 = all; dry run 4)")
     ap.add_argument("--min-shots", type=int, default=1)
+    ap.add_argument("--parts-file", default=None,
+                    help="C4_PART_NN: the slot content (default ci/parts/<TOKEN>.json; prompts/33a step D)")
     if ci:
         tok = None
         for i, a in enumerate(sys.argv):
@@ -348,9 +446,12 @@ def add_table(ctx, title, header, rows):
 
 
 # =========================================================================== token dispatch
-def run_token(args, ci):
+def run_token(args, ci, pre=None):
     from skqd.campaign33 import tokens_run as TR
     ctx = Ctx(args, ci)
+    if pre is not None:
+        ctx.data["preflight"] = {"ok": True, **pre}
+        ctx.phases["preflight_s"] = pre["seconds"]
     ctx.log(f"device {ctx.device} (available {ctx.available}), budget {args.budget_minutes} min, "
             f"shots x {args.shots_scale}, chunk <= {chunk_bound(ctx)}, s0 {ctx.s0}"
             + (" [DRY RUN]" if ctx.dry else ""))
@@ -367,14 +468,26 @@ def run_token(args, ci):
         TR.run_fcells(ctx)
     elif t == "C4_CF":
         TR.run_cf(ctx)
+    elif TK.is_slot(t):
+        TR.run_part(ctx)
     elif t.startswith("C4_F"):
         TR.run_frun(ctx)
     else:
         raise SystemExit(f"unknown token {t}")
-    return finish(ctx)
+    rc = finish(ctx)
+    if ctx.copy_to:
+        import shutil
+        sub = "dryrun" if ctx.dry else ""
+        src = os.path.join(ROOT, "validation", sub, ctx.token + ".json")
+        dst = os.path.join(ROOT, "validation", sub, ctx.copy_to + ".json")
+        shutil.copyfile(src, dst)
+        print(f"{ctx.token}: content-named copy {rel(dst)}")
+    return rc
 
 
 def main(argv=None):
+    tok, stage, dry = _peek_args(list(sys.argv[1:] if argv is None else argv))
+    pre = preflight(tok, dry=dry) if (stage == "run" and tok in TK.load_tokens()) else None
     ci = ci_context()
     ap = build_parser(ci)
     args = ap.parse_args(argv)
@@ -393,7 +506,7 @@ def main(argv=None):
     if args.token not in TK.load_tokens():
         raise SystemExit(f"unknown token {args.token}")
     args = apply_dry_defaults(args)
-    return run_token(args, ci)
+    return run_token(args, ci, pre)
 
 
 if __name__ == "__main__":

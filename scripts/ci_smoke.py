@@ -1,6 +1,7 @@
 """GPU smoke test for skqd-ci: is this node usable as the 'QPU' for SKQD sampling?
 
 Checks, each recorded separately in validation/ci_smoke.json:
+  python_packages: threadpoolctl, numpy, scipy import (versions printed; prompts/33a step A)
   qiskit_aer_gpu : 12-qubit GHZ + diagonal phases sampled on AerSimulator(device="GPU")
   cudaq_nvidia   : the same circuit on CUDA-Q's "nvidia" (cuStateVec) target
   aer_28q_memory : a 28-qubit state vector (2x4 ladder size) fits on one GPU
@@ -81,6 +82,18 @@ def aer_28q():
     return {"qubits": n, "distinct": len(counts)}
 
 
+def python_packages():
+    # prompts/33a R5: the campaign-33 jobs need threadpoolctl (gate_CV pins BLAS threads per call); a missing
+    # package fails this 15-min smoke instead of four 60-min jobs
+    import threadpoolctl
+    import numpy
+    import scipy
+    v = {"threadpoolctl": threadpoolctl.__version__, "numpy": numpy.__version__, "scipy": scipy.__version__}
+    print("threadpoolctl", v["threadpoolctl"], flush=True)
+    return {"versions": v}
+
+
+check("python_packages", python_packages)
 check("qiskit_aer_gpu", qiskit_aer)
 check("cudaq_nvidia", cudaq_nvidia)
 check("aer_28q_memory", aer_28q)

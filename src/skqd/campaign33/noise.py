@@ -433,9 +433,18 @@ class _RecordBackend:
         return "<record backend>"
 
 
-def record_target(record: dict, t2_scale: float = 1.0):
+def rm_t2(t1, t2):
+    """prompts/33a R2, representation RM ("reset mixture", the planner's label): T2 := min(T2, T1), so that
+    Aer's thermal_relaxation_error takes its reset-mixture branch (T2 <= T1) instead of a Kraus channel."""
+    if t1 is None or t2 is None:
+        return t2
+    return min(float(t2), float(t1))
+
+
+def record_target(record: dict, t2_scale: float = 1.0, t2_cap_t1: bool = False):
     """A qiskit Target carrying the record's numbers: cz (every edge key), sx, x, rz (duration 0,
-    error 0), measure, delay; qubit_properties T1 and T2 (T2 x t2_scale, then clipped to 2 T1 by Aer)."""
+    error 0), measure, delay; qubit_properties T1 and T2 (T2 x t2_scale, then clipped to 2 T1 by Aer).
+    t2_cap_t1: representation RM, T2 := min(T2 x t2_scale, T1) per qubit (prompts/33a R2)."""
     from qiskit.circuit import Delay, Measure, Parameter
     from qiskit.circuit.library import CZGate, RZGate, SXGate, XGate
     from qiskit.providers.backend import QubitProperties
@@ -447,6 +456,8 @@ def record_target(record: dict, t2_scale: float = 1.0):
         v = record["qubits"].get(str(q)) or {}
         t1 = None if v.get("T1_s") is None else float(v["T1_s"])
         t2 = None if v.get("T2_s") is None else float(v["T2_s"]) * float(t2_scale)
+        if t2_cap_t1:
+            t2 = rm_t2(t1, t2)
         qp.append(QubitProperties(t1=t1, t2=t2, frequency=None))
     t = Target(num_qubits=n, dt=float(record["dt_s"]), qubit_properties=qp)
     qs = sorted(int(q) for q in record["qubits"])
@@ -471,14 +482,15 @@ def record_target(record: dict, t2_scale: float = 1.0):
     return t
 
 
-def kraus_record_model(record: dict, t2_scale: float = 1.0):
+def kraus_record_model(record: dict, t2_scale: float = 1.0, t2_cap_t1: bool = False):
     """`NoiseModel.from_backend` (depolarizing + thermal relaxation on gates, readout, relaxation on
-    delays) on the record's target: exactly Aer's own construction, version by version."""
+    delays) on the record's target: exactly Aer's own construction, version by version.  t2_cap_t1: the
+    RM representation (T2 := min(T2, T1) on the target, prompts/33a R2)."""
     from qiskit_aer.noise import NoiseModel
     import warnings
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        return NoiseModel.from_backend(_RecordBackend(record_target(record, t2_scale)))
+        return NoiseModel.from_backend(_RecordBackend(record_target(record, t2_scale, t2_cap_t1)))
 
 
 def _local_errors(nm) -> dict:
@@ -491,7 +503,7 @@ def _local_errors(nm) -> dict:
     return out
 
 
-def t1_t2_lists(record: dict, t2_scale: float = 1.0):
+def t1_t2_lists(record: dict, t2_scale: float = 1.0, t2_cap_t1: bool = False):
     n = int(record["num_qubits"])
     t1s, t2s = [], []
     for q in range(n):
@@ -502,8 +514,77 @@ def t1_t2_lists(record: dict, t2_scale: float = 1.0):
         else:
             t1 = float(v["T1_s"])
             t1s.append(t1)
-            t2s.append(truncate_t2(t1, float(v["T2_s"]) * float(t2_scale)))
+            t2 = truncate_t2(t1, float(v["T2_s"]) * float(t2_scale))
+            t2s.append(rm_t2(t1, t2) if t2_cap_t1 else t2)
     return t1s, t2s
+
+
+def rm_changed_qubits(record: dict, qubits, t2_scale: float = 1.0) -> dict:
+    """{qubit: [T2 of the Kraus model s, T2 of RM s, T1 s]} for the qubits of `qubits` whose T2 (x t2_scale,
+    clipped to 2 T1) exceeds T1 -- the only sites where RM differs from the Kraus model."""
+    t1s, t2s = t1_t2_lists(record, t2_scale)
+    _t1, t2r = t1_t2_lists(record, t2_scale, t2_cap_t1=True)
+    return {int(q): [t2s[q], t2r[q], t1s[q]] for q in sorted(int(x) for x in qubits) if t2s[q] > t1s[q]}
+
+
+def rm_vs_kraus_check(kraus_spec, rm_spec, record, active_qubits, circuit=None, t2_scale: float = 1.0) -> dict:
+    """prompts/33a step B arm 2: (i) no Kraus instruction in the RM model (to_dict, and in the delay errors its
+    custom pass inserts into `circuit`); (ii) on every gate site whose qubits all have T2 <= T1 (the active
+    qubits outside rm_changed_qubits) the RM error equals the Kraus error (SuperOp max |diff| <= 1e-12), the
+    readout errors are identical and the delay-pass T1/T2 of those qubits are identical."""
+    from qiskit.quantum_info import SuperOp
+    changed = rm_changed_qubits(record, active_qubits, t2_scale)
+    same = sorted(int(q) for q in active_qubits if int(q) not in changed)
+    ek, er = kraus_spec.local_errors, rm_spec.local_errors
+    keys = [k for k in ek if all(q in same for q in k[1])]
+    worst = 0.0
+    for k in keys:
+        a = SuperOp(ek[k].to_quantumchannel()).data
+        b = SuperOp(er[k].to_quantumchannel()).data
+        worst = max(worst, float(np.max(np.abs(a - b))))
+    ro = max((float(np.max(np.abs(np.asarray(kraus_spec.readout_per_qubit[q]) - np.asarray(rm_spec.readout_per_qubit[q]))))
+              for q in same if q in kraus_spec.readout_per_qubit), default=0.0)
+    d_t = max(max(abs(kraus_spec.t1s[q] - rm_spec.t1s[q]), abs(kraus_spec.t2s[q] - rm_spec.t2s[q])) for q in same)
+    pk, pr = kraus_spec.noise_model._custom_noise_passes, rm_spec.noise_model._custom_noise_passes
+    d_pass = max((max(abs(float(a._t1s[q]) - float(b._t1s[q])), abs(float(a._t2s[q]) - float(b._t2s[q])))
+                  for a, b in zip(pk, pr) for q in same), default=0.0)
+    kr_rm = kraus_instructions(rm_spec.noise_model, circuit)
+    kr_k = kraus_instructions(kraus_spec.noise_model, circuit)
+    ok_same = bool(worst <= 1e-12 and ro <= 1e-12 and d_t <= 1e-15 and d_pass <= 1e-15 and len(pk) == len(pr))
+    no_kraus = kr_rm["to_dict"] == 0 and kr_rm.get("custom_pass_sites", 0) == 0
+    return {"changed_qubits": {str(q): {"T2_kraus_s": v[0], "T2_rm_s": v[1], "T1_s": v[2]} for q, v in changed.items()},
+            "n_changed": len(changed), "unchanged_qubits": same, "n_unchanged": len(same),
+            "gate_sites_compared": len(keys), "max_superop_diff_unchanged": worst, "max_readout_diff_unchanged": ro,
+            "max_t1_t2_diff_unchanged_s": d_t, "max_delay_pass_t1_t2_diff_unchanged_s": d_pass,
+            "kraus_in_rm": kr_rm, "kraus_in_kraus_model": kr_k,
+            "identical_on_unchanged": ok_same, "rm_has_no_kraus": bool(no_kraus), "ok": bool(ok_same and no_kraus),
+            "rule": "SuperOp max |diff| <= 1e-12 on every gate site whose qubits all have T2 <= T1; readout <= 1e-12; "
+                    "delay T1/T2 <= 1e-15; 0 kraus instructions in RM's to_dict and in its delay-pass errors"}
+
+
+def kraus_instructions(noise_model, circuit=None) -> dict:
+    """Where a Kraus channel appears: in `noise_model.to_dict()` (gate and readout errors) and, when a
+    circuit is given, in the errors the model's custom passes (RelaxationNoisePass on delays) insert into
+    it -- the passes are not part of to_dict.  Returns {"to_dict": n, "custom_pass_sites": n_kraus,
+    "custom_pass_sites_total": n}."""
+    from qiskit_aer.noise import QuantumError
+    d = json.dumps(noise_model.to_dict(serializable=True))
+    out = {"to_dict": d.count('"kraus"')}
+    if circuit is not None:
+        pm = noise_model._pass_manager()
+        n_k, n_tot = 0, 0
+        if pm is not None:
+            qc = pm.run(circuit)
+            for inst in qc.data:
+                op = inst.operation
+                # the pass appends QuantumChannelInstruction(QuantumError) (aer 0.15.1 and 0.17.2)
+                err = op if isinstance(op, QuantumError) else getattr(op, "_quantum_error", None)
+                if err is not None:
+                    n_tot += 1
+                    if '"kraus"' in json.dumps(err.to_dict(), default=str):
+                        n_k += 1
+        out.update({"custom_pass_sites": n_k, "custom_pass_sites_total": n_tot})
+    return out
 
 
 def delay_seconds(inst, dt: float) -> float:
@@ -540,22 +621,27 @@ def ibm_spec(record: dict, cell: str, representation: str = "kraus", t2_conventi
              t2_star_ratio: float = None, coherent_eps: dict = None) -> NoiseSpec:
     """Class 2 (prompts/33 1.2): I-GATE, I-ECHO, I-STAR, I-XY4, I-COH on the committed record.
 
-    representation: "kraus" (from_backend as is: Kraus relaxation on gates, RelaxationNoisePass on delays)
-    or "pta" (every gate error replaced by its Pauli twirl, the delays by the closed-form twirl).
+    representation: "kraus" (from_backend as is: Kraus relaxation on gates, RelaxationNoisePass on delays),
+    "rm" (prompts/33a R2: the same construction with T2 := min(T2, T1) per qubit, so every relaxation site
+    is Aer's reset mixture and no Kraus channel exists; non-unital like Kraus, overstates dephasing where
+    T2 > T1) or "pta" (every gate error replaced by its Pauli twirl, the delays by the closed-form twirl).
     t2_convention: "echo" (the record's Hahn-echo T2) or "star" (T2* = ratio x T2_echo on every qubit,
     gates and delays alike, as gate_H0P.apply_t2_override).  coherent_eps: {qubit: eps rad} for I-COH:
     Rx(eps) composed after the x error of that qubit (coherent, never twirled)."""
     from qiskit_aer.noise import NoiseModel, coherent_unitary_error
     from qiskit.circuit.library import RXGate
 
+    if representation not in ("kraus", "rm", "pta"):
+        raise ValueError(representation)
     scale = 1.0 if t2_convention == "echo" else float(t2_star_ratio)
-    kraus = kraus_record_model(record, scale)
-    t1s, t2s = t1_t2_lists(record, scale)
+    cap = representation == "rm"
+    kraus = kraus_record_model(record, scale, t2_cap_t1=cap)
+    t1s, t2s = t1_t2_lists(record, scale, t2_cap_t1=cap)
     dt = float(record["dt_s"])
     errs = _local_errors(kraus)
     nm = NoiseModel(basis_gates=list(kraus.basis_gates))
     for (name, qs), err in errs.items():
-        e = err if representation == "kraus" else twirled_error(err)
+        e = twirled_error(err) if representation == "pta" else err
         if coherent_eps and name == "x" and qs[0] in coherent_eps:
             e = e.compose(coherent_unitary_error(RXGate(float(coherent_eps[qs[0]])).to_matrix()))
         nm.add_quantum_error(e, name, list(qs), warnings=False)
@@ -565,7 +651,7 @@ def ibm_spec(record: dict, cell: str, representation: str = "kraus", t2_conventi
         p = np.asarray(rerr.probabilities)
         ro[int(qs[0])] = (float(p[0][1]), float(p[1][0]))
     transform = None
-    if representation == "kraus":
+    if representation in ("kraus", "rm"):
         nm._custom_noise_passes = list(kraus._custom_noise_passes)     # RelaxationNoisePass on Delay
     elif representation == "pta":
         after = pta_delay_transform(t1s, t2s, dt)
@@ -591,7 +677,11 @@ def ibm_spec(record: dict, cell: str, representation: str = "kraus", t2_conventi
                if cell == "I-XY4" else []),
             "source": SOURCES["I"],
             "pta_rule": ("p_X = p_Y = (1 - e^{-t/T1})/4, p_Z = (1 - e^{-t/T2})/2 - (1 - e^{-t/T1})/4 on delays; "
-                         "every gate error twirled numerically (sum_k |Tr P K_k|^2 / d^2)") if representation == "pta" else None}
+                         "every gate error twirled numerically (sum_k |Tr P K_k|^2 / d^2)") if representation == "pta" else None,
+            "rm_rule": ("T2 := min(T2, T1) per qubit on the target and on the delays (after the T2 convention and Aer's "
+                        "2 T1 clip), so thermal_relaxation_error is Aer's reset mixture {I, Z, reset0, reset1} "
+                        "everywhere (no Kraus); non-unital like Kraus; overstates dephasing where T2 > T1 "
+                        "(prompts/33a R2)") if representation == "rm" else None}
     spec = NoiseSpec(cell, nm, transform, desc, readout=None, readout_per_qubit=ro)
     spec.t1s, spec.t2s, spec.dt = t1s, t2s, dt
     spec.local_errors = {k: v for k, v in _local_errors(nm).items()}

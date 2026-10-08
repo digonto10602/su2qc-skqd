@@ -76,7 +76,8 @@ def main():
     except Exception as e:
         ok = False
         print("could not spot-check references:", e)
-    for mod in ("skqd.su2", "skqd.hamiltonian", "skqd.codec", "skqd.skqd", "skqd.circuits_ir",
+    # threadpoolctl: gate_CV pins the BLAS thread count per call (prompts/33a R5; jobs 59491455/62/80 died on it)
+    for mod in ("threadpoolctl", "skqd.su2", "skqd.hamiltonian", "skqd.codec", "skqd.skqd", "skqd.circuits_ir",
                 "skqd.hardware"):
         try:
             importlib.import_module(mod)

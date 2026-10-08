@@ -188,3 +188,28 @@ def test_star_and_coherent_cells(record):
     e = N.ibm_spec(record, "I-ECHO", "kraus", "echo")
     assert N.identity_probability(c.local_errors[("x", (59,))]) < N.identity_probability(e.local_errors[("x", (59,))])
     assert "coherent over-rotation Rx(eps_q) after every x" in c.description["channel_classes"]
+
+
+def test_rm_representation_has_no_kraus_and_equals_kraus_where_t2_le_t1(record):
+    """prompts/33a R2 / step B arm 2: RM = the Kraus builder with T2 := min(T2, T1); no Kraus instruction in its
+    to_dict nor in the delay errors its relaxation pass inserts; identical to the Kraus model (SuperOp, readout,
+    delay T1/T2) on every site whose qubits have T2 <= T1; T2 = T1 exactly on the qubits where T2 > T1."""
+    from skqd.campaign33 import circuits as C
+    man = C.load_manifest("IBM-T0", "B0_ref117_k1")
+    k = N.ibm_spec(record, "I-ECHO", "kraus", "echo")
+    r = N.ibm_spec(record, "I-ECHO", "rm", "echo")
+    circ = C.load_circuit("IBM-T0", "B0_ref117_k1")
+    chk = N.rm_vs_kraus_check(k, r, record, man["physical_qubits"], circuit=r.apply(circ))
+    want = {q for q in man["physical_qubits"]
+            if record["qubits"][str(q)]["T2_s"] > record["qubits"][str(q)]["T1_s"]}
+    assert set(int(q) for q in chk["changed_qubits"]) == want == {59, 69, 92, 95}, "prompts/33a R2"
+    assert chk["n_unchanged"] == len(man["physical_qubits"]) - len(want) == 17
+    for v in chk["changed_qubits"].values():
+        assert v["T2_rm_s"] == v["T1_s"] < v["T2_kraus_s"]
+    assert chk["ok"] and chk["max_superop_diff_unchanged"] <= 1e-12 and chk["gate_sites_compared"] > 0
+    assert chk["kraus_in_rm"]["to_dict"] == 0 and chk["kraus_in_rm"]["custom_pass_sites"] == 0
+    assert chk["kraus_in_rm"]["custom_pass_sites_total"] == chk["kraus_in_kraus_model"]["custom_pass_sites_total"] > 0
+    assert chk["kraus_in_kraus_model"]["to_dict"] > 0 and chk["kraus_in_kraus_model"]["custom_pass_sites"] > 0
+    assert r.description["representation"] == "rm" and r.description["rm_rule"]
+    # RM keeps the non-unital reset on the changed qubits (PTA would not)
+    assert "reset" in json.dumps(r.local_errors[("x", (59,))].to_dict(), default=str)

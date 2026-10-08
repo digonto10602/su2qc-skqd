@@ -121,6 +121,32 @@ class Prefixes:
             self.bounds[r["label"]] = [0] + [int(e) for e in ends]
             self.done[r["label"]] = int(r["shots_done"])
 
+    @classmethod
+    def from_chunks(cls, P: Physics, twoB: int, chunks_by_circuit: dict):
+        """prompts/33a step D4: the same bookkeeping rebuilt from decoded per-chunk counts
+        {cid: [{start, shots, accepted {full-basis index: n}, rejected}]} (the part JSONs of a split run,
+        concatenated); the chunks of each circuit must tile [0, N_c) in start order (no gap, no overlap)."""
+        self = cls.__new__(cls)
+        self.P, self.twoB = P, twoB
+        self.S = P.sector(twoB)
+        pos = {int(b): j for j, b in enumerate(self.S.sector_idx)}
+        self.ids = list(chunks_by_circuit)
+        self.mats, self.rej, self.bounds, self.done = {}, {}, {}, {}
+        for c, rows in chunks_by_circuit.items():
+            rows = sorted(rows, key=lambda r: int(r["start"]))
+            m = np.zeros((len(rows), len(self.S.sector_idx)), dtype=np.int32)
+            rj = np.zeros(len(rows), dtype=np.int64)
+            b = [0]
+            for k, r in enumerate(rows):
+                if int(r["start"]) != b[-1]:
+                    raise ValueError(f"{c}: chunk at {r['start']} does not continue the prefix ending at {b[-1]}")
+                for i, v in r["accepted"].items():
+                    m[k, pos[int(i)]] += int(v)
+                rj[k] = int(r["rejected"])
+                b.append(b[-1] + int(r["shots"]))
+            self.mats[c], self.rej[c], self.bounds[c], self.done[c] = m, rj, b, b[-1]
+        return self
+
     def covered(self, cid, L):
         return int(L) in self.bounds[cid]
 

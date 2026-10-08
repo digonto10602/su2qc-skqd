@@ -54,6 +54,28 @@ def chunk_plan(n_shots: int, max_chunk: int, phis=PHI) -> list:
     return out
 
 
+def split_ranges(n_shots: int, max_chunk: int, parts: int, phis=PHI) -> list:
+    """prompts/33a step D: [(start, end)] of `parts` consecutive pieces of the unsplit chunk plan of n_shots,
+    each boundary the first chunk start >= i n_shots / parts (rounded UP to a chunk boundary), so that the
+    concatenated parts are exactly the unsplit chunk plan and every gate_CV prefix point stays a boundary."""
+    plan = chunk_plan(n_shots, max_chunk, phis)
+    starts = [a for a, _s in plan] + [int(n_shots)]
+    cuts = [0]
+    for i in range(1, int(parts)):
+        x = i * float(n_shots) / int(parts)
+        cuts.append(min(s for s in starts if s >= x))
+    cuts.append(int(n_shots))
+    return [(cuts[i], cuts[i + 1]) for i in range(int(parts))]
+
+
+def part_plan(n_shots: int, max_chunk: int, start: int, end: int, phis=PHI) -> list:
+    """The chunks [(start, size)] of the unsplit plan of n_shots that lie in [start, end) (exact cover)."""
+    p = [(a, s) for a, s in chunk_plan(n_shots, max_chunk, phis) if start <= a < end]
+    if sum(s for _a, s in p) != int(end) - int(start) or (p and p[0][0] != int(start)):
+        raise ValueError(f"[{start}, {end}) is not a union of chunks of the plan of {n_shots} at {max_chunk}")
+    return p
+
+
 def make_simulator(device: str = "CPU", mode: str = "policy", noise_model=None, threads: int = 0,
                    batched_max_qubits: int = 24):
     """AerSimulator per the owner's HPC policy.  GPU modes:
@@ -104,19 +126,25 @@ class Sampler:
     WARMUP_CIRCUIT_INDEX = 999       # seed slot of the discarded 1-shot rate probe (no token has 999 circuits)
 
     def __init__(self, sim, s0: int, max_chunk: int, deadline: float = None, log=print, rate_hint: float = None,
-                 min_rounds: int = 0):
+                 min_rounds: int = 0, phis=PHI):
         self.sim, self.s0, self.max_chunk = sim, int(s0), int(max_chunk)
         self.deadline, self.log = deadline, log
         self.rate_hint = rate_hint
         self.min_rounds = int(min_rounds)      # rounds run regardless of the deadline (a dry run samples every unit)
+        self.phis = tuple(phis)                # (1.0,) = plain chunks of max_chunk (class 2 reads no prefix curve)
         self.calls, self.oom_retries, self.call_seconds = 0, [], []
         self.warmup = None
 
-    def _run(self, circ, shots, seed):
+    def _sim(self, c):
+        """The simulator of circuit c: `sim` may be one AerSimulator or a list with one per circuit (class 2:
+        each T2 convention has its own noise model)."""
+        return self.sim[c] if isinstance(self.sim, (list, tuple)) else self.sim
+
+    def _run(self, circ, shots, seed, c=0):
         """One chunk; on OOM split into halves with seeds (seed, seed + a) -- the same shot stream."""
         try:
             t0 = time.time()
-            res = self.sim.run(circ, shots=int(shots), seed_simulator=int(seed)).result()
+            res = self._sim(c).run(circ, shots=int(shots), seed_simulator=int(seed)).result()
             if not res.success:
                 raise RuntimeError(str(getattr(res, "status", "")))
             c = counts_to_int(res.get_counts(0))
@@ -129,16 +157,20 @@ class Sampler:
             a = shots // 2
             self.oom_retries.append({"shots": int(shots), "seed": int(seed), "split": [a, shots - a],
                                      "error": str(exc)[:200]})
-            c1 = self._run(circ, a, seed)
-            c2 = self._run(circ, shots - a, seed + a)
+            c1 = self._run(circ, a, seed, c)
+            c2 = self._run(circ, shots - a, seed + a, c)
             for k, v in c2.items():
                 c1[k] = c1.get(k, 0) + v
             return c1
 
-    def run(self, circuits: list, shots: list, labels: list, circuit_offset: int = 0):
+    def run(self, circuits: list, shots: list, labels: list, circuit_offset: int = 0, plans: list = None):
         """Sample circuits[c] for shots[c] shots.  Returns per circuit {label, plan, chunks: [{start, shots,
-        seed, counts}], shots_done} and the info block.  Circuit c's seeds use index circuit_offset + c."""
-        plans = [chunk_plan(n, self.max_chunk) for n in shots]
+        seed, counts}], shots_done} and the info block.  Circuit c's seeds use index circuit_offset + c.
+        plans: an explicit [(start, size)] list per circuit (prompts/33a step D: part i of a split run samples
+        the chunks of the unsplit chunk plan that lie in its range; `shots` is then their sum)."""
+        if plans is None:
+            plans = [chunk_plan(n, self.max_chunk, self.phis) for n in shots]
+        plans = [list(p) for p in plans]
         stride = max([s for p in plans for _a, s in p] or [1])
         out = [{"label": lab, "requested": int(n), "chunks": [], "shots_done": 0} for lab, n in zip(labels, shots)]
         n_rounds = max([len(p) for p in plans] or [0])
@@ -147,7 +179,7 @@ class Sampler:
             # a discarded 1-shot call measures the rate before round 0 (otherwise the first round of a
             # slow channel -- Kraus relaxation at 21 qubits on a CPU -- could run far past the deadline)
             tw = time.time()
-            self.sim.run(circuits[0], shots=1,
+            self._sim(0).run(circuits[0], shots=1,
                          seed_simulator=T.chunk_seed(self.s0, self.WARMUP_CIRCUIT_INDEX, 0, 1)).result()
             rate0 = time.time() - tw
             self.warmup = {"shots": 1, "seconds": rate0, "discarded": True,
@@ -166,13 +198,18 @@ class Sampler:
             for c in todo:
                 a, s = plans[c][j]
                 seed = T.chunk_seed(self.s0, circuit_offset + c, j, stride)
-                counts = self._run(circuits[c], s, seed)
-                out[c]["chunks"].append({"start": int(a), "shots": int(s), "seed": int(seed), "counts": counts})
+                t_c = time.time()
+                counts = self._run(circuits[c], s, seed, c)
+                out[c]["chunks"].append({"start": int(a), "shots": int(s), "seed": int(seed), "counts": counts,
+                                         "seconds": time.time() - t_c})
                 out[c]["shots_done"] += int(s)
                 done_shots += int(s)
         wall = time.time() - t_start
         info = {"calls": self.calls, "oom_retries": list(self.oom_retries), "stride": int(stride),
-                "max_chunk": self.max_chunk, "chunk_rule": CHUNK_RULE, "rounds": n_rounds,
+                "max_chunk": self.max_chunk,
+                "chunk_rule": CHUNK_RULE if self.phis == PHI else
+                f"plain chunks of <= max_chunk shots with boundaries at phi in {list(self.phis)} of N_c",
+                "rounds": n_rounds,
                 "stopped": stopped, "wall_s": wall, "shots_done": int(done_shots),
                 "seconds_per_shot": wall / done_shots if done_shots else rate0,
                 "warmup": self.warmup, "seed_rule": T.SEED_RULE}

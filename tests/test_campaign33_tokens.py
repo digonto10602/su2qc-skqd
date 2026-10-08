@@ -18,9 +18,13 @@ EXPECTED = ["C1_IDEAL", "C2_CAL", "C2_GATE", "C2_ECHO", "C2_STAR", "C2_XY4", "C2
             "C4_F6_B1", "C4_F7_B0", "C4_F7_B1", "C4_F8_B0a", "C4_F8_B0b", "C4_F8_B1a", "C4_F8_B1b", "C4_CF"]
 
 
+SLOTS = [f"C4_PART_{i:02d}" for i in range(1, 21)]      # prompts/33a step D1: appended after the 33
+
+
 def test_table_is_complete_and_in_the_order_of_section_1_5():
     tok = T.load_tokens()
-    assert list(tok) == EXPECTED and len(tok) == 33
+    assert list(tok)[:33] == EXPECTED and list(T.campaign_tokens()) == EXPECTED
+    assert list(tok)[33:] == SLOTS and list(T.slot_tokens()) == SLOTS and len(tok) == 53
 
 
 def test_every_entry_is_valid():

@@ -45,19 +45,169 @@ def _g(d, *path, default=None):
     return d
 
 
+# --------------------------------------------------------------------------- prompts/33a step D4: split runs
+def vpath(name, dry):
+    return os.path.join(ROOT, "validation", "dryrun" if dry else "", name + ".json")
+
+
+def split_runs(dry) -> dict:
+    """{run: {token, parts, files, present}} for every F token whose JSON says part 1 of n > 1."""
+    out = {}
+    for tok in TK.campaign_tokens():
+        if not tok.startswith("C4_F") or tok.startswith("C4_FCELLS"):
+            continue
+        d = token_json(tok, dry)
+        p = _g(d, "data", "frun", "part")
+        if not p or int(p["parts"]) < 2:
+            continue
+        run = d["data"]["frun"]["run"]
+        n = int(p["parts"])
+        files = [vpath(tok, dry)] + [vpath(f"C33_{run}_part{i}of{n}", dry) for i in range(2, n + 1)]
+        out[run] = {"token": tok, "parts": n, "files": [os.path.relpath(f, ROOT) for f in files],
+                    "present": [os.path.exists(f) for f in files],
+                    "cv3": os.path.relpath(vpath(f"C33_{run}_cv3", dry), ROOT)}
+    return out
+
+
+def _pseudo_counts(P, acc: dict, rejected: int) -> dict:
+    """Raw-count stand-in for fcell_stats from decoded counts: {codeword int: n} plus key -1 (never a codeword:
+    decoded as rejected) for the rejected strings.  Exact for every quantity fcell_stats reads."""
+    out = {int(P.emb.ints[int(i)]): int(v) for i, v in acc.items()}
+    if rejected:
+        out[-1] = int(rejected)
+    return out
+
+
+def merge_run(run, info, dry, P, B=None):
+    """Concatenate the parts of a split F run in order, rebuild the order-kept prefixes and evaluate what run_frun
+    evaluates in-job (CV0-CV5, the certificate of ruling 2, recall, bootstrap, P13 / P14 / P15) ->
+    validation/C33_<run>.json (dry: validation/dryrun/), listing the part JSONs it came from."""
+    from skqd.report import GateResult, md_table, write_report
+
+    from . import analysis as A
+    from . import circuits as C
+    from . import tokens_run as TR
+    t0 = time.time()
+    parts = [load(f) for f in info["files"]]
+    fr = [p["data"]["frun"] for p in parts]
+    p1 = fr[0]["part"]
+    spec = TR.f_run_spec(run)
+    twoB, sec = spec["twoB"], spec["sector"]
+    plan = {c: int(v) for c, v in p1["plan_shots_by_circuit"].items()}
+    ids = list(plan)
+    chunks = {c: [] for c in ids}
+    for f in fr:
+        for c, rows in f["chunks_accepted"].items():
+            chunks[c] += rows
+    pre = A.Prefixes.from_chunks(P, twoB, chunks)
+    done = {c: pre.done[c] for c in ids}
+    acc = {c: {} for c in ids}
+    rej = {c: 0 for c in ids}
+    for c, rows in chunks.items():
+        for r in rows:
+            for i, v in r["accepted"].items():
+                acc[c][int(i)] = acc[c].get(int(i), 0) + int(v)
+            rej[c] += int(r["rejected"])
+    per_counts = {c: _pseudo_counts(P, acc[c], rej[c]) for c in ids}
+    mans = {c: C.load_manifest(spec["family"], c) for c in ids}
+    eq, cv3_src = None, None
+    cv3 = load(info["cv3"])
+    if cv3 is not None and _g(cv3, "data", "cv3", "full"):
+        d3 = cv3["data"]["cv3"]
+        N_eq = int(d3["N_eq"])
+
+        def tot(a, r):
+            return A.Prefixes.from_chunks(P, twoB, {c: [{"start": 0, "shots": N_eq, "accepted": a[c], "rejected": r[c]}]
+                                                    for c in a})
+        eq = (tot(d3["eq_accepted_by_circuit"], d3["eq_rejected_by_circuit"]), N_eq,
+              tot(d3["k5_accepted_by_circuit"], d3["k5_rejected_by_circuit"]))
+        cv3_src = info["cv3"]
+    plan_s = {c: int(v) for c, v in (p1.get("plan_f010_by_circuit") or {}).items()} or None
+    B = B if B is not None else (20 if dry else 2000)
+    rd, crit, var_ok, pt = TR.frun_readout(P, spec, pre, plan, done, plan_s, per_counts, acc, mans, eq, B,
+                                           fr[0]["plan_tier"])
+    gate = ("dryrun/" if dry else "") + f"C33_{run}"
+    R = GateResult(gate, ("DRY RUN: " if dry else "") + f"Campaign 33 split run {run}: the {info['parts']} parts merged "
+                   "(prompts/33a step D4)")
+    full = all(f["full"] for f in fr)
+    R.add("every part JSON present and full (S6 of each part)", {"present": len(parts), "full": [f["full"] for f in fr]},
+          f"{info['parts']} parts, full: true", len(parts) == info["parts"] and full)
+    tiles = all(pre.bounds[c][-1] == plan[c] for c in ids)
+    pfx = all(SM_rnd(phi * plan[c]) in pre.bounds[c] for c in ids for phi in PHI)
+    R.add("the concatenated chunks tile the plan and every gate_CV prefix point is a chunk boundary",
+          {"tile": tiles, "prefix_points": pfx}, "both true", tiles and pfx)
+    for name, value, thr, passed, _gating in crit:
+        R.add(name, value, thr, passed)
+    R.data = {"run": run, "token": info["token"], "parts": info["files"], "cv3_slot": cv3_src, "dry_run": dry,
+              "scenario": spec["scenario"], "family": spec["family"], "sector": sec, "kind": spec["kind"],
+              "plan_tier": fr[0]["plan_tier"], "plan_shots_by_circuit": plan, "shots_done": done,
+              "bounds": pre.bounds, "frun": dict(rd, run=run, scenario=spec["scenario"], family=spec["family"],
+                                                 kind=spec["kind"], half=spec["half"], sector=sec,
+                                                 plan_tier=fr[0]["plan_tier"], shots_done=done, full=full,
+                                                 accepted_counts_by_circuit=acc, rejected_by_circuit=rej,
+                                                 cv3_status=("evaluated from " + cv3_src) if cv3_src else
+                                                 "not_evaluated: no cv3 slot result"),
+              "variational_ok": var_ok, "created": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())}
+    R.runtime_s = time.time() - t0
+    R.save()
+    cert = rd["at_N"]["certificate"]
+    write_report(("dryrun/" if dry else "") + f"C33_{run}.md", "\n".join([
+        f"# {R.title}", "", f"**Status: {'PASS' if R.passed else 'FAIL'}** — `python scripts/campaign33.py --stage assemble"
+        f"{' --dry-run' if dry else ''}`; parts: {', '.join(info['files'])}.", "",
+        md_table(["shots", "|B_all|", "E_R - E0", "certificate", "E0 inside", "recall S999"],
+                 [[rd["at_N"]["shots"], pt["B_all_size"], cert["E_R_minus_E0"], cert["type"], cert["E0_inside"],
+                   cert["recall_S999"]]]), "", "## Criteria", "", R.criteria_table(), "",
+        f"Every number above is computed by `src/skqd/campaign33/assemble.py` and stored in `validation/{gate}.json`.",
+        ""]))
+    return {"status": "PASS" if R.passed else "FAIL", "json": os.path.relpath(vpath(f"C33_{run}", dry), ROOT)}
+
+
+def SM_rnd(x):
+    from .sampling import rnd
+    return rnd(x)
+
+
+PHI = (1 / 16, 1 / 8, 1 / 4, 1 / 2, 1.0)
+
+
+def assemble_split_runs(dry, P=None):
+    """Merge every split run whose parts are all present; {run: status} (pending when a part is missing)."""
+    out = {}
+    runs = split_runs(dry)
+    for run, info in runs.items():
+        if not all(info["present"]):
+            out[run] = {"status": "pending", "present": info["present"], "files": info["files"]}
+            continue
+        if P is None:
+            from .analysis import Physics
+            P = Physics()
+        out[run] = merge_run(run, info, dry, P)
+    return out, P
+
+
+def frun_of(tok, dry):
+    """The F run's reading: the merged C33_<run>.json when the run was split, else the token's own frun."""
+    d = token_json(tok, dry)
+    fr = _g(d, "data", "frun")
+    if fr and fr.get("part") and int(fr["part"]["parts"]) > 1:
+        m = load(vpath(f"C33_{fr['run']}", dry))
+        return (m["data"]["frun"], m) if m else (None, None)
+    return fr, d
+
+
 # --------------------------------------------------------------------------- the S3-quota merges
 def merge_halves(tokens, dry, P=None):
-    """{F4|F8: {sector: merged reading}} from the a/b halves' accepted_counts_by_circuit."""
+    """{F4|F8: {sector: merged reading}} from the a/b halves' accepted_counts_by_circuit (each half merged over
+    its parts first when it was split, prompts/33a step D4)."""
     out = {}
     for f in ("F4", "F8"):
         for sec, tb in (("B=0", 0), ("B=1", 2)):
-            a = token_json(f"C4_{f}_B{tb // 2}a", dry)
-            b = token_json(f"C4_{f}_B{tb // 2}b", dry)
+            fa, a = frun_of(f"C4_{f}_B{tb // 2}a", dry)
+            fb, b = frun_of(f"C4_{f}_B{tb // 2}b", dry)
             key = f"{f}|{sec}"
-            if a is None or b is None:
-                out[key] = {"status": "pending", "halves_present": [a is not None, b is not None]}
+            if fa is None or fb is None:
+                out[key] = {"status": "pending", "halves_present": [fa is not None, fb is not None]}
                 continue
-            fa, fb = a["data"]["frun"], b["data"]["frun"]
             n_full = None
             if P is None:
                 from .analysis import Physics
@@ -113,7 +263,15 @@ def matrix_rows(tokens, dry):
                           "accepted_fraction_B0_k1": _g(c, "stats", "per_circuit", "B0_ref25_k1", "accepted_fraction")})
                 rows.append(r)
         elif "frun" in D:
-            fr = D["frun"]
+            fr, src = frun_of(tok, dry)           # a split run reads its merged C33_<run>.json (prompts/33a D4)
+            if fr is None:
+                r = dict(base)
+                r.update({"status": "pending (split run: parts missing)", "split": D["frun"].get("part")})
+                rows.append(r)
+                continue
+            if src is not d:
+                base["status"] = src["status"]
+                base["merged_from"] = src["data"].get("parts")
             cert = fr["at_N"]["certificate"]
             pk = _g(fr, "clean_fraction", "pooled_k1") or {}
             r = dict(base)
@@ -270,14 +428,17 @@ def comparisons(dry, merged):
 def main(dry=False):
     from skqd.report import GateResult, md_table, write_report
     t0 = time.time()
-    tokens = list(TK.load_tokens())
+    tokens = list(TK.campaign_tokens())        # the 33 tokens; the C4_PART_NN slots are read through their runs
+    split, P0 = assemble_split_runs(dry)
     present = {t: token_json(t, dry) is not None for t in tokens}
     statuses = {}
     for t in tokens:
         d = token_json(t, dry) or {}
         # an engine token dropped by data/campaign33/engines.json (its engine cannot run) is DROPPED, not failing
         statuses[t] = ("DROPPED" if (d.get("data") or {}).get("dropped") else d.get("status"))
-    merged, P = merge_halves(tokens, dry)
+    for run, v in split.items():
+        statuses[f"C33_{run}"] = v["status"] if v["status"] != "pending" else None
+    merged, P = merge_halves(tokens, dry, P0)
     rows = matrix_rows(tokens, dry)
     comp = comparisons(dry, merged)
     gate = ("dryrun/" if dry else "") + GATE
@@ -295,6 +456,7 @@ def main(dry=False):
                 R.add(f"P15 gate-S3 criterion {sec}: recall S999 >= 0.9 at 2e5 and E0 inside Weinstein",
                       [m["recall_S999"], m["E0_in_weinstein"]], ">= 0.9 and inside", m["P15_gate_S3_criterion"]["pass"])
     R.data = {"dry_run": dry, "tokens": tokens, "present": present, "statuses": statuses, "merged_s3_quota": merged,
+              "split_runs": split,
               "matrix": rows, "comparison": comp, "prompt": "prompts/33 A7 / section 6",
               "created": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())}
     R.runtime_s = time.time() - t0

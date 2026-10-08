@@ -82,3 +82,24 @@ def test_tv_and_its_multinomial_null():
 def test_binomial_band_contains_the_mean():
     lo, hi = ST.binomial_band(3200, 695 / 3200)
     assert lo < 695 < hi
+
+
+def test_garbage_structure_and_comparison():
+    """prompts/33a: mean Hamming weight (per-shot variance), per-clbit marginals, the two-sample z and the readout
+    share (n/2)[(1 - P11) - (1 - P00)]."""
+    cnt = {0b011: 30, 0b100: 10, 0b000: 60}             # bit k = clbit k
+    g = ST.garbage_structure(cnt, 3, [7, 8, 9])
+    w = np.repeat([2, 1, 0], [30, 10, 60])
+    assert abs(g["mean_hamming_weight"] - w.mean()) < 1e-12
+    assert abs(g["sd_hamming_weight"] - w.std(ddof=1)) < 1e-12
+    assert abs(g["se_mean_hamming_weight"] - w.std(ddof=1) / 10.0) < 1e-12
+    assert g["marginals_by_clbit"] == [0.3, 0.3, 0.1] and g["physical_by_clbit"] == [7, 8, 9]
+    assert abs(g["deficit_vs_unital"] - (1.5 - w.mean())) < 1e-12
+    same = ST.structure_compare(g, g)
+    assert same["pass"] and same["z_mean_hamming_weight"] == 0.0 and same["n_marginal_tests"] == 3
+    assert abs(same["family_wise_false_alarm_marginals"] - 3 * math.erfc(3 / math.sqrt(2))) < 1e-15
+    far = ST.structure_compare(g, ST.garbage_structure({0b111: 1000}, 3))
+    assert not far["pass"] and far["clbits_outside"] == [0, 1, 2]
+    rs = ST.readout_share({"n_bits": 20, "deficit_vs_unital": 0.229}, 0.9863, 0.9800)
+    assert abs(rs["readout_shift_bits"] - 10 * (0.0200 - 0.0137)) < 1e-12
+    assert abs(rs["share"] - rs["readout_shift_bits"] / 0.229) < 1e-12

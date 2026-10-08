@@ -104,7 +104,7 @@ use, and GitHub keeps the master copy anyway.
 module load python
 conda create -n skqd python=3.12 -y
 conda activate skqd
-pip install numpy scipy pytest qiskit qiskit-aer-gpu cudaq
+pip install numpy scipy threadpoolctl pytest qiskit qiskit-aer-gpu cudaq
 python -c "import qiskit, qiskit_aer; print(qiskit.__version__, qiskit_aer.__version__)"
 ```
 

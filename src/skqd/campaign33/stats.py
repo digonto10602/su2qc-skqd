@@ -194,3 +194,75 @@ def seed_spread_sigma(values) -> float:
     """Old uncertainty from a seed spread: (max - min)/2/1.96 (label `seed_spread`)."""
     v = [float(x) for x in values]
     return (max(v) - min(v)) / 2.0 / 1.96
+
+
+# --------------------------------------------------------------------------- prompts/33a: the garbage structure
+THREE_SIGMA_TWO_SIDED = math.erfc(3.0 / math.sqrt(2.0))       # 0.0026998: P(|Z| > 3) for a standard normal
+
+
+def garbage_structure(counts: dict, n_bits: int, bit_to_physical=None) -> dict:
+    """The structure of a set of measured strings (prompts/33a R2): mean Hamming weight with its standard
+    error (from the per-shot variance), and the per-clbit marginals p_k = P(bit_k = 1) with their binomial
+    standard errors.  counts: {int with bit k = clbit k: count} (skqd.reference_sim convention; in a qiskit
+    counts key string position j is clbit n_bits - 1 - j).  bit_to_physical[k]: the physical qubit of clbit k."""
+    keys = np.fromiter((int(k) for k in counts), dtype=np.int64, count=len(counts))
+    n = np.fromiter((int(v) for v in counts.values()), dtype=np.float64, count=len(counts))
+    N = float(n.sum())
+    if N <= 0:
+        return {"shots": 0, "n_bits": int(n_bits)}
+    bits = ((keys[:, None] >> np.arange(n_bits)[None, :]) & 1).astype(np.float64)
+    w = bits.sum(axis=1)
+    mean = float((n * w).sum() / N)
+    var = float((n * (w - mean) ** 2).sum() / (N - 1.0)) if N > 1 else 0.0
+    p = (n[:, None] * bits).sum(axis=0) / N
+    se_p = np.sqrt(p * (1.0 - p) / N)
+    return {"shots": int(N), "n_bits": int(n_bits), "mean_hamming_weight": mean, "sd_hamming_weight": math.sqrt(var),
+            "se_mean_hamming_weight": math.sqrt(var / N), "unital_limit": n_bits / 2.0,
+            "deficit_vs_unital": n_bits / 2.0 - mean,
+            "marginals_by_clbit": [float(x) for x in p], "se_marginals_by_clbit": [float(x) for x in se_p],
+            "physical_by_clbit": None if bit_to_physical is None else [int(bit_to_physical[k]) for k in range(n_bits)],
+            "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"}
+
+
+def _z(a, sa, b, sb):
+    s = math.sqrt(sa * sa + sb * sb)
+    if s == 0.0:
+        return 0.0 if a == b else math.inf
+    return (a - b) / s
+
+
+def structure_compare(a: dict, b: dict, n_sigma: float = 3.0) -> dict:
+    """Two-sample comparison of two garbage_structure() results (prompts/33a P4a): the mean Hamming weight
+    (sigma^2 = s_a^2/N_a + s_b^2/N_b from the per-shot variances) and every per-clbit marginal
+    (sigma_k^2 = p_a(1-p_a)/N_a + p_b(1-p_b)/N_b).  PASS iff |z| <= n_sigma for the weight and all marginals."""
+    if not a.get("shots") or not b.get("shots"):
+        return {"evaluated": False, "reason": "an arm has no shots", "pass": None}
+    if a["n_bits"] != b["n_bits"]:
+        raise ValueError("different string lengths")
+    z_w = _z(a["mean_hamming_weight"], a["se_mean_hamming_weight"], b["mean_hamming_weight"], b["se_mean_hamming_weight"])
+    z_k = [_z(pa, sa, pb, sb) for pa, sa, pb, sb in zip(a["marginals_by_clbit"], a["se_marginals_by_clbit"],
+                                                         b["marginals_by_clbit"], b["se_marginals_by_clbit"])]
+    ok_w = abs(z_w) <= n_sigma
+    bad = [k for k, z in enumerate(z_k) if abs(z) > n_sigma]
+    nb = int(a["n_bits"])
+    return {"evaluated": True, "n_sigma": n_sigma, "shots": [a["shots"], b["shots"]],
+            "mean_hamming_weight": [a["mean_hamming_weight"], b["mean_hamming_weight"]],
+            "delta_mean_hamming_weight": a["mean_hamming_weight"] - b["mean_hamming_weight"],
+            "z_mean_hamming_weight": z_w, "z_marginals_by_clbit": z_k,
+            "max_abs_z_marginal": max(abs(z) for z in z_k) if z_k else 0.0,
+            "clbits_outside": bad, "weight_ok": bool(ok_w), "marginals_ok": not bad, "pass": bool(ok_w and not bad),
+            "n_marginal_tests": nb,
+            "family_wise_false_alarm_marginals": nb * THREE_SIGMA_TWO_SIDED if n_sigma == 3.0 else None,
+            "family_wise_rule": f"{nb} marginal tests x P(|Z| > 3) = {nb} x {THREE_SIGMA_TWO_SIDED:.4g} (Bonferroni bound)"}
+
+
+def readout_share(structure: dict, p00_mean: float, p11_mean: float) -> dict:
+    """The part of a Hamming-weight deficit that the readout asymmetry alone explains (prompts/33a R2, the
+    planner's section-9 formula): a uniform n-bit string read through the mean confusion loses
+    (n/2) [(1 - P11) - (1 - P00)] bits of weight."""
+    nb = int(structure["n_bits"])
+    shift = nb / 2.0 * ((1.0 - p11_mean) - (1.0 - p00_mean))
+    d = structure.get("deficit_vs_unital")
+    return {"readout_shift_bits": shift, "deficit_bits": d, "share": (shift / d) if d else None,
+            "remainder_bits": None if d is None else d - shift, "mean_P00": p00_mean, "mean_P11": p11_mean,
+            "rule": "(n/2)[(1 - mean P11) - (1 - mean P00)] for a uniform string; share = shift / deficit"}

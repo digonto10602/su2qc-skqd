@@ -13,6 +13,10 @@ import os
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 TOKENS_FILE = os.path.join(ROOT, "scripts", "gate_tokens.json")
 ALLOWLIST_FILE = os.path.join(ROOT, "ci", "allowed_jobs.campaign33")
+ALLOWLIST_FILE_33A = os.path.join(ROOT, "ci", "allowed_jobs.campaign33a")
+PARTS_DIR = os.path.join(ROOT, "ci", "parts")
+SLOT_PREFIX = "C4_PART_"          # prompts/33a step D: 20 generic class-4 part slots, appended after the 33 tokens
+N_SLOTS = 20
 ENV_DIR = os.path.join(ROOT, "jobs", "env")
 VALID_ENVS = ("skqd", "skqd-pecos", "skqd-selene")
 MAX_WALLTIME_S = 3600
@@ -47,9 +51,29 @@ def walltime_seconds(w: str) -> int:
     return 3600 * h + 60 * m + s
 
 
-def allowlist_text(tokens: dict = None) -> str:
-    """`TOKEN  MAX_WALLTIME  GPUS` lines, aligned as in prompts/33 section 7a."""
+def is_slot(token: str) -> bool:
+    return token.startswith(SLOT_PREFIX)
+
+
+def campaign_tokens(tokens: dict = None) -> dict:
+    """The 33 tokens of prompts/33 (the generic part slots of prompts/33a excluded)."""
     tokens = load_tokens() if tokens is None else tokens
+    return {t: v for t, v in tokens.items() if not is_slot(t)}
+
+
+def slot_tokens(tokens: dict = None) -> dict:
+    tokens = load_tokens() if tokens is None else tokens
+    return {t: v for t, v in tokens.items() if is_slot(t)}
+
+
+def part_file(token: str) -> str:
+    return os.path.join(PARTS_DIR, token + ".json")
+
+
+def allowlist_text(tokens: dict = None) -> str:
+    """`TOKEN  MAX_WALLTIME  GPUS` lines, aligned as in prompts/33 section 7a (default: the 33 campaign
+    tokens; the slots' lines are allowlist_text(slot_tokens()), ci/allowed_jobs.campaign33a)."""
+    tokens = campaign_tokens() if tokens is None else tokens
     width = max(len(t) for t in tokens) + 2
     lines = [f"{t:<{width}}{v['walltime']} {int(v['gpus'])}" for t, v in tokens.items()]
     return "\n".join(lines) + "\n"
@@ -91,10 +115,14 @@ def chunk_seed(s0: int, circuit_index: int, chunk_index: int, stride: int) -> in
 
 
 def write_derived(tokens: dict = None) -> dict:
-    """Write ci/allowed_jobs.campaign33 and jobs/env/<TOKEN> from the token table."""
+    """Write ci/allowed_jobs.campaign33 (the 33 tokens), ci/allowed_jobs.campaign33a (the 20 slots) and
+    jobs/env/<TOKEN> from the token table."""
     tokens = load_tokens() if tokens is None else tokens
     with open(ALLOWLIST_FILE, "w") as fh:
-        fh.write(allowlist_text(tokens))
+        fh.write(allowlist_text(campaign_tokens(tokens)))
+    if slot_tokens(tokens):
+        with open(ALLOWLIST_FILE_33A, "w") as fh:
+            fh.write(allowlist_text(slot_tokens(tokens)))
     os.makedirs(ENV_DIR, exist_ok=True)
     envs = env_files(tokens)
     for t, e in envs.items():
