@@ -1,31 +1,11 @@
-# Campaign 33 token C2_CAL (class 2): 21-qubit timing ladder {8,32,128,512} on B0_ref117_k1 (IBM-T0), Kraus vs PTA, cuStateVec vs batched; sizes C2_*
-
-**Status: FAIL** — `python scripts/campaign33.py --token C2_CAL`.  Environment: Python 3.12.14, numpy 2.5.3, scipy 1.18.1, Linux-6.4.0-150600.23.125_15.0.29-cray_shasta_c-x86_64-with-glibc2.38, 128 CPUs, commit n/a, 2026-10-09 12:40:02 PDT.  Runtime 230 s.  Prompt prompts/33_2x3_four_class_perlmutter_campaign.md.
-
-## Engine and resources
-
-Engine Qiskit Aer statevector (double precision); device GPU (requested GPU, available ['CPU', 'GPU']); GPU mode custatevec; GPUs 1; tasks 1; wall 230 s; GPU node-hours (shared QOS, G/4 x t) 0.01595; E(p) None (one task: E(p) needs T_1 and T_p from two task counts (not measured)); seconds per shot None; peak GPU memory 2295 MiB; mean GPU utilisation 48 %; versions {'qiskit': '1.4.3', 'qiskit_aer': '0.15.1', 'numpy': '2.5.3', 'scipy': '1.18.1', 'threadpoolctl': '3.7.0', 'python': '3.12.14'}.  Phases (s): preflight_s 15.9, noise_model_build_s 34.7, rm_check_s 14.0, arms_s 176.9.
-
-## C2_CAL run 2 arms (I-ECHO on IBM-T0 B0_ref117_k1, cuStateVec)
-
-| representation | target | shots done | points | s/shot (largest point) | mean weight | se | accepted | reference hits |
-|---|---|---|---|---|---|---|---|---|
-| pta | 512 | 512 | 4 | 0.286 | 9.957 | 0.1021 | 0 | 0 |
-| rm | 1024 | 0 | 0 | None | None | None | 0 | 0 |
-| kraus | 1024 | 0 | 0 | None | None | None | 0 | 0 |
-
-## Garbage-structure comparisons
-
-| comparison | z mean weight | max |z| marginal | marginals outside | pass |
-|---|---|---|---|---|
-| P4a RM vs Kraus | None | None | None | None |
-| P4b PTA vs Kraus (information) | None | None | None | None |
-| P4c pta vs K1 (information) | 1.817 | 2.874 | [] | True |
-| P4c rm vs K1 (information) | None | None | None | None |
-| P4c kraus vs K1 (information) | None | None | None | None |
-
-## Criteria
-
+conda env: skqd
+preflight: 16 modules imported in 15.87 s (env skqd; threadpoolctl 3.7.0)
+[    0.0 s] C2_CAL: device GPU (available ['CPU', 'GPU']), budget 35.0 min, shots x 1.0, chunk <= 476, s0 33100000
+/global/homes/d/digonto/.conda/envs/skqd/lib/python3.12/site-packages/qiskit/qpy/interface.py:346: UserWarning: The qiskit version used to generate the provided QPY file, 2.5.2, is newer than the current qiskit version 1.4.3. This may result in an error if the QPY file uses instructions not present in this current qiskit version
+  warnings.warn(
+[  204.1 s] C2_CAL: pta: 512/512 shots in 4 chunks, 0.2860286976210773 s/shot at 128, w 9.95703125, accepted 0
+[  216.4 s] C2_CAL: rm: 0/1024 shots in 0 chunks, None s/shot at 0, w None, accepted 0
+[  229.6 s] C2_CAL: kraus: 0/1024 shots in 0 chunks, None s/shot at 0, w None, accepted 0
 | check | value | criterion | result |
 |---|---|---|---|
 | P0 run-1 record archived unedited and referenced (supersedes + sha256) | 54b77474065486eaa0f43b5e1c7403ed521ddafcd1d3abd58d6b85fca1022ac7 | validation/archive/C2_CAL_job59491475.json present | PASS |
@@ -40,5 +20,10 @@ Engine Qiskit Aer statevector (double precision); device GPU (requested GPU, ava
 | S4 every seed and every chunk recorded | True | true | PASS |
 | S5 no out-of-memory retry left unrecorded | 0 recorded | each OOM split recorded | PASS |
 | S6 shots >= the token's minimum | {'pta': 512, 'rm': 0, 'kraus': 0} | no reduction below the minimum | FAIL |
-
-Every number above is computed by `scripts/campaign33.py` and stored in `validation/C2_CAL.json`.
+C2_CAL: FAIL (230 s)
+gate C2_CAL: status FAIL, exit code 1, 250 s
+srun: error: nid003316: task 0: Exited with exit code 1
+srun: Terminating StepId=59570318.0
+/var/spool/slurmd/job59570318/slurm_script: line 56: 625806 Terminated              ( while true; do
+    nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader,nounits | sed "s/^/$(date +%s),/"; sleep 10;
+done ) > "$SKQD_GPU_TELEMETRY" 2> /dev/null
