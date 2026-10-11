@@ -120,10 +120,35 @@ def counts_to_int(counts: dict) -> dict:
     return out
 
 
+def call_bound(point, shots: int) -> float:
+    """Upper bound on the wall time of one run() call of `shots` shots from one measured call `point` =
+    (s_p, t_p) of the same circuit, under the call model t(s) = c + b s with c, b >= 0 (per-call set-up c,
+    per-shot cost b):  t(s) <= t_p max(1, s / s_p).  For s >= s_p it is the line through the origin and the
+    point (>= c + b s because c s / s_p >= c); for s <= s_p, t(s) <= t(s_p).  The bound is tight when the
+    point was measured at the call size itself, and overstates a set-up-dominated call by up to s / s_p --
+    a 1-shot point (the warmup) overstates a 128-shot call by up to 128x (the C2_CAL run-2 bug, job 59570318:
+    RM 12.27 s, Kraus 13.19 s for one shot on the A100, read as 12-13 s PER SHOT)."""
+    s_p, t_p = point
+    return float(t_p) * max(1.0, float(shots) / float(s_p))
+
+
 class Sampler:
-    """Chunk-major, budgeted sampling of a list of circuits with per-chunk counts."""
+    """Chunk-major, budgeted sampling of a list of circuits with per-chunk counts.
+
+    Deadline rule (the fix of the C2_CAL run-2 zero-shot arms, job 59570318).  The time of the next round is
+    the sum over its calls of `call_bound` from the best measured point of each circuit: its own largest
+    completed chunk, else (round 0) the largest discarded probe of circuit 0, else the per-shot `rate_hint`.
+    Before round 0, without a hint, a discarded 1-shot warmup is the first point; when its bound does not fit
+    the deadline, discarded probes of increasing size (each pessimistically costing <= PROBE_SHARE of the
+    time left, at most the largest round-0 call) replace it until the bound fits or no larger probe is
+    affordable.  A round is never started whose bound exceeds the deadline, so the protection against a
+    per-shot-dominated channel (Kraus relaxation on a CPU: t(s) ~ b s) is kept, and a set-up-dominated one
+    (the A100: c >> b) is no longer stopped on a 1-shot extrapolation.  Every probe and every stop is logged
+    and recorded."""
 
     WARMUP_CIRCUIT_INDEX = 999       # seed slot of the discarded 1-shot rate probe (no token has 999 circuits)
+    PROBE_SHARE = 0.1                # a probe's pessimistic cost is at most this share of the time left
+    MAX_PROBES = 3
 
     def __init__(self, sim, s0: int, max_chunk: int, deadline: float = None, log=print, rate_hint: float = None,
                  min_rounds: int = 0, phis=PHI):
@@ -163,6 +188,73 @@ class Sampler:
                 c1[k] = c1.get(k, 0) + v
             return c1
 
+    def _timed(self, circ, shots, seed):
+        """One discarded probe call (circuit 0's simulator); returns its wall time."""
+        t0 = time.time()
+        res = self._sim(0).run(circ, shots=int(shots), seed_simulator=int(seed)).result()
+        if not res.success:
+            raise RuntimeError(f"probe call failed: {getattr(res, 'status', '')}")
+        return time.time() - t0
+
+    def _probe(self, circuits, plans, stride):
+        """Before round 0 without a rate hint: the discarded 1-shot warmup (as before, same seed), then, only
+        if its call_bound for round 0 does not fit the deadline, discarded probes of increasing size (seeds in
+        the WARMUP_CIRCUIT_INDEX slot, chunk index i >= 1, stride = the largest chunk: disjoint from the
+        warmup and from every real chunk).  Returns the bounding point (shots, seconds)."""
+        seed0 = T.chunk_seed(self.s0, self.WARMUP_CIRCUIT_INDEX, 0, 1)
+        tw = self._timed(circuits[0], 1, seed0)
+        self.warmup = {"shots": 1, "seconds": tw, "discarded": True, "seed": seed0, "probes": [],
+                       "probe_rule": f"call_bound from the largest probe; a probe costs <= {self.PROBE_SHARE} of the "
+                                     f"time left at its pessimistic bound, at most {self.MAX_PROBES} probes, size <= "
+                                     "the largest round-0 call"}
+        point = (1, tw)
+        round0 = [p[0][1] for p in plans if p]
+        s_max = max(round0)
+        for i in range(1, self.MAX_PROBES + 1):
+            need = sum(call_bound(point, s) for s in round0)
+            left = self.deadline - time.time()
+            if need <= left or point[0] >= s_max:
+                break
+            s_p = min(s_max, int(self.PROBE_SHARE * left * point[0] / point[1]))
+            if s_p <= point[0]:
+                break
+            seed = T.chunk_seed(self.s0, self.WARMUP_CIRCUIT_INDEX, i, max(s_max, stride))
+            try:
+                tp = self._timed(circuits[0], s_p, seed)
+            except Exception as exc:
+                if not is_oom(exc):
+                    raise
+                self.warmup["probes"].append({"shots": int(s_p), "seed": int(seed), "oom": str(exc)[:200]})
+                self.log(f"rate probe of {s_p} shots ran out of memory; the bound keeps the {point[0]}-shot point")
+                break
+            self.warmup["probes"].append({"shots": int(s_p), "seconds": tp, "seed": int(seed), "discarded": True,
+                                          "round0_bound_before_s": need, "seconds_left_before": left})
+            self.log(f"rate probe {i}: {s_p} shots in {tp:.2f} s (the {point[0]}-shot bound {need:.1f} s for round 0 "
+                     f"exceeded the {left:.1f} s left)")
+            point = (s_p, tp)
+        self.warmup["bounding_point"] = {"shots": int(point[0]), "seconds": float(point[1])}
+        return point
+
+    def _round_bound(self, out, plans, todo, j, probe_point):
+        """call_bound summed over the calls of round j: each circuit from its own largest completed chunk
+        (slowest of that size), else circuit 0's probe point, else the per-shot rate hint."""
+        need, basis = 0.0, set()
+        for c in todo:
+            s = plans[c][j][1]
+            chs = out[c]["chunks"]
+            if chs:
+                big = max(ch["shots"] for ch in chs)
+                tk = max(ch["seconds"] for ch in chs if ch["shots"] == big)
+                need += call_bound((big, tk), s)
+                basis.add("own chunks")
+            elif probe_point is not None:
+                need += call_bound(probe_point, s)
+                basis.add(f"probe {probe_point[0]} shots")
+            elif self.rate_hint is not None:
+                need += float(self.rate_hint) * s
+                basis.add("rate hint")
+        return need, ", ".join(sorted(basis)) or "none"
+
     def run(self, circuits: list, shots: list, labels: list, circuit_offset: int = 0, plans: list = None):
         """Sample circuits[c] for shots[c] shots.  Returns per circuit {label, plan, chunks: [{start, shots,
         seed, counts}], shots_done} and the info block.  Circuit c's seeds use index circuit_offset + c.
@@ -174,26 +266,23 @@ class Sampler:
         stride = max([s for p in plans for _a, s in p] or [1])
         out = [{"label": lab, "requested": int(n), "chunks": [], "shots_done": 0} for lab, n in zip(labels, shots)]
         n_rounds = max([len(p) for p in plans] or [0])
-        rate0 = self.rate_hint
-        if self.deadline is not None and rate0 is None and circuits and n_rounds > self.min_rounds:
-            # a discarded 1-shot call measures the rate before round 0 (otherwise the first round of a
-            # slow channel -- Kraus relaxation at 21 qubits on a CPU -- could run far past the deadline)
-            tw = time.time()
-            self._sim(0).run(circuits[0], shots=1,
-                         seed_simulator=T.chunk_seed(self.s0, self.WARMUP_CIRCUIT_INDEX, 0, 1)).result()
-            rate0 = time.time() - tw
-            self.warmup = {"shots": 1, "seconds": rate0, "discarded": True,
-                           "seed": T.chunk_seed(self.s0, self.WARMUP_CIRCUIT_INDEX, 0, 1)}
+        probe_point = None                      # (shots, seconds) of the largest discarded probe of circuit 0
+        if self.deadline is not None and self.rate_hint is None and circuits and n_rounds > self.min_rounds:
+            probe_point = self._probe(circuits, plans, stride)
         t_start = time.time()
         done_shots, stopped = 0, None
         for j in range(n_rounds):
             todo = [c for c, p in enumerate(plans) if j < len(p)]
             if self.deadline is not None and j >= self.min_rounds:
-                rate = (time.time() - t_start) / done_shots if done_shots > 0 else rate0
-                need = (rate or 0.0) * sum(plans[c][j][1] for c in todo)
-                if time.time() + need > self.deadline:
+                need, basis = self._round_bound(out, plans, todo, j, probe_point)
+                left = self.deadline - time.time()
+                if need > left:
                     stopped = {"round": j, "reason": "deadline", "predicted_round_s": need,
-                               "rate_s_per_shot": rate}
+                               "seconds_left": left, "bound_basis": basis,
+                               "rate_s_per_shot": need / max(1, sum(plans[c][j][1] for c in todo)),
+                               "rule": "call_bound: t(s) <= t_p max(1, s / s_p) from the measured point"}
+                    self.log(f"deadline stop before round {j}: predicted {need:.1f} s > {left:.1f} s left "
+                             f"(basis {basis}); {done_shots} shots done")
                     break
             for c in todo:
                 a, s = plans[c][j]
@@ -211,7 +300,7 @@ class Sampler:
                 f"plain chunks of <= max_chunk shots with boundaries at phi in {list(self.phis)} of N_c",
                 "rounds": n_rounds,
                 "stopped": stopped, "wall_s": wall, "shots_done": int(done_shots),
-                "seconds_per_shot": wall / done_shots if done_shots else rate0,
+                "seconds_per_shot": wall / done_shots if done_shots else None,
                 "warmup": self.warmup, "seed_rule": T.SEED_RULE}
         return out, info
 

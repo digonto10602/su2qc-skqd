@@ -409,6 +409,25 @@ def arm_observables(P, r0, man, clbit_to_phys, twoB) -> dict:
             "roundtrip": A.roundtrip_check(P, acc), "chunks": chunk_record(r0)}
 
 
+def c2_cal_run_rate(arms: dict, prod: str, mode: str) -> dict:
+    """data.seconds_per_shot of C2_CAL (the run block's policy field, criterion S3): the production
+    representation's measured rate at its largest ladder point; when that arm drew no shot, the job's pooled
+    measured throughput over the arms that did (sum of sampling walls / sum of shots), labelled; None only when
+    no arm drew a shot.  Job 59570318 wrote null here because the Kraus arm drew 0 shots (the Sampler's
+    1-shot extrapolation, fixed in sampling.call_bound)."""
+    r = (arms.get(prod) or {}).get("seconds_per_shot_at_largest_point")
+    if r is not None:
+        return {"seconds_per_shot": float(r),
+                "seconds_per_shot_source": f"{prod} arm ({mode}) at its largest point"}
+    sampled = [a for a in arms.values() if a.get("shots_done")]
+    shots = sum(int(a["shots_done"]) for a in sampled)
+    if not shots:
+        return {"seconds_per_shot": None, "seconds_per_shot_source": "no arm drew a shot"}
+    return {"seconds_per_shot": float(sum(a["sampling_wall_s"] for a in sampled)) / shots,
+            "seconds_per_shot_source": (f"the {prod} arm drew no shot: pooled throughput of the arms "
+                                        f"{sorted(a['representation'] for a in sampled)} (sampling wall / shots)")}
+
+
 def run_c2_cal(ctx):
     """C2_CAL run 2 (prompts/33a step B): PTA 512 / RM 1024 / Kraus (target 1024, minimum 384, deadline-stopped)
     on IBM-T0 B0_ref117_k1 under I-ECHO, cuStateVec only (the batched arm is closed by R1), compared on the
@@ -498,7 +517,8 @@ def run_c2_cal(ctx):
         rows.append([rep, n, r0["shots_done"], len(pts), rate_big, obs["structure"].get("mean_hamming_weight"),
                      obs["structure"].get("se_mean_hamming_weight"), obs["accepted"], obs["reference_hits"]])
         ctx.log(f"{rep}: {r0['shots_done']}/{n} shots in {len(pts)} chunks, {rate_big} s/shot at {big}, "
-                f"w {obs['structure'].get('mean_hamming_weight')}, accepted {obs['accepted']}")
+                f"w {obs['structure'].get('mean_hamming_weight')}, accepted {obs['accepted']}, "
+                f"probes {[p['shots'] for p in (info['warmup'] or {}).get('probes', [])]}, stopped {info['stopped']}")
     ctx.phases["arms_s"] = time.time() - t_all
     # ---- comparisons
     st = {rep: arms[rep]["structure"] for rep in arms}
@@ -546,7 +566,7 @@ def run_c2_cal(ctx):
                      "comparisons": {"P4a_rm_vs_kraus": p4a, "P4b_pta_vs_kraus": p4b, "P4c_vs_K1": p4c},
                      "K1_device_structure": device, "decision": decision,
                      "circuit": f"IBM-T0 {cid}", "model": "I-ECHO (record T2 echo)",
-                     "seconds_per_shot": rates[prod][mode], "seed_circuit_offsets": {rep: C2_CAL_SEED_OFFSET + i
+                     **c2_cal_run_rate(arms, prod, mode), "seed_circuit_offsets": {rep: C2_CAL_SEED_OFFSET + i
                                                                                     for i, (rep, _t, _s) in enumerate(C2_CAL_ARMS)},
                      "design": {"arms": [list(a) for a in C2_CAL_ARMS], "chunk": chunk, "kraus_minimum": kmin,
                                 "kraus_share_of_remaining": C2_CAL_KRAUS_SHARE, "fixed_arm_guard": C2_CAL_FIXED_GUARD,

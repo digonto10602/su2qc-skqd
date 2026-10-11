@@ -105,10 +105,15 @@ def test_split_run_respects_n_max():
     assert sp["parts"] >= 2 and max(sp["part_shots"]) <= 40000 and sum(sp["part_shots"]) == 44 * 1537
 
 
-def test_build_on_a_synthetic_fcells_a(tmp_path):
+def test_build_on_a_synthetic_fcells_a(tmp_path, monkeypatch):
     """The resize script on a synthetic C4_FCELLS_A JSON (b = 0.02, c = 2.7, only the 476 point succeeds):
     every F run sized, B=1 plan runs and the 1e5 quota halves split in 2, B=0 plan runs in 1, slot files written
-    with the slot's own seed index, and the script names its input."""
+    with the slot's own seed index, and the script names its input.  Hermetic: the plan tier is read through
+    tokens_run.validation_path, which would otherwise find the harvested validation/C4_FCELLS_A.json (its
+    plan_tiers put E3 at 0.05, i.e. 193 600 shots for F3_B1); here every token JSON is the synthetic one (no
+    plan_tiers -> the default tier 0.15 this test is written for)."""
+    from skqd.campaign33 import tokens_run as TR
+    monkeypatch.setattr(TR, "validation_path", lambda ctx, tok: str(tmp_path / f"{tok}.json"))
     fa = tmp_path / "C4_FCELLS_A.json"
     json.dump({"status": "PASS", "data": {"ladder": synthetic_ladder(), "cells_dropped": ["E4|NAT-O3"],
                                          "run": {"ci": {"SLURM_JOB_ID": "12345"}}}}, open(fa, "w"))
