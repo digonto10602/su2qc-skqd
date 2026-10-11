@@ -1,0 +1,6700 @@
+{
+ "written_by": "scripts/campaign33_resize.py",
+ "prompt": "prompts/33a_campaign33_first_wave_reruling.md step D",
+ "created": "2026-10-11 17:22:09 UTC",
+ "dry_run": false,
+ "from": "validation/C4_FCELLS_A.json job 59570315",
+ "inputs": {
+  "ladder": "validation/C4_FCELLS_A.json job 59570315: data.ladder.points (6 points)",
+  "fastest_mode": "data.ladder.fastest_mode = custatevec",
+  "cells_dropped": [
+   "validation/C4_FCELLS_A.json: data.cells_dropped",
+   "validation/C4_FCELLS_B.json: data.cells_dropped (if present)"
+  ],
+  "plan": "validation/CV_2x3_plan.json via tokens_run.cv_plan at tokens_run.plan_tier",
+  "quota": "tokens_run.PRODUCTION_SHOTS_PER_SECTOR = 200000"
+ },
+ "fit": {
+  "c_s": 1.737094084421787,
+  "b_s_per_shot": 0.02449866603402532,
+  "points_used": 3,
+  "residual_rms_s": 0.46004543935516445,
+  "single_chunk": false,
+  "points": [
+   [
+    476.0,
+    13.72376036643982
+   ],
+   [
+    952.0,
+    24.409221649169922
+   ],
+   [
+    1428.0,
+    37.04649043083191
+   ]
+  ],
+  "mode": "custatevec",
+  "chunk": 1428,
+  "chunk_rule": "largest successful point with gpu_memory_bytes_model >= 1.6e+10",
+  "r_eff_s_per_shot": 0.025715118474096597,
+  "rule": "t = c + b chunk (least squares); r_eff = b + c / chunk"
+ },
+ "budget": {
+  "budget_s": 3000.0,
+  "setup_s": 120.0,
+  "contingency": 1.25,
+  "shares": {
+   "plan": 0.6,
+   "s3quota": 0.75,
+   "fcells": 0.75
+  },
+  "N_max": {
+   "plan": 53758,
+   "s3quota": 67197,
+   "fcells": 67197
+  },
+  "rule": "N_max = share x (budget - setup) / (1.25 r_eff)"
+ },
+ "runs": {
+  "F1_B0": {
+   "token": "C4_F1_B0",
+   "kind": "plan",
+   "share": 0.6,
+   "scenario": "E1",
+   "family": "NAT-O0",
+   "sector": "B=0",
+   "tier": 0.15,
+   "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E1: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.1858 of f_hat_ideal",
+   "circuits": 32,
+   "total_shots": 27309,
+   "N_max": 53758,
+   "parts": 1,
+   "part_shots": [
+    27309
+   ],
+   "forced_parts": false,
+   "part_descriptors": [
+    {
+     "content": "frun",
+     "run": "F1_B0",
+     "token": "C4_F1_B0",
+     "scenario": "E1",
+     "sector": "B0",
+     "family": "NAT-O0",
+     "kind": "plan",
+     "tier": 0.15,
+     "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E1: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.1858 of f_hat_ideal",
+     "part": 1,
+     "parts": 1,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 1267,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 1267,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 10400,
+      "B0_ref25_k4": 1400,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 1267,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 1400,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 1500,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 1267,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 1400
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B0_ref117_k1": [
+       0,
+       267
+      ],
+      "B0_ref117_k2": [
+       0,
+       267
+      ],
+      "B0_ref117_k3": [
+       0,
+       267
+      ],
+      "B0_ref117_k4": [
+       0,
+       1267
+      ],
+      "B0_ref169_k1": [
+       0,
+       267
+      ],
+      "B0_ref169_k2": [
+       0,
+       267
+      ],
+      "B0_ref169_k3": [
+       0,
+       267
+      ],
+      "B0_ref169_k4": [
+       0,
+       1267
+      ],
+      "B0_ref25_k1": [
+       0,
+       267
+      ],
+      "B0_ref25_k2": [
+       0,
+       267
+      ],
+      "B0_ref25_k3": [
+       0,
+       10400
+      ],
+      "B0_ref25_k4": [
+       0,
+       1400
+      ],
+      "B0_ref333_k1": [
+       0,
+       267
+      ],
+      "B0_ref333_k2": [
+       0,
+       267
+      ],
+      "B0_ref333_k3": [
+       0,
+       267
+      ],
+      "B0_ref333_k4": [
+       0,
+       1267
+      ],
+      "B0_ref525_k1": [
+       0,
+       267
+      ],
+      "B0_ref525_k2": [
+       0,
+       267
+      ],
+      "B0_ref525_k3": [
+       0,
+       267
+      ],
+      "B0_ref525_k4": [
+       0,
+       1400
+      ],
+      "B0_ref70_k1": [
+       0,
+       267
+      ],
+      "B0_ref70_k2": [
+       0,
+       267
+      ],
+      "B0_ref70_k3": [
+       0,
+       267
+      ],
+      "B0_ref70_k4": [
+       0,
+       1500
+      ],
+      "B0_ref795_k1": [
+       0,
+       267
+      ],
+      "B0_ref795_k2": [
+       0,
+       267
+      ],
+      "B0_ref795_k3": [
+       0,
+       267
+      ],
+      "B0_ref795_k4": [
+       0,
+       1267
+      ],
+      "B0_ref86_k1": [
+       0,
+       267
+      ],
+      "B0_ref86_k2": [
+       0,
+       267
+      ],
+      "B0_ref86_k3": [
+       0,
+       267
+      ],
+      "B0_ref86_k4": [
+       0,
+       1400
+      ]
+     },
+     "shots_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 1267,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 1267,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 10400,
+      "B0_ref25_k4": 1400,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 1267,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 1400,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 1500,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 1267,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 1400
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315"
+    }
+   ],
+   "slots": [
+    "C4_F1_B0"
+   ]
+  },
+  "F1_B1": {
+   "token": "C4_F1_B1",
+   "kind": "plan",
+   "share": 0.6,
+   "scenario": "E1",
+   "family": "NAT-O0",
+   "sector": "B=1",
+   "tier": 0.15,
+   "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E1: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.1858 of f_hat_ideal",
+   "circuits": 12,
+   "total_shots": 67600,
+   "N_max": 53758,
+   "parts": 2,
+   "part_shots": [
+    33800,
+    33800
+   ],
+   "forced_parts": false,
+   "part_descriptors": [
+    {
+     "content": "frun",
+     "run": "F1_B1",
+     "token": "C4_F1_B1",
+     "scenario": "E1",
+     "sector": "B1",
+     "family": "NAT-O0",
+     "kind": "plan",
+     "tier": 0.15,
+     "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E1: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.1858 of f_hat_ideal",
+     "part": 1,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 19800,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 15000,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 27400
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B1_ref27_k1": [
+       0,
+       300
+      ],
+      "B1_ref27_k2": [
+       0,
+       300
+      ],
+      "B1_ref27_k3": [
+       0,
+       300
+      ],
+      "B1_ref27_k4": [
+       0,
+       9900
+      ],
+      "B1_ref29_k1": [
+       0,
+       300
+      ],
+      "B1_ref29_k2": [
+       0,
+       300
+      ],
+      "B1_ref29_k3": [
+       0,
+       300
+      ],
+      "B1_ref29_k4": [
+       0,
+       7500
+      ],
+      "B1_ref57_k1": [
+       0,
+       300
+      ],
+      "B1_ref57_k2": [
+       0,
+       300
+      ],
+      "B1_ref57_k3": [
+       0,
+       300
+      ],
+      "B1_ref57_k4": [
+       0,
+       13700
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref27_k1": 300,
+      "B1_ref27_k2": 300,
+      "B1_ref27_k3": 300,
+      "B1_ref27_k4": 9900,
+      "B1_ref29_k1": 300,
+      "B1_ref29_k2": 300,
+      "B1_ref29_k3": 300,
+      "B1_ref29_k4": 7500,
+      "B1_ref57_k1": 300,
+      "B1_ref57_k2": 300,
+      "B1_ref57_k3": 300,
+      "B1_ref57_k4": 13700
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315"
+    },
+    {
+     "content": "frun",
+     "run": "F1_B1",
+     "token": "C4_F1_B1",
+     "scenario": "E1",
+     "sector": "B1",
+     "family": "NAT-O0",
+     "kind": "plan",
+     "tier": 0.15,
+     "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E1: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.1858 of f_hat_ideal",
+     "part": 2,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 19800,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 15000,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 27400
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B1_ref27_k1": [
+       300,
+       600
+      ],
+      "B1_ref27_k2": [
+       300,
+       600
+      ],
+      "B1_ref27_k3": [
+       300,
+       600
+      ],
+      "B1_ref27_k4": [
+       9900,
+       19800
+      ],
+      "B1_ref29_k1": [
+       300,
+       600
+      ],
+      "B1_ref29_k2": [
+       300,
+       600
+      ],
+      "B1_ref29_k3": [
+       300,
+       600
+      ],
+      "B1_ref29_k4": [
+       7500,
+       15000
+      ],
+      "B1_ref57_k1": [
+       300,
+       600
+      ],
+      "B1_ref57_k2": [
+       300,
+       600
+      ],
+      "B1_ref57_k3": [
+       300,
+       600
+      ],
+      "B1_ref57_k4": [
+       13700,
+       27400
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref27_k1": 300,
+      "B1_ref27_k2": 300,
+      "B1_ref27_k3": 300,
+      "B1_ref27_k4": 9900,
+      "B1_ref29_k1": 300,
+      "B1_ref29_k2": 300,
+      "B1_ref29_k3": 300,
+      "B1_ref29_k4": 7500,
+      "B1_ref57_k1": 300,
+      "B1_ref57_k2": 300,
+      "B1_ref57_k3": 300,
+      "B1_ref57_k4": 13700
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315",
+     "slot": "C4_PART_01"
+    }
+   ],
+   "slots": [
+    "C4_F1_B1",
+    "C4_PART_01"
+   ]
+  },
+  "F2_B0": {
+   "token": "C4_F2_B0",
+   "kind": "plan",
+   "share": 0.6,
+   "scenario": "E2",
+   "family": "NAT-O0",
+   "sector": "B=0",
+   "tier": 0.15,
+   "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E2: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.2167 of f_hat_ideal",
+   "circuits": 32,
+   "total_shots": 27309,
+   "N_max": 53758,
+   "parts": 1,
+   "part_shots": [
+    27309
+   ],
+   "forced_parts": false,
+   "part_descriptors": [
+    {
+     "content": "frun",
+     "run": "F2_B0",
+     "token": "C4_F2_B0",
+     "scenario": "E2",
+     "sector": "B0",
+     "family": "NAT-O0",
+     "kind": "plan",
+     "tier": 0.15,
+     "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E2: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.2167 of f_hat_ideal",
+     "part": 1,
+     "parts": 1,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 1267,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 1267,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 10400,
+      "B0_ref25_k4": 1400,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 1267,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 1400,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 1500,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 1267,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 1400
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B0_ref117_k1": [
+       0,
+       267
+      ],
+      "B0_ref117_k2": [
+       0,
+       267
+      ],
+      "B0_ref117_k3": [
+       0,
+       267
+      ],
+      "B0_ref117_k4": [
+       0,
+       1267
+      ],
+      "B0_ref169_k1": [
+       0,
+       267
+      ],
+      "B0_ref169_k2": [
+       0,
+       267
+      ],
+      "B0_ref169_k3": [
+       0,
+       267
+      ],
+      "B0_ref169_k4": [
+       0,
+       1267
+      ],
+      "B0_ref25_k1": [
+       0,
+       267
+      ],
+      "B0_ref25_k2": [
+       0,
+       267
+      ],
+      "B0_ref25_k3": [
+       0,
+       10400
+      ],
+      "B0_ref25_k4": [
+       0,
+       1400
+      ],
+      "B0_ref333_k1": [
+       0,
+       267
+      ],
+      "B0_ref333_k2": [
+       0,
+       267
+      ],
+      "B0_ref333_k3": [
+       0,
+       267
+      ],
+      "B0_ref333_k4": [
+       0,
+       1267
+      ],
+      "B0_ref525_k1": [
+       0,
+       267
+      ],
+      "B0_ref525_k2": [
+       0,
+       267
+      ],
+      "B0_ref525_k3": [
+       0,
+       267
+      ],
+      "B0_ref525_k4": [
+       0,
+       1400
+      ],
+      "B0_ref70_k1": [
+       0,
+       267
+      ],
+      "B0_ref70_k2": [
+       0,
+       267
+      ],
+      "B0_ref70_k3": [
+       0,
+       267
+      ],
+      "B0_ref70_k4": [
+       0,
+       1500
+      ],
+      "B0_ref795_k1": [
+       0,
+       267
+      ],
+      "B0_ref795_k2": [
+       0,
+       267
+      ],
+      "B0_ref795_k3": [
+       0,
+       267
+      ],
+      "B0_ref795_k4": [
+       0,
+       1267
+      ],
+      "B0_ref86_k1": [
+       0,
+       267
+      ],
+      "B0_ref86_k2": [
+       0,
+       267
+      ],
+      "B0_ref86_k3": [
+       0,
+       267
+      ],
+      "B0_ref86_k4": [
+       0,
+       1400
+      ]
+     },
+     "shots_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 1267,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 1267,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 10400,
+      "B0_ref25_k4": 1400,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 1267,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 1400,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 1500,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 1267,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 1400
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315"
+    }
+   ],
+   "slots": [
+    "C4_F2_B0"
+   ]
+  },
+  "F2_B1": {
+   "token": "C4_F2_B1",
+   "kind": "plan",
+   "share": 0.6,
+   "scenario": "E2",
+   "family": "NAT-O0",
+   "sector": "B=1",
+   "tier": 0.15,
+   "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E2: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.2167 of f_hat_ideal",
+   "circuits": 12,
+   "total_shots": 67600,
+   "N_max": 53758,
+   "parts": 2,
+   "part_shots": [
+    33800,
+    33800
+   ],
+   "forced_parts": false,
+   "part_descriptors": [
+    {
+     "content": "frun",
+     "run": "F2_B1",
+     "token": "C4_F2_B1",
+     "scenario": "E2",
+     "sector": "B1",
+     "family": "NAT-O0",
+     "kind": "plan",
+     "tier": 0.15,
+     "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E2: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.2167 of f_hat_ideal",
+     "part": 1,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 19800,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 15000,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 27400
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B1_ref27_k1": [
+       0,
+       300
+      ],
+      "B1_ref27_k2": [
+       0,
+       300
+      ],
+      "B1_ref27_k3": [
+       0,
+       300
+      ],
+      "B1_ref27_k4": [
+       0,
+       9900
+      ],
+      "B1_ref29_k1": [
+       0,
+       300
+      ],
+      "B1_ref29_k2": [
+       0,
+       300
+      ],
+      "B1_ref29_k3": [
+       0,
+       300
+      ],
+      "B1_ref29_k4": [
+       0,
+       7500
+      ],
+      "B1_ref57_k1": [
+       0,
+       300
+      ],
+      "B1_ref57_k2": [
+       0,
+       300
+      ],
+      "B1_ref57_k3": [
+       0,
+       300
+      ],
+      "B1_ref57_k4": [
+       0,
+       13700
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref27_k1": 300,
+      "B1_ref27_k2": 300,
+      "B1_ref27_k3": 300,
+      "B1_ref27_k4": 9900,
+      "B1_ref29_k1": 300,
+      "B1_ref29_k2": 300,
+      "B1_ref29_k3": 300,
+      "B1_ref29_k4": 7500,
+      "B1_ref57_k1": 300,
+      "B1_ref57_k2": 300,
+      "B1_ref57_k3": 300,
+      "B1_ref57_k4": 13700
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315"
+    },
+    {
+     "content": "frun",
+     "run": "F2_B1",
+     "token": "C4_F2_B1",
+     "scenario": "E2",
+     "sector": "B1",
+     "family": "NAT-O0",
+     "kind": "plan",
+     "tier": 0.15,
+     "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E2: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.2167 of f_hat_ideal",
+     "part": 2,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 19800,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 15000,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 27400
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B1_ref27_k1": [
+       300,
+       600
+      ],
+      "B1_ref27_k2": [
+       300,
+       600
+      ],
+      "B1_ref27_k3": [
+       300,
+       600
+      ],
+      "B1_ref27_k4": [
+       9900,
+       19800
+      ],
+      "B1_ref29_k1": [
+       300,
+       600
+      ],
+      "B1_ref29_k2": [
+       300,
+       600
+      ],
+      "B1_ref29_k3": [
+       300,
+       600
+      ],
+      "B1_ref29_k4": [
+       7500,
+       15000
+      ],
+      "B1_ref57_k1": [
+       300,
+       600
+      ],
+      "B1_ref57_k2": [
+       300,
+       600
+      ],
+      "B1_ref57_k3": [
+       300,
+       600
+      ],
+      "B1_ref57_k4": [
+       13700,
+       27400
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref27_k1": 300,
+      "B1_ref27_k2": 300,
+      "B1_ref27_k3": 300,
+      "B1_ref27_k4": 9900,
+      "B1_ref29_k1": 300,
+      "B1_ref29_k2": 300,
+      "B1_ref29_k3": 300,
+      "B1_ref29_k4": 7500,
+      "B1_ref57_k1": 300,
+      "B1_ref57_k2": 300,
+      "B1_ref57_k3": 300,
+      "B1_ref57_k4": 13700
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315",
+     "slot": "C4_PART_02"
+    }
+   ],
+   "slots": [
+    "C4_F2_B1",
+    "C4_PART_02"
+   ]
+  },
+  "F3_B0": {
+   "token": "C4_F3_B0",
+   "kind": "plan",
+   "share": 0.6,
+   "scenario": "E3",
+   "family": "NAT-O0",
+   "sector": "B=0",
+   "tier": 0.05,
+   "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E3: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.08693 of f_hat_ideal",
+   "circuits": 32,
+   "total_shots": 63875,
+   "N_max": 53758,
+   "parts": 2,
+   "part_shots": [
+    31950,
+    31925
+   ],
+   "forced_parts": false,
+   "part_descriptors": [
+    {
+     "content": "frun",
+     "run": "F3_B0",
+     "token": "C4_F3_B0",
+     "scenario": "E3",
+     "sector": "B0",
+     "family": "NAT-O0",
+     "kind": "plan",
+     "tier": 0.05,
+     "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E3: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.08693 of f_hat_ideal",
+     "part": 1,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 2900,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 2700,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 267,
+      "B0_ref25_k4": 37000,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 2700,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 3100,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 3700,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 2267,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 3100
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B0_ref117_k1": [
+       0,
+       134
+      ],
+      "B0_ref117_k2": [
+       0,
+       134
+      ],
+      "B0_ref117_k3": [
+       0,
+       134
+      ],
+      "B0_ref117_k4": [
+       0,
+       1450
+      ],
+      "B0_ref169_k1": [
+       0,
+       134
+      ],
+      "B0_ref169_k2": [
+       0,
+       134
+      ],
+      "B0_ref169_k3": [
+       0,
+       134
+      ],
+      "B0_ref169_k4": [
+       0,
+       1350
+      ],
+      "B0_ref25_k1": [
+       0,
+       134
+      ],
+      "B0_ref25_k2": [
+       0,
+       134
+      ],
+      "B0_ref25_k3": [
+       0,
+       134
+      ],
+      "B0_ref25_k4": [
+       0,
+       18500
+      ],
+      "B0_ref333_k1": [
+       0,
+       134
+      ],
+      "B0_ref333_k2": [
+       0,
+       134
+      ],
+      "B0_ref333_k3": [
+       0,
+       134
+      ],
+      "B0_ref333_k4": [
+       0,
+       1350
+      ],
+      "B0_ref525_k1": [
+       0,
+       134
+      ],
+      "B0_ref525_k2": [
+       0,
+       134
+      ],
+      "B0_ref525_k3": [
+       0,
+       134
+      ],
+      "B0_ref525_k4": [
+       0,
+       1550
+      ],
+      "B0_ref70_k1": [
+       0,
+       134
+      ],
+      "B0_ref70_k2": [
+       0,
+       134
+      ],
+      "B0_ref70_k3": [
+       0,
+       134
+      ],
+      "B0_ref70_k4": [
+       0,
+       1850
+      ],
+      "B0_ref795_k1": [
+       0,
+       134
+      ],
+      "B0_ref795_k2": [
+       0,
+       134
+      ],
+      "B0_ref795_k3": [
+       0,
+       134
+      ],
+      "B0_ref795_k4": [
+       0,
+       1134
+      ],
+      "B0_ref86_k1": [
+       0,
+       134
+      ],
+      "B0_ref86_k2": [
+       0,
+       134
+      ],
+      "B0_ref86_k3": [
+       0,
+       134
+      ],
+      "B0_ref86_k4": [
+       0,
+       1550
+      ]
+     },
+     "shots_by_circuit": {
+      "B0_ref117_k1": 134,
+      "B0_ref117_k2": 134,
+      "B0_ref117_k3": 134,
+      "B0_ref117_k4": 1450,
+      "B0_ref169_k1": 134,
+      "B0_ref169_k2": 134,
+      "B0_ref169_k3": 134,
+      "B0_ref169_k4": 1350,
+      "B0_ref25_k1": 134,
+      "B0_ref25_k2": 134,
+      "B0_ref25_k3": 134,
+      "B0_ref25_k4": 18500,
+      "B0_ref333_k1": 134,
+      "B0_ref333_k2": 134,
+      "B0_ref333_k3": 134,
+      "B0_ref333_k4": 1350,
+      "B0_ref525_k1": 134,
+      "B0_ref525_k2": 134,
+      "B0_ref525_k3": 134,
+      "B0_ref525_k4": 1550,
+      "B0_ref70_k1": 134,
+      "B0_ref70_k2": 134,
+      "B0_ref70_k3": 134,
+      "B0_ref70_k4": 1850,
+      "B0_ref795_k1": 134,
+      "B0_ref795_k2": 134,
+      "B0_ref795_k3": 134,
+      "B0_ref795_k4": 1134,
+      "B0_ref86_k1": 134,
+      "B0_ref86_k2": 134,
+      "B0_ref86_k3": 134,
+      "B0_ref86_k4": 1550
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315"
+    },
+    {
+     "content": "frun",
+     "run": "F3_B0",
+     "token": "C4_F3_B0",
+     "scenario": "E3",
+     "sector": "B0",
+     "family": "NAT-O0",
+     "kind": "plan",
+     "tier": 0.05,
+     "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E3: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.08693 of f_hat_ideal",
+     "part": 2,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 2900,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 2700,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 267,
+      "B0_ref25_k4": 37000,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 2700,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 3100,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 3700,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 2267,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 3100
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B0_ref117_k1": [
+       134,
+       267
+      ],
+      "B0_ref117_k2": [
+       134,
+       267
+      ],
+      "B0_ref117_k3": [
+       134,
+       267
+      ],
+      "B0_ref117_k4": [
+       1450,
+       2900
+      ],
+      "B0_ref169_k1": [
+       134,
+       267
+      ],
+      "B0_ref169_k2": [
+       134,
+       267
+      ],
+      "B0_ref169_k3": [
+       134,
+       267
+      ],
+      "B0_ref169_k4": [
+       1350,
+       2700
+      ],
+      "B0_ref25_k1": [
+       134,
+       267
+      ],
+      "B0_ref25_k2": [
+       134,
+       267
+      ],
+      "B0_ref25_k3": [
+       134,
+       267
+      ],
+      "B0_ref25_k4": [
+       18500,
+       37000
+      ],
+      "B0_ref333_k1": [
+       134,
+       267
+      ],
+      "B0_ref333_k2": [
+       134,
+       267
+      ],
+      "B0_ref333_k3": [
+       134,
+       267
+      ],
+      "B0_ref333_k4": [
+       1350,
+       2700
+      ],
+      "B0_ref525_k1": [
+       134,
+       267
+      ],
+      "B0_ref525_k2": [
+       134,
+       267
+      ],
+      "B0_ref525_k3": [
+       134,
+       267
+      ],
+      "B0_ref525_k4": [
+       1550,
+       3100
+      ],
+      "B0_ref70_k1": [
+       134,
+       267
+      ],
+      "B0_ref70_k2": [
+       134,
+       267
+      ],
+      "B0_ref70_k3": [
+       134,
+       267
+      ],
+      "B0_ref70_k4": [
+       1850,
+       3700
+      ],
+      "B0_ref795_k1": [
+       134,
+       267
+      ],
+      "B0_ref795_k2": [
+       134,
+       267
+      ],
+      "B0_ref795_k3": [
+       134,
+       267
+      ],
+      "B0_ref795_k4": [
+       1134,
+       2267
+      ],
+      "B0_ref86_k1": [
+       134,
+       267
+      ],
+      "B0_ref86_k2": [
+       134,
+       267
+      ],
+      "B0_ref86_k3": [
+       134,
+       267
+      ],
+      "B0_ref86_k4": [
+       1550,
+       3100
+      ]
+     },
+     "shots_by_circuit": {
+      "B0_ref117_k1": 133,
+      "B0_ref117_k2": 133,
+      "B0_ref117_k3": 133,
+      "B0_ref117_k4": 1450,
+      "B0_ref169_k1": 133,
+      "B0_ref169_k2": 133,
+      "B0_ref169_k3": 133,
+      "B0_ref169_k4": 1350,
+      "B0_ref25_k1": 133,
+      "B0_ref25_k2": 133,
+      "B0_ref25_k3": 133,
+      "B0_ref25_k4": 18500,
+      "B0_ref333_k1": 133,
+      "B0_ref333_k2": 133,
+      "B0_ref333_k3": 133,
+      "B0_ref333_k4": 1350,
+      "B0_ref525_k1": 133,
+      "B0_ref525_k2": 133,
+      "B0_ref525_k3": 133,
+      "B0_ref525_k4": 1550,
+      "B0_ref70_k1": 133,
+      "B0_ref70_k2": 133,
+      "B0_ref70_k3": 133,
+      "B0_ref70_k4": 1850,
+      "B0_ref795_k1": 133,
+      "B0_ref795_k2": 133,
+      "B0_ref795_k3": 133,
+      "B0_ref795_k4": 1133,
+      "B0_ref86_k1": 133,
+      "B0_ref86_k2": 133,
+      "B0_ref86_k3": 133,
+      "B0_ref86_k4": 1550
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315",
+     "slot": "C4_PART_03"
+    }
+   ],
+   "slots": [
+    "C4_F3_B0",
+    "C4_PART_03"
+   ]
+  },
+  "F3_B1": {
+   "token": "C4_F3_B1",
+   "kind": "plan",
+   "share": 0.6,
+   "scenario": "E3",
+   "family": "NAT-O0",
+   "sector": "B=1",
+   "tier": 0.05,
+   "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E3: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.08693 of f_hat_ideal",
+   "circuits": 12,
+   "total_shots": 193600,
+   "N_max": 53758,
+   "parts": 4,
+   "part_shots": [
+    48400,
+    48400,
+    52680,
+    44120
+   ],
+   "forced_parts": false,
+   "part_descriptors": [
+    {
+     "content": "frun",
+     "run": "F3_B1",
+     "token": "C4_F3_B1",
+     "scenario": "E3",
+     "sector": "B1",
+     "family": "NAT-O0",
+     "kind": "plan",
+     "tier": 0.05,
+     "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E3: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.08693 of f_hat_ideal",
+     "part": 1,
+     "parts": 4,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 59600,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 45800,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 82800
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B1_ref27_k1": [
+       0,
+       150
+      ],
+      "B1_ref27_k2": [
+       0,
+       150
+      ],
+      "B1_ref27_k3": [
+       0,
+       150
+      ],
+      "B1_ref27_k4": [
+       0,
+       14900
+      ],
+      "B1_ref29_k1": [
+       0,
+       150
+      ],
+      "B1_ref29_k2": [
+       0,
+       150
+      ],
+      "B1_ref29_k3": [
+       0,
+       150
+      ],
+      "B1_ref29_k4": [
+       0,
+       11450
+      ],
+      "B1_ref57_k1": [
+       0,
+       150
+      ],
+      "B1_ref57_k2": [
+       0,
+       150
+      ],
+      "B1_ref57_k3": [
+       0,
+       150
+      ],
+      "B1_ref57_k4": [
+       0,
+       20700
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref27_k1": 150,
+      "B1_ref27_k2": 150,
+      "B1_ref27_k3": 150,
+      "B1_ref27_k4": 14900,
+      "B1_ref29_k1": 150,
+      "B1_ref29_k2": 150,
+      "B1_ref29_k3": 150,
+      "B1_ref29_k4": 11450,
+      "B1_ref57_k1": 150,
+      "B1_ref57_k2": 150,
+      "B1_ref57_k3": 150,
+      "B1_ref57_k4": 20700
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315"
+    },
+    {
+     "content": "frun",
+     "run": "F3_B1",
+     "token": "C4_F3_B1",
+     "scenario": "E3",
+     "sector": "B1",
+     "family": "NAT-O0",
+     "kind": "plan",
+     "tier": 0.05,
+     "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E3: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.08693 of f_hat_ideal",
+     "part": 2,
+     "parts": 4,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 59600,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 45800,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 82800
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B1_ref27_k1": [
+       150,
+       300
+      ],
+      "B1_ref27_k2": [
+       150,
+       300
+      ],
+      "B1_ref27_k3": [
+       150,
+       300
+      ],
+      "B1_ref27_k4": [
+       14900,
+       29800
+      ],
+      "B1_ref29_k1": [
+       150,
+       300
+      ],
+      "B1_ref29_k2": [
+       150,
+       300
+      ],
+      "B1_ref29_k3": [
+       150,
+       300
+      ],
+      "B1_ref29_k4": [
+       11450,
+       22900
+      ],
+      "B1_ref57_k1": [
+       150,
+       300
+      ],
+      "B1_ref57_k2": [
+       150,
+       300
+      ],
+      "B1_ref57_k3": [
+       150,
+       300
+      ],
+      "B1_ref57_k4": [
+       20700,
+       41400
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref27_k1": 150,
+      "B1_ref27_k2": 150,
+      "B1_ref27_k3": 150,
+      "B1_ref27_k4": 14900,
+      "B1_ref29_k1": 150,
+      "B1_ref29_k2": 150,
+      "B1_ref29_k3": 150,
+      "B1_ref29_k4": 11450,
+      "B1_ref57_k1": 150,
+      "B1_ref57_k2": 150,
+      "B1_ref57_k3": 150,
+      "B1_ref57_k4": 20700
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315",
+     "slot": "C4_PART_04"
+    },
+    {
+     "content": "frun",
+     "run": "F3_B1",
+     "token": "C4_F3_B1",
+     "scenario": "E3",
+     "sector": "B1",
+     "family": "NAT-O0",
+     "kind": "plan",
+     "tier": 0.05,
+     "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E3: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.08693 of f_hat_ideal",
+     "part": 3,
+     "parts": 4,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 59600,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 45800,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 82800
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B1_ref27_k1": [
+       300,
+       600
+      ],
+      "B1_ref27_k2": [
+       300,
+       600
+      ],
+      "B1_ref27_k3": [
+       300,
+       600
+      ],
+      "B1_ref27_k4": [
+       29800,
+       45508
+      ],
+      "B1_ref29_k1": [
+       300,
+       600
+      ],
+      "B1_ref29_k2": [
+       300,
+       600
+      ],
+      "B1_ref29_k3": [
+       300,
+       600
+      ],
+      "B1_ref29_k4": [
+       22900,
+       35752
+      ],
+      "B1_ref57_k1": [
+       300,
+       600
+      ],
+      "B1_ref57_k2": [
+       300,
+       600
+      ],
+      "B1_ref57_k3": [
+       300,
+       600
+      ],
+      "B1_ref57_k4": [
+       41400,
+       62820
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref27_k1": 300,
+      "B1_ref27_k2": 300,
+      "B1_ref27_k3": 300,
+      "B1_ref27_k4": 15708,
+      "B1_ref29_k1": 300,
+      "B1_ref29_k2": 300,
+      "B1_ref29_k3": 300,
+      "B1_ref29_k4": 12852,
+      "B1_ref57_k1": 300,
+      "B1_ref57_k2": 300,
+      "B1_ref57_k3": 300,
+      "B1_ref57_k4": 21420
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315",
+     "slot": "C4_PART_05"
+    },
+    {
+     "content": "frun",
+     "run": "F3_B1",
+     "token": "C4_F3_B1",
+     "scenario": "E3",
+     "sector": "B1",
+     "family": "NAT-O0",
+     "kind": "plan",
+     "tier": 0.05,
+     "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E3: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.08693 of f_hat_ideal",
+     "part": 4,
+     "parts": 4,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 59600,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 45800,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 82800
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B1_ref27_k1": [
+       600,
+       600
+      ],
+      "B1_ref27_k2": [
+       600,
+       600
+      ],
+      "B1_ref27_k3": [
+       600,
+       600
+      ],
+      "B1_ref27_k4": [
+       45508,
+       59600
+      ],
+      "B1_ref29_k1": [
+       600,
+       600
+      ],
+      "B1_ref29_k2": [
+       600,
+       600
+      ],
+      "B1_ref29_k3": [
+       600,
+       600
+      ],
+      "B1_ref29_k4": [
+       35752,
+       45800
+      ],
+      "B1_ref57_k1": [
+       600,
+       600
+      ],
+      "B1_ref57_k2": [
+       600,
+       600
+      ],
+      "B1_ref57_k3": [
+       600,
+       600
+      ],
+      "B1_ref57_k4": [
+       62820,
+       82800
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref27_k1": 0,
+      "B1_ref27_k2": 0,
+      "B1_ref27_k3": 0,
+      "B1_ref27_k4": 14092,
+      "B1_ref29_k1": 0,
+      "B1_ref29_k2": 0,
+      "B1_ref29_k3": 0,
+      "B1_ref29_k4": 10048,
+      "B1_ref57_k1": 0,
+      "B1_ref57_k2": 0,
+      "B1_ref57_k3": 0,
+      "B1_ref57_k4": 19980
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315",
+     "slot": "C4_PART_06"
+    }
+   ],
+   "slots": [
+    "C4_F3_B1",
+    "C4_PART_04",
+    "C4_PART_05",
+    "C4_PART_06"
+   ]
+  },
+  "F4_B0a": {
+   "token": "C4_F4_B0a",
+   "kind": "s3quota",
+   "share": 0.75,
+   "scenario": "E7_0.10",
+   "family": "NAT-O0",
+   "sector": "B=0",
+   "tier": null,
+   "tier_reason": null,
+   "circuits": 32,
+   "total_shots": 100000,
+   "N_max": 67197,
+   "parts": 2,
+   "part_shots": [
+    50016,
+    49984
+   ],
+   "forced_parts": false,
+   "part_descriptors": [
+    {
+     "content": "frun",
+     "run": "F4_B0a",
+     "token": "C4_F4_B0a",
+     "scenario": "E7_0.10",
+     "sector": "B0",
+     "family": "NAT-O0",
+     "kind": "s3quota",
+     "tier": null,
+     "tier_reason": null,
+     "part": 1,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B0_ref117_k1": 3125,
+      "B0_ref117_k2": 3125,
+      "B0_ref117_k3": 3125,
+      "B0_ref117_k4": 3125,
+      "B0_ref169_k1": 3125,
+      "B0_ref169_k2": 3125,
+      "B0_ref169_k3": 3125,
+      "B0_ref169_k4": 3125,
+      "B0_ref25_k1": 3125,
+      "B0_ref25_k2": 3125,
+      "B0_ref25_k3": 3125,
+      "B0_ref25_k4": 3125,
+      "B0_ref333_k1": 3125,
+      "B0_ref333_k2": 3125,
+      "B0_ref333_k3": 3125,
+      "B0_ref333_k4": 3125,
+      "B0_ref525_k1": 3125,
+      "B0_ref525_k2": 3125,
+      "B0_ref525_k3": 3125,
+      "B0_ref525_k4": 3125,
+      "B0_ref70_k1": 3125,
+      "B0_ref70_k2": 3125,
+      "B0_ref70_k3": 3125,
+      "B0_ref70_k4": 3125,
+      "B0_ref795_k1": 3125,
+      "B0_ref795_k2": 3125,
+      "B0_ref795_k3": 3125,
+      "B0_ref795_k4": 3125,
+      "B0_ref86_k1": 3125,
+      "B0_ref86_k2": 3125,
+      "B0_ref86_k3": 3125,
+      "B0_ref86_k4": 3125
+     },
+     "plan_f010_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 1367,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 1367,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 1000,
+      "B0_ref25_k4": 17600,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 1367,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 1500,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 1700,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 1367,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 1500
+     },
+     "ranges_by_circuit": {
+      "B0_ref117_k1": [
+       0,
+       1563
+      ],
+      "B0_ref117_k2": [
+       0,
+       1563
+      ],
+      "B0_ref117_k3": [
+       0,
+       1563
+      ],
+      "B0_ref117_k4": [
+       0,
+       1563
+      ],
+      "B0_ref169_k1": [
+       0,
+       1563
+      ],
+      "B0_ref169_k2": [
+       0,
+       1563
+      ],
+      "B0_ref169_k3": [
+       0,
+       1563
+      ],
+      "B0_ref169_k4": [
+       0,
+       1563
+      ],
+      "B0_ref25_k1": [
+       0,
+       1563
+      ],
+      "B0_ref25_k2": [
+       0,
+       1563
+      ],
+      "B0_ref25_k3": [
+       0,
+       1563
+      ],
+      "B0_ref25_k4": [
+       0,
+       1563
+      ],
+      "B0_ref333_k1": [
+       0,
+       1563
+      ],
+      "B0_ref333_k2": [
+       0,
+       1563
+      ],
+      "B0_ref333_k3": [
+       0,
+       1563
+      ],
+      "B0_ref333_k4": [
+       0,
+       1563
+      ],
+      "B0_ref525_k1": [
+       0,
+       1563
+      ],
+      "B0_ref525_k2": [
+       0,
+       1563
+      ],
+      "B0_ref525_k3": [
+       0,
+       1563
+      ],
+      "B0_ref525_k4": [
+       0,
+       1563
+      ],
+      "B0_ref70_k1": [
+       0,
+       1563
+      ],
+      "B0_ref70_k2": [
+       0,
+       1563
+      ],
+      "B0_ref70_k3": [
+       0,
+       1563
+      ],
+      "B0_ref70_k4": [
+       0,
+       1563
+      ],
+      "B0_ref795_k1": [
+       0,
+       1563
+      ],
+      "B0_ref795_k2": [
+       0,
+       1563
+      ],
+      "B0_ref795_k3": [
+       0,
+       1563
+      ],
+      "B0_ref795_k4": [
+       0,
+       1563
+      ],
+      "B0_ref86_k1": [
+       0,
+       1563
+      ],
+      "B0_ref86_k2": [
+       0,
+       1563
+      ],
+      "B0_ref86_k3": [
+       0,
+       1563
+      ],
+      "B0_ref86_k4": [
+       0,
+       1563
+      ]
+     },
+     "shots_by_circuit": {
+      "B0_ref117_k1": 1563,
+      "B0_ref117_k2": 1563,
+      "B0_ref117_k3": 1563,
+      "B0_ref117_k4": 1563,
+      "B0_ref169_k1": 1563,
+      "B0_ref169_k2": 1563,
+      "B0_ref169_k3": 1563,
+      "B0_ref169_k4": 1563,
+      "B0_ref25_k1": 1563,
+      "B0_ref25_k2": 1563,
+      "B0_ref25_k3": 1563,
+      "B0_ref25_k4": 1563,
+      "B0_ref333_k1": 1563,
+      "B0_ref333_k2": 1563,
+      "B0_ref333_k3": 1563,
+      "B0_ref333_k4": 1563,
+      "B0_ref525_k1": 1563,
+      "B0_ref525_k2": 1563,
+      "B0_ref525_k3": 1563,
+      "B0_ref525_k4": 1563,
+      "B0_ref70_k1": 1563,
+      "B0_ref70_k2": 1563,
+      "B0_ref70_k3": 1563,
+      "B0_ref70_k4": 1563,
+      "B0_ref795_k1": 1563,
+      "B0_ref795_k2": 1563,
+      "B0_ref795_k3": 1563,
+      "B0_ref795_k4": 1563,
+      "B0_ref86_k1": 1563,
+      "B0_ref86_k2": 1563,
+      "B0_ref86_k3": 1563,
+      "B0_ref86_k4": 1563
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315"
+    },
+    {
+     "content": "frun",
+     "run": "F4_B0a",
+     "token": "C4_F4_B0a",
+     "scenario": "E7_0.10",
+     "sector": "B0",
+     "family": "NAT-O0",
+     "kind": "s3quota",
+     "tier": null,
+     "tier_reason": null,
+     "part": 2,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B0_ref117_k1": 3125,
+      "B0_ref117_k2": 3125,
+      "B0_ref117_k3": 3125,
+      "B0_ref117_k4": 3125,
+      "B0_ref169_k1": 3125,
+      "B0_ref169_k2": 3125,
+      "B0_ref169_k3": 3125,
+      "B0_ref169_k4": 3125,
+      "B0_ref25_k1": 3125,
+      "B0_ref25_k2": 3125,
+      "B0_ref25_k3": 3125,
+      "B0_ref25_k4": 3125,
+      "B0_ref333_k1": 3125,
+      "B0_ref333_k2": 3125,
+      "B0_ref333_k3": 3125,
+      "B0_ref333_k4": 3125,
+      "B0_ref525_k1": 3125,
+      "B0_ref525_k2": 3125,
+      "B0_ref525_k3": 3125,
+      "B0_ref525_k4": 3125,
+      "B0_ref70_k1": 3125,
+      "B0_ref70_k2": 3125,
+      "B0_ref70_k3": 3125,
+      "B0_ref70_k4": 3125,
+      "B0_ref795_k1": 3125,
+      "B0_ref795_k2": 3125,
+      "B0_ref795_k3": 3125,
+      "B0_ref795_k4": 3125,
+      "B0_ref86_k1": 3125,
+      "B0_ref86_k2": 3125,
+      "B0_ref86_k3": 3125,
+      "B0_ref86_k4": 3125
+     },
+     "plan_f010_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 1367,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 1367,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 1000,
+      "B0_ref25_k4": 17600,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 1367,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 1500,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 1700,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 1367,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 1500
+     },
+     "ranges_by_circuit": {
+      "B0_ref117_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref117_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref117_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref117_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref169_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref169_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref169_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref169_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref25_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref25_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref25_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref25_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref333_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref333_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref333_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref333_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref525_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref525_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref525_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref525_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref70_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref70_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref70_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref70_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref795_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref795_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref795_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref795_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref86_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref86_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref86_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref86_k4": [
+       1563,
+       3125
+      ]
+     },
+     "shots_by_circuit": {
+      "B0_ref117_k1": 1562,
+      "B0_ref117_k2": 1562,
+      "B0_ref117_k3": 1562,
+      "B0_ref117_k4": 1562,
+      "B0_ref169_k1": 1562,
+      "B0_ref169_k2": 1562,
+      "B0_ref169_k3": 1562,
+      "B0_ref169_k4": 1562,
+      "B0_ref25_k1": 1562,
+      "B0_ref25_k2": 1562,
+      "B0_ref25_k3": 1562,
+      "B0_ref25_k4": 1562,
+      "B0_ref333_k1": 1562,
+      "B0_ref333_k2": 1562,
+      "B0_ref333_k3": 1562,
+      "B0_ref333_k4": 1562,
+      "B0_ref525_k1": 1562,
+      "B0_ref525_k2": 1562,
+      "B0_ref525_k3": 1562,
+      "B0_ref525_k4": 1562,
+      "B0_ref70_k1": 1562,
+      "B0_ref70_k2": 1562,
+      "B0_ref70_k3": 1562,
+      "B0_ref70_k4": 1562,
+      "B0_ref795_k1": 1562,
+      "B0_ref795_k2": 1562,
+      "B0_ref795_k3": 1562,
+      "B0_ref795_k4": 1562,
+      "B0_ref86_k1": 1562,
+      "B0_ref86_k2": 1562,
+      "B0_ref86_k3": 1562,
+      "B0_ref86_k4": 1562
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315",
+     "slot": "C4_PART_07"
+    }
+   ],
+   "slots": [
+    "C4_F4_B0a",
+    "C4_PART_07"
+   ]
+  },
+  "F4_B0b": {
+   "token": "C4_F4_B0b",
+   "kind": "s3quota",
+   "share": 0.75,
+   "scenario": "E7_0.10",
+   "family": "NAT-O0",
+   "sector": "B=0",
+   "tier": null,
+   "tier_reason": null,
+   "circuits": 32,
+   "total_shots": 100000,
+   "N_max": 67197,
+   "parts": 2,
+   "part_shots": [
+    50016,
+    49984
+   ],
+   "forced_parts": false,
+   "part_descriptors": [
+    {
+     "content": "frun",
+     "run": "F4_B0b",
+     "token": "C4_F4_B0b",
+     "scenario": "E7_0.10",
+     "sector": "B0",
+     "family": "NAT-O0",
+     "kind": "s3quota",
+     "tier": null,
+     "tier_reason": null,
+     "part": 1,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B0_ref117_k1": 3125,
+      "B0_ref117_k2": 3125,
+      "B0_ref117_k3": 3125,
+      "B0_ref117_k4": 3125,
+      "B0_ref169_k1": 3125,
+      "B0_ref169_k2": 3125,
+      "B0_ref169_k3": 3125,
+      "B0_ref169_k4": 3125,
+      "B0_ref25_k1": 3125,
+      "B0_ref25_k2": 3125,
+      "B0_ref25_k3": 3125,
+      "B0_ref25_k4": 3125,
+      "B0_ref333_k1": 3125,
+      "B0_ref333_k2": 3125,
+      "B0_ref333_k3": 3125,
+      "B0_ref333_k4": 3125,
+      "B0_ref525_k1": 3125,
+      "B0_ref525_k2": 3125,
+      "B0_ref525_k3": 3125,
+      "B0_ref525_k4": 3125,
+      "B0_ref70_k1": 3125,
+      "B0_ref70_k2": 3125,
+      "B0_ref70_k3": 3125,
+      "B0_ref70_k4": 3125,
+      "B0_ref795_k1": 3125,
+      "B0_ref795_k2": 3125,
+      "B0_ref795_k3": 3125,
+      "B0_ref795_k4": 3125,
+      "B0_ref86_k1": 3125,
+      "B0_ref86_k2": 3125,
+      "B0_ref86_k3": 3125,
+      "B0_ref86_k4": 3125
+     },
+     "plan_f010_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 1367,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 1367,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 1000,
+      "B0_ref25_k4": 17600,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 1367,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 1500,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 1700,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 1367,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 1500
+     },
+     "ranges_by_circuit": {
+      "B0_ref117_k1": [
+       0,
+       1563
+      ],
+      "B0_ref117_k2": [
+       0,
+       1563
+      ],
+      "B0_ref117_k3": [
+       0,
+       1563
+      ],
+      "B0_ref117_k4": [
+       0,
+       1563
+      ],
+      "B0_ref169_k1": [
+       0,
+       1563
+      ],
+      "B0_ref169_k2": [
+       0,
+       1563
+      ],
+      "B0_ref169_k3": [
+       0,
+       1563
+      ],
+      "B0_ref169_k4": [
+       0,
+       1563
+      ],
+      "B0_ref25_k1": [
+       0,
+       1563
+      ],
+      "B0_ref25_k2": [
+       0,
+       1563
+      ],
+      "B0_ref25_k3": [
+       0,
+       1563
+      ],
+      "B0_ref25_k4": [
+       0,
+       1563
+      ],
+      "B0_ref333_k1": [
+       0,
+       1563
+      ],
+      "B0_ref333_k2": [
+       0,
+       1563
+      ],
+      "B0_ref333_k3": [
+       0,
+       1563
+      ],
+      "B0_ref333_k4": [
+       0,
+       1563
+      ],
+      "B0_ref525_k1": [
+       0,
+       1563
+      ],
+      "B0_ref525_k2": [
+       0,
+       1563
+      ],
+      "B0_ref525_k3": [
+       0,
+       1563
+      ],
+      "B0_ref525_k4": [
+       0,
+       1563
+      ],
+      "B0_ref70_k1": [
+       0,
+       1563
+      ],
+      "B0_ref70_k2": [
+       0,
+       1563
+      ],
+      "B0_ref70_k3": [
+       0,
+       1563
+      ],
+      "B0_ref70_k4": [
+       0,
+       1563
+      ],
+      "B0_ref795_k1": [
+       0,
+       1563
+      ],
+      "B0_ref795_k2": [
+       0,
+       1563
+      ],
+      "B0_ref795_k3": [
+       0,
+       1563
+      ],
+      "B0_ref795_k4": [
+       0,
+       1563
+      ],
+      "B0_ref86_k1": [
+       0,
+       1563
+      ],
+      "B0_ref86_k2": [
+       0,
+       1563
+      ],
+      "B0_ref86_k3": [
+       0,
+       1563
+      ],
+      "B0_ref86_k4": [
+       0,
+       1563
+      ]
+     },
+     "shots_by_circuit": {
+      "B0_ref117_k1": 1563,
+      "B0_ref117_k2": 1563,
+      "B0_ref117_k3": 1563,
+      "B0_ref117_k4": 1563,
+      "B0_ref169_k1": 1563,
+      "B0_ref169_k2": 1563,
+      "B0_ref169_k3": 1563,
+      "B0_ref169_k4": 1563,
+      "B0_ref25_k1": 1563,
+      "B0_ref25_k2": 1563,
+      "B0_ref25_k3": 1563,
+      "B0_ref25_k4": 1563,
+      "B0_ref333_k1": 1563,
+      "B0_ref333_k2": 1563,
+      "B0_ref333_k3": 1563,
+      "B0_ref333_k4": 1563,
+      "B0_ref525_k1": 1563,
+      "B0_ref525_k2": 1563,
+      "B0_ref525_k3": 1563,
+      "B0_ref525_k4": 1563,
+      "B0_ref70_k1": 1563,
+      "B0_ref70_k2": 1563,
+      "B0_ref70_k3": 1563,
+      "B0_ref70_k4": 1563,
+      "B0_ref795_k1": 1563,
+      "B0_ref795_k2": 1563,
+      "B0_ref795_k3": 1563,
+      "B0_ref795_k4": 1563,
+      "B0_ref86_k1": 1563,
+      "B0_ref86_k2": 1563,
+      "B0_ref86_k3": 1563,
+      "B0_ref86_k4": 1563
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315"
+    },
+    {
+     "content": "frun",
+     "run": "F4_B0b",
+     "token": "C4_F4_B0b",
+     "scenario": "E7_0.10",
+     "sector": "B0",
+     "family": "NAT-O0",
+     "kind": "s3quota",
+     "tier": null,
+     "tier_reason": null,
+     "part": 2,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B0_ref117_k1": 3125,
+      "B0_ref117_k2": 3125,
+      "B0_ref117_k3": 3125,
+      "B0_ref117_k4": 3125,
+      "B0_ref169_k1": 3125,
+      "B0_ref169_k2": 3125,
+      "B0_ref169_k3": 3125,
+      "B0_ref169_k4": 3125,
+      "B0_ref25_k1": 3125,
+      "B0_ref25_k2": 3125,
+      "B0_ref25_k3": 3125,
+      "B0_ref25_k4": 3125,
+      "B0_ref333_k1": 3125,
+      "B0_ref333_k2": 3125,
+      "B0_ref333_k3": 3125,
+      "B0_ref333_k4": 3125,
+      "B0_ref525_k1": 3125,
+      "B0_ref525_k2": 3125,
+      "B0_ref525_k3": 3125,
+      "B0_ref525_k4": 3125,
+      "B0_ref70_k1": 3125,
+      "B0_ref70_k2": 3125,
+      "B0_ref70_k3": 3125,
+      "B0_ref70_k4": 3125,
+      "B0_ref795_k1": 3125,
+      "B0_ref795_k2": 3125,
+      "B0_ref795_k3": 3125,
+      "B0_ref795_k4": 3125,
+      "B0_ref86_k1": 3125,
+      "B0_ref86_k2": 3125,
+      "B0_ref86_k3": 3125,
+      "B0_ref86_k4": 3125
+     },
+     "plan_f010_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 1367,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 1367,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 1000,
+      "B0_ref25_k4": 17600,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 1367,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 1500,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 1700,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 1367,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 1500
+     },
+     "ranges_by_circuit": {
+      "B0_ref117_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref117_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref117_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref117_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref169_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref169_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref169_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref169_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref25_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref25_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref25_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref25_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref333_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref333_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref333_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref333_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref525_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref525_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref525_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref525_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref70_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref70_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref70_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref70_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref795_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref795_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref795_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref795_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref86_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref86_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref86_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref86_k4": [
+       1563,
+       3125
+      ]
+     },
+     "shots_by_circuit": {
+      "B0_ref117_k1": 1562,
+      "B0_ref117_k2": 1562,
+      "B0_ref117_k3": 1562,
+      "B0_ref117_k4": 1562,
+      "B0_ref169_k1": 1562,
+      "B0_ref169_k2": 1562,
+      "B0_ref169_k3": 1562,
+      "B0_ref169_k4": 1562,
+      "B0_ref25_k1": 1562,
+      "B0_ref25_k2": 1562,
+      "B0_ref25_k3": 1562,
+      "B0_ref25_k4": 1562,
+      "B0_ref333_k1": 1562,
+      "B0_ref333_k2": 1562,
+      "B0_ref333_k3": 1562,
+      "B0_ref333_k4": 1562,
+      "B0_ref525_k1": 1562,
+      "B0_ref525_k2": 1562,
+      "B0_ref525_k3": 1562,
+      "B0_ref525_k4": 1562,
+      "B0_ref70_k1": 1562,
+      "B0_ref70_k2": 1562,
+      "B0_ref70_k3": 1562,
+      "B0_ref70_k4": 1562,
+      "B0_ref795_k1": 1562,
+      "B0_ref795_k2": 1562,
+      "B0_ref795_k3": 1562,
+      "B0_ref795_k4": 1562,
+      "B0_ref86_k1": 1562,
+      "B0_ref86_k2": 1562,
+      "B0_ref86_k3": 1562,
+      "B0_ref86_k4": 1562
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315",
+     "slot": "C4_PART_08"
+    }
+   ],
+   "slots": [
+    "C4_F4_B0b",
+    "C4_PART_08"
+   ]
+  },
+  "F4_B1a": {
+   "token": "C4_F4_B1a",
+   "kind": "s3quota",
+   "share": 0.75,
+   "scenario": "E7_0.10",
+   "family": "NAT-O0",
+   "sector": "B=1",
+   "tier": null,
+   "tier_reason": null,
+   "circuits": 12,
+   "total_shots": 99996,
+   "N_max": 67197,
+   "parts": 2,
+   "part_shots": [
+    50004,
+    49992
+   ],
+   "forced_parts": false,
+   "part_descriptors": [
+    {
+     "content": "frun",
+     "run": "F4_B1a",
+     "token": "C4_F4_B1a",
+     "scenario": "E7_0.10",
+     "sector": "B1",
+     "family": "NAT-O0",
+     "kind": "s3quota",
+     "tier": null,
+     "tier_reason": null,
+     "part": 1,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B1_ref27_k1": 8333,
+      "B1_ref27_k2": 8333,
+      "B1_ref27_k3": 8333,
+      "B1_ref27_k4": 8333,
+      "B1_ref29_k1": 8333,
+      "B1_ref29_k2": 8333,
+      "B1_ref29_k3": 8333,
+      "B1_ref29_k4": 8333,
+      "B1_ref57_k1": 8333,
+      "B1_ref57_k2": 8333,
+      "B1_ref57_k3": 8333,
+      "B1_ref57_k4": 8333
+     },
+     "plan_f010_by_circuit": {
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 29600,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 22800,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 41200
+     },
+     "ranges_by_circuit": {
+      "B1_ref27_k1": [
+       0,
+       4167
+      ],
+      "B1_ref27_k2": [
+       0,
+       4167
+      ],
+      "B1_ref27_k3": [
+       0,
+       4167
+      ],
+      "B1_ref27_k4": [
+       0,
+       4167
+      ],
+      "B1_ref29_k1": [
+       0,
+       4167
+      ],
+      "B1_ref29_k2": [
+       0,
+       4167
+      ],
+      "B1_ref29_k3": [
+       0,
+       4167
+      ],
+      "B1_ref29_k4": [
+       0,
+       4167
+      ],
+      "B1_ref57_k1": [
+       0,
+       4167
+      ],
+      "B1_ref57_k2": [
+       0,
+       4167
+      ],
+      "B1_ref57_k3": [
+       0,
+       4167
+      ],
+      "B1_ref57_k4": [
+       0,
+       4167
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref27_k1": 4167,
+      "B1_ref27_k2": 4167,
+      "B1_ref27_k3": 4167,
+      "B1_ref27_k4": 4167,
+      "B1_ref29_k1": 4167,
+      "B1_ref29_k2": 4167,
+      "B1_ref29_k3": 4167,
+      "B1_ref29_k4": 4167,
+      "B1_ref57_k1": 4167,
+      "B1_ref57_k2": 4167,
+      "B1_ref57_k3": 4167,
+      "B1_ref57_k4": 4167
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315"
+    },
+    {
+     "content": "frun",
+     "run": "F4_B1a",
+     "token": "C4_F4_B1a",
+     "scenario": "E7_0.10",
+     "sector": "B1",
+     "family": "NAT-O0",
+     "kind": "s3quota",
+     "tier": null,
+     "tier_reason": null,
+     "part": 2,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B1_ref27_k1": 8333,
+      "B1_ref27_k2": 8333,
+      "B1_ref27_k3": 8333,
+      "B1_ref27_k4": 8333,
+      "B1_ref29_k1": 8333,
+      "B1_ref29_k2": 8333,
+      "B1_ref29_k3": 8333,
+      "B1_ref29_k4": 8333,
+      "B1_ref57_k1": 8333,
+      "B1_ref57_k2": 8333,
+      "B1_ref57_k3": 8333,
+      "B1_ref57_k4": 8333
+     },
+     "plan_f010_by_circuit": {
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 29600,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 22800,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 41200
+     },
+     "ranges_by_circuit": {
+      "B1_ref27_k1": [
+       4167,
+       8333
+      ],
+      "B1_ref27_k2": [
+       4167,
+       8333
+      ],
+      "B1_ref27_k3": [
+       4167,
+       8333
+      ],
+      "B1_ref27_k4": [
+       4167,
+       8333
+      ],
+      "B1_ref29_k1": [
+       4167,
+       8333
+      ],
+      "B1_ref29_k2": [
+       4167,
+       8333
+      ],
+      "B1_ref29_k3": [
+       4167,
+       8333
+      ],
+      "B1_ref29_k4": [
+       4167,
+       8333
+      ],
+      "B1_ref57_k1": [
+       4167,
+       8333
+      ],
+      "B1_ref57_k2": [
+       4167,
+       8333
+      ],
+      "B1_ref57_k3": [
+       4167,
+       8333
+      ],
+      "B1_ref57_k4": [
+       4167,
+       8333
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref27_k1": 4166,
+      "B1_ref27_k2": 4166,
+      "B1_ref27_k3": 4166,
+      "B1_ref27_k4": 4166,
+      "B1_ref29_k1": 4166,
+      "B1_ref29_k2": 4166,
+      "B1_ref29_k3": 4166,
+      "B1_ref29_k4": 4166,
+      "B1_ref57_k1": 4166,
+      "B1_ref57_k2": 4166,
+      "B1_ref57_k3": 4166,
+      "B1_ref57_k4": 4166
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315",
+     "slot": "C4_PART_09"
+    }
+   ],
+   "slots": [
+    "C4_F4_B1a",
+    "C4_PART_09"
+   ]
+  },
+  "F4_B1b": {
+   "token": "C4_F4_B1b",
+   "kind": "s3quota",
+   "share": 0.75,
+   "scenario": "E7_0.10",
+   "family": "NAT-O0",
+   "sector": "B=1",
+   "tier": null,
+   "tier_reason": null,
+   "circuits": 12,
+   "total_shots": 99996,
+   "N_max": 67197,
+   "parts": 2,
+   "part_shots": [
+    50004,
+    49992
+   ],
+   "forced_parts": false,
+   "part_descriptors": [
+    {
+     "content": "frun",
+     "run": "F4_B1b",
+     "token": "C4_F4_B1b",
+     "scenario": "E7_0.10",
+     "sector": "B1",
+     "family": "NAT-O0",
+     "kind": "s3quota",
+     "tier": null,
+     "tier_reason": null,
+     "part": 1,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B1_ref27_k1": 8333,
+      "B1_ref27_k2": 8333,
+      "B1_ref27_k3": 8333,
+      "B1_ref27_k4": 8333,
+      "B1_ref29_k1": 8333,
+      "B1_ref29_k2": 8333,
+      "B1_ref29_k3": 8333,
+      "B1_ref29_k4": 8333,
+      "B1_ref57_k1": 8333,
+      "B1_ref57_k2": 8333,
+      "B1_ref57_k3": 8333,
+      "B1_ref57_k4": 8333
+     },
+     "plan_f010_by_circuit": {
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 29600,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 22800,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 41200
+     },
+     "ranges_by_circuit": {
+      "B1_ref27_k1": [
+       0,
+       4167
+      ],
+      "B1_ref27_k2": [
+       0,
+       4167
+      ],
+      "B1_ref27_k3": [
+       0,
+       4167
+      ],
+      "B1_ref27_k4": [
+       0,
+       4167
+      ],
+      "B1_ref29_k1": [
+       0,
+       4167
+      ],
+      "B1_ref29_k2": [
+       0,
+       4167
+      ],
+      "B1_ref29_k3": [
+       0,
+       4167
+      ],
+      "B1_ref29_k4": [
+       0,
+       4167
+      ],
+      "B1_ref57_k1": [
+       0,
+       4167
+      ],
+      "B1_ref57_k2": [
+       0,
+       4167
+      ],
+      "B1_ref57_k3": [
+       0,
+       4167
+      ],
+      "B1_ref57_k4": [
+       0,
+       4167
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref27_k1": 4167,
+      "B1_ref27_k2": 4167,
+      "B1_ref27_k3": 4167,
+      "B1_ref27_k4": 4167,
+      "B1_ref29_k1": 4167,
+      "B1_ref29_k2": 4167,
+      "B1_ref29_k3": 4167,
+      "B1_ref29_k4": 4167,
+      "B1_ref57_k1": 4167,
+      "B1_ref57_k2": 4167,
+      "B1_ref57_k3": 4167,
+      "B1_ref57_k4": 4167
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315"
+    },
+    {
+     "content": "frun",
+     "run": "F4_B1b",
+     "token": "C4_F4_B1b",
+     "scenario": "E7_0.10",
+     "sector": "B1",
+     "family": "NAT-O0",
+     "kind": "s3quota",
+     "tier": null,
+     "tier_reason": null,
+     "part": 2,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B1_ref27_k1": 8333,
+      "B1_ref27_k2": 8333,
+      "B1_ref27_k3": 8333,
+      "B1_ref27_k4": 8333,
+      "B1_ref29_k1": 8333,
+      "B1_ref29_k2": 8333,
+      "B1_ref29_k3": 8333,
+      "B1_ref29_k4": 8333,
+      "B1_ref57_k1": 8333,
+      "B1_ref57_k2": 8333,
+      "B1_ref57_k3": 8333,
+      "B1_ref57_k4": 8333
+     },
+     "plan_f010_by_circuit": {
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 29600,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 22800,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 41200
+     },
+     "ranges_by_circuit": {
+      "B1_ref27_k1": [
+       4167,
+       8333
+      ],
+      "B1_ref27_k2": [
+       4167,
+       8333
+      ],
+      "B1_ref27_k3": [
+       4167,
+       8333
+      ],
+      "B1_ref27_k4": [
+       4167,
+       8333
+      ],
+      "B1_ref29_k1": [
+       4167,
+       8333
+      ],
+      "B1_ref29_k2": [
+       4167,
+       8333
+      ],
+      "B1_ref29_k3": [
+       4167,
+       8333
+      ],
+      "B1_ref29_k4": [
+       4167,
+       8333
+      ],
+      "B1_ref57_k1": [
+       4167,
+       8333
+      ],
+      "B1_ref57_k2": [
+       4167,
+       8333
+      ],
+      "B1_ref57_k3": [
+       4167,
+       8333
+      ],
+      "B1_ref57_k4": [
+       4167,
+       8333
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref27_k1": 4166,
+      "B1_ref27_k2": 4166,
+      "B1_ref27_k3": 4166,
+      "B1_ref27_k4": 4166,
+      "B1_ref29_k1": 4166,
+      "B1_ref29_k2": 4166,
+      "B1_ref29_k3": 4166,
+      "B1_ref29_k4": 4166,
+      "B1_ref57_k1": 4166,
+      "B1_ref57_k2": 4166,
+      "B1_ref57_k3": 4166,
+      "B1_ref57_k4": 4166
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315",
+     "slot": "C4_PART_10"
+    }
+   ],
+   "slots": [
+    "C4_F4_B1b",
+    "C4_PART_10"
+   ]
+  },
+  "F5_B0": {
+   "token": "C4_F5_B0",
+   "kind": "plan",
+   "share": 0.6,
+   "scenario": "E7_0.07",
+   "family": "NAT-O0",
+   "sector": "B=0",
+   "tier": 0.1,
+   "tier_reason": "fixed by design (prompts/33 1.5: F5 at the f = 0.10 plan)",
+   "circuits": 32,
+   "total_shots": 34909,
+   "N_max": 53758,
+   "parts": 1,
+   "part_shots": [
+    34909
+   ],
+   "forced_parts": false,
+   "part_descriptors": [
+    {
+     "content": "frun",
+     "run": "F5_B0",
+     "token": "C4_F5_B0",
+     "scenario": "E7_0.07",
+     "sector": "B0",
+     "family": "NAT-O0",
+     "kind": "plan",
+     "tier": 0.1,
+     "tier_reason": "fixed by design (prompts/33 1.5: F5 at the f = 0.10 plan)",
+     "part": 1,
+     "parts": 1,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 1367,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 1367,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 1000,
+      "B0_ref25_k4": 17600,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 1367,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 1500,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 1700,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 1367,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 1500
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B0_ref117_k1": [
+       0,
+       267
+      ],
+      "B0_ref117_k2": [
+       0,
+       267
+      ],
+      "B0_ref117_k3": [
+       0,
+       267
+      ],
+      "B0_ref117_k4": [
+       0,
+       1367
+      ],
+      "B0_ref169_k1": [
+       0,
+       267
+      ],
+      "B0_ref169_k2": [
+       0,
+       267
+      ],
+      "B0_ref169_k3": [
+       0,
+       267
+      ],
+      "B0_ref169_k4": [
+       0,
+       1367
+      ],
+      "B0_ref25_k1": [
+       0,
+       267
+      ],
+      "B0_ref25_k2": [
+       0,
+       267
+      ],
+      "B0_ref25_k3": [
+       0,
+       1000
+      ],
+      "B0_ref25_k4": [
+       0,
+       17600
+      ],
+      "B0_ref333_k1": [
+       0,
+       267
+      ],
+      "B0_ref333_k2": [
+       0,
+       267
+      ],
+      "B0_ref333_k3": [
+       0,
+       267
+      ],
+      "B0_ref333_k4": [
+       0,
+       1367
+      ],
+      "B0_ref525_k1": [
+       0,
+       267
+      ],
+      "B0_ref525_k2": [
+       0,
+       267
+      ],
+      "B0_ref525_k3": [
+       0,
+       267
+      ],
+      "B0_ref525_k4": [
+       0,
+       1500
+      ],
+      "B0_ref70_k1": [
+       0,
+       267
+      ],
+      "B0_ref70_k2": [
+       0,
+       267
+      ],
+      "B0_ref70_k3": [
+       0,
+       267
+      ],
+      "B0_ref70_k4": [
+       0,
+       1700
+      ],
+      "B0_ref795_k1": [
+       0,
+       267
+      ],
+      "B0_ref795_k2": [
+       0,
+       267
+      ],
+      "B0_ref795_k3": [
+       0,
+       267
+      ],
+      "B0_ref795_k4": [
+       0,
+       1367
+      ],
+      "B0_ref86_k1": [
+       0,
+       267
+      ],
+      "B0_ref86_k2": [
+       0,
+       267
+      ],
+      "B0_ref86_k3": [
+       0,
+       267
+      ],
+      "B0_ref86_k4": [
+       0,
+       1500
+      ]
+     },
+     "shots_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 1367,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 1367,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 1000,
+      "B0_ref25_k4": 17600,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 1367,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 1500,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 1700,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 1367,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 1500
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315"
+    }
+   ],
+   "slots": [
+    "C4_F5_B0"
+   ]
+  },
+  "F5_B1": {
+   "token": "C4_F5_B1",
+   "kind": "plan",
+   "share": 0.6,
+   "scenario": "E7_0.07",
+   "family": "NAT-O0",
+   "sector": "B=1",
+   "tier": 0.1,
+   "tier_reason": "fixed by design (prompts/33 1.5: F5 at the f = 0.10 plan)",
+   "circuits": 12,
+   "total_shots": 99000,
+   "N_max": 53758,
+   "parts": 2,
+   "part_shots": [
+    49500,
+    49500
+   ],
+   "forced_parts": false,
+   "part_descriptors": [
+    {
+     "content": "frun",
+     "run": "F5_B1",
+     "token": "C4_F5_B1",
+     "scenario": "E7_0.07",
+     "sector": "B1",
+     "family": "NAT-O0",
+     "kind": "plan",
+     "tier": 0.1,
+     "tier_reason": "fixed by design (prompts/33 1.5: F5 at the f = 0.10 plan)",
+     "part": 1,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 29600,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 22800,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 41200
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B1_ref27_k1": [
+       0,
+       300
+      ],
+      "B1_ref27_k2": [
+       0,
+       300
+      ],
+      "B1_ref27_k3": [
+       0,
+       300
+      ],
+      "B1_ref27_k4": [
+       0,
+       14800
+      ],
+      "B1_ref29_k1": [
+       0,
+       300
+      ],
+      "B1_ref29_k2": [
+       0,
+       300
+      ],
+      "B1_ref29_k3": [
+       0,
+       300
+      ],
+      "B1_ref29_k4": [
+       0,
+       11400
+      ],
+      "B1_ref57_k1": [
+       0,
+       300
+      ],
+      "B1_ref57_k2": [
+       0,
+       300
+      ],
+      "B1_ref57_k3": [
+       0,
+       300
+      ],
+      "B1_ref57_k4": [
+       0,
+       20600
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref27_k1": 300,
+      "B1_ref27_k2": 300,
+      "B1_ref27_k3": 300,
+      "B1_ref27_k4": 14800,
+      "B1_ref29_k1": 300,
+      "B1_ref29_k2": 300,
+      "B1_ref29_k3": 300,
+      "B1_ref29_k4": 11400,
+      "B1_ref57_k1": 300,
+      "B1_ref57_k2": 300,
+      "B1_ref57_k3": 300,
+      "B1_ref57_k4": 20600
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315"
+    },
+    {
+     "content": "frun",
+     "run": "F5_B1",
+     "token": "C4_F5_B1",
+     "scenario": "E7_0.07",
+     "sector": "B1",
+     "family": "NAT-O0",
+     "kind": "plan",
+     "tier": 0.1,
+     "tier_reason": "fixed by design (prompts/33 1.5: F5 at the f = 0.10 plan)",
+     "part": 2,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 29600,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 22800,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 41200
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B1_ref27_k1": [
+       300,
+       600
+      ],
+      "B1_ref27_k2": [
+       300,
+       600
+      ],
+      "B1_ref27_k3": [
+       300,
+       600
+      ],
+      "B1_ref27_k4": [
+       14800,
+       29600
+      ],
+      "B1_ref29_k1": [
+       300,
+       600
+      ],
+      "B1_ref29_k2": [
+       300,
+       600
+      ],
+      "B1_ref29_k3": [
+       300,
+       600
+      ],
+      "B1_ref29_k4": [
+       11400,
+       22800
+      ],
+      "B1_ref57_k1": [
+       300,
+       600
+      ],
+      "B1_ref57_k2": [
+       300,
+       600
+      ],
+      "B1_ref57_k3": [
+       300,
+       600
+      ],
+      "B1_ref57_k4": [
+       20600,
+       41200
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref27_k1": 300,
+      "B1_ref27_k2": 300,
+      "B1_ref27_k3": 300,
+      "B1_ref27_k4": 14800,
+      "B1_ref29_k1": 300,
+      "B1_ref29_k2": 300,
+      "B1_ref29_k3": 300,
+      "B1_ref29_k4": 11400,
+      "B1_ref57_k1": 300,
+      "B1_ref57_k2": 300,
+      "B1_ref57_k3": 300,
+      "B1_ref57_k4": 20600
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315",
+     "slot": "C4_PART_11"
+    }
+   ],
+   "slots": [
+    "C4_F5_B1",
+    "C4_PART_11"
+   ]
+  },
+  "F6_B0": {
+   "token": "C4_F6_B0",
+   "kind": "plan",
+   "share": 0.6,
+   "scenario": "E5b",
+   "family": "NAT-O0",
+   "sector": "B=0",
+   "tier": 0.15,
+   "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E5b: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.1969 of f_hat_ideal",
+   "circuits": 32,
+   "total_shots": 27309,
+   "N_max": 53758,
+   "parts": 1,
+   "part_shots": [
+    27309
+   ],
+   "forced_parts": false,
+   "part_descriptors": [
+    {
+     "content": "frun",
+     "run": "F6_B0",
+     "token": "C4_F6_B0",
+     "scenario": "E5b",
+     "sector": "B0",
+     "family": "NAT-O0",
+     "kind": "plan",
+     "tier": 0.15,
+     "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E5b: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.1969 of f_hat_ideal",
+     "part": 1,
+     "parts": 1,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 1267,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 1267,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 10400,
+      "B0_ref25_k4": 1400,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 1267,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 1400,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 1500,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 1267,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 1400
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B0_ref117_k1": [
+       0,
+       267
+      ],
+      "B0_ref117_k2": [
+       0,
+       267
+      ],
+      "B0_ref117_k3": [
+       0,
+       267
+      ],
+      "B0_ref117_k4": [
+       0,
+       1267
+      ],
+      "B0_ref169_k1": [
+       0,
+       267
+      ],
+      "B0_ref169_k2": [
+       0,
+       267
+      ],
+      "B0_ref169_k3": [
+       0,
+       267
+      ],
+      "B0_ref169_k4": [
+       0,
+       1267
+      ],
+      "B0_ref25_k1": [
+       0,
+       267
+      ],
+      "B0_ref25_k2": [
+       0,
+       267
+      ],
+      "B0_ref25_k3": [
+       0,
+       10400
+      ],
+      "B0_ref25_k4": [
+       0,
+       1400
+      ],
+      "B0_ref333_k1": [
+       0,
+       267
+      ],
+      "B0_ref333_k2": [
+       0,
+       267
+      ],
+      "B0_ref333_k3": [
+       0,
+       267
+      ],
+      "B0_ref333_k4": [
+       0,
+       1267
+      ],
+      "B0_ref525_k1": [
+       0,
+       267
+      ],
+      "B0_ref525_k2": [
+       0,
+       267
+      ],
+      "B0_ref525_k3": [
+       0,
+       267
+      ],
+      "B0_ref525_k4": [
+       0,
+       1400
+      ],
+      "B0_ref70_k1": [
+       0,
+       267
+      ],
+      "B0_ref70_k2": [
+       0,
+       267
+      ],
+      "B0_ref70_k3": [
+       0,
+       267
+      ],
+      "B0_ref70_k4": [
+       0,
+       1500
+      ],
+      "B0_ref795_k1": [
+       0,
+       267
+      ],
+      "B0_ref795_k2": [
+       0,
+       267
+      ],
+      "B0_ref795_k3": [
+       0,
+       267
+      ],
+      "B0_ref795_k4": [
+       0,
+       1267
+      ],
+      "B0_ref86_k1": [
+       0,
+       267
+      ],
+      "B0_ref86_k2": [
+       0,
+       267
+      ],
+      "B0_ref86_k3": [
+       0,
+       267
+      ],
+      "B0_ref86_k4": [
+       0,
+       1400
+      ]
+     },
+     "shots_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 1267,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 1267,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 10400,
+      "B0_ref25_k4": 1400,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 1267,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 1400,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 1500,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 1267,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 1400
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315"
+    }
+   ],
+   "slots": [
+    "C4_F6_B0"
+   ]
+  },
+  "F6_B1": {
+   "token": "C4_F6_B1",
+   "kind": "plan",
+   "share": 0.6,
+   "scenario": "E5b",
+   "family": "NAT-O0",
+   "sector": "B=1",
+   "tier": 0.15,
+   "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E5b: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.1969 of f_hat_ideal",
+   "circuits": 12,
+   "total_shots": 67600,
+   "N_max": 53758,
+   "parts": 2,
+   "part_shots": [
+    33800,
+    33800
+   ],
+   "forced_parts": false,
+   "part_descriptors": [
+    {
+     "content": "frun",
+     "run": "F6_B1",
+     "token": "C4_F6_B1",
+     "scenario": "E5b",
+     "sector": "B1",
+     "family": "NAT-O0",
+     "kind": "plan",
+     "tier": 0.15,
+     "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E5b: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.1969 of f_hat_ideal",
+     "part": 1,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 19800,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 15000,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 27400
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B1_ref27_k1": [
+       0,
+       300
+      ],
+      "B1_ref27_k2": [
+       0,
+       300
+      ],
+      "B1_ref27_k3": [
+       0,
+       300
+      ],
+      "B1_ref27_k4": [
+       0,
+       9900
+      ],
+      "B1_ref29_k1": [
+       0,
+       300
+      ],
+      "B1_ref29_k2": [
+       0,
+       300
+      ],
+      "B1_ref29_k3": [
+       0,
+       300
+      ],
+      "B1_ref29_k4": [
+       0,
+       7500
+      ],
+      "B1_ref57_k1": [
+       0,
+       300
+      ],
+      "B1_ref57_k2": [
+       0,
+       300
+      ],
+      "B1_ref57_k3": [
+       0,
+       300
+      ],
+      "B1_ref57_k4": [
+       0,
+       13700
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref27_k1": 300,
+      "B1_ref27_k2": 300,
+      "B1_ref27_k3": 300,
+      "B1_ref27_k4": 9900,
+      "B1_ref29_k1": 300,
+      "B1_ref29_k2": 300,
+      "B1_ref29_k3": 300,
+      "B1_ref29_k4": 7500,
+      "B1_ref57_k1": 300,
+      "B1_ref57_k2": 300,
+      "B1_ref57_k3": 300,
+      "B1_ref57_k4": 13700
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315"
+    },
+    {
+     "content": "frun",
+     "run": "F6_B1",
+     "token": "C4_F6_B1",
+     "scenario": "E5b",
+     "sector": "B1",
+     "family": "NAT-O0",
+     "kind": "plan",
+     "tier": 0.15,
+     "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E5b: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.1969 of f_hat_ideal",
+     "part": 2,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 19800,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 15000,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 27400
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B1_ref27_k1": [
+       300,
+       600
+      ],
+      "B1_ref27_k2": [
+       300,
+       600
+      ],
+      "B1_ref27_k3": [
+       300,
+       600
+      ],
+      "B1_ref27_k4": [
+       9900,
+       19800
+      ],
+      "B1_ref29_k1": [
+       300,
+       600
+      ],
+      "B1_ref29_k2": [
+       300,
+       600
+      ],
+      "B1_ref29_k3": [
+       300,
+       600
+      ],
+      "B1_ref29_k4": [
+       7500,
+       15000
+      ],
+      "B1_ref57_k1": [
+       300,
+       600
+      ],
+      "B1_ref57_k2": [
+       300,
+       600
+      ],
+      "B1_ref57_k3": [
+       300,
+       600
+      ],
+      "B1_ref57_k4": [
+       13700,
+       27400
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref27_k1": 300,
+      "B1_ref27_k2": 300,
+      "B1_ref27_k3": 300,
+      "B1_ref27_k4": 9900,
+      "B1_ref29_k1": 300,
+      "B1_ref29_k2": 300,
+      "B1_ref29_k3": 300,
+      "B1_ref29_k4": 7500,
+      "B1_ref57_k1": 300,
+      "B1_ref57_k2": 300,
+      "B1_ref57_k3": 300,
+      "B1_ref57_k4": 13700
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315",
+     "slot": "C4_PART_12"
+    }
+   ],
+   "slots": [
+    "C4_F6_B1",
+    "C4_PART_12"
+   ]
+  },
+  "F7_B0": {
+   "token": "C4_F7_B0",
+   "kind": "plan",
+   "share": 0.6,
+   "scenario": "E1",
+   "family": "NAT-O2",
+   "sector": "B=0",
+   "tier": 0.15,
+   "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E1: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.1858 of f_hat_ideal",
+   "circuits": 32,
+   "total_shots": 27309,
+   "N_max": 53758,
+   "parts": 1,
+   "part_shots": [
+    27309
+   ],
+   "forced_parts": false,
+   "part_descriptors": [
+    {
+     "content": "frun",
+     "run": "F7_B0",
+     "token": "C4_F7_B0",
+     "scenario": "E1",
+     "sector": "B0",
+     "family": "NAT-O2",
+     "kind": "plan",
+     "tier": 0.15,
+     "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E1: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.1858 of f_hat_ideal",
+     "part": 1,
+     "parts": 1,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 1267,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 1267,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 10400,
+      "B0_ref25_k4": 1400,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 1267,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 1400,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 1500,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 1267,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 1400
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B0_ref117_k1": [
+       0,
+       267
+      ],
+      "B0_ref117_k2": [
+       0,
+       267
+      ],
+      "B0_ref117_k3": [
+       0,
+       267
+      ],
+      "B0_ref117_k4": [
+       0,
+       1267
+      ],
+      "B0_ref169_k1": [
+       0,
+       267
+      ],
+      "B0_ref169_k2": [
+       0,
+       267
+      ],
+      "B0_ref169_k3": [
+       0,
+       267
+      ],
+      "B0_ref169_k4": [
+       0,
+       1267
+      ],
+      "B0_ref25_k1": [
+       0,
+       267
+      ],
+      "B0_ref25_k2": [
+       0,
+       267
+      ],
+      "B0_ref25_k3": [
+       0,
+       10400
+      ],
+      "B0_ref25_k4": [
+       0,
+       1400
+      ],
+      "B0_ref333_k1": [
+       0,
+       267
+      ],
+      "B0_ref333_k2": [
+       0,
+       267
+      ],
+      "B0_ref333_k3": [
+       0,
+       267
+      ],
+      "B0_ref333_k4": [
+       0,
+       1267
+      ],
+      "B0_ref525_k1": [
+       0,
+       267
+      ],
+      "B0_ref525_k2": [
+       0,
+       267
+      ],
+      "B0_ref525_k3": [
+       0,
+       267
+      ],
+      "B0_ref525_k4": [
+       0,
+       1400
+      ],
+      "B0_ref70_k1": [
+       0,
+       267
+      ],
+      "B0_ref70_k2": [
+       0,
+       267
+      ],
+      "B0_ref70_k3": [
+       0,
+       267
+      ],
+      "B0_ref70_k4": [
+       0,
+       1500
+      ],
+      "B0_ref795_k1": [
+       0,
+       267
+      ],
+      "B0_ref795_k2": [
+       0,
+       267
+      ],
+      "B0_ref795_k3": [
+       0,
+       267
+      ],
+      "B0_ref795_k4": [
+       0,
+       1267
+      ],
+      "B0_ref86_k1": [
+       0,
+       267
+      ],
+      "B0_ref86_k2": [
+       0,
+       267
+      ],
+      "B0_ref86_k3": [
+       0,
+       267
+      ],
+      "B0_ref86_k4": [
+       0,
+       1400
+      ]
+     },
+     "shots_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 1267,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 1267,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 10400,
+      "B0_ref25_k4": 1400,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 1267,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 1400,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 1500,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 1267,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 1400
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315"
+    }
+   ],
+   "slots": [
+    "C4_F7_B0"
+   ]
+  },
+  "F7_B1": {
+   "token": "C4_F7_B1",
+   "kind": "plan",
+   "share": 0.6,
+   "scenario": "E1",
+   "family": "NAT-O2",
+   "sector": "B=1",
+   "tier": 0.15,
+   "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E1: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.1858 of f_hat_ideal",
+   "circuits": 12,
+   "total_shots": 67600,
+   "N_max": 53758,
+   "parts": 2,
+   "part_shots": [
+    33800,
+    33800
+   ],
+   "forced_parts": false,
+   "part_descriptors": [
+    {
+     "content": "frun",
+     "run": "F7_B1",
+     "token": "C4_F7_B1",
+     "scenario": "E1",
+     "sector": "B1",
+     "family": "NAT-O2",
+     "kind": "plan",
+     "tier": 0.15,
+     "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E1: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.1858 of f_hat_ideal",
+     "part": 1,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 19800,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 15000,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 27400
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B1_ref27_k1": [
+       0,
+       300
+      ],
+      "B1_ref27_k2": [
+       0,
+       300
+      ],
+      "B1_ref27_k3": [
+       0,
+       300
+      ],
+      "B1_ref27_k4": [
+       0,
+       9900
+      ],
+      "B1_ref29_k1": [
+       0,
+       300
+      ],
+      "B1_ref29_k2": [
+       0,
+       300
+      ],
+      "B1_ref29_k3": [
+       0,
+       300
+      ],
+      "B1_ref29_k4": [
+       0,
+       7500
+      ],
+      "B1_ref57_k1": [
+       0,
+       300
+      ],
+      "B1_ref57_k2": [
+       0,
+       300
+      ],
+      "B1_ref57_k3": [
+       0,
+       300
+      ],
+      "B1_ref57_k4": [
+       0,
+       13700
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref27_k1": 300,
+      "B1_ref27_k2": 300,
+      "B1_ref27_k3": 300,
+      "B1_ref27_k4": 9900,
+      "B1_ref29_k1": 300,
+      "B1_ref29_k2": 300,
+      "B1_ref29_k3": 300,
+      "B1_ref29_k4": 7500,
+      "B1_ref57_k1": 300,
+      "B1_ref57_k2": 300,
+      "B1_ref57_k3": 300,
+      "B1_ref57_k4": 13700
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315"
+    },
+    {
+     "content": "frun",
+     "run": "F7_B1",
+     "token": "C4_F7_B1",
+     "scenario": "E1",
+     "sector": "B1",
+     "family": "NAT-O2",
+     "kind": "plan",
+     "tier": 0.15,
+     "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E1: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.1858 of f_hat_ideal",
+     "part": 2,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 19800,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 15000,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 27400
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B1_ref27_k1": [
+       300,
+       600
+      ],
+      "B1_ref27_k2": [
+       300,
+       600
+      ],
+      "B1_ref27_k3": [
+       300,
+       600
+      ],
+      "B1_ref27_k4": [
+       9900,
+       19800
+      ],
+      "B1_ref29_k1": [
+       300,
+       600
+      ],
+      "B1_ref29_k2": [
+       300,
+       600
+      ],
+      "B1_ref29_k3": [
+       300,
+       600
+      ],
+      "B1_ref29_k4": [
+       7500,
+       15000
+      ],
+      "B1_ref57_k1": [
+       300,
+       600
+      ],
+      "B1_ref57_k2": [
+       300,
+       600
+      ],
+      "B1_ref57_k3": [
+       300,
+       600
+      ],
+      "B1_ref57_k4": [
+       13700,
+       27400
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref27_k1": 300,
+      "B1_ref27_k2": 300,
+      "B1_ref27_k3": 300,
+      "B1_ref27_k4": 9900,
+      "B1_ref29_k1": 300,
+      "B1_ref29_k2": 300,
+      "B1_ref29_k3": 300,
+      "B1_ref29_k4": 7500,
+      "B1_ref57_k1": 300,
+      "B1_ref57_k2": 300,
+      "B1_ref57_k3": 300,
+      "B1_ref57_k4": 13700
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315",
+     "slot": "C4_PART_13"
+    }
+   ],
+   "slots": [
+    "C4_F7_B1",
+    "C4_PART_13"
+   ]
+  },
+  "F8_B0a": {
+   "token": "C4_F8_B0a",
+   "kind": "s3quota",
+   "share": 0.75,
+   "scenario": "E8",
+   "family": "IR-L3-RZZ",
+   "sector": "B=0",
+   "tier": null,
+   "tier_reason": null,
+   "circuits": 32,
+   "total_shots": 100000,
+   "N_max": 67197,
+   "parts": 2,
+   "part_shots": [
+    50016,
+    49984
+   ],
+   "forced_parts": false,
+   "part_descriptors": [
+    {
+     "content": "frun",
+     "run": "F8_B0a",
+     "token": "C4_F8_B0a",
+     "scenario": "E8",
+     "sector": "B0",
+     "family": "IR-L3-RZZ",
+     "kind": "s3quota",
+     "tier": null,
+     "tier_reason": null,
+     "part": 1,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B0_ref117_k1": 3125,
+      "B0_ref117_k2": 3125,
+      "B0_ref117_k3": 3125,
+      "B0_ref117_k4": 3125,
+      "B0_ref169_k1": 3125,
+      "B0_ref169_k2": 3125,
+      "B0_ref169_k3": 3125,
+      "B0_ref169_k4": 3125,
+      "B0_ref25_k1": 3125,
+      "B0_ref25_k2": 3125,
+      "B0_ref25_k3": 3125,
+      "B0_ref25_k4": 3125,
+      "B0_ref333_k1": 3125,
+      "B0_ref333_k2": 3125,
+      "B0_ref333_k3": 3125,
+      "B0_ref333_k4": 3125,
+      "B0_ref525_k1": 3125,
+      "B0_ref525_k2": 3125,
+      "B0_ref525_k3": 3125,
+      "B0_ref525_k4": 3125,
+      "B0_ref70_k1": 3125,
+      "B0_ref70_k2": 3125,
+      "B0_ref70_k3": 3125,
+      "B0_ref70_k4": 3125,
+      "B0_ref795_k1": 3125,
+      "B0_ref795_k2": 3125,
+      "B0_ref795_k3": 3125,
+      "B0_ref795_k4": 3125,
+      "B0_ref86_k1": 3125,
+      "B0_ref86_k2": 3125,
+      "B0_ref86_k3": 3125,
+      "B0_ref86_k4": 3125
+     },
+     "plan_f010_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 1367,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 1367,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 1000,
+      "B0_ref25_k4": 17600,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 1367,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 1500,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 1700,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 1367,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 1500
+     },
+     "ranges_by_circuit": {
+      "B0_ref117_k1": [
+       0,
+       1563
+      ],
+      "B0_ref117_k2": [
+       0,
+       1563
+      ],
+      "B0_ref117_k3": [
+       0,
+       1563
+      ],
+      "B0_ref117_k4": [
+       0,
+       1563
+      ],
+      "B0_ref169_k1": [
+       0,
+       1563
+      ],
+      "B0_ref169_k2": [
+       0,
+       1563
+      ],
+      "B0_ref169_k3": [
+       0,
+       1563
+      ],
+      "B0_ref169_k4": [
+       0,
+       1563
+      ],
+      "B0_ref25_k1": [
+       0,
+       1563
+      ],
+      "B0_ref25_k2": [
+       0,
+       1563
+      ],
+      "B0_ref25_k3": [
+       0,
+       1563
+      ],
+      "B0_ref25_k4": [
+       0,
+       1563
+      ],
+      "B0_ref333_k1": [
+       0,
+       1563
+      ],
+      "B0_ref333_k2": [
+       0,
+       1563
+      ],
+      "B0_ref333_k3": [
+       0,
+       1563
+      ],
+      "B0_ref333_k4": [
+       0,
+       1563
+      ],
+      "B0_ref525_k1": [
+       0,
+       1563
+      ],
+      "B0_ref525_k2": [
+       0,
+       1563
+      ],
+      "B0_ref525_k3": [
+       0,
+       1563
+      ],
+      "B0_ref525_k4": [
+       0,
+       1563
+      ],
+      "B0_ref70_k1": [
+       0,
+       1563
+      ],
+      "B0_ref70_k2": [
+       0,
+       1563
+      ],
+      "B0_ref70_k3": [
+       0,
+       1563
+      ],
+      "B0_ref70_k4": [
+       0,
+       1563
+      ],
+      "B0_ref795_k1": [
+       0,
+       1563
+      ],
+      "B0_ref795_k2": [
+       0,
+       1563
+      ],
+      "B0_ref795_k3": [
+       0,
+       1563
+      ],
+      "B0_ref795_k4": [
+       0,
+       1563
+      ],
+      "B0_ref86_k1": [
+       0,
+       1563
+      ],
+      "B0_ref86_k2": [
+       0,
+       1563
+      ],
+      "B0_ref86_k3": [
+       0,
+       1563
+      ],
+      "B0_ref86_k4": [
+       0,
+       1563
+      ]
+     },
+     "shots_by_circuit": {
+      "B0_ref117_k1": 1563,
+      "B0_ref117_k2": 1563,
+      "B0_ref117_k3": 1563,
+      "B0_ref117_k4": 1563,
+      "B0_ref169_k1": 1563,
+      "B0_ref169_k2": 1563,
+      "B0_ref169_k3": 1563,
+      "B0_ref169_k4": 1563,
+      "B0_ref25_k1": 1563,
+      "B0_ref25_k2": 1563,
+      "B0_ref25_k3": 1563,
+      "B0_ref25_k4": 1563,
+      "B0_ref333_k1": 1563,
+      "B0_ref333_k2": 1563,
+      "B0_ref333_k3": 1563,
+      "B0_ref333_k4": 1563,
+      "B0_ref525_k1": 1563,
+      "B0_ref525_k2": 1563,
+      "B0_ref525_k3": 1563,
+      "B0_ref525_k4": 1563,
+      "B0_ref70_k1": 1563,
+      "B0_ref70_k2": 1563,
+      "B0_ref70_k3": 1563,
+      "B0_ref70_k4": 1563,
+      "B0_ref795_k1": 1563,
+      "B0_ref795_k2": 1563,
+      "B0_ref795_k3": 1563,
+      "B0_ref795_k4": 1563,
+      "B0_ref86_k1": 1563,
+      "B0_ref86_k2": 1563,
+      "B0_ref86_k3": 1563,
+      "B0_ref86_k4": 1563
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315"
+    },
+    {
+     "content": "frun",
+     "run": "F8_B0a",
+     "token": "C4_F8_B0a",
+     "scenario": "E8",
+     "sector": "B0",
+     "family": "IR-L3-RZZ",
+     "kind": "s3quota",
+     "tier": null,
+     "tier_reason": null,
+     "part": 2,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B0_ref117_k1": 3125,
+      "B0_ref117_k2": 3125,
+      "B0_ref117_k3": 3125,
+      "B0_ref117_k4": 3125,
+      "B0_ref169_k1": 3125,
+      "B0_ref169_k2": 3125,
+      "B0_ref169_k3": 3125,
+      "B0_ref169_k4": 3125,
+      "B0_ref25_k1": 3125,
+      "B0_ref25_k2": 3125,
+      "B0_ref25_k3": 3125,
+      "B0_ref25_k4": 3125,
+      "B0_ref333_k1": 3125,
+      "B0_ref333_k2": 3125,
+      "B0_ref333_k3": 3125,
+      "B0_ref333_k4": 3125,
+      "B0_ref525_k1": 3125,
+      "B0_ref525_k2": 3125,
+      "B0_ref525_k3": 3125,
+      "B0_ref525_k4": 3125,
+      "B0_ref70_k1": 3125,
+      "B0_ref70_k2": 3125,
+      "B0_ref70_k3": 3125,
+      "B0_ref70_k4": 3125,
+      "B0_ref795_k1": 3125,
+      "B0_ref795_k2": 3125,
+      "B0_ref795_k3": 3125,
+      "B0_ref795_k4": 3125,
+      "B0_ref86_k1": 3125,
+      "B0_ref86_k2": 3125,
+      "B0_ref86_k3": 3125,
+      "B0_ref86_k4": 3125
+     },
+     "plan_f010_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 1367,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 1367,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 1000,
+      "B0_ref25_k4": 17600,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 1367,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 1500,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 1700,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 1367,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 1500
+     },
+     "ranges_by_circuit": {
+      "B0_ref117_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref117_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref117_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref117_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref169_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref169_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref169_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref169_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref25_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref25_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref25_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref25_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref333_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref333_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref333_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref333_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref525_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref525_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref525_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref525_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref70_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref70_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref70_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref70_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref795_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref795_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref795_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref795_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref86_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref86_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref86_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref86_k4": [
+       1563,
+       3125
+      ]
+     },
+     "shots_by_circuit": {
+      "B0_ref117_k1": 1562,
+      "B0_ref117_k2": 1562,
+      "B0_ref117_k3": 1562,
+      "B0_ref117_k4": 1562,
+      "B0_ref169_k1": 1562,
+      "B0_ref169_k2": 1562,
+      "B0_ref169_k3": 1562,
+      "B0_ref169_k4": 1562,
+      "B0_ref25_k1": 1562,
+      "B0_ref25_k2": 1562,
+      "B0_ref25_k3": 1562,
+      "B0_ref25_k4": 1562,
+      "B0_ref333_k1": 1562,
+      "B0_ref333_k2": 1562,
+      "B0_ref333_k3": 1562,
+      "B0_ref333_k4": 1562,
+      "B0_ref525_k1": 1562,
+      "B0_ref525_k2": 1562,
+      "B0_ref525_k3": 1562,
+      "B0_ref525_k4": 1562,
+      "B0_ref70_k1": 1562,
+      "B0_ref70_k2": 1562,
+      "B0_ref70_k3": 1562,
+      "B0_ref70_k4": 1562,
+      "B0_ref795_k1": 1562,
+      "B0_ref795_k2": 1562,
+      "B0_ref795_k3": 1562,
+      "B0_ref795_k4": 1562,
+      "B0_ref86_k1": 1562,
+      "B0_ref86_k2": 1562,
+      "B0_ref86_k3": 1562,
+      "B0_ref86_k4": 1562
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315",
+     "slot": "C4_PART_14"
+    }
+   ],
+   "slots": [
+    "C4_F8_B0a",
+    "C4_PART_14"
+   ]
+  },
+  "F8_B0b": {
+   "token": "C4_F8_B0b",
+   "kind": "s3quota",
+   "share": 0.75,
+   "scenario": "E8",
+   "family": "IR-L3-RZZ",
+   "sector": "B=0",
+   "tier": null,
+   "tier_reason": null,
+   "circuits": 32,
+   "total_shots": 100000,
+   "N_max": 67197,
+   "parts": 2,
+   "part_shots": [
+    50016,
+    49984
+   ],
+   "forced_parts": false,
+   "part_descriptors": [
+    {
+     "content": "frun",
+     "run": "F8_B0b",
+     "token": "C4_F8_B0b",
+     "scenario": "E8",
+     "sector": "B0",
+     "family": "IR-L3-RZZ",
+     "kind": "s3quota",
+     "tier": null,
+     "tier_reason": null,
+     "part": 1,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B0_ref117_k1": 3125,
+      "B0_ref117_k2": 3125,
+      "B0_ref117_k3": 3125,
+      "B0_ref117_k4": 3125,
+      "B0_ref169_k1": 3125,
+      "B0_ref169_k2": 3125,
+      "B0_ref169_k3": 3125,
+      "B0_ref169_k4": 3125,
+      "B0_ref25_k1": 3125,
+      "B0_ref25_k2": 3125,
+      "B0_ref25_k3": 3125,
+      "B0_ref25_k4": 3125,
+      "B0_ref333_k1": 3125,
+      "B0_ref333_k2": 3125,
+      "B0_ref333_k3": 3125,
+      "B0_ref333_k4": 3125,
+      "B0_ref525_k1": 3125,
+      "B0_ref525_k2": 3125,
+      "B0_ref525_k3": 3125,
+      "B0_ref525_k4": 3125,
+      "B0_ref70_k1": 3125,
+      "B0_ref70_k2": 3125,
+      "B0_ref70_k3": 3125,
+      "B0_ref70_k4": 3125,
+      "B0_ref795_k1": 3125,
+      "B0_ref795_k2": 3125,
+      "B0_ref795_k3": 3125,
+      "B0_ref795_k4": 3125,
+      "B0_ref86_k1": 3125,
+      "B0_ref86_k2": 3125,
+      "B0_ref86_k3": 3125,
+      "B0_ref86_k4": 3125
+     },
+     "plan_f010_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 1367,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 1367,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 1000,
+      "B0_ref25_k4": 17600,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 1367,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 1500,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 1700,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 1367,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 1500
+     },
+     "ranges_by_circuit": {
+      "B0_ref117_k1": [
+       0,
+       1563
+      ],
+      "B0_ref117_k2": [
+       0,
+       1563
+      ],
+      "B0_ref117_k3": [
+       0,
+       1563
+      ],
+      "B0_ref117_k4": [
+       0,
+       1563
+      ],
+      "B0_ref169_k1": [
+       0,
+       1563
+      ],
+      "B0_ref169_k2": [
+       0,
+       1563
+      ],
+      "B0_ref169_k3": [
+       0,
+       1563
+      ],
+      "B0_ref169_k4": [
+       0,
+       1563
+      ],
+      "B0_ref25_k1": [
+       0,
+       1563
+      ],
+      "B0_ref25_k2": [
+       0,
+       1563
+      ],
+      "B0_ref25_k3": [
+       0,
+       1563
+      ],
+      "B0_ref25_k4": [
+       0,
+       1563
+      ],
+      "B0_ref333_k1": [
+       0,
+       1563
+      ],
+      "B0_ref333_k2": [
+       0,
+       1563
+      ],
+      "B0_ref333_k3": [
+       0,
+       1563
+      ],
+      "B0_ref333_k4": [
+       0,
+       1563
+      ],
+      "B0_ref525_k1": [
+       0,
+       1563
+      ],
+      "B0_ref525_k2": [
+       0,
+       1563
+      ],
+      "B0_ref525_k3": [
+       0,
+       1563
+      ],
+      "B0_ref525_k4": [
+       0,
+       1563
+      ],
+      "B0_ref70_k1": [
+       0,
+       1563
+      ],
+      "B0_ref70_k2": [
+       0,
+       1563
+      ],
+      "B0_ref70_k3": [
+       0,
+       1563
+      ],
+      "B0_ref70_k4": [
+       0,
+       1563
+      ],
+      "B0_ref795_k1": [
+       0,
+       1563
+      ],
+      "B0_ref795_k2": [
+       0,
+       1563
+      ],
+      "B0_ref795_k3": [
+       0,
+       1563
+      ],
+      "B0_ref795_k4": [
+       0,
+       1563
+      ],
+      "B0_ref86_k1": [
+       0,
+       1563
+      ],
+      "B0_ref86_k2": [
+       0,
+       1563
+      ],
+      "B0_ref86_k3": [
+       0,
+       1563
+      ],
+      "B0_ref86_k4": [
+       0,
+       1563
+      ]
+     },
+     "shots_by_circuit": {
+      "B0_ref117_k1": 1563,
+      "B0_ref117_k2": 1563,
+      "B0_ref117_k3": 1563,
+      "B0_ref117_k4": 1563,
+      "B0_ref169_k1": 1563,
+      "B0_ref169_k2": 1563,
+      "B0_ref169_k3": 1563,
+      "B0_ref169_k4": 1563,
+      "B0_ref25_k1": 1563,
+      "B0_ref25_k2": 1563,
+      "B0_ref25_k3": 1563,
+      "B0_ref25_k4": 1563,
+      "B0_ref333_k1": 1563,
+      "B0_ref333_k2": 1563,
+      "B0_ref333_k3": 1563,
+      "B0_ref333_k4": 1563,
+      "B0_ref525_k1": 1563,
+      "B0_ref525_k2": 1563,
+      "B0_ref525_k3": 1563,
+      "B0_ref525_k4": 1563,
+      "B0_ref70_k1": 1563,
+      "B0_ref70_k2": 1563,
+      "B0_ref70_k3": 1563,
+      "B0_ref70_k4": 1563,
+      "B0_ref795_k1": 1563,
+      "B0_ref795_k2": 1563,
+      "B0_ref795_k3": 1563,
+      "B0_ref795_k4": 1563,
+      "B0_ref86_k1": 1563,
+      "B0_ref86_k2": 1563,
+      "B0_ref86_k3": 1563,
+      "B0_ref86_k4": 1563
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315"
+    },
+    {
+     "content": "frun",
+     "run": "F8_B0b",
+     "token": "C4_F8_B0b",
+     "scenario": "E8",
+     "sector": "B0",
+     "family": "IR-L3-RZZ",
+     "kind": "s3quota",
+     "tier": null,
+     "tier_reason": null,
+     "part": 2,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B0_ref117_k1": 3125,
+      "B0_ref117_k2": 3125,
+      "B0_ref117_k3": 3125,
+      "B0_ref117_k4": 3125,
+      "B0_ref169_k1": 3125,
+      "B0_ref169_k2": 3125,
+      "B0_ref169_k3": 3125,
+      "B0_ref169_k4": 3125,
+      "B0_ref25_k1": 3125,
+      "B0_ref25_k2": 3125,
+      "B0_ref25_k3": 3125,
+      "B0_ref25_k4": 3125,
+      "B0_ref333_k1": 3125,
+      "B0_ref333_k2": 3125,
+      "B0_ref333_k3": 3125,
+      "B0_ref333_k4": 3125,
+      "B0_ref525_k1": 3125,
+      "B0_ref525_k2": 3125,
+      "B0_ref525_k3": 3125,
+      "B0_ref525_k4": 3125,
+      "B0_ref70_k1": 3125,
+      "B0_ref70_k2": 3125,
+      "B0_ref70_k3": 3125,
+      "B0_ref70_k4": 3125,
+      "B0_ref795_k1": 3125,
+      "B0_ref795_k2": 3125,
+      "B0_ref795_k3": 3125,
+      "B0_ref795_k4": 3125,
+      "B0_ref86_k1": 3125,
+      "B0_ref86_k2": 3125,
+      "B0_ref86_k3": 3125,
+      "B0_ref86_k4": 3125
+     },
+     "plan_f010_by_circuit": {
+      "B0_ref117_k1": 267,
+      "B0_ref117_k2": 267,
+      "B0_ref117_k3": 267,
+      "B0_ref117_k4": 1367,
+      "B0_ref169_k1": 267,
+      "B0_ref169_k2": 267,
+      "B0_ref169_k3": 267,
+      "B0_ref169_k4": 1367,
+      "B0_ref25_k1": 267,
+      "B0_ref25_k2": 267,
+      "B0_ref25_k3": 1000,
+      "B0_ref25_k4": 17600,
+      "B0_ref333_k1": 267,
+      "B0_ref333_k2": 267,
+      "B0_ref333_k3": 267,
+      "B0_ref333_k4": 1367,
+      "B0_ref525_k1": 267,
+      "B0_ref525_k2": 267,
+      "B0_ref525_k3": 267,
+      "B0_ref525_k4": 1500,
+      "B0_ref70_k1": 267,
+      "B0_ref70_k2": 267,
+      "B0_ref70_k3": 267,
+      "B0_ref70_k4": 1700,
+      "B0_ref795_k1": 267,
+      "B0_ref795_k2": 267,
+      "B0_ref795_k3": 267,
+      "B0_ref795_k4": 1367,
+      "B0_ref86_k1": 267,
+      "B0_ref86_k2": 267,
+      "B0_ref86_k3": 267,
+      "B0_ref86_k4": 1500
+     },
+     "ranges_by_circuit": {
+      "B0_ref117_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref117_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref117_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref117_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref169_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref169_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref169_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref169_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref25_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref25_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref25_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref25_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref333_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref333_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref333_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref333_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref525_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref525_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref525_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref525_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref70_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref70_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref70_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref70_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref795_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref795_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref795_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref795_k4": [
+       1563,
+       3125
+      ],
+      "B0_ref86_k1": [
+       1563,
+       3125
+      ],
+      "B0_ref86_k2": [
+       1563,
+       3125
+      ],
+      "B0_ref86_k3": [
+       1563,
+       3125
+      ],
+      "B0_ref86_k4": [
+       1563,
+       3125
+      ]
+     },
+     "shots_by_circuit": {
+      "B0_ref117_k1": 1562,
+      "B0_ref117_k2": 1562,
+      "B0_ref117_k3": 1562,
+      "B0_ref117_k4": 1562,
+      "B0_ref169_k1": 1562,
+      "B0_ref169_k2": 1562,
+      "B0_ref169_k3": 1562,
+      "B0_ref169_k4": 1562,
+      "B0_ref25_k1": 1562,
+      "B0_ref25_k2": 1562,
+      "B0_ref25_k3": 1562,
+      "B0_ref25_k4": 1562,
+      "B0_ref333_k1": 1562,
+      "B0_ref333_k2": 1562,
+      "B0_ref333_k3": 1562,
+      "B0_ref333_k4": 1562,
+      "B0_ref525_k1": 1562,
+      "B0_ref525_k2": 1562,
+      "B0_ref525_k3": 1562,
+      "B0_ref525_k4": 1562,
+      "B0_ref70_k1": 1562,
+      "B0_ref70_k2": 1562,
+      "B0_ref70_k3": 1562,
+      "B0_ref70_k4": 1562,
+      "B0_ref795_k1": 1562,
+      "B0_ref795_k2": 1562,
+      "B0_ref795_k3": 1562,
+      "B0_ref795_k4": 1562,
+      "B0_ref86_k1": 1562,
+      "B0_ref86_k2": 1562,
+      "B0_ref86_k3": 1562,
+      "B0_ref86_k4": 1562
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315",
+     "slot": "C4_PART_15"
+    }
+   ],
+   "slots": [
+    "C4_F8_B0b",
+    "C4_PART_15"
+   ]
+  },
+  "F8_B1a": {
+   "token": "C4_F8_B1a",
+   "kind": "s3quota",
+   "share": 0.75,
+   "scenario": "E8",
+   "family": "IR-L3-RZZ",
+   "sector": "B=1",
+   "tier": null,
+   "tier_reason": null,
+   "circuits": 12,
+   "total_shots": 99996,
+   "N_max": 67197,
+   "parts": 2,
+   "part_shots": [
+    50004,
+    49992
+   ],
+   "forced_parts": false,
+   "part_descriptors": [
+    {
+     "content": "frun",
+     "run": "F8_B1a",
+     "token": "C4_F8_B1a",
+     "scenario": "E8",
+     "sector": "B1",
+     "family": "IR-L3-RZZ",
+     "kind": "s3quota",
+     "tier": null,
+     "tier_reason": null,
+     "part": 1,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B1_ref27_k1": 8333,
+      "B1_ref27_k2": 8333,
+      "B1_ref27_k3": 8333,
+      "B1_ref27_k4": 8333,
+      "B1_ref29_k1": 8333,
+      "B1_ref29_k2": 8333,
+      "B1_ref29_k3": 8333,
+      "B1_ref29_k4": 8333,
+      "B1_ref57_k1": 8333,
+      "B1_ref57_k2": 8333,
+      "B1_ref57_k3": 8333,
+      "B1_ref57_k4": 8333
+     },
+     "plan_f010_by_circuit": {
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 29600,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 22800,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 41200
+     },
+     "ranges_by_circuit": {
+      "B1_ref27_k1": [
+       0,
+       4167
+      ],
+      "B1_ref27_k2": [
+       0,
+       4167
+      ],
+      "B1_ref27_k3": [
+       0,
+       4167
+      ],
+      "B1_ref27_k4": [
+       0,
+       4167
+      ],
+      "B1_ref29_k1": [
+       0,
+       4167
+      ],
+      "B1_ref29_k2": [
+       0,
+       4167
+      ],
+      "B1_ref29_k3": [
+       0,
+       4167
+      ],
+      "B1_ref29_k4": [
+       0,
+       4167
+      ],
+      "B1_ref57_k1": [
+       0,
+       4167
+      ],
+      "B1_ref57_k2": [
+       0,
+       4167
+      ],
+      "B1_ref57_k3": [
+       0,
+       4167
+      ],
+      "B1_ref57_k4": [
+       0,
+       4167
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref27_k1": 4167,
+      "B1_ref27_k2": 4167,
+      "B1_ref27_k3": 4167,
+      "B1_ref27_k4": 4167,
+      "B1_ref29_k1": 4167,
+      "B1_ref29_k2": 4167,
+      "B1_ref29_k3": 4167,
+      "B1_ref29_k4": 4167,
+      "B1_ref57_k1": 4167,
+      "B1_ref57_k2": 4167,
+      "B1_ref57_k3": 4167,
+      "B1_ref57_k4": 4167
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315"
+    },
+    {
+     "content": "frun",
+     "run": "F8_B1a",
+     "token": "C4_F8_B1a",
+     "scenario": "E8",
+     "sector": "B1",
+     "family": "IR-L3-RZZ",
+     "kind": "s3quota",
+     "tier": null,
+     "tier_reason": null,
+     "part": 2,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B1_ref27_k1": 8333,
+      "B1_ref27_k2": 8333,
+      "B1_ref27_k3": 8333,
+      "B1_ref27_k4": 8333,
+      "B1_ref29_k1": 8333,
+      "B1_ref29_k2": 8333,
+      "B1_ref29_k3": 8333,
+      "B1_ref29_k4": 8333,
+      "B1_ref57_k1": 8333,
+      "B1_ref57_k2": 8333,
+      "B1_ref57_k3": 8333,
+      "B1_ref57_k4": 8333
+     },
+     "plan_f010_by_circuit": {
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 29600,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 22800,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 41200
+     },
+     "ranges_by_circuit": {
+      "B1_ref27_k1": [
+       4167,
+       8333
+      ],
+      "B1_ref27_k2": [
+       4167,
+       8333
+      ],
+      "B1_ref27_k3": [
+       4167,
+       8333
+      ],
+      "B1_ref27_k4": [
+       4167,
+       8333
+      ],
+      "B1_ref29_k1": [
+       4167,
+       8333
+      ],
+      "B1_ref29_k2": [
+       4167,
+       8333
+      ],
+      "B1_ref29_k3": [
+       4167,
+       8333
+      ],
+      "B1_ref29_k4": [
+       4167,
+       8333
+      ],
+      "B1_ref57_k1": [
+       4167,
+       8333
+      ],
+      "B1_ref57_k2": [
+       4167,
+       8333
+      ],
+      "B1_ref57_k3": [
+       4167,
+       8333
+      ],
+      "B1_ref57_k4": [
+       4167,
+       8333
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref27_k1": 4166,
+      "B1_ref27_k2": 4166,
+      "B1_ref27_k3": 4166,
+      "B1_ref27_k4": 4166,
+      "B1_ref29_k1": 4166,
+      "B1_ref29_k2": 4166,
+      "B1_ref29_k3": 4166,
+      "B1_ref29_k4": 4166,
+      "B1_ref57_k1": 4166,
+      "B1_ref57_k2": 4166,
+      "B1_ref57_k3": 4166,
+      "B1_ref57_k4": 4166
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315",
+     "slot": "C4_PART_16"
+    }
+   ],
+   "slots": [
+    "C4_F8_B1a",
+    "C4_PART_16"
+   ]
+  },
+  "F8_B1b": {
+   "token": "C4_F8_B1b",
+   "kind": "s3quota",
+   "share": 0.75,
+   "scenario": "E8",
+   "family": "IR-L3-RZZ",
+   "sector": "B=1",
+   "tier": null,
+   "tier_reason": null,
+   "circuits": 12,
+   "total_shots": 99996,
+   "N_max": 67197,
+   "parts": 2,
+   "part_shots": [
+    50004,
+    49992
+   ],
+   "forced_parts": false,
+   "part_descriptors": [
+    {
+     "content": "frun",
+     "run": "F8_B1b",
+     "token": "C4_F8_B1b",
+     "scenario": "E8",
+     "sector": "B1",
+     "family": "IR-L3-RZZ",
+     "kind": "s3quota",
+     "tier": null,
+     "tier_reason": null,
+     "part": 1,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B1_ref27_k1": 8333,
+      "B1_ref27_k2": 8333,
+      "B1_ref27_k3": 8333,
+      "B1_ref27_k4": 8333,
+      "B1_ref29_k1": 8333,
+      "B1_ref29_k2": 8333,
+      "B1_ref29_k3": 8333,
+      "B1_ref29_k4": 8333,
+      "B1_ref57_k1": 8333,
+      "B1_ref57_k2": 8333,
+      "B1_ref57_k3": 8333,
+      "B1_ref57_k4": 8333
+     },
+     "plan_f010_by_circuit": {
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 29600,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 22800,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 41200
+     },
+     "ranges_by_circuit": {
+      "B1_ref27_k1": [
+       0,
+       4167
+      ],
+      "B1_ref27_k2": [
+       0,
+       4167
+      ],
+      "B1_ref27_k3": [
+       0,
+       4167
+      ],
+      "B1_ref27_k4": [
+       0,
+       4167
+      ],
+      "B1_ref29_k1": [
+       0,
+       4167
+      ],
+      "B1_ref29_k2": [
+       0,
+       4167
+      ],
+      "B1_ref29_k3": [
+       0,
+       4167
+      ],
+      "B1_ref29_k4": [
+       0,
+       4167
+      ],
+      "B1_ref57_k1": [
+       0,
+       4167
+      ],
+      "B1_ref57_k2": [
+       0,
+       4167
+      ],
+      "B1_ref57_k3": [
+       0,
+       4167
+      ],
+      "B1_ref57_k4": [
+       0,
+       4167
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref27_k1": 4167,
+      "B1_ref27_k2": 4167,
+      "B1_ref27_k3": 4167,
+      "B1_ref27_k4": 4167,
+      "B1_ref29_k1": 4167,
+      "B1_ref29_k2": 4167,
+      "B1_ref29_k3": 4167,
+      "B1_ref29_k4": 4167,
+      "B1_ref57_k1": 4167,
+      "B1_ref57_k2": 4167,
+      "B1_ref57_k3": 4167,
+      "B1_ref57_k4": 4167
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315"
+    },
+    {
+     "content": "frun",
+     "run": "F8_B1b",
+     "token": "C4_F8_B1b",
+     "scenario": "E8",
+     "sector": "B1",
+     "family": "IR-L3-RZZ",
+     "kind": "s3quota",
+     "tier": null,
+     "tier_reason": null,
+     "part": 2,
+     "parts": 2,
+     "chunk": 1428,
+     "plan_shots_by_circuit": {
+      "B1_ref27_k1": 8333,
+      "B1_ref27_k2": 8333,
+      "B1_ref27_k3": 8333,
+      "B1_ref27_k4": 8333,
+      "B1_ref29_k1": 8333,
+      "B1_ref29_k2": 8333,
+      "B1_ref29_k3": 8333,
+      "B1_ref29_k4": 8333,
+      "B1_ref57_k1": 8333,
+      "B1_ref57_k2": 8333,
+      "B1_ref57_k3": 8333,
+      "B1_ref57_k4": 8333
+     },
+     "plan_f010_by_circuit": {
+      "B1_ref27_k1": 600,
+      "B1_ref27_k2": 600,
+      "B1_ref27_k3": 600,
+      "B1_ref27_k4": 29600,
+      "B1_ref29_k1": 600,
+      "B1_ref29_k2": 600,
+      "B1_ref29_k3": 600,
+      "B1_ref29_k4": 22800,
+      "B1_ref57_k1": 600,
+      "B1_ref57_k2": 600,
+      "B1_ref57_k3": 600,
+      "B1_ref57_k4": 41200
+     },
+     "ranges_by_circuit": {
+      "B1_ref27_k1": [
+       4167,
+       8333
+      ],
+      "B1_ref27_k2": [
+       4167,
+       8333
+      ],
+      "B1_ref27_k3": [
+       4167,
+       8333
+      ],
+      "B1_ref27_k4": [
+       4167,
+       8333
+      ],
+      "B1_ref29_k1": [
+       4167,
+       8333
+      ],
+      "B1_ref29_k2": [
+       4167,
+       8333
+      ],
+      "B1_ref29_k3": [
+       4167,
+       8333
+      ],
+      "B1_ref29_k4": [
+       4167,
+       8333
+      ],
+      "B1_ref57_k1": [
+       4167,
+       8333
+      ],
+      "B1_ref57_k2": [
+       4167,
+       8333
+      ],
+      "B1_ref57_k3": [
+       4167,
+       8333
+      ],
+      "B1_ref57_k4": [
+       4167,
+       8333
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref27_k1": 4166,
+      "B1_ref27_k2": 4166,
+      "B1_ref27_k3": 4166,
+      "B1_ref27_k4": 4166,
+      "B1_ref29_k1": 4166,
+      "B1_ref29_k2": 4166,
+      "B1_ref29_k3": 4166,
+      "B1_ref29_k4": 4166,
+      "B1_ref57_k1": 4166,
+      "B1_ref57_k2": 4166,
+      "B1_ref57_k3": 4166,
+      "B1_ref57_k4": 4166
+     },
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/C4_FCELLS_A.json job 59570315",
+     "slot": "C4_PART_17"
+    }
+   ],
+   "slots": [
+    "C4_F8_B1b",
+    "C4_PART_17"
+   ]
+  }
+ },
+ "fcells": {
+  "dropped": [
+   [
+    "E4",
+    "NAT-O1"
+   ],
+   [
+    "E5a",
+    "NAT-O1"
+   ],
+   [
+    "E5b",
+    "NAT-O1"
+   ],
+   [
+    "E5c",
+    "NAT-O1"
+   ],
+   [
+    "E1",
+    "NAT-O2"
+   ],
+   [
+    "E2",
+    "NAT-O2"
+   ],
+   [
+    "E3",
+    "NAT-O2"
+   ],
+   [
+    "E4",
+    "NAT-O2"
+   ],
+   [
+    "E5a",
+    "NAT-O2"
+   ],
+   [
+    "E5b",
+    "NAT-O2"
+   ],
+   [
+    "E5c",
+    "NAT-O2"
+   ],
+   [
+    "E1",
+    "NAT-O3"
+   ],
+   [
+    "E2",
+    "NAT-O3"
+   ],
+   [
+    "E3",
+    "NAT-O3"
+   ],
+   [
+    "E4",
+    "NAT-O3"
+   ],
+   [
+    "E5a",
+    "NAT-O3"
+   ],
+   [
+    "E5b",
+    "NAT-O3"
+   ],
+   [
+    "E5c",
+    "NAT-O3"
+   ],
+   [
+    "E1",
+    "NAT-O4"
+   ],
+   [
+    "E2",
+    "NAT-O4"
+   ],
+   [
+    "E3",
+    "NAT-O4"
+   ],
+   [
+    "E4",
+    "NAT-O4"
+   ],
+   [
+    "E5a",
+    "NAT-O4"
+   ],
+   [
+    "E5b",
+    "NAT-O4"
+   ],
+   [
+    "E5c",
+    "NAT-O4"
+   ],
+   [
+    "E1",
+    "NAT-O6"
+   ],
+   [
+    "E2",
+    "NAT-O6"
+   ],
+   [
+    "E3",
+    "NAT-O6"
+   ],
+   [
+    "E4",
+    "NAT-O6"
+   ],
+   [
+    "E5a",
+    "NAT-O6"
+   ],
+   [
+    "E5b",
+    "NAT-O6"
+   ],
+   [
+    "E5c",
+    "NAT-O6"
+   ]
+  ],
+  "cells_per_slot": 33,
+  "slots": 1
+ },
+ "cv3": {
+  "F1_B1": {
+   "N_eq": 5700,
+   "k5_circuits": 3,
+   "shots": 85500,
+   "N_max": 67197,
+   "fits_one_slot": false,
+   "status": "not_evaluated: N_eq x (12 + 3) = 85500 shots exceed one slot's N_max 67197"
+  },
+  "F2_B1": {
+   "N_eq": 5700,
+   "k5_circuits": 3,
+   "shots": 85500,
+   "N_max": 67197,
+   "fits_one_slot": false,
+   "status": "not_evaluated: N_eq x (12 + 3) = 85500 shots exceed one slot's N_max 67197"
+  },
+  "F3_B0": {
+   "N_eq": 2000,
+   "k5_circuits": 8,
+   "shots": 80000,
+   "N_max": 67197,
+   "fits_one_slot": false,
+   "status": "not_evaluated: N_eq x (32 + 8) = 80000 shots exceed one slot's N_max 67197"
+  },
+  "F3_B1": {
+   "N_eq": 16200,
+   "k5_circuits": 3,
+   "shots": 243000,
+   "N_max": 67197,
+   "fits_one_slot": false,
+   "status": "not_evaluated: N_eq x (12 + 3) = 243000 shots exceed one slot's N_max 67197"
+  },
+  "F5_B1": {
+   "N_eq": 8300,
+   "k5_circuits": 3,
+   "shots": 124500,
+   "N_max": 67197,
+   "fits_one_slot": false,
+   "status": "not_evaluated: N_eq x (12 + 3) = 124500 shots exceed one slot's N_max 67197"
+  },
+  "F6_B1": {
+   "N_eq": 5700,
+   "k5_circuits": 3,
+   "shots": 85500,
+   "N_max": 67197,
+   "fits_one_slot": false,
+   "status": "not_evaluated: N_eq x (12 + 3) = 85500 shots exceed one slot's N_max 67197"
+  }
+ },
+ "slots": {
+  "C4_PART_01": {
+   "content": "frun",
+   "run": "F1_B1",
+   "part": 2,
+   "parts": 2,
+   "cells": null
+  },
+  "C4_PART_02": {
+   "content": "frun",
+   "run": "F2_B1",
+   "part": 2,
+   "parts": 2,
+   "cells": null
+  },
+  "C4_PART_03": {
+   "content": "frun",
+   "run": "F3_B0",
+   "part": 2,
+   "parts": 2,
+   "cells": null
+  },
+  "C4_PART_04": {
+   "content": "frun",
+   "run": "F3_B1",
+   "part": 2,
+   "parts": 4,
+   "cells": null
+  },
+  "C4_PART_05": {
+   "content": "frun",
+   "run": "F3_B1",
+   "part": 3,
+   "parts": 4,
+   "cells": null
+  },
+  "C4_PART_06": {
+   "content": "frun",
+   "run": "F3_B1",
+   "part": 4,
+   "parts": 4,
+   "cells": null
+  },
+  "C4_PART_07": {
+   "content": "frun",
+   "run": "F4_B0a",
+   "part": 2,
+   "parts": 2,
+   "cells": null
+  },
+  "C4_PART_08": {
+   "content": "frun",
+   "run": "F4_B0b",
+   "part": 2,
+   "parts": 2,
+   "cells": null
+  },
+  "C4_PART_09": {
+   "content": "frun",
+   "run": "F4_B1a",
+   "part": 2,
+   "parts": 2,
+   "cells": null
+  },
+  "C4_PART_10": {
+   "content": "frun",
+   "run": "F4_B1b",
+   "part": 2,
+   "parts": 2,
+   "cells": null
+  },
+  "C4_PART_11": {
+   "content": "frun",
+   "run": "F5_B1",
+   "part": 2,
+   "parts": 2,
+   "cells": null
+  },
+  "C4_PART_12": {
+   "content": "frun",
+   "run": "F6_B1",
+   "part": 2,
+   "parts": 2,
+   "cells": null
+  },
+  "C4_PART_13": {
+   "content": "frun",
+   "run": "F7_B1",
+   "part": 2,
+   "parts": 2,
+   "cells": null
+  },
+  "C4_PART_14": {
+   "content": "frun",
+   "run": "F8_B0a",
+   "part": 2,
+   "parts": 2,
+   "cells": null
+  },
+  "C4_PART_15": {
+   "content": "frun",
+   "run": "F8_B0b",
+   "part": 2,
+   "parts": 2,
+   "cells": null
+  },
+  "C4_PART_16": {
+   "content": "frun",
+   "run": "F8_B1a",
+   "part": 2,
+   "parts": 2,
+   "cells": null
+  },
+  "C4_PART_17": {
+   "content": "frun",
+   "run": "F8_B1b",
+   "part": 2,
+   "parts": 2,
+   "cells": null
+  },
+  "C4_PART_18": {
+   "content": "fcells",
+   "run": null,
+   "part": 1,
+   "parts": 1,
+   "cells": [
+    [
+     "E4",
+     "NAT-O1"
+    ],
+    [
+     "E5a",
+     "NAT-O1"
+    ],
+    [
+     "E5b",
+     "NAT-O1"
+    ],
+    [
+     "E5c",
+     "NAT-O1"
+    ],
+    [
+     "E1",
+     "NAT-O2"
+    ],
+    [
+     "E2",
+     "NAT-O2"
+    ],
+    [
+     "E3",
+     "NAT-O2"
+    ],
+    [
+     "E4",
+     "NAT-O2"
+    ],
+    [
+     "E5a",
+     "NAT-O2"
+    ],
+    [
+     "E5b",
+     "NAT-O2"
+    ],
+    [
+     "E5c",
+     "NAT-O2"
+    ],
+    [
+     "E1",
+     "NAT-O3"
+    ],
+    [
+     "E2",
+     "NAT-O3"
+    ],
+    [
+     "E3",
+     "NAT-O3"
+    ],
+    [
+     "E4",
+     "NAT-O3"
+    ],
+    [
+     "E5a",
+     "NAT-O3"
+    ],
+    [
+     "E5b",
+     "NAT-O3"
+    ],
+    [
+     "E5c",
+     "NAT-O3"
+    ],
+    [
+     "E1",
+     "NAT-O4"
+    ],
+    [
+     "E2",
+     "NAT-O4"
+    ],
+    [
+     "E3",
+     "NAT-O4"
+    ],
+    [
+     "E4",
+     "NAT-O4"
+    ],
+    [
+     "E5a",
+     "NAT-O4"
+    ],
+    [
+     "E5b",
+     "NAT-O4"
+    ],
+    [
+     "E5c",
+     "NAT-O4"
+    ],
+    [
+     "E1",
+     "NAT-O6"
+    ],
+    [
+     "E2",
+     "NAT-O6"
+    ],
+    [
+     "E3",
+     "NAT-O6"
+    ],
+    [
+     "E4",
+     "NAT-O6"
+    ],
+    [
+     "E5a",
+     "NAT-O6"
+    ],
+    [
+     "E5b",
+     "NAT-O6"
+    ],
+    [
+     "E5c",
+     "NAT-O6"
+    ]
+   ]
+  }
+ },
+ "slots_used": 18,
+ "slots_available": 20,
+ "unassigned": [],
+ "allowlist_33a": "ci/allowed_jobs.campaign33a"
+}
