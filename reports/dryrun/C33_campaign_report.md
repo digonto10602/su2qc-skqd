@@ -32,7 +32,7 @@
 | C4_F4_B1a | PASS | E7_0.10 | NAT-O0 | B=1 | 0.2741 | 0.2458 | 0.05263 | 0.8261 | 18.48 | None |
 | C4_F4_B1b | PASS | E7_0.10 | NAT-O0 | B=1 | 0.137 | 0.1229 | 0.07368 | 0.6678 | 16.74 | None |
 | C4_F5_B0 | PASS | E7_0.07 | NAT-O0 | B=0 | 0.3617 | 0.3243 | 0.1047 | 0.1967 | 10.65 | None |
-| C4_F5_B1 | PASS | E7_0.07 | NAT-O0 | B=1 | -1.045e-06 | -9.375e-07 | 0.06316 | 0.5231 | 6.986 | None |
+| C4_F5_B1 | PASS | E7_0.07 | NAT-O0 | B=1 | -1.045e-06 | -9.375e-07 | 0.06316 | 0.8261 | 10.34 | None |
 | C4_F6_B0 | PASS | E5b | NAT-O0 | B=0 | -1.035e-06 | -9.279e-07 | 0.1163 | 0.1894 | 26.08 | None |
 | C4_F6_B1 | PASS | E5b | NAT-O0 | B=1 | -1.045e-06 | -9.375e-07 | 0.04211 | 0.8261 | 26.07 | None |
 | C4_F7_B0 | PASS | E1 | NAT-O2 | B=0 | 0.3617 | 0.3243 | 0.1279 | 0.1888 | 6.959 | None |
@@ -66,7 +66,7 @@
 | Q0P A6 dry run: 64 hits / 280, f_hit 0.2502 | C4_FCELLS_A E1 x NAT-O0 (k = 1 circuits) | done | f_hit: consistent (Delta 0.02346) |
 | CF_traj pooled r(1e-3) 1.0693 [1.0285934561902321, 1.1151352098004452], r_nc 1.1151 | C4_CF (K = 2000 per arm) | done | pooled_r: tension (Delta -0.07343) |
 | CV_2x3_plan / Q0P_2x3_plan P3 B=0 f=0.10 (proxy at 0.7 f, 3 seeds) | C4_F5_B0 | done | recall_S999: inconsistent (Delta -0.8566); CV1_dE: not_comparable (Delta None) |
-| CV_2x3_plan / Q0P_2x3_plan P3 B=1 f=0.10 (proxy at 0.7 f, 3 seeds) | C4_F5_B1 | done | recall_S999: inconsistent (Delta -0.8912); CV1_dE: inconsistent (Delta -0.0014) |
+| CV_2x3_plan / Q0P_2x3_plan P3 B=1 f=0.10 (proxy at 0.7 f, 3 seeds) | C4_F5_B1 | done | recall_S999: inconsistent (Delta -0.9123); CV1_dE: not_comparable (Delta None) |
 | K1 measured 0 / 0 hits, 58 / 45 accepted of 1e5; K0/K1 analytic predictions | C2_GATE | done | - |
 | K1 measured 0 / 0 hits, 58 / 45 accepted of 1e5; K0/K1 analytic predictions | C2_ECHO | done | - |
 | K1 measured 0 / 0 hits, 58 / 45 accepted of 1e5; K0/K1 analytic predictions | C2_STAR | done | - |

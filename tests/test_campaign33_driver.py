@@ -60,12 +60,12 @@ def test_chunk_plan_has_the_gate_cv_prefixes_and_the_bound():
     for n in (1, 2, 17, 267, 1367, 17600, 41200):
         for m in (16, 476):
             plan = SM.chunk_plan(n, m)
-            assert sum(s for _a, s in plan) == n and all(1 <= s <= m for _a, s in plan)
-            ends = {a + s for a, s in plan}
+            assert sum(s for _a, s, _i in plan) == n and all(1 <= s <= m for _a, s, _i in plan)
+            ends = {a + s for a, s, _i in plan}
             for phi in SM.PHI:
                 L = SM.rnd(phi * n)
                 assert L == 0 or L in ends, (n, m, phi)
-            starts = [a for a, _s in plan]
+            starts = [a for a, _s, _i in plan]
             assert starts == sorted(starts) and starts[0] == 0
 
 

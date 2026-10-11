@@ -65,8 +65,80 @@ def split_runs(dry) -> dict:
         files = [vpath(tok, dry)] + [vpath(f"C33_{run}_part{i}of{n}", dry) for i in range(2, n + 1)]
         out[run] = {"token": tok, "parts": n, "files": [os.path.relpath(f, ROOT) for f in files],
                     "present": [os.path.exists(f) for f in files],
-                    "cv3": os.path.relpath(vpath(f"C33_{run}_cv3", dry), ROOT)}
+                    "cv3": cv3_files(run, dry)}
     return out
+
+
+def cv3_files(run, dry) -> dict:
+    """prompts/33b R6: the cv3 content of a run -- C33_<run>_cv3.json (one part) or C33_<run>_cv3_part<i>of<n>.json
+    (n > 1 parts; the largest n found is the sizing in force).  {files, parts, present, complete}."""
+    import glob
+    import re
+    single = vpath(f"C33_{run}_cv3", dry)
+    if os.path.exists(single):
+        return {"files": [os.path.relpath(single, ROOT)], "parts": 1, "present": [True], "complete": True}
+    found = {}
+    for f in glob.glob(vpath(f"C33_{run}_cv3_part*of*", dry)):
+        m = re.search(r"_cv3_part(\d+)of(\d+)\.json$", f)
+        if m:
+            found.setdefault(int(m.group(2)), {})[int(m.group(1))] = f
+    if not found:
+        return {"files": [], "parts": 0, "present": [], "complete": False}
+    n = max(found)
+    files = [vpath(f"C33_{run}_cv3_part{i}of{n}", dry) for i in range(1, n + 1)]
+    present = [os.path.exists(f) for f in files]
+    return {"files": [os.path.relpath(f, ROOT) for f in files], "parts": n, "present": present,
+            "complete": all(present)}
+
+
+def merge_cv3(info: dict) -> tuple:
+    """Merge the cv3 parts of a run (prompts/33b step A3): the equal-shots totals per circuit summed over the
+    parts, after checking that every part has the same N_eq and circuits and that the parts' ranges tile
+    [0, N_eq) of every circuit.  Returns (d3 or None, note); d3 has the fields of a single-part cv3 JSON
+    (N_eq, eq_/k5_accepted_by_circuit, eq_/k5_rejected_by_circuit, shots_done, full) plus `parts_files`."""
+    if not info or not info.get("complete"):
+        return None, ("not_evaluated: no cv3 slot result" if not info or not info.get("files") else
+                      f"not_evaluated: cv3 parts missing ({sum(info['present'])} of {info['parts']} present)")
+    ds = [_g(load(f), "data", "cv3") for f in info["files"]]
+    if any(d is None for d in ds):
+        return None, "not_evaluated: a cv3 part JSON has no data.cv3"
+    if len(ds) == 1:
+        return ds[0], f"evaluated from {info['files'][0]}"
+    N_eq = int(ds[0]["N_eq"])
+    eq_ids, k5_ids = list(ds[0]["eq_accepted_by_circuit"]), list(ds[0]["k5_ids"])
+    same = all(int(d["N_eq"]) == N_eq and list(d["k5_ids"]) == k5_ids and list(d["eq_accepted_by_circuit"]) == eq_ids
+               for d in ds)
+    if not same:
+        return None, "not_evaluated: the cv3 parts disagree on N_eq or the circuits (re-sized between parts?)"
+    from .sampling import ranges_list
+    tiles = True
+    for key, cids in (("eq_ranges_by_circuit", eq_ids), ("k5_ranges_by_circuit", k5_ids)):
+        for c in cids:
+            rr = sorted(tuple(x) for d in ds for x in ranges_list(d[key][c]) if x[1] > x[0])
+            tiles &= bool(rr) and rr[0][0] == 0 and rr[-1][1] == N_eq and all(rr[i][1] == rr[i + 1][0]
+                                                                             for i in range(len(rr) - 1))
+    m = {"N_eq": N_eq, "k5_ids": k5_ids, "parts_files": info["files"], "ranges_tile": bool(tiles),
+         "full": bool(tiles and all(d.get("full") for d in ds))}
+    for side in ("eq", "k5"):
+        acc, rej = {}, {}
+        for d in ds:
+            for c, a in d[f"{side}_accepted_by_circuit"].items():
+                t = acc.setdefault(c, {})
+                for i, v in a.items():
+                    t[str(i)] = t.get(str(i), 0) + int(v)
+            for c, r in d[f"{side}_rejected_by_circuit"].items():
+                rej[c] = rej.get(c, 0) + int(r)
+        m[f"{side}_accepted_by_circuit"], m[f"{side}_rejected_by_circuit"] = acc, rej
+    done = {}
+    for d in ds:
+        for c, v in d["shots_done"].items():
+            done[c] = done.get(c, 0) + int(v)
+    m["shots_done"] = done
+    m["full"] = m["full"] and all(v == N_eq for v in done.values())
+    note = (f"evaluated from {len(ds)} merged cv3 parts" if m["full"] else
+            "not_evaluated: the merged cv3 parts do not cover N_eq on every circuit (a part was cut or the ranges "
+            "do not tile)")
+    return m, note
 
 
 def _pseudo_counts(P, acc: dict, rejected: int) -> dict:
@@ -111,9 +183,8 @@ def merge_run(run, info, dry, P, B=None):
     per_counts = {c: _pseudo_counts(P, acc[c], rej[c]) for c in ids}
     mans = {c: C.load_manifest(spec["family"], c) for c in ids}
     eq, cv3_src = None, None
-    cv3 = load(info["cv3"])
-    if cv3 is not None and _g(cv3, "data", "cv3", "full"):
-        d3 = cv3["data"]["cv3"]
+    d3, cv3_note = merge_cv3(info.get("cv3"))
+    if d3 is not None and d3.get("full"):
         N_eq = int(d3["N_eq"])
 
         def tot(a, r):
@@ -121,7 +192,7 @@ def merge_run(run, info, dry, P, B=None):
                                                     for c in a})
         eq = (tot(d3["eq_accepted_by_circuit"], d3["eq_rejected_by_circuit"]), N_eq,
               tot(d3["k5_accepted_by_circuit"], d3["k5_rejected_by_circuit"]))
-        cv3_src = info["cv3"]
+        cv3_src = ", ".join(info["cv3"]["files"])
     plan_s = {c: int(v) for c, v in (p1.get("plan_f010_by_circuit") or {}).items()} or None
     B = B if B is not None else (20 if dry else 2000)
     rd, crit, var_ok, pt = TR.frun_readout(P, spec, pre, plan, done, plan_s, per_counts, acc, mans, eq, B,
@@ -145,8 +216,8 @@ def merge_run(run, info, dry, P, B=None):
                                                  kind=spec["kind"], half=spec["half"], sector=sec,
                                                  plan_tier=fr[0]["plan_tier"], shots_done=done, full=full,
                                                  accepted_counts_by_circuit=acc, rejected_by_circuit=rej,
-                                                 cv3_status=("evaluated from " + cv3_src) if cv3_src else
-                                                 "not_evaluated: no cv3 slot result"),
+                                                 cv3_status=("evaluated from " + cv3_src) if cv3_src else cv3_note),
+              "cv3_parts": (info.get("cv3") or {}).get("parts"),
               "variational_ok": var_ok, "created": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())}
     R.runtime_s = time.time() - t0
     R.save()

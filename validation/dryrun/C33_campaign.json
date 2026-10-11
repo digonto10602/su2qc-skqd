@@ -129,7 +129,8 @@
    "C4_F8_B0b": "PASS",
    "C4_F8_B1a": "PASS",
    "C4_F8_B1b": "PASS",
-   "C4_CF": "PASS"
+   "C4_CF": "PASS",
+   "C33_F5_B1": "PASS"
   },
   "merged_s3_quota": {
    "F4|B=0": {
@@ -277,6 +278,12 @@
      "rule": "recall of the 99.9 % support >= 0.9 with 2e5 shots per sector and E0 inside the Weinstein interval (s3_device_model.RECALL_MIN, EPS_SUPPORT)"
     },
     "dry_run_inputs": true
+   }
+  },
+  "split_runs": {
+   "F5_B1": {
+    "status": "PASS",
+    "json": "validation/dryrun/C33_F5_B1.json"
    }
   },
   "matrix": [
@@ -487,6 +494,7 @@
     "wall_s": 420.6638069152832,
     "node_hours": null,
     "dry_run": true,
+    "merged_from": null,
     "scenario": "E1",
     "variant": "NAT-O0",
     "sector": "B=0",
@@ -523,6 +531,7 @@
     "wall_s": 240.9708218574524,
     "node_hours": null,
     "dry_run": true,
+    "merged_from": null,
     "scenario": "E1",
     "variant": "NAT-O0",
     "sector": "B=1",
@@ -553,6 +562,7 @@
     "wall_s": 212.31100177764893,
     "node_hours": null,
     "dry_run": true,
+    "merged_from": null,
     "scenario": "E2",
     "variant": "NAT-O0",
     "sector": "B=0",
@@ -583,6 +593,7 @@
     "wall_s": 204.82529044151306,
     "node_hours": null,
     "dry_run": true,
+    "merged_from": null,
     "scenario": "E2",
     "variant": "NAT-O0",
     "sector": "B=1",
@@ -613,6 +624,7 @@
     "wall_s": 303.79795718193054,
     "node_hours": null,
     "dry_run": true,
+    "merged_from": null,
     "scenario": "E3",
     "variant": "NAT-O0",
     "sector": "B=0",
@@ -643,6 +655,7 @@
     "wall_s": 160.60362601280212,
     "node_hours": null,
     "dry_run": true,
+    "merged_from": null,
     "scenario": "E3",
     "variant": "NAT-O0",
     "sector": "B=1",
@@ -673,6 +686,7 @@
     "wall_s": 250.9308362007141,
     "node_hours": null,
     "dry_run": true,
+    "merged_from": null,
     "scenario": "E7_0.10",
     "variant": "NAT-O0",
     "sector": "B=0",
@@ -703,6 +717,7 @@
     "wall_s": 249.96031665802002,
     "node_hours": null,
     "dry_run": true,
+    "merged_from": null,
     "scenario": "E7_0.10",
     "variant": "NAT-O0",
     "sector": "B=0",
@@ -733,6 +748,7 @@
     "wall_s": 309.26955246925354,
     "node_hours": null,
     "dry_run": true,
+    "merged_from": null,
     "scenario": "E7_0.10",
     "variant": "NAT-O0",
     "sector": "B=1",
@@ -763,6 +779,7 @@
     "wall_s": 284.5194661617279,
     "node_hours": null,
     "dry_run": true,
+    "merged_from": null,
     "scenario": "E7_0.10",
     "variant": "NAT-O0",
     "sector": "B=1",
@@ -793,6 +810,7 @@
     "wall_s": 280.42269229888916,
     "node_hours": null,
     "dry_run": true,
+    "merged_from": null,
     "scenario": "E7_0.07",
     "variant": "NAT-O0",
     "sector": "B=0",
@@ -819,37 +837,41 @@
     "token": "C4_F5_B1",
     "class": 4,
     "status": "PASS",
-    "s_per_shot": 6.985737840334575,
-    "wall_s": 180.87083745002747,
+    "s_per_shot": 10.344312601089477,
+    "wall_s": 272.2326514720917,
     "node_hours": null,
     "dry_run": true,
+    "merged_from": [
+     "validation/dryrun/C4_F5_B1.json",
+     "validation/dryrun/C33_F5_B1_part2of2.json"
+    ],
     "scenario": "E7_0.07",
     "variant": "NAT-O0",
     "sector": "B=1",
     "kind": "plan",
     "half": null,
     "plan_tier": 0.1,
-    "shots": 24,
+    "shots": 50,
     "B_all": 7,
     "recall_S999": 0.06315789473684211,
-    "E_R_minus_E0": 0.5230969459885157,
+    "E_R_minus_E0": 0.826084443124147,
     "certificate": "weinstein",
-    "width": 1.305603938509933,
+    "width": 1.620185174601965,
     "E0_inside": true,
     "f_hit": -1.0454670001903172e-06,
     "f_hat_ideal": -9.375248768061092e-07,
     "f_hat_ideal_ci95": [
      -9.375248768061092e-07,
-     1.8132052043806604
+     0.3022000861260461
     ],
     "CV": {
      "CV1": true,
      "CV2": false,
+     "CV3": false,
      "CV4": false,
-     "CV5": false,
-     "CV3": null
+     "CV5": false
     },
-    "cv3": "not_evaluated: the equal-shots (6 per circuit) and k = 5 samples need 36 shots ~ 251 s, more than the 226 s left (budget)"
+    "cv3": "evaluated from validation/dryrun/C33_F5_B1_cv3_part1of2.json, validation/dryrun/C33_F5_B1_cv3_part2of2.json"
    },
    {
     "token": "C4_F6_B0",
@@ -859,6 +881,7 @@
     "wall_s": 243.87629580497742,
     "node_hours": null,
     "dry_run": true,
+    "merged_from": null,
     "scenario": "E5b",
     "variant": "NAT-O0",
     "sector": "B=0",
@@ -889,6 +912,7 @@
     "wall_s": 175.99714255332947,
     "node_hours": null,
     "dry_run": true,
+    "merged_from": null,
     "scenario": "E5b",
     "variant": "NAT-O0",
     "sector": "B=1",
@@ -919,6 +943,7 @@
     "wall_s": 188.63123178482056,
     "node_hours": null,
     "dry_run": true,
+    "merged_from": null,
     "scenario": "E1",
     "variant": "NAT-O2",
     "sector": "B=0",
@@ -949,6 +974,7 @@
     "wall_s": 192.15202856063843,
     "node_hours": null,
     "dry_run": true,
+    "merged_from": null,
     "scenario": "E1",
     "variant": "NAT-O2",
     "sector": "B=1",
@@ -979,6 +1005,7 @@
     "wall_s": 245.70529413223267,
     "node_hours": null,
     "dry_run": true,
+    "merged_from": null,
     "scenario": "E8",
     "variant": "IR-L3-RZZ",
     "sector": "B=0",
@@ -1009,6 +1036,7 @@
     "wall_s": 198.3733012676239,
     "node_hours": null,
     "dry_run": true,
+    "merged_from": null,
     "scenario": "E8",
     "variant": "IR-L3-RZZ",
     "sector": "B=0",
@@ -1039,6 +1067,7 @@
     "wall_s": 241.91527271270752,
     "node_hours": null,
     "dry_run": true,
+    "merged_from": null,
     "scenario": "E8",
     "variant": "IR-L3-RZZ",
     "sector": "B=1",
@@ -1069,6 +1098,7 @@
     "wall_s": 241.84298753738403,
     "node_hours": null,
     "dry_run": true,
+    "merged_from": null,
     "scenario": "E8",
     "variant": "IR-L3-RZZ",
     "sector": "B=1",
@@ -1363,30 +1393,23 @@
     "redo": "C4_F5_B1",
     "status": "done",
     "recall_S999": {
-     "new": 0.06315789473684211,
+     "new": 0.042105263157894736,
      "new_ci95": null,
      "old": 0.9543859649122807,
      "old_ci95": null,
-     "delta": -0.8912280701754386,
+     "delta": -0.9122807017543859,
      "sigma_new": null,
      "sigma_old": 0.0026852846401718665,
      "old_sigma_label": "seed_spread",
      "sigma": 0.0026852846401718665,
-     "z": 331.8933333333323,
+     "z": 339.73333333333227,
      "verdict": "inconsistent"
     },
     "CV1_dE": {
-     "new": 0.00021185940363643851,
-     "new_ci95": null,
+     "new": null,
      "old": 0.0016122057088729196,
-     "old_ci95": null,
-     "delta": -0.001400346305236481,
-     "sigma_new": null,
-     "sigma_old": 0.00014522851311957243,
-     "old_sigma_label": "seed_spread",
-     "sigma": 0.00014522851311957243,
-     "z": 9.64236481636027,
-     "verdict": "inconsistent"
+     "delta": null,
+     "verdict": "not_comparable"
     }
    },
    {
@@ -1537,16 +1560,16 @@
    }
   ],
   "prompt": "prompts/33 A7 / section 6",
-  "created": "2026-10-07 00:15:09 UTC"
+  "created": "2026-10-11 18:57:09 UTC"
  },
- "runtime_s": 3.4830076694488525,
+ "runtime_s": 4.202643871307373,
  "environment": {
   "python": "3.12.14",
   "numpy": "2.5.2",
   "scipy": "1.18.0",
   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
   "cpu_count": 12,
-  "git_commit": "cb7753f",
-  "timestamp": "2026-10-06 18:15:09 MDT"
+  "git_commit": "7186860",
+  "timestamp": "2026-10-11 12:57:09 MDT"
  }
 }

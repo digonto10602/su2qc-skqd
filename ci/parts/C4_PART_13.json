@@ -1,97 +1,95 @@
 {
- "content": "frun",
- "run": "F7_B1",
- "token": "C4_F7_B1",
- "scenario": "E1",
- "sector": "B1",
- "family": "NAT-O2",
- "kind": "plan",
- "tier": 0.15,
- "tier_reason": "validation/C4_FCELLS_A.json plan_tiers.E1: largest of [0.05, 0.1, 0.15] not above the lower 95 % end 0.1858 of f_hat_ideal",
- "part": 2,
- "parts": 2,
- "chunk": 1428,
- "plan_shots_by_circuit": {
-  "B1_ref27_k1": 600,
-  "B1_ref27_k2": 600,
-  "B1_ref27_k3": 600,
-  "B1_ref27_k4": 19800,
-  "B1_ref29_k1": 600,
-  "B1_ref29_k2": 600,
-  "B1_ref29_k3": 600,
-  "B1_ref29_k4": 15000,
-  "B1_ref57_k1": 600,
-  "B1_ref57_k2": 600,
-  "B1_ref57_k3": 600,
-  "B1_ref57_k4": 27400
- },
- "plan_f010_by_circuit": null,
- "ranges_by_circuit": {
-  "B1_ref27_k1": [
-   300,
-   600
+ "content": "fcells",
+ "group": "A",
+ "label": "A",
+ "cells": [
+  [
+   "E1",
+   "NAT-O2"
   ],
-  "B1_ref27_k2": [
-   300,
-   600
+  [
+   "E1",
+   "NAT-O3"
   ],
-  "B1_ref27_k3": [
-   300,
-   600
+  [
+   "E1",
+   "NAT-O4"
   ],
-  "B1_ref27_k4": [
-   9900,
-   19800
+  [
+   "E1",
+   "NAT-O6"
   ],
-  "B1_ref29_k1": [
-   300,
-   600
+  [
+   "E2",
+   "NAT-O2"
   ],
-  "B1_ref29_k2": [
-   300,
-   600
+  [
+   "E2",
+   "NAT-O3"
   ],
-  "B1_ref29_k3": [
-   300,
-   600
+  [
+   "E2",
+   "NAT-O4"
   ],
-  "B1_ref29_k4": [
-   7500,
-   15000
+  [
+   "E2",
+   "NAT-O6"
   ],
-  "B1_ref57_k1": [
-   300,
-   600
+  [
+   "E3",
+   "NAT-O2"
   ],
-  "B1_ref57_k2": [
-   300,
-   600
+  [
+   "E3",
+   "NAT-O3"
   ],
-  "B1_ref57_k3": [
-   300,
-   600
+  [
+   "E3",
+   "NAT-O4"
   ],
-  "B1_ref57_k4": [
-   13700,
-   27400
+  [
+   "E3",
+   "NAT-O6"
+  ],
+  [
+   "E4",
+   "NAT-O1"
+  ],
+  [
+   "E4",
+   "NAT-O2"
+  ],
+  [
+   "E4",
+   "NAT-O3"
+  ],
+  [
+   "E4",
+   "NAT-O4"
   ]
+ ],
+ "predicted_s": 1686.7476825714111,
+ "capacity_s": 1728.0,
+ "over_capacity": false,
+ "cell_costs_s": {
+  "E1": 58.43758940696716,
+  "E2": 57.94089698791504,
+  "E3": 151.8480486869812,
+  "E4": 153.46038556098938
  },
- "shots_by_circuit": {
-  "B1_ref27_k1": 300,
-  "B1_ref27_k2": 300,
-  "B1_ref27_k3": 300,
-  "B1_ref27_k4": 9900,
-  "B1_ref29_k1": 300,
-  "B1_ref29_k2": 300,
-  "B1_ref29_k3": 300,
-  "B1_ref29_k4": 7500,
-  "B1_ref57_k1": 300,
-  "B1_ref57_k2": 300,
-  "B1_ref57_k3": 300,
-  "B1_ref57_k4": 13700
+ "cell_index_offset": 0,
+ "part": 1,
+ "parts": 4,
+ "cell_shots": {
+  "B0_ref25_k1": 800,
+  "B1_ref57_k1": 800,
+  "B0_ref25_k4": 200,
+  "B1_ref57_k4": 200
  },
+ "seed_rule": "prompts/33b R4: seed_token_index = token_index of the run's own F token (frun, cv3) or of the slot (fcells); chunk index global in the unsplit plan; stride = the sizing's chunk",
  "written_by": "scripts/campaign33_resize.py",
- "from": "validation/C4_FCELLS_A.json job 59570315",
+ "from": "validation/C4_FCELLS_A.json job 59570315; validation/C4_FCELLS_B.json (absent: not yet harvested)",
+ "dropped_by": "validation/C4_FCELLS_A.json data.cells_dropped",
  "slot": "C4_PART_13",
  "seed_token_index": 45
 }

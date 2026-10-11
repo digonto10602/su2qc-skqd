@@ -44,7 +44,7 @@ def synthetic(P, cids, shots, max_chunk, rng, family="NAT-O0"):
         p = np.asarray(list(pr.values()))
         p = p / p.sum()
         chunks = []
-        for i, (a, s) in enumerate(SM.chunk_plan(n, max_chunk)):
+        for i, (a, s, _ci) in enumerate(SM.chunk_plan(n, max_chunk)):
             draw = rng.multinomial(s, p)
             chunks.append({"start": a, "shots": s, "seed": 1000 * i, "counts": {int(k): int(v) for k, v in zip(keys, draw) if v}})
         out.append({"label": c, "requested": n, "chunks": chunks, "shots_done": n})

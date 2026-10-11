@@ -36,7 +36,14 @@ MAX_SHOTS_PER_CIRCUIT_SEEDED = CIRCUIT_SEED_SPAN
 SEED_RULE = ("aer seed of chunk i of circuit c = s0 * 1e4 + c * 1e6 + i * stride, stride = chunk size, "
              "s0 = 33 000 000 + 1e5 x token index (prompts/33 2.3 s0; the circuit/chunk offsets are widened "
              "from 1e3 c so that circuits, chunks, tokens and the a/b halves are disjoint for <= 1e6 shots per "
-             "circuit: the literal s0 + 1e3 c + i stride overlaps above 1000 shots per circuit)")
+             "circuit: the literal s0 + 1e3 c + i stride overlaps above 1000 shots per circuit).  prompts/33b R4: "
+             "every part of a split class-4 run (part 1 on the F token, parts >= 2 on any C4_PART slot) uses s0 "
+             "of the run's OWN F token, i = the chunk's index in the UNSPLIT chunk plan and stride = the sizing's "
+             "chunk, so the parts concatenate to the unsplit run seed for seed and a slot can be re-used; the "
+             "run's CV3 equal-shots sample uses the same s0 with circuit offsets 100 (k <= 4) / 200 (k = 5); "
+             "an f-cell slot uses the slot's own s0 with circuit offset 4 x the cell's global index")
+SEED_RULE_PARTS = ("prompts/33b R4: seed_token_index = token_index of the run's own F token (frun, cv3) or of the "
+                   "slot (fcells); chunk index global in the unsplit plan; stride = the sizing's chunk")
 
 
 def load_tokens(path: str = TOKENS_FILE) -> dict:

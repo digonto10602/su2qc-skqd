@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import re
 import time
 
 import numpy as np
@@ -151,11 +152,13 @@ C2_CHUNK = 4096        # class 2: a 21-qubit circuit with ~5600 delays has a lar
 
 
 def sample(ctx, sim, circuits, shots, labels, circuit_offset=0, share=0.75, deadline=None, rate_hint=None,
-           max_chunk=None, phis=SM.PHI, min_rounds=None, plans=None):
-    s = SM.Sampler(sim, ctx.s0, int(max_chunk or SM_chunk(ctx)),
+           max_chunk=None, phis=SM.PHI, min_rounds=None, plans=None, s0=None, stride=None):
+    """s0: the seed base (default the token's own, ctx.s0; prompts/33b R4: a part of a split class-4 run passes
+    the base seed of the run's own F token); stride: the seed stride (a part: the sizing's chunk)."""
+    s = SM.Sampler(sim, ctx.s0 if s0 is None else int(s0), int(max_chunk or SM_chunk(ctx)),
                    deadline if deadline is not None else ctx.sampling_deadline(share), log=ctx.log, rate_hint=rate_hint,
                    min_rounds=(1 if ctx.dry else 0) if min_rounds is None else int(min_rounds), phis=phis)
-    res, info = s.run(circuits, shots, labels, circuit_offset, plans=plans)
+    res, info = s.run(circuits, shots, labels, circuit_offset, plans=plans, stride=stride)
     ctx.oom += info["oom_retries"]
     return res, info
 
@@ -174,7 +177,7 @@ def totals(res):
 
 def chunk_record(res):
     """Seeds and sizes of every chunk (S4), without the counts."""
-    return [{k: ch[k] for k in ("start", "shots", "seed", "seconds") if k in ch} for ch in res["chunks"]]
+    return [{k: ch[k] for k in ("start", "shots", "index", "seed", "seconds") if k in ch} for ch in res["chunks"]]
 
 
 def save_npz(ctx, name, P, results, twoB_of):
@@ -1214,8 +1217,8 @@ def chunks_accepted(P, res, twoB) -> dict:
         rows = []
         for ch in r["chunks"]:
             acc, rej = sparse_accepted(P, ch["counts"], twoB)
-            rows.append({"start": int(ch["start"]), "shots": int(ch["shots"]), "seed": int(ch["seed"]),
-                         "accepted": acc, "rejected": rej})
+            rows.append({"start": int(ch["start"]), "shots": int(ch["shots"]), "index": ch.get("index"),
+                         "seed": int(ch["seed"]), "accepted": acc, "rejected": rej})
         out[r["label"]] = rows
     return out
 
@@ -1249,12 +1252,15 @@ def run_frun(ctx, part=None):
         tier, tier_reason = part.get("tier"), part.get("tier_reason")
         plan_full = {c: int(part["plan_shots_by_circuit"][c]) for c in ids}
         chunk = int(part["chunk"])
-        ranges = {c: [int(x) for x in part["ranges_by_circuit"][c]] for c in ids}
-        plans = [SM.part_plan(plan_full[c], chunk, ranges[c][0], ranges[c][1]) for c in ids]
-        want = {c: ranges[c][1] - ranges[c][0] for c in ids}
+        ranges = {c: part["ranges_by_circuit"][c] for c in ids}          # [a, b] or [[a, b], ...] (prompts/33b)
+        plans = [SM.part_plan_ranges(plan_full[c], chunk, ranges[c]) for c in ids]
+        want = {c: SM.range_shots(ranges[c]) for c in ids}
         target = plan_full
         plan_f010 = part.get("plan_f010_by_circuit")
         part_info = f"{part['part']} of {part['parts']}"
+        # prompts/33b R4: every part seeds from the run's OWN F token (global chunk index, stride = the chunk)
+        seed_token = part.get("token") or ("C4_" + run)
+        s0, stride = TK.base_seed(seed_token), chunk
     else:
         ids = select_ids(ctx, spec["all_ids"], tuple(FCELL_SHOTS))
         pl = f_run_plan(ctx, spec, ids)
@@ -1263,6 +1269,11 @@ def run_frun(ctx, part=None):
         target = want
         plan_f010 = pl["plan_f010"]
         chunk, plans, part_info = SM_chunk(ctx), None, None
+        seed_token, s0, stride = ctx.token, ctx.s0, None
+    ctx.data["seeds"] = {"s0": s0, "s0_token": seed_token, "stride": stride if stride is not None else "largest chunk",
+                         "rule": TK.SEED_RULE}
+    if s0 != ctx.s0:
+        ctx.data["seeds"]["slot_s0_not_used"] = ctx.s0
     sm = N.quantinuum_spec(sid)
     mode, mode_src = gpu_mode_for(ctx, "C4_FCELLS_A")
     ctx.data["gpu_mode_used"] = mode
@@ -1273,7 +1284,7 @@ def run_frun(ctx, part=None):
     t_s = time.time()
     res, info = sample(ctx, sim, [sm.apply(circs[c]) for c in ids], [want[c] for c in ids], ids,
                        circuit_offset=0, share=spec["share"], max_chunk=chunk,
-                       plans=None if plans is None else plans)
+                       plans=None if plans is None else plans, s0=s0, stride=stride)
     ctx.phases["sampling_s"] = time.time() - t_s
     done = {r["label"]: r["shots_done"] for r in res}
     ctx.data["seconds_per_shot"] = info["seconds_per_shot"]
@@ -1281,7 +1292,17 @@ def run_frun(ctx, part=None):
     if not full:
         ctx.min_shots_ok = False
         ctx.shots_reduced_to = {c: done[c] for c in ids if done[c] < want[c]}
-    ctx.no_shots = any(done[c] == 0 for c in ids)
+    ctx.no_shots = any(done[c] == 0 and want[c] > 0 for c in ids)
+    # prompts/33b: a part cut in the run's call order (round_major split) may hold no chunk of a circuit; the
+    # circuit keeps its seed index (sampling order above) and is left out of this part's in-job analysis
+    want_all, done_all = dict(want), dict(done)
+    idle = [c for c in ids if want[c] == 0]
+    if idle:
+        ctx.notes.append(f"part {part_info}: {len(idle)} circuit(s) have no chunk in this part (their ranges are empty; "
+                         f"seed indices unchanged): {idle}")
+        ids = [c for c in ids if want[c] > 0]
+        res = [r for r in res if r["label"] in ids]
+        want, done = {c: want[c] for c in ids}, {c: done[c] for c in ids}
     # ---- CV3 extra samples (NAT-O0 plan runs in one job only, and only if the budget covers them in full)
     eq = None
     if part_info is not None:
@@ -1308,10 +1329,10 @@ def run_frun(ctx, part=None):
                                         ctx.args.bootstrap, tier, part_info=part_info)
     ctx.phases["bootstrap_and_readout_s"] = time.time() - t_b
     out = {"run": run, "scenario": sid, "family": fam, "family_rule": spec["family_rule"], "kind": kind, "half": half,
-           "sector": sec, "plan_tier": tier, "plan_tier_reason": tier_reason, "shots_requested": want,
-           "shots_done": done, "full": full, "cv3_status": cv3_status, "noise": sm.description,
+           "sector": sec, "plan_tier": tier, "plan_tier_reason": tier_reason, "shots_requested": want_all,
+           "shots_done": done_all, "full": full, "cv3_status": cv3_status, "noise": sm.description,
            "chunks": {r["label"]: chunk_record(r) for r in res}, "sampling": {k: v for k, v in info.items()},
-           "chunk": chunk, "sizing_note": sizing_note}
+           "chunk": chunk, "sizing_note": sizing_note, "seeds": ctx.data["seeds"]}
     out.update(rd)
     out["accepted_counts_by_circuit"] = acc_counts
     out["rejected_by_circuit"] = {c: sparse_accepted(P, per_counts[c], twoB)[1] for c in ids}
@@ -1347,29 +1368,63 @@ def run_frun(ctx, part=None):
     return out
 
 
-def cv3_sample(ctx, sim, sm, circs, mans, ids, want, twoB, sec, idx, rate, budget_share=0.75, force=False):
-    """The CV3 equal-shots sample (N_eq per k <= 4 circuit) and the k = 5 circuits; None when the budget does not
-    cover it in full (force: a cv3 slot runs it regardless and records what it reached)."""
-    n_sec = sum(want.values())
-    N_eq = int(math.ceil(n_sec / len(ids) / 100.0) * 100) if not ctx.dry else max(2, int(math.ceil(n_sec / len(ids))))
+def cv3_n_eq(want: dict, dry: bool) -> int:
+    """N_eq of the CV3 equal-shots sample: the run's mean per-circuit plan shots rounded up to 100 (dry: >= 2)."""
+    n_sec, n = sum(int(v) for v in want.values()), len(want)
+    return int(math.ceil(n_sec / n / 100.0) * 100) if not dry else max(2, int(math.ceil(n_sec / n)))
+
+
+def cv3_k5_ids(mans, ids, twoB, sec, idx) -> list:
+    """The frozen NAT-O0-k5 circuits of the run's k = 1 references, in the order of `ids`."""
     k5_all = [c for c in idx["families"].get("NAT-O0-k5", {}).get("circuits", []) if sector_of(c) == twoB]
     k5_ids = [f"{sec.replace('=', '')}_ref{int(mans[c]['reference']):02d}_k5" for c in ids if int(mans[c]["k"]) == 1]
-    k5_ids = [c for c in k5_ids if c in k5_all]
-    extra = N_eq * (len(ids) + len(k5_ids))
-    rem = budget_share * (ctx.remaining() or 1e9)
+    return [c for c in k5_ids if c in k5_all]
+
+
+def cv3_sample(ctx, sim, sm, circs, mans, ids, want, twoB, sec, idx, rate, budget_share=0.75, force=False,
+               part=None, s0=None):
+    """The CV3 equal-shots sample (N_eq per k <= 4 circuit) and the k = 5 circuits; None when the budget does not
+    cover it in full (force: a cv3 slot runs it regardless and records what it reached).
+    part (prompts/33b R6): a cv3 slot descriptor of part i of n -- only its ranges of the equal-shots plan are
+    sampled (`eq_ranges_by_circuit` / `k5_ranges_by_circuit`, pieces of the unsplit chunk plan at the sizing's
+    `chunk`), seeded per R4 from s0 = the run's own F token's base seed, global chunk indices, stride = chunk,
+    circuit offsets 100 / 200 as the in-job path; "complete" then means every range sampled in full."""
+    N_eq = cv3_n_eq(want, ctx.dry)
+    k5_ids = cv3_k5_ids(mans, ids, twoB, sec, idx)
     if not k5_ids:
         return None, None, N_eq, k5_ids, "not_evaluated: no NAT-O0-k5 circuits frozen for this sector"
+    if part is not None:
+        if int(part["N_eq"]) != N_eq or list(part["k5_ranges_by_circuit"]) != k5_ids:
+            raise ValueError(f"cv3 part descriptor (N_eq {part['N_eq']}, k5 {list(part['k5_ranges_by_circuit'])}) does "
+                             f"not match the run's plan (N_eq {N_eq}, k5 {k5_ids}): re-run scripts/campaign33_resize.py")
+        chunk = int(part["chunk"])
+        rq, rk = part["eq_ranges_by_circuit"], part["k5_ranges_by_circuit"]
+        plans_eq = [SM.part_plan_ranges(N_eq, chunk, rq[c]) for c in ids]
+        plans_k5 = [SM.part_plan_ranges(N_eq, chunk, rk[c]) for c in k5_ids]
+        n_eq_c = [SM.range_shots(rq[c]) for c in ids]
+        n_k5_c = [SM.range_shots(rk[c]) for c in k5_ids]
+        kw = {"plans": None, "s0": s0, "stride": chunk, "max_chunk": chunk}
+    else:
+        plans_eq = plans_k5 = None
+        n_eq_c, n_k5_c = [N_eq] * len(ids), [N_eq] * len(k5_ids)
+        kw = {"s0": s0}
+    extra = sum(n_eq_c) + sum(n_k5_c)
+    rem = budget_share * (ctx.remaining() or 1e9)
     if not force and rate * extra > rem:
         return None, None, N_eq, k5_ids, (f"not_evaluated: the equal-shots ({N_eq} per circuit) and k = 5 samples need "
                                           f"{extra} shots ~ {rate * extra:.0f} s, more than the {rem:.0f} s left (budget)")
     t_e = time.time()
-    r_eq, _i_eq = sample(ctx, sim, [sm.apply(circs[c]) for c in ids], [N_eq] * len(ids), ids,
-                         circuit_offset=100, rate_hint=rate or None)
+    r_eq, _i_eq = sample(ctx, sim, [sm.apply(circs[c]) for c in ids], n_eq_c, ids,
+                         circuit_offset=100, rate_hint=rate or None, **dict(kw, plans=plans_eq))
     k5c = [sm.apply(C.load_circuit("NAT-O0-k5", c)) for c in k5_ids]
-    r_k5, _i_k5 = sample(ctx, sim, k5c, [N_eq] * len(k5_ids), k5_ids, circuit_offset=200, rate_hint=rate or None)
+    r_k5, _i_k5 = sample(ctx, sim, k5c, n_k5_c, k5_ids, circuit_offset=200, rate_hint=rate or None,
+                         **dict(kw, plans=plans_k5))
     ctx.phases["cv3_sampling_s"] = time.time() - t_e
-    if all(r["shots_done"] == N_eq for r in r_eq + r_k5):
-        return r_eq, r_k5, N_eq, k5_ids, f"evaluated at N_eq = {N_eq} per circuit (k <= 4) + {len(k5_ids)} k = 5 circuits"
+    if [r["shots_done"] for r in r_eq + r_k5] == n_eq_c + n_k5_c:
+        what = (f"evaluated at N_eq = {N_eq} per circuit (k <= 4) + {len(k5_ids)} k = 5 circuits" if part is None else
+                f"part {part['part']} of {part['parts']} of the equal-shots sample (N_eq = {N_eq} per circuit, "
+                f"{len(k5_ids)} k = 5 circuits) complete; CV3 is read at assembly on the merged parts")
+        return r_eq, r_k5, N_eq, k5_ids, what
     return (r_eq, r_k5, N_eq, k5_ids, "not_evaluated: the equal-shots sample was cut by the deadline") if force else \
         (None, None, N_eq, k5_ids, "not_evaluated: the equal-shots sample was cut by the deadline")
 
@@ -1383,13 +1438,25 @@ def load_part(ctx):
 
 
 def part_copy_name(part):
-    """The content-named copy of a slot's JSON (prompts/33a step D1)."""
+    """The content-named copy of a slot's JSON (prompts/33a step D1; prompts/33b R4/R6: a cv3 content of n > 1
+    parts is C33_<run>_cv3_part<i>of<n>, a single-part one keeps C33_<run>_cv3; the f-cell slots of C4_FCELLS_B's
+    dropped cells are C33_fcellsB_part<i>of<n>, so that appending them never renames C4_FCELLS_A's)."""
     c = part["content"]
+    i, n = int(part.get("part", 1)), int(part.get("parts", 1))
     if c == "frun":
-        return f"C33_{part['run']}_part{int(part['part'])}of{int(part['parts'])}"
+        return f"C33_{part['run']}_part{i}of{n}"
     if c == "cv3":
-        return f"C33_{part['run']}_cv3"
-    return f"C33_fcells_part{int(part['part'])}of{int(part['parts'])}"
+        return f"C33_{part['run']}_cv3" if n == 1 else f"C33_{part['run']}_cv3_part{i}of{n}"
+    g = part.get("group", "A")
+    return f"C33_fcells{'' if g == 'A' else g}_part{i}of{n}"
+
+
+def expected_seed_token_index(part, slot):
+    """prompts/33b R4 (criterion P0): a frun / cv3 content seeds from the run's own F token; an f-cell content
+    (no run) from the slot's own index."""
+    if part.get("content") in ("frun", "cv3"):
+        return TK.token_index(part.get("token") or ("C4_" + part["run"])), "the run's own F token"
+    return TK.token_index(slot), "the slot's own token (f-cells have no run)"
 
 
 def run_part(ctx):
@@ -1403,15 +1470,20 @@ def run_part(ctx):
         ctx.R.add("P0 slot content present", path, "ci/parts/<TOKEN>.json exists", False)
         ctx.min_shots_ok = False
         return
-    want_idx = TK.token_index(ctx.token)
-    ok_slot = int(part.get("seed_token_index", -1)) == want_idx and part.get("slot", ctx.token) == ctx.token
-    ctx.R.add("P0 slot content written for this slot (seed_token_index = the slot's own index)",
-              {"seed_token_index": part.get("seed_token_index"), "slot_index": want_idx, "content": part.get("content")},
+    want_idx, rule = expected_seed_token_index(part, ctx.token)
+    tok_ok = part.get("content") not in ("frun", "cv3") or part.get("token") == "C4_" + str(part.get("run"))
+    ok_slot = int(part.get("seed_token_index", -1)) == want_idx and part.get("slot") == ctx.token and tok_ok
+    ctx.R.add("P0 slot content written for this slot (prompts/33b R4: seed_token_index = the index of the run's own "
+              "F token, or the slot's own for f-cells; slot = this token)",
+              {"seed_token_index": part.get("seed_token_index"), "expected": want_idx, "rule": rule,
+               "slot": part.get("slot"), "this_token": ctx.token, "content": part.get("content"),
+               "token_matches_run": tok_ok},
               "equal", ok_slot)
-    ctx.data["part"] = {k: v for k, v in part.items() if k not in ("ranges_by_circuit",)}
+    ctx.data["part"] = {k: v for k, v in part.items()
+                        if k not in ("ranges_by_circuit", "eq_ranges_by_circuit", "k5_ranges_by_circuit")}
     name = part_copy_name(part)
     ctx.copy_to = name
-    rname = name if part["content"] == "cv3" else name[:name.rindex("of")]       # C33_<run>_part<i>
+    rname = re.sub(r"(_part\d+)of\d+$", r"\1", name)        # C33_<run>_part<i>, C33_<run>_cv3[_part<i>]
     ctx.results_dir = os.path.join(ROOT, "results", "campaign33", "dryrun" if ctx.dry else "", rname)
     os.makedirs(ctx.results_dir, exist_ok=True)
     if not ok_slot:
@@ -1435,13 +1507,17 @@ def run_fcell_slot(ctx, part):
     ctx.data["gpu_mode_used"], ctx.data["gpu_mode_source"] = mode, mode_src
     deadline = ctx.sampling_deadline(QUOTA_SHARE)
     out, dropped, rate = {}, [], None
+    # prompts/33b R4: the slot's own s0, circuit offset 4 x the cell's GLOBAL index in the packed priority order,
+    # so two f-cell contents on one re-used slot never share a seed
+    off = int(part.get("cell_index_offset", 0))
+    ctx.data["seeds"] = dict(ctx.data.get("seeds") or {}, cell_index_offset=off, rule=TK.SEED_RULE)
     t_c = time.time()
     for i, (sid, fam) in enumerate(part["cells"]):
         nshots = sum(ctx.scaled(v) for v in FCELL_SHOTS.values())
         if deadline is not None and rate is not None and time.time() + rate * nshots > deadline:
             dropped.append(f"{sid}|{fam}")
             continue
-        r = run_one_fcell(ctx, P, sid, fam, i, deadline, rate_hint=rate)
+        r = run_one_fcell(ctx, P, sid, fam, off + i, deadline, rate_hint=rate)
         out[f"{sid}|{fam}"] = r
         rate = (time.time() - t_c) / max(1, sum(v["shots"] for v in out.values()))
     ctx.phases["cells_s"] = time.time() - t_c
@@ -1471,13 +1547,28 @@ def run_cv3_slot(ctx, part):
     sim, _kw = simulator(ctx, sm.noise_model, mode)
     circs = {c: C.load_circuit(spec["family"], c) for c in ids}
     mans = {c: C.load_manifest(spec["family"], c) for c in ids}
+    # prompts/33b R4 / R6: the run's own F token seeds the cv3 content; part i of n samples its ranges only
+    seed_token = part.get("token") or ("C4_" + part["run"])
+    s0 = TK.base_seed(seed_token)
+    ctx.data["seeds"] = {"s0": s0, "s0_token": seed_token, "slot_s0_not_used": ctx.s0, "rule": TK.SEED_RULE,
+                         "circuit_offsets": {"eq": 100, "k5": 200}}
+    split = "eq_ranges_by_circuit" in part
     r_eq, r_k5, N_eq, k5_ids, status = cv3_sample(ctx, sim, sm, circs, mans, ids, want, spec["twoB"], spec["sector"],
-                                                  idx, 0.0, force=True)
-    full = r_eq is not None and all(r["shots_done"] == N_eq for r in r_eq + r_k5)
+                                                  idx, 0.0, force=True, part=part if split else None, s0=s0)
+    if split:
+        rng = dict(part["eq_ranges_by_circuit"], **part["k5_ranges_by_circuit"])
+        need = {c: SM.range_shots(rng[c]) for c in rng}
+    else:
+        need = {c: N_eq for c in list(ids) + list(k5_ids)}
+    full = r_eq is not None and all(r["shots_done"] == need[r["label"]] for r in r_eq + r_k5)
     ctx.min_shots_ok = bool(full)
     ctx.no_shots = r_eq is None
     tb = spec["twoB"]
     ctx.data["cv3"] = {"run": part["run"], "N_eq": N_eq, "k5_ids": k5_ids, "status": status, "full": full,
+                       "part": int(part.get("part", 1)), "parts": int(part.get("parts", 1)),
+                       "chunk": part.get("chunk"), "shots_required_by_circuit": need,
+                       "eq_ranges_by_circuit": part.get("eq_ranges_by_circuit"),
+                       "k5_ranges_by_circuit": part.get("k5_ranges_by_circuit"),
                        "eq_accepted_by_circuit": {r["label"]: sparse_accepted(P, totals(r), tb)[0] for r in (r_eq or [])},
                        "eq_rejected_by_circuit": {r["label"]: sparse_accepted(P, totals(r), tb)[1] for r in (r_eq or [])},
                        "k5_accepted_by_circuit": {r["label"]: sparse_accepted(P, totals(r), tb)[0] for r in (r_k5 or [])},

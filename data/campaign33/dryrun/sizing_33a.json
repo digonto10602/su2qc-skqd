@@ -1,0 +1,2124 @@
+{
+ "written_by": "scripts/campaign33_resize.py",
+ "prompt": "prompts/33b",
+ "prompts": [
+  "prompts/33a_campaign33_first_wave_reruling.md step D",
+  "prompts/33b_campaign33_scenario_aware_sizing_and_waves.md step A"
+ ],
+ "created": "2026-10-11 18:30:31 UTC",
+ "dry_run": true,
+ "from": "validation/dryrun/C4_FCELLS_A.json job None; validation/dryrun/C4_FCELLS_B.json job None",
+ "from_jsons": {
+  "C4_FCELLS_A": {
+   "path": "validation/dryrun/C4_FCELLS_A.json",
+   "job": null
+  },
+  "C4_FCELLS_B": {
+   "path": "validation/dryrun/C4_FCELLS_B.json",
+   "job": null,
+   "present": true
+  }
+ },
+ "inputs": {
+  "ladder": "validation/dryrun/C4_FCELLS_A.json job None: data.ladder.points (2 points)",
+  "fastest_mode": "data.ladder.fastest_mode = cpu",
+  "cell_timings": [
+   "validation/dryrun/C4_FCELLS_A.json (job None) data.cells.<cell>.chunks / .seconds",
+   "validation/dryrun/C4_FCELLS_B.json (job None) data.cells.<cell>.chunks / .seconds"
+  ],
+  "cells_dropped": [
+   "validation/dryrun/C4_FCELLS_A.json: data.cells_dropped",
+   "validation/dryrun/C4_FCELLS_B.json: data.cells_dropped (if present)"
+  ],
+  "s3_rate": {
+   "s_per_shot": 0.0198662576555204,
+   "source": "validation/S3.json data.cost.seconds_per_shot_best_ladder"
+  },
+  "plan": "validation/CV_2x3_plan.json via tokens_run.cv_plan at tokens_run.plan_tier",
+  "quota": "tokens_run.PRODUCTION_SHOTS_PER_SECTOR = 200000"
+ },
+ "fit": {
+  "c_s": 0.0,
+  "b_s_per_shot": 6.918256461620331,
+  "points_used": 1,
+  "residual_rms_s": 0.0,
+  "single_chunk": true,
+  "note": "one chunk size only: c := 0, b = mean t / chunk",
+  "mode": "cpu",
+  "chunk": 16,
+  "chunk_rule": "16: no larger point succeeded at >= 1.6e+10 bytes",
+  "r_eff_s_per_shot": 6.918256461620331,
+  "rule": "t = c + b chunk (least squares); r_eff = b + c / chunk"
+ },
+ "scenario_rates": {
+  "E1": {
+   "s_per_shot": 6.918256461620331,
+   "rho": 1.0,
+   "source": "rho_E1",
+   "fit": null,
+   "label": "no E1|NAT-O0 cell timing in the input JSONs: rho := 1 for every scenario (the 33a single-rate rule); assumed: E1 (no f-cell of this scenario in the input JSONs)"
+  },
+  "E2": {
+   "s_per_shot": 6.918256461620331,
+   "rho": 1.0,
+   "source": "rho_E1",
+   "fit": null,
+   "label": "no E1|NAT-O0 cell timing in the input JSONs: rho := 1 for every scenario (the 33a single-rate rule); assumed: E1 (no f-cell of this scenario in the input JSONs)"
+  },
+  "E3": {
+   "s_per_shot": 6.918256461620331,
+   "rho": 1.0,
+   "source": "rho_E1",
+   "fit": null,
+   "label": "no E1|NAT-O0 cell timing in the input JSONs: rho := 1 for every scenario (the 33a single-rate rule); assumed: E1 (no f-cell of this scenario in the input JSONs)"
+  },
+  "E4": {
+   "s_per_shot": 6.918256461620331,
+   "rho": 1.0,
+   "source": "rho_E1",
+   "fit": null,
+   "label": "no E1|NAT-O0 cell timing in the input JSONs: rho := 1 for every scenario (the 33a single-rate rule); assumed: E1 (no f-cell of this scenario in the input JSONs)"
+  },
+  "E5a": {
+   "s_per_shot": 6.918256461620331,
+   "rho": 1.0,
+   "source": "rho_E1",
+   "fit": null,
+   "label": "no E1|NAT-O0 cell timing in the input JSONs: rho := 1 for every scenario (the 33a single-rate rule); assumed: E1 (no f-cell of this scenario in the input JSONs)"
+  },
+  "E5b": {
+   "s_per_shot": 6.918256461620331,
+   "rho": 1.0,
+   "source": "rho_E1",
+   "fit": null,
+   "label": "no E1|NAT-O0 cell timing in the input JSONs: rho := 1 for every scenario (the 33a single-rate rule); assumed: E1 (no f-cell of this scenario in the input JSONs)"
+  },
+  "E5c": {
+   "s_per_shot": 6.918256461620331,
+   "rho": 1.0,
+   "source": "rho_E1",
+   "fit": null,
+   "label": "no E1|NAT-O0 cell timing in the input JSONs: rho := 1 for every scenario (the 33a single-rate rule); assumed: E1 (no f-cell of this scenario in the input JSONs)"
+  },
+  "E6a": {
+   "s_per_shot": 6.918256461620331,
+   "rho": 1.0,
+   "source": "rho_E1",
+   "fit": null,
+   "label": "no E1|NAT-O0 cell timing in the input JSONs: rho := 1 for every scenario (the 33a single-rate rule); assumed: E1 (same channel classes, other parameters)"
+  },
+  "E6b": {
+   "s_per_shot": 6.918256461620331,
+   "rho": 1.0,
+   "source": "rho_E1",
+   "fit": null,
+   "label": "no E1|NAT-O0 cell timing in the input JSONs: rho := 1 for every scenario (the 33a single-rate rule); assumed: E1 (same channel classes, other parameters)"
+  },
+  "E6c": {
+   "s_per_shot": 6.918256461620331,
+   "rho": 1.0,
+   "source": "rho_E1",
+   "fit": null,
+   "label": "no E1|NAT-O0 cell timing in the input JSONs: rho := 1 for every scenario (the 33a single-rate rule); assumed: E1 (same channel classes, other parameters)"
+  },
+  "E7_0.05": {
+   "s_per_shot": 6.918256461620331,
+   "rho": 1.0,
+   "source": "rho_E1",
+   "fit": null,
+   "label": "no E1|NAT-O0 cell timing in the input JSONs: rho := 1 for every scenario (the 33a single-rate rule); assumed: E1 (same channel classes, other parameters)"
+  },
+  "E7_0.07": {
+   "s_per_shot": 6.918256461620331,
+   "rho": 1.0,
+   "source": "rho_E1",
+   "fit": null,
+   "label": "no E1|NAT-O0 cell timing in the input JSONs: rho := 1 for every scenario (the 33a single-rate rule); assumed: E1 (same channel classes, other parameters)"
+  },
+  "E7_0.10": {
+   "s_per_shot": 6.918256461620331,
+   "rho": 1.0,
+   "source": "rho_E1",
+   "fit": null,
+   "label": "no E1|NAT-O0 cell timing in the input JSONs: rho := 1 for every scenario (the 33a single-rate rule); assumed: E1 (same channel classes, other parameters)"
+  },
+  "E7_0.15": {
+   "s_per_shot": 6.918256461620331,
+   "rho": 1.0,
+   "source": "rho_E1",
+   "fit": null,
+   "label": "no E1|NAT-O0 cell timing in the input JSONs: rho := 1 for every scenario (the 33a single-rate rule); assumed: E1 (same channel classes, other parameters)"
+  },
+  "E8": {
+   "s_per_shot": 9.602041780948639,
+   "rho": 1.387927989402656,
+   "source": "validation/dryrun/C4_FCELLS_B.json (job None) data.s3_redo.seconds / data.s3_redo.shots",
+   "fit": null,
+   "label": "measured: the faithful S3 redo, 4 shots in 38.4 s (chunk 16, per-call set-up included)"
+  }
+ },
+ "rate_rule": "r_s = r_ladder x rho_s, r_ladder = b + c / chunk (E1 ladder of C4_FCELLS_A), rho_s = max over the measured families of b_(s,fam) / b_(E1|NAT-O0) from least-squares t = c + b n over the recorded chunks of every f-cell present, rho_E1 >= 1; no cell: E6/E7 rho_E1 (assumed), E8 rho_E1 (upper bound) until C4_FCELLS_B's s3_redo (prompts/33b R2)",
+ "cell_fits": {},
+ "budget": {
+  "budget_s": 3000.0,
+  "setup_s": 120.0,
+  "contingency": 1.25,
+  "shares": {
+   "plan": 0.6,
+   "s3quota": 0.75,
+   "fcells": 0.75,
+   "cv3": 0.75
+  },
+  "N_max": {
+   "plan": 199,
+   "s3quota": 249,
+   "fcells": 249
+  },
+  "N_max_note": "N_max at the E1 rate (the 33a field); per scenario: N_max_by_scenario",
+  "N_max_by_scenario": {
+   "plan": {
+    "E1": 199,
+    "E2": 199,
+    "E3": 199,
+    "E4": 199,
+    "E5a": 199,
+    "E5b": 199,
+    "E5c": 199,
+    "E6a": 199,
+    "E6b": 199,
+    "E6c": 199,
+    "E7_0.05": 199,
+    "E7_0.07": 199,
+    "E7_0.10": 199,
+    "E7_0.15": 199,
+    "E8": 143
+   },
+   "s3quota": {
+    "E1": 249,
+    "E2": 249,
+    "E3": 249,
+    "E4": 249,
+    "E5a": 249,
+    "E5b": 249,
+    "E5c": 249,
+    "E6a": 249,
+    "E6b": 249,
+    "E6c": 249,
+    "E7_0.05": 249,
+    "E7_0.07": 249,
+    "E7_0.10": 249,
+    "E7_0.15": 249,
+    "E8": 179
+   },
+   "fcells": {
+    "E1": 249,
+    "E2": 249,
+    "E3": 249,
+    "E4": 249,
+    "E5a": 249,
+    "E5b": 249,
+    "E5c": 249,
+    "E6a": 249,
+    "E6b": 249,
+    "E6c": 249,
+    "E7_0.05": 249,
+    "E7_0.07": 249,
+    "E7_0.10": 249,
+    "E7_0.15": 249,
+    "E8": 179
+   },
+   "cv3": {
+    "E1": 249,
+    "E2": 249,
+    "E3": 249,
+    "E4": 249,
+    "E5a": 249,
+    "E5b": 249,
+    "E5c": 249,
+    "E6a": 249,
+    "E6b": 249,
+    "E6c": 249,
+    "E7_0.05": 249,
+    "E7_0.07": 249,
+    "E7_0.10": 249,
+    "E7_0.15": 249,
+    "E8": 179
+   }
+  },
+  "rule": "N_max(kind, s) = share x (budget - setup) / (1.25 r_s)"
+ },
+ "runs": {
+  "F5_B1": {
+   "token": "C4_F5_B1",
+   "kind": "plan",
+   "share": 0.6,
+   "scenario": "E7_0.07",
+   "family": "NAT-O0",
+   "sector": "B=1",
+   "tier": 0.1,
+   "tier_reason": "fixed by design (prompts/33 1.5: F5 at the f = 0.10 plan)",
+   "circuits": 4,
+   "total_shots": 50,
+   "rate_s_per_shot": 6.918256461620331,
+   "rate_label": "no E1|NAT-O0 cell timing in the input JSONs: rho := 1 for every scenario (the 33a single-rate rule); assumed: E1 (same channel classes, other parameters)",
+   "N_max": 199,
+   "parts": 2,
+   "part_shots": [
+    25,
+    25
+   ],
+   "split_method": "equal_fraction (33a rule)",
+   "parts_ceil_N_over_N_max": 1,
+   "max_part_seconds_at_rate_x1.25": 216.19551442563534,
+   "part_budget_s": 1728.0,
+   "forced_parts": true,
+   "part_descriptors": [
+    {
+     "content": "frun",
+     "run": "F5_B1",
+     "token": "C4_F5_B1",
+     "scenario": "E7_0.07",
+     "sector": "B1",
+     "family": "NAT-O0",
+     "kind": "plan",
+     "tier": 0.1,
+     "tier_reason": "fixed by design (prompts/33 1.5: F5 at the f = 0.10 plan)",
+     "part": 1,
+     "parts": 2,
+     "chunk": 16,
+     "stride": 16,
+     "seed_token_index": 23,
+     "seed_rule": "prompts/33b R4: seed_token_index = token_index of the run's own F token (frun, cv3) or of the slot (fcells); chunk index global in the unsplit plan; stride = the sizing's chunk",
+     "plan_shots_by_circuit": {
+      "B1_ref57_k1": 6,
+      "B1_ref57_k4": 32,
+      "B1_ref27_k1": 6,
+      "B1_ref27_k2": 6
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B1_ref57_k1": [
+       0,
+       3
+      ],
+      "B1_ref57_k4": [
+       0,
+       16
+      ],
+      "B1_ref27_k1": [
+       0,
+       3
+      ],
+      "B1_ref27_k2": [
+       0,
+       3
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref57_k1": 3,
+      "B1_ref57_k4": 16,
+      "B1_ref27_k1": 3,
+      "B1_ref27_k2": 3
+     },
+     "rate_s_per_shot": 6.918256461620331,
+     "N_max": 199,
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/dryrun/C4_FCELLS_A.json job None; validation/dryrun/C4_FCELLS_B.json job None"
+    },
+    {
+     "content": "frun",
+     "run": "F5_B1",
+     "token": "C4_F5_B1",
+     "scenario": "E7_0.07",
+     "sector": "B1",
+     "family": "NAT-O0",
+     "kind": "plan",
+     "tier": 0.1,
+     "tier_reason": "fixed by design (prompts/33 1.5: F5 at the f = 0.10 plan)",
+     "part": 2,
+     "parts": 2,
+     "chunk": 16,
+     "stride": 16,
+     "seed_token_index": 23,
+     "seed_rule": "prompts/33b R4: seed_token_index = token_index of the run's own F token (frun, cv3) or of the slot (fcells); chunk index global in the unsplit plan; stride = the sizing's chunk",
+     "plan_shots_by_circuit": {
+      "B1_ref57_k1": 6,
+      "B1_ref57_k4": 32,
+      "B1_ref27_k1": 6,
+      "B1_ref27_k2": 6
+     },
+     "plan_f010_by_circuit": null,
+     "ranges_by_circuit": {
+      "B1_ref57_k1": [
+       3,
+       6
+      ],
+      "B1_ref57_k4": [
+       16,
+       32
+      ],
+      "B1_ref27_k1": [
+       3,
+       6
+      ],
+      "B1_ref27_k2": [
+       3,
+       6
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref57_k1": 3,
+      "B1_ref57_k4": 16,
+      "B1_ref27_k1": 3,
+      "B1_ref27_k2": 3
+     },
+     "rate_s_per_shot": 6.918256461620331,
+     "N_max": 199,
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/dryrun/C4_FCELLS_A.json job None; validation/dryrun/C4_FCELLS_B.json job None",
+     "slot": "C4_PART_01"
+    }
+   ],
+   "slots": [
+    "C4_F5_B1",
+    "C4_PART_01"
+   ]
+  }
+ },
+ "fcells": {
+  "dropped": [
+   [
+    "E1",
+    "NAT-O1"
+   ],
+   [
+    "E1",
+    "NAT-O2"
+   ],
+   [
+    "E1",
+    "NAT-O3"
+   ],
+   [
+    "E1",
+    "NAT-O4"
+   ],
+   [
+    "E1",
+    "NAT-O6"
+   ],
+   [
+    "E2",
+    "NAT-O0"
+   ],
+   [
+    "E2",
+    "NAT-O1"
+   ],
+   [
+    "E2",
+    "NAT-O2"
+   ],
+   [
+    "E2",
+    "NAT-O3"
+   ],
+   [
+    "E2",
+    "NAT-O4"
+   ],
+   [
+    "E2",
+    "NAT-O6"
+   ],
+   [
+    "E3",
+    "NAT-O0"
+   ],
+   [
+    "E3",
+    "NAT-O1"
+   ],
+   [
+    "E3",
+    "NAT-O2"
+   ],
+   [
+    "E3",
+    "NAT-O3"
+   ],
+   [
+    "E3",
+    "NAT-O4"
+   ],
+   [
+    "E3",
+    "NAT-O6"
+   ],
+   [
+    "E4",
+    "NAT-O0"
+   ],
+   [
+    "E4",
+    "NAT-O1"
+   ],
+   [
+    "E4",
+    "NAT-O2"
+   ],
+   [
+    "E4",
+    "NAT-O3"
+   ],
+   [
+    "E4",
+    "NAT-O4"
+   ],
+   [
+    "E4",
+    "NAT-O6"
+   ],
+   [
+    "E5a",
+    "NAT-O0"
+   ],
+   [
+    "E5a",
+    "NAT-O1"
+   ],
+   [
+    "E5a",
+    "NAT-O2"
+   ],
+   [
+    "E5a",
+    "NAT-O3"
+   ],
+   [
+    "E5a",
+    "NAT-O4"
+   ],
+   [
+    "E5a",
+    "NAT-O6"
+   ],
+   [
+    "E5b",
+    "NAT-O0"
+   ],
+   [
+    "E5b",
+    "NAT-O1"
+   ],
+   [
+    "E5b",
+    "NAT-O2"
+   ],
+   [
+    "E5b",
+    "NAT-O3"
+   ],
+   [
+    "E5b",
+    "NAT-O4"
+   ],
+   [
+    "E5b",
+    "NAT-O6"
+   ],
+   [
+    "E5c",
+    "NAT-O0"
+   ],
+   [
+    "E5c",
+    "NAT-O1"
+   ],
+   [
+    "E5c",
+    "NAT-O2"
+   ],
+   [
+    "E5c",
+    "NAT-O3"
+   ],
+   [
+    "E5c",
+    "NAT-O4"
+   ],
+   [
+    "E5c",
+    "NAT-O6"
+   ],
+   [
+    "E6a",
+    "NAT-O1"
+   ],
+   [
+    "E6a",
+    "NAT-O2"
+   ],
+   [
+    "E6a",
+    "NAT-O3"
+   ],
+   [
+    "E6a",
+    "NAT-O4"
+   ],
+   [
+    "E6b",
+    "NAT-O0"
+   ],
+   [
+    "E6b",
+    "NAT-O1"
+   ],
+   [
+    "E6b",
+    "NAT-O2"
+   ],
+   [
+    "E6b",
+    "NAT-O3"
+   ],
+   [
+    "E6b",
+    "NAT-O4"
+   ],
+   [
+    "E6c",
+    "NAT-O0"
+   ],
+   [
+    "E6c",
+    "NAT-O1"
+   ],
+   [
+    "E6c",
+    "NAT-O2"
+   ],
+   [
+    "E6c",
+    "NAT-O3"
+   ],
+   [
+    "E6c",
+    "NAT-O4"
+   ],
+   [
+    "E7_0.05",
+    "NAT-O0"
+   ],
+   [
+    "E7_0.05",
+    "NAT-O1"
+   ],
+   [
+    "E7_0.05",
+    "NAT-O2"
+   ],
+   [
+    "E7_0.05",
+    "NAT-O3"
+   ],
+   [
+    "E7_0.05",
+    "NAT-O4"
+   ],
+   [
+    "E7_0.07",
+    "NAT-O0"
+   ],
+   [
+    "E7_0.07",
+    "NAT-O1"
+   ],
+   [
+    "E7_0.07",
+    "NAT-O2"
+   ],
+   [
+    "E7_0.07",
+    "NAT-O3"
+   ],
+   [
+    "E7_0.07",
+    "NAT-O4"
+   ],
+   [
+    "E7_0.10",
+    "NAT-O0"
+   ],
+   [
+    "E7_0.10",
+    "NAT-O1"
+   ],
+   [
+    "E7_0.10",
+    "NAT-O2"
+   ],
+   [
+    "E7_0.10",
+    "NAT-O3"
+   ],
+   [
+    "E7_0.10",
+    "NAT-O4"
+   ],
+   [
+    "E7_0.15",
+    "NAT-O0"
+   ],
+   [
+    "E7_0.15",
+    "NAT-O1"
+   ],
+   [
+    "E7_0.15",
+    "NAT-O2"
+   ],
+   [
+    "E7_0.15",
+    "NAT-O3"
+   ],
+   [
+    "E7_0.15",
+    "NAT-O4"
+   ]
+  ],
+  "cell_cost_s": {
+   "E1": {
+    "seconds": 198.53956818580627,
+    "source": "validation/dryrun/C4_FCELLS_A.json (job None) data.cells.E1|NAT-O0.seconds"
+   },
+   "E2": {
+    "seconds": 198.53956818580627,
+    "source": "assumed: the E1 cell cost x rho_E2 / rho_E1 (validation/dryrun/C4_FCELLS_A.json (job None) data.cells.E1|NAT-O0.seconds)"
+   },
+   "E3": {
+    "seconds": 198.53956818580627,
+    "source": "assumed: the E1 cell cost x rho_E3 / rho_E1 (validation/dryrun/C4_FCELLS_A.json (job None) data.cells.E1|NAT-O0.seconds)"
+   },
+   "E4": {
+    "seconds": 198.53956818580627,
+    "source": "assumed: the E1 cell cost x rho_E4 / rho_E1 (validation/dryrun/C4_FCELLS_A.json (job None) data.cells.E1|NAT-O0.seconds)"
+   },
+   "E5a": {
+    "seconds": 198.53956818580627,
+    "source": "assumed: the E1 cell cost x rho_E5a / rho_E1 (validation/dryrun/C4_FCELLS_A.json (job None) data.cells.E1|NAT-O0.seconds)"
+   },
+   "E5b": {
+    "seconds": 198.53956818580627,
+    "source": "assumed: the E1 cell cost x rho_E5b / rho_E1 (validation/dryrun/C4_FCELLS_A.json (job None) data.cells.E1|NAT-O0.seconds)"
+   },
+   "E5c": {
+    "seconds": 198.53956818580627,
+    "source": "assumed: the E1 cell cost x rho_E5c / rho_E1 (validation/dryrun/C4_FCELLS_A.json (job None) data.cells.E1|NAT-O0.seconds)"
+   },
+   "E6a": {
+    "seconds": 284.2516827583313,
+    "source": "validation/dryrun/C4_FCELLS_B.json (job None) data.cells.E6a|NAT-O0.seconds"
+   },
+   "E6b": {
+    "seconds": 198.53956818580627,
+    "source": "assumed: the E1 cell cost x rho_E6b / rho_E1 (validation/dryrun/C4_FCELLS_A.json (job None) data.cells.E1|NAT-O0.seconds)"
+   },
+   "E6c": {
+    "seconds": 198.53956818580627,
+    "source": "assumed: the E1 cell cost x rho_E6c / rho_E1 (validation/dryrun/C4_FCELLS_A.json (job None) data.cells.E1|NAT-O0.seconds)"
+   },
+   "E7_0.05": {
+    "seconds": 198.53956818580627,
+    "source": "assumed: the E1 cell cost x rho_E7_0.05 / rho_E1 (validation/dryrun/C4_FCELLS_A.json (job None) data.cells.E1|NAT-O0.seconds)"
+   },
+   "E7_0.07": {
+    "seconds": 198.53956818580627,
+    "source": "assumed: the E1 cell cost x rho_E7_0.07 / rho_E1 (validation/dryrun/C4_FCELLS_A.json (job None) data.cells.E1|NAT-O0.seconds)"
+   },
+   "E7_0.10": {
+    "seconds": 198.53956818580627,
+    "source": "assumed: the E1 cell cost x rho_E7_0.10 / rho_E1 (validation/dryrun/C4_FCELLS_A.json (job None) data.cells.E1|NAT-O0.seconds)"
+   },
+   "E7_0.15": {
+    "seconds": 198.53956818580627,
+    "source": "assumed: the E1 cell cost x rho_E7_0.15 / rho_E1 (validation/dryrun/C4_FCELLS_A.json (job None) data.cells.E1|NAT-O0.seconds)"
+   },
+   "E8": {
+    "seconds": 275.5586236889976,
+    "source": "assumed: the E1 cell cost x rho_E8 / rho_E1 (validation/dryrun/C4_FCELLS_A.json (job None) data.cells.E1|NAT-O0.seconds)"
+   }
+  },
+  "slot_capacity_s": 1728.0,
+  "cell_shots": 20,
+  "rule": "first fit in the priority order scenario E1, E2, E3, E4, E5a, E5b, E5c (then C4_FCELLS_B's E6a..E7_0.15 as their own group), within a scenario O0, O1, O2, O3, O4, O6; cost = the measured seconds of the scenario's most expensive measured cell (prompts/33b R5)",
+  "slots": [
+   {
+    "group": "A",
+    "label": "A",
+    "cells": [
+     [
+      "E1",
+      "NAT-O1"
+     ],
+     [
+      "E1",
+      "NAT-O2"
+     ],
+     [
+      "E1",
+      "NAT-O3"
+     ],
+     [
+      "E1",
+      "NAT-O4"
+     ],
+     [
+      "E1",
+      "NAT-O6"
+     ],
+     [
+      "E2",
+      "NAT-O0"
+     ],
+     [
+      "E2",
+      "NAT-O1"
+     ],
+     [
+      "E2",
+      "NAT-O2"
+     ]
+    ],
+    "predicted_s": 1588.3165454864502,
+    "over_capacity": false,
+    "cell_index_offset": 0,
+    "part": 1,
+    "parts": 6
+   },
+   {
+    "group": "A",
+    "label": "B",
+    "cells": [
+     [
+      "E2",
+      "NAT-O3"
+     ],
+     [
+      "E2",
+      "NAT-O4"
+     ],
+     [
+      "E2",
+      "NAT-O6"
+     ],
+     [
+      "E3",
+      "NAT-O0"
+     ],
+     [
+      "E3",
+      "NAT-O1"
+     ],
+     [
+      "E3",
+      "NAT-O2"
+     ],
+     [
+      "E3",
+      "NAT-O3"
+     ],
+     [
+      "E3",
+      "NAT-O4"
+     ]
+    ],
+    "predicted_s": 1588.3165454864502,
+    "over_capacity": false,
+    "cell_index_offset": 8,
+    "part": 2,
+    "parts": 6
+   },
+   {
+    "group": "A",
+    "label": "C",
+    "cells": [
+     [
+      "E3",
+      "NAT-O6"
+     ],
+     [
+      "E4",
+      "NAT-O0"
+     ],
+     [
+      "E4",
+      "NAT-O1"
+     ],
+     [
+      "E4",
+      "NAT-O2"
+     ],
+     [
+      "E4",
+      "NAT-O3"
+     ],
+     [
+      "E4",
+      "NAT-O4"
+     ],
+     [
+      "E4",
+      "NAT-O6"
+     ],
+     [
+      "E5a",
+      "NAT-O0"
+     ]
+    ],
+    "predicted_s": 1588.3165454864502,
+    "over_capacity": false,
+    "cell_index_offset": 16,
+    "part": 3,
+    "parts": 6
+   },
+   {
+    "group": "A",
+    "label": "D",
+    "cells": [
+     [
+      "E5a",
+      "NAT-O1"
+     ],
+     [
+      "E5a",
+      "NAT-O2"
+     ],
+     [
+      "E5a",
+      "NAT-O3"
+     ],
+     [
+      "E5a",
+      "NAT-O4"
+     ],
+     [
+      "E5a",
+      "NAT-O6"
+     ],
+     [
+      "E5b",
+      "NAT-O0"
+     ],
+     [
+      "E5b",
+      "NAT-O1"
+     ],
+     [
+      "E5b",
+      "NAT-O2"
+     ]
+    ],
+    "predicted_s": 1588.3165454864502,
+    "over_capacity": false,
+    "cell_index_offset": 24,
+    "part": 4,
+    "parts": 6
+   },
+   {
+    "group": "A",
+    "label": "E",
+    "cells": [
+     [
+      "E5b",
+      "NAT-O3"
+     ],
+     [
+      "E5b",
+      "NAT-O4"
+     ],
+     [
+      "E5b",
+      "NAT-O6"
+     ],
+     [
+      "E5c",
+      "NAT-O0"
+     ],
+     [
+      "E5c",
+      "NAT-O1"
+     ],
+     [
+      "E5c",
+      "NAT-O2"
+     ],
+     [
+      "E5c",
+      "NAT-O3"
+     ],
+     [
+      "E5c",
+      "NAT-O4"
+     ]
+    ],
+    "predicted_s": 1588.3165454864502,
+    "over_capacity": false,
+    "cell_index_offset": 32,
+    "part": 5,
+    "parts": 6
+   },
+   {
+    "group": "A",
+    "label": "F",
+    "cells": [
+     [
+      "E5c",
+      "NAT-O6"
+     ]
+    ],
+    "predicted_s": 198.53956818580627,
+    "over_capacity": false,
+    "cell_index_offset": 40,
+    "part": 6,
+    "parts": 6
+   },
+   {
+    "group": "B",
+    "label": "FB1",
+    "cells": [
+     [
+      "E6a",
+      "NAT-O1"
+     ],
+     [
+      "E6a",
+      "NAT-O2"
+     ],
+     [
+      "E6a",
+      "NAT-O3"
+     ],
+     [
+      "E6a",
+      "NAT-O4"
+     ],
+     [
+      "E6b",
+      "NAT-O0"
+     ],
+     [
+      "E6b",
+      "NAT-O1"
+     ]
+    ],
+    "predicted_s": 1534.0858674049377,
+    "over_capacity": false,
+    "cell_index_offset": 41,
+    "part": 1,
+    "parts": 5
+   },
+   {
+    "group": "B",
+    "label": "FB2",
+    "cells": [
+     [
+      "E6b",
+      "NAT-O2"
+     ],
+     [
+      "E6b",
+      "NAT-O3"
+     ],
+     [
+      "E6b",
+      "NAT-O4"
+     ],
+     [
+      "E6c",
+      "NAT-O0"
+     ],
+     [
+      "E6c",
+      "NAT-O1"
+     ],
+     [
+      "E6c",
+      "NAT-O2"
+     ],
+     [
+      "E6c",
+      "NAT-O3"
+     ],
+     [
+      "E6c",
+      "NAT-O4"
+     ]
+    ],
+    "predicted_s": 1588.3165454864502,
+    "over_capacity": false,
+    "cell_index_offset": 47,
+    "part": 2,
+    "parts": 5
+   },
+   {
+    "group": "B",
+    "label": "FB3",
+    "cells": [
+     [
+      "E7_0.05",
+      "NAT-O0"
+     ],
+     [
+      "E7_0.05",
+      "NAT-O1"
+     ],
+     [
+      "E7_0.05",
+      "NAT-O2"
+     ],
+     [
+      "E7_0.05",
+      "NAT-O3"
+     ],
+     [
+      "E7_0.05",
+      "NAT-O4"
+     ],
+     [
+      "E7_0.07",
+      "NAT-O0"
+     ],
+     [
+      "E7_0.07",
+      "NAT-O1"
+     ],
+     [
+      "E7_0.07",
+      "NAT-O2"
+     ]
+    ],
+    "predicted_s": 1588.3165454864502,
+    "over_capacity": false,
+    "cell_index_offset": 55,
+    "part": 3,
+    "parts": 5
+   },
+   {
+    "group": "B",
+    "label": "FB4",
+    "cells": [
+     [
+      "E7_0.07",
+      "NAT-O3"
+     ],
+     [
+      "E7_0.07",
+      "NAT-O4"
+     ],
+     [
+      "E7_0.10",
+      "NAT-O0"
+     ],
+     [
+      "E7_0.10",
+      "NAT-O1"
+     ],
+     [
+      "E7_0.10",
+      "NAT-O2"
+     ],
+     [
+      "E7_0.10",
+      "NAT-O3"
+     ],
+     [
+      "E7_0.10",
+      "NAT-O4"
+     ],
+     [
+      "E7_0.15",
+      "NAT-O0"
+     ]
+    ],
+    "predicted_s": 1588.3165454864502,
+    "over_capacity": false,
+    "cell_index_offset": 63,
+    "part": 4,
+    "parts": 5
+   },
+   {
+    "group": "B",
+    "label": "FB5",
+    "cells": [
+     [
+      "E7_0.15",
+      "NAT-O1"
+     ],
+     [
+      "E7_0.15",
+      "NAT-O2"
+     ],
+     [
+      "E7_0.15",
+      "NAT-O3"
+     ],
+     [
+      "E7_0.15",
+      "NAT-O4"
+     ]
+    ],
+    "predicted_s": 794.1582727432251,
+    "over_capacity": false,
+    "cell_index_offset": 71,
+    "part": 5,
+    "parts": 5
+   }
+  ]
+ },
+ "cv3": {
+  "F5_B1": {
+   "N_eq": 13,
+   "k5_circuits": 2,
+   "shots": 78,
+   "rate_s_per_shot": 6.918256461620331,
+   "N_max": 249,
+   "parts": 2,
+   "part_shots": [
+    42,
+    36
+   ],
+   "split_method": "equal_fraction (33a rule)",
+   "parts_ceil_N_over_N_max": 1,
+   "sampling_s_at_rate": 539.6240040063858,
+   "status": "slot: 2 part(s) (prompts/33b R6)",
+   "part_descriptors": [
+    {
+     "content": "cv3",
+     "run": "F5_B1",
+     "token": "C4_F5_B1",
+     "scenario": "E7_0.07",
+     "sector": "B1",
+     "family": "NAT-O0",
+     "kind": "cv3",
+     "part": 1,
+     "parts": 2,
+     "chunk": 16,
+     "stride": 16,
+     "seed_token_index": 23,
+     "seed_rule": "prompts/33b R4: seed_token_index = token_index of the run's own F token (frun, cv3) or of the slot (fcells); chunk index global in the unsplit plan; stride = the sizing's chunk",
+     "circuit_offsets": {
+      "eq": 100,
+      "k5": 200
+     },
+     "N_eq": 13,
+     "plan_shots_by_circuit": {
+      "B1_ref57_k1": 6,
+      "B1_ref57_k4": 32,
+      "B1_ref27_k1": 6,
+      "B1_ref27_k2": 6
+     },
+     "k5_circuits": [
+      "B1_ref57_k5",
+      "B1_ref27_k5"
+     ],
+     "eq_ranges_by_circuit": {
+      "B1_ref57_k1": [
+       0,
+       7
+      ],
+      "B1_ref57_k4": [
+       0,
+       7
+      ],
+      "B1_ref27_k1": [
+       0,
+       7
+      ],
+      "B1_ref27_k2": [
+       0,
+       7
+      ]
+     },
+     "k5_ranges_by_circuit": {
+      "B1_ref57_k5": [
+       0,
+       7
+      ],
+      "B1_ref27_k5": [
+       0,
+       7
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref57_k1": 7,
+      "B1_ref57_k4": 7,
+      "B1_ref27_k1": 7,
+      "B1_ref27_k2": 7,
+      "B1_ref57_k5": 7,
+      "B1_ref27_k5": 7
+     },
+     "rate_s_per_shot": 6.918256461620331,
+     "N_max": 249,
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/dryrun/C4_FCELLS_A.json job None; validation/dryrun/C4_FCELLS_B.json job None"
+    },
+    {
+     "content": "cv3",
+     "run": "F5_B1",
+     "token": "C4_F5_B1",
+     "scenario": "E7_0.07",
+     "sector": "B1",
+     "family": "NAT-O0",
+     "kind": "cv3",
+     "part": 2,
+     "parts": 2,
+     "chunk": 16,
+     "stride": 16,
+     "seed_token_index": 23,
+     "seed_rule": "prompts/33b R4: seed_token_index = token_index of the run's own F token (frun, cv3) or of the slot (fcells); chunk index global in the unsplit plan; stride = the sizing's chunk",
+     "circuit_offsets": {
+      "eq": 100,
+      "k5": 200
+     },
+     "N_eq": 13,
+     "plan_shots_by_circuit": {
+      "B1_ref57_k1": 6,
+      "B1_ref57_k4": 32,
+      "B1_ref27_k1": 6,
+      "B1_ref27_k2": 6
+     },
+     "k5_circuits": [
+      "B1_ref57_k5",
+      "B1_ref27_k5"
+     ],
+     "eq_ranges_by_circuit": {
+      "B1_ref57_k1": [
+       7,
+       13
+      ],
+      "B1_ref57_k4": [
+       7,
+       13
+      ],
+      "B1_ref27_k1": [
+       7,
+       13
+      ],
+      "B1_ref27_k2": [
+       7,
+       13
+      ]
+     },
+     "k5_ranges_by_circuit": {
+      "B1_ref57_k5": [
+       7,
+       13
+      ],
+      "B1_ref27_k5": [
+       7,
+       13
+      ]
+     },
+     "shots_by_circuit": {
+      "B1_ref57_k1": 6,
+      "B1_ref57_k4": 6,
+      "B1_ref27_k1": 6,
+      "B1_ref27_k2": 6,
+      "B1_ref57_k5": 6,
+      "B1_ref27_k5": 6
+     },
+     "rate_s_per_shot": 6.918256461620331,
+     "N_max": 249,
+     "written_by": "scripts/campaign33_resize.py",
+     "from": "validation/dryrun/C4_FCELLS_A.json job None; validation/dryrun/C4_FCELLS_B.json job None"
+    }
+   ],
+   "slots": [
+    "C4_PART_03",
+    "C4_PART_04"
+   ]
+  }
+ },
+ "cv3_rule": {
+  "CV3_SLOTS": [
+   "F5_B1",
+   "F1_B1"
+  ],
+  "CV3_QUEUED_LAST": [
+   "F2_B1"
+  ],
+  "source": "prompts/33b R6"
+ },
+ "allowlist_33a": "ci/allowed_jobs.campaign33a",
+ "slots_available": 20,
+ "unassigned": [],
+ "slots": {
+  "C4_PART_01": {
+   "content": "frun",
+   "run": "F5_B1",
+   "label": null,
+   "part": 2,
+   "parts": 2,
+   "cells": null,
+   "seed_token_index": 23,
+   "copy": "C33_F5_B1_part2of2"
+  },
+  "C4_PART_02": {
+   "content": "fcells",
+   "run": null,
+   "label": "A",
+   "part": 1,
+   "parts": 6,
+   "cells": [
+    [
+     "E1",
+     "NAT-O1"
+    ],
+    [
+     "E1",
+     "NAT-O2"
+    ],
+    [
+     "E1",
+     "NAT-O3"
+    ],
+    [
+     "E1",
+     "NAT-O4"
+    ],
+    [
+     "E1",
+     "NAT-O6"
+    ],
+    [
+     "E2",
+     "NAT-O0"
+    ],
+    [
+     "E2",
+     "NAT-O1"
+    ],
+    [
+     "E2",
+     "NAT-O2"
+    ]
+   ],
+   "seed_token_index": 34,
+   "copy": "C33_fcells_part1of6"
+  },
+  "C4_PART_03": {
+   "content": "cv3",
+   "run": "F5_B1",
+   "label": null,
+   "part": 1,
+   "parts": 2,
+   "cells": null,
+   "seed_token_index": 23,
+   "copy": "C33_F5_B1_cv3_part1of2"
+  },
+  "C4_PART_04": {
+   "content": "cv3",
+   "run": "F5_B1",
+   "label": null,
+   "part": 2,
+   "parts": 2,
+   "cells": null,
+   "seed_token_index": 23,
+   "copy": "C33_F5_B1_cv3_part2of2"
+  },
+  "C4_PART_05": {
+   "content": "fcells",
+   "run": null,
+   "label": "B",
+   "part": 2,
+   "parts": 6,
+   "cells": [
+    [
+     "E2",
+     "NAT-O3"
+    ],
+    [
+     "E2",
+     "NAT-O4"
+    ],
+    [
+     "E2",
+     "NAT-O6"
+    ],
+    [
+     "E3",
+     "NAT-O0"
+    ],
+    [
+     "E3",
+     "NAT-O1"
+    ],
+    [
+     "E3",
+     "NAT-O2"
+    ],
+    [
+     "E3",
+     "NAT-O3"
+    ],
+    [
+     "E3",
+     "NAT-O4"
+    ]
+   ],
+   "seed_token_index": 37,
+   "copy": "C33_fcells_part2of6"
+  },
+  "C4_PART_06": {
+   "content": "fcells",
+   "run": null,
+   "label": "C",
+   "part": 3,
+   "parts": 6,
+   "cells": [
+    [
+     "E3",
+     "NAT-O6"
+    ],
+    [
+     "E4",
+     "NAT-O0"
+    ],
+    [
+     "E4",
+     "NAT-O1"
+    ],
+    [
+     "E4",
+     "NAT-O2"
+    ],
+    [
+     "E4",
+     "NAT-O3"
+    ],
+    [
+     "E4",
+     "NAT-O4"
+    ],
+    [
+     "E4",
+     "NAT-O6"
+    ],
+    [
+     "E5a",
+     "NAT-O0"
+    ]
+   ],
+   "seed_token_index": 38,
+   "copy": "C33_fcells_part3of6"
+  },
+  "C4_PART_07": {
+   "content": "fcells",
+   "run": null,
+   "label": "D",
+   "part": 4,
+   "parts": 6,
+   "cells": [
+    [
+     "E5a",
+     "NAT-O1"
+    ],
+    [
+     "E5a",
+     "NAT-O2"
+    ],
+    [
+     "E5a",
+     "NAT-O3"
+    ],
+    [
+     "E5a",
+     "NAT-O4"
+    ],
+    [
+     "E5a",
+     "NAT-O6"
+    ],
+    [
+     "E5b",
+     "NAT-O0"
+    ],
+    [
+     "E5b",
+     "NAT-O1"
+    ],
+    [
+     "E5b",
+     "NAT-O2"
+    ]
+   ],
+   "seed_token_index": 39,
+   "copy": "C33_fcells_part4of6"
+  },
+  "C4_PART_08": {
+   "content": "fcells",
+   "run": null,
+   "label": "E",
+   "part": 5,
+   "parts": 6,
+   "cells": [
+    [
+     "E5b",
+     "NAT-O3"
+    ],
+    [
+     "E5b",
+     "NAT-O4"
+    ],
+    [
+     "E5b",
+     "NAT-O6"
+    ],
+    [
+     "E5c",
+     "NAT-O0"
+    ],
+    [
+     "E5c",
+     "NAT-O1"
+    ],
+    [
+     "E5c",
+     "NAT-O2"
+    ],
+    [
+     "E5c",
+     "NAT-O3"
+    ],
+    [
+     "E5c",
+     "NAT-O4"
+    ]
+   ],
+   "seed_token_index": 40,
+   "copy": "C33_fcells_part5of6"
+  },
+  "C4_PART_09": {
+   "content": "fcells",
+   "run": null,
+   "label": "F",
+   "part": 6,
+   "parts": 6,
+   "cells": [
+    [
+     "E5c",
+     "NAT-O6"
+    ]
+   ],
+   "seed_token_index": 41,
+   "copy": "C33_fcells_part6of6"
+  },
+  "C4_PART_10": {
+   "content": "fcells",
+   "run": null,
+   "label": "FB1",
+   "part": 1,
+   "parts": 5,
+   "cells": [
+    [
+     "E6a",
+     "NAT-O1"
+    ],
+    [
+     "E6a",
+     "NAT-O2"
+    ],
+    [
+     "E6a",
+     "NAT-O3"
+    ],
+    [
+     "E6a",
+     "NAT-O4"
+    ],
+    [
+     "E6b",
+     "NAT-O0"
+    ],
+    [
+     "E6b",
+     "NAT-O1"
+    ]
+   ],
+   "seed_token_index": 42,
+   "copy": "C33_fcellsB_part1of5"
+  },
+  "C4_PART_11": {
+   "content": "fcells",
+   "run": null,
+   "label": "FB2",
+   "part": 2,
+   "parts": 5,
+   "cells": [
+    [
+     "E6b",
+     "NAT-O2"
+    ],
+    [
+     "E6b",
+     "NAT-O3"
+    ],
+    [
+     "E6b",
+     "NAT-O4"
+    ],
+    [
+     "E6c",
+     "NAT-O0"
+    ],
+    [
+     "E6c",
+     "NAT-O1"
+    ],
+    [
+     "E6c",
+     "NAT-O2"
+    ],
+    [
+     "E6c",
+     "NAT-O3"
+    ],
+    [
+     "E6c",
+     "NAT-O4"
+    ]
+   ],
+   "seed_token_index": 43,
+   "copy": "C33_fcellsB_part2of5"
+  },
+  "C4_PART_12": {
+   "content": "fcells",
+   "run": null,
+   "label": "FB3",
+   "part": 3,
+   "parts": 5,
+   "cells": [
+    [
+     "E7_0.05",
+     "NAT-O0"
+    ],
+    [
+     "E7_0.05",
+     "NAT-O1"
+    ],
+    [
+     "E7_0.05",
+     "NAT-O2"
+    ],
+    [
+     "E7_0.05",
+     "NAT-O3"
+    ],
+    [
+     "E7_0.05",
+     "NAT-O4"
+    ],
+    [
+     "E7_0.07",
+     "NAT-O0"
+    ],
+    [
+     "E7_0.07",
+     "NAT-O1"
+    ],
+    [
+     "E7_0.07",
+     "NAT-O2"
+    ]
+   ],
+   "seed_token_index": 44,
+   "copy": "C33_fcellsB_part3of5"
+  },
+  "C4_PART_13": {
+   "content": "fcells",
+   "run": null,
+   "label": "FB4",
+   "part": 4,
+   "parts": 5,
+   "cells": [
+    [
+     "E7_0.07",
+     "NAT-O3"
+    ],
+    [
+     "E7_0.07",
+     "NAT-O4"
+    ],
+    [
+     "E7_0.10",
+     "NAT-O0"
+    ],
+    [
+     "E7_0.10",
+     "NAT-O1"
+    ],
+    [
+     "E7_0.10",
+     "NAT-O2"
+    ],
+    [
+     "E7_0.10",
+     "NAT-O3"
+    ],
+    [
+     "E7_0.10",
+     "NAT-O4"
+    ],
+    [
+     "E7_0.15",
+     "NAT-O0"
+    ]
+   ],
+   "seed_token_index": 45,
+   "copy": "C33_fcellsB_part4of5"
+  },
+  "C4_PART_14": {
+   "content": "fcells",
+   "run": null,
+   "label": "FB5",
+   "part": 5,
+   "parts": 5,
+   "cells": [
+    [
+     "E7_0.15",
+     "NAT-O1"
+    ],
+    [
+     "E7_0.15",
+     "NAT-O2"
+    ],
+    [
+     "E7_0.15",
+     "NAT-O3"
+    ],
+    [
+     "E7_0.15",
+     "NAT-O4"
+    ]
+   ],
+   "seed_token_index": 46,
+   "copy": "C33_fcellsB_part5of5"
+  }
+ },
+ "slots_used": 14,
+ "slot_queue": [
+  {
+   "kind": "frun",
+   "run": "F5_B1",
+   "part": 2,
+   "parts": 2,
+   "copy": "C33_F5_B1_part2of2",
+   "slot": "C4_PART_01",
+   "generation": 1,
+   "position": 1
+  },
+  {
+   "kind": "fcells",
+   "label": "A",
+   "part": 1,
+   "parts": 6,
+   "copy": "C33_fcells_part1of6",
+   "slot": "C4_PART_02",
+   "generation": 1,
+   "position": 2
+  },
+  {
+   "kind": "cv3",
+   "run": "F5_B1",
+   "part": 1,
+   "parts": 2,
+   "copy": "C33_F5_B1_cv3_part1of2",
+   "slot": "C4_PART_03",
+   "generation": 1,
+   "position": 3
+  },
+  {
+   "kind": "cv3",
+   "run": "F5_B1",
+   "part": 2,
+   "parts": 2,
+   "copy": "C33_F5_B1_cv3_part2of2",
+   "slot": "C4_PART_04",
+   "generation": 1,
+   "position": 4
+  },
+  {
+   "kind": "fcells",
+   "label": "B",
+   "part": 2,
+   "parts": 6,
+   "copy": "C33_fcells_part2of6",
+   "slot": "C4_PART_05",
+   "generation": 1,
+   "position": 5
+  },
+  {
+   "kind": "fcells",
+   "label": "C",
+   "part": 3,
+   "parts": 6,
+   "copy": "C33_fcells_part3of6",
+   "slot": "C4_PART_06",
+   "generation": 1,
+   "position": 6
+  },
+  {
+   "kind": "fcells",
+   "label": "D",
+   "part": 4,
+   "parts": 6,
+   "copy": "C33_fcells_part4of6",
+   "slot": "C4_PART_07",
+   "generation": 1,
+   "position": 7
+  },
+  {
+   "kind": "fcells",
+   "label": "E",
+   "part": 5,
+   "parts": 6,
+   "copy": "C33_fcells_part5of6",
+   "slot": "C4_PART_08",
+   "generation": 1,
+   "position": 8
+  },
+  {
+   "kind": "fcells",
+   "label": "F",
+   "part": 6,
+   "parts": 6,
+   "copy": "C33_fcells_part6of6",
+   "slot": "C4_PART_09",
+   "generation": 1,
+   "position": 9
+  },
+  {
+   "kind": "fcells",
+   "label": "FB1",
+   "part": 1,
+   "parts": 5,
+   "copy": "C33_fcellsB_part1of5",
+   "slot": "C4_PART_10",
+   "generation": 1,
+   "position": 10
+  },
+  {
+   "kind": "fcells",
+   "label": "FB2",
+   "part": 2,
+   "parts": 5,
+   "copy": "C33_fcellsB_part2of5",
+   "slot": "C4_PART_11",
+   "generation": 1,
+   "position": 11
+  },
+  {
+   "kind": "fcells",
+   "label": "FB3",
+   "part": 3,
+   "parts": 5,
+   "copy": "C33_fcellsB_part3of5",
+   "slot": "C4_PART_12",
+   "generation": 1,
+   "position": 12
+  },
+  {
+   "kind": "fcells",
+   "label": "FB4",
+   "part": 4,
+   "parts": 5,
+   "copy": "C33_fcellsB_part4of5",
+   "slot": "C4_PART_13",
+   "generation": 1,
+   "position": 13
+  },
+  {
+   "kind": "fcells",
+   "label": "FB5",
+   "part": 5,
+   "parts": 5,
+   "copy": "C33_fcellsB_part5of5",
+   "slot": "C4_PART_14",
+   "generation": 1,
+   "position": 14
+  }
+ ],
+ "deferred": [],
+ "slot_history": {
+  "C4_PART_01": [
+   {
+    "kind": "frun",
+    "run": "F5_B1",
+    "part": 2,
+    "parts": 2,
+    "copy": "C33_F5_B1_part2of2",
+    "slot": "C4_PART_01",
+    "generation": 1,
+    "assigned": "2026-10-11 18:30:31 UTC"
+   }
+  ],
+  "C4_PART_02": [
+   {
+    "kind": "fcells",
+    "label": "A",
+    "part": 1,
+    "parts": 6,
+    "copy": "C33_fcells_part1of6",
+    "slot": "C4_PART_02",
+    "generation": 1,
+    "assigned": "2026-10-11 18:30:31 UTC"
+   }
+  ],
+  "C4_PART_03": [
+   {
+    "kind": "cv3",
+    "run": "F5_B1",
+    "part": 1,
+    "parts": 2,
+    "copy": "C33_F5_B1_cv3_part1of2",
+    "slot": "C4_PART_03",
+    "generation": 1,
+    "assigned": "2026-10-11 18:30:31 UTC"
+   }
+  ],
+  "C4_PART_04": [
+   {
+    "kind": "cv3",
+    "run": "F5_B1",
+    "part": 2,
+    "parts": 2,
+    "copy": "C33_F5_B1_cv3_part2of2",
+    "slot": "C4_PART_04",
+    "generation": 1,
+    "assigned": "2026-10-11 18:30:31 UTC"
+   }
+  ],
+  "C4_PART_05": [
+   {
+    "kind": "fcells",
+    "label": "B",
+    "part": 2,
+    "parts": 6,
+    "copy": "C33_fcells_part2of6",
+    "slot": "C4_PART_05",
+    "generation": 1,
+    "assigned": "2026-10-11 18:30:31 UTC"
+   }
+  ],
+  "C4_PART_06": [
+   {
+    "kind": "fcells",
+    "label": "C",
+    "part": 3,
+    "parts": 6,
+    "copy": "C33_fcells_part3of6",
+    "slot": "C4_PART_06",
+    "generation": 1,
+    "assigned": "2026-10-11 18:30:31 UTC"
+   }
+  ],
+  "C4_PART_07": [
+   {
+    "kind": "fcells",
+    "label": "D",
+    "part": 4,
+    "parts": 6,
+    "copy": "C33_fcells_part4of6",
+    "slot": "C4_PART_07",
+    "generation": 1,
+    "assigned": "2026-10-11 18:30:31 UTC"
+   }
+  ],
+  "C4_PART_08": [
+   {
+    "kind": "fcells",
+    "label": "E",
+    "part": 5,
+    "parts": 6,
+    "copy": "C33_fcells_part5of6",
+    "slot": "C4_PART_08",
+    "generation": 1,
+    "assigned": "2026-10-11 18:30:31 UTC"
+   }
+  ],
+  "C4_PART_09": [
+   {
+    "kind": "fcells",
+    "label": "F",
+    "part": 6,
+    "parts": 6,
+    "copy": "C33_fcells_part6of6",
+    "slot": "C4_PART_09",
+    "generation": 1,
+    "assigned": "2026-10-11 18:30:31 UTC"
+   }
+  ],
+  "C4_PART_10": [
+   {
+    "kind": "fcells",
+    "label": "FB1",
+    "part": 1,
+    "parts": 5,
+    "copy": "C33_fcellsB_part1of5",
+    "slot": "C4_PART_10",
+    "generation": 1,
+    "assigned": "2026-10-11 18:30:31 UTC"
+   }
+  ],
+  "C4_PART_11": [
+   {
+    "kind": "fcells",
+    "label": "FB2",
+    "part": 2,
+    "parts": 5,
+    "copy": "C33_fcellsB_part2of5",
+    "slot": "C4_PART_11",
+    "generation": 1,
+    "assigned": "2026-10-11 18:30:31 UTC"
+   }
+  ],
+  "C4_PART_12": [
+   {
+    "kind": "fcells",
+    "label": "FB3",
+    "part": 3,
+    "parts": 5,
+    "copy": "C33_fcellsB_part3of5",
+    "slot": "C4_PART_12",
+    "generation": 1,
+    "assigned": "2026-10-11 18:30:31 UTC"
+   }
+  ],
+  "C4_PART_13": [
+   {
+    "kind": "fcells",
+    "label": "FB4",
+    "part": 4,
+    "parts": 5,
+    "copy": "C33_fcellsB_part4of5",
+    "slot": "C4_PART_13",
+    "generation": 1,
+    "assigned": "2026-10-11 18:30:31 UTC"
+   }
+  ],
+  "C4_PART_14": [
+   {
+    "kind": "fcells",
+    "label": "FB5",
+    "part": 5,
+    "parts": 5,
+    "copy": "C33_fcellsB_part5of5",
+    "slot": "C4_PART_14",
+    "generation": 1,
+    "assigned": "2026-10-11 18:30:31 UTC"
+   }
+  ]
+ }
+}

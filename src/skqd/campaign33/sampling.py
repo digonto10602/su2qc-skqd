@@ -8,9 +8,12 @@ Order-kept, budgeted Aer sampling for the 2x3 campaign (prompts/33 sections 1.3 
   sum of chunks (nested by construction).  This keeps the prompt's purpose for the chunk rule
   "chunk <= min(476, ceil(N_c/16))" with fewer run() calls: the boundaries are placed at the prefix
   points instead of every N_c/16 shots (recorded as `chunk_rule` in every JSON).
-* Seeds.  Chunk i of circuit c uses tokens.chunk_seed(s0, c, i, stride) with stride = the largest chunk;
-  Aer seeds shot j of a call with seed + j, so chunks never share a shot stream.  An out-of-memory chunk
-  is split in two calls with seeds (seed, seed + a): the SAME shot stream as the unsplit chunk.
+* Seeds.  Chunk i of circuit c uses tokens.chunk_seed(s0, c, i, stride) with i the chunk's index in the
+  UNSPLIT chunk plan (chunk_plan numbers its chunks, part_plan keeps the numbers: prompts/33b R4) and stride =
+  the largest chunk (an unsplit run) or the sizing's chunk (a part of a split run, given explicitly), so the
+  parts of a split run concatenate to the unsplit run seed for seed.  Aer seeds shot j of a call with seed + j,
+  so chunks never share a shot stream.  An out-of-memory chunk is split in two calls with seeds
+  (seed, seed + a): the SAME shot stream as the unsplit chunk.
 * Rounds and budget.  Calls are issued chunk-index-major (round j = chunk j of every circuit that has one),
   so a deadline stops at a round boundary with every circuit holding a complete prefix; the shots
   reached are recorded (`shots_reduced_to`), never extrapolated.
@@ -40,7 +43,9 @@ def rnd(x):
 
 
 def chunk_plan(n_shots: int, max_chunk: int, phis=PHI) -> list:
-    """[(start, size)] covering [0, n_shots) with boundaries at the prefix points and sizes <= max_chunk."""
+    """[(start, size, index)] covering [0, n_shots) with boundaries at the prefix points and sizes <= max_chunk;
+    `index` numbers the chunks of this (unsplit) plan 0, 1, ... -- the chunk index of the seed rule (prompts/33b
+    R4), kept by part_plan for the pieces of a split run."""
     n = int(n_shots)
     if n <= 0:
         return []
@@ -49,7 +54,7 @@ def chunk_plan(n_shots: int, max_chunk: int, phis=PHI) -> list:
     for b in cuts:
         while a < b:
             s = min(int(max_chunk), b - a)
-            out.append((a, s))
+            out.append((a, s, len(out)))
             a += s
     return out
 
@@ -59,7 +64,7 @@ def split_ranges(n_shots: int, max_chunk: int, parts: int, phis=PHI) -> list:
     each boundary the first chunk start >= i n_shots / parts (rounded UP to a chunk boundary), so that the
     concatenated parts are exactly the unsplit chunk plan and every gate_CV prefix point stays a boundary."""
     plan = chunk_plan(n_shots, max_chunk, phis)
-    starts = [a for a, _s in plan] + [int(n_shots)]
+    starts = [a for a, _s, _i in plan] + [int(n_shots)]
     cuts = [0]
     for i in range(1, int(parts)):
         x = i * float(n_shots) / int(parts)
@@ -69,11 +74,34 @@ def split_ranges(n_shots: int, max_chunk: int, parts: int, phis=PHI) -> list:
 
 
 def part_plan(n_shots: int, max_chunk: int, start: int, end: int, phis=PHI) -> list:
-    """The chunks [(start, size)] of the unsplit plan of n_shots that lie in [start, end) (exact cover)."""
-    p = [(a, s) for a, s in chunk_plan(n_shots, max_chunk, phis) if start <= a < end]
-    if sum(s for _a, s in p) != int(end) - int(start) or (p and p[0][0] != int(start)):
+    """The chunks [(start, size, index)] of the unsplit plan of n_shots that lie in [start, end) (exact cover);
+    `index` is the chunk's number in the UNSPLIT plan (the seed rule's chunk index, prompts/33b R4)."""
+    p = [(a, s, i) for a, s, i in chunk_plan(n_shots, max_chunk, phis) if start <= a < end]
+    if sum(s for _a, s, _i in p) != int(end) - int(start) or (p and p[0][0] != int(start)):
         raise ValueError(f"[{start}, {end}) is not a union of chunks of the plan of {n_shots} at {max_chunk}")
     return p
+
+
+def ranges_list(r) -> list:
+    """A part's piece of one circuit as [[a, b], ...]: the 33a form [a, b] (one contiguous range), or (prompts/33b,
+    a chunk-packed part) a list of ranges [[a1, b1], [a2, b2], ...], possibly empty."""
+    r = list(r)
+    if not r:
+        return []
+    if isinstance(r[0], (list, tuple)):
+        return [[int(a), int(b)] for a, b in r]
+    return [[int(r[0]), int(r[1])]]
+
+
+def range_shots(r) -> int:
+    return sum(b - a for a, b in ranges_list(r))
+
+
+def part_plan_ranges(n_shots: int, max_chunk: int, r, phis=PHI) -> list:
+    """The chunks [(start, size, index)] of the unsplit plan covered by a part's range(s) of one circuit (each
+    range an exact union of chunks; part_plan), in start order."""
+    out = [t for a, b in ranges_list(r) for t in part_plan(n_shots, max_chunk, a, b, phis)]
+    return sorted(out)
 
 
 def make_simulator(device: str = "CPU", mode: str = "policy", noise_model=None, threads: int = 0,
@@ -255,15 +283,22 @@ class Sampler:
                 basis.add("rate hint")
         return need, ", ".join(sorted(basis)) or "none"
 
-    def run(self, circuits: list, shots: list, labels: list, circuit_offset: int = 0, plans: list = None):
+    def run(self, circuits: list, shots: list, labels: list, circuit_offset: int = 0, plans: list = None,
+            stride: int = None):
         """Sample circuits[c] for shots[c] shots.  Returns per circuit {label, plan, chunks: [{start, shots,
-        seed, counts}], shots_done} and the info block.  Circuit c's seeds use index circuit_offset + c.
-        plans: an explicit [(start, size)] list per circuit (prompts/33a step D: part i of a split run samples
-        the chunks of the unsplit chunk plan that lie in its range; `shots` is then their sum)."""
+        index, seed, counts}], shots_done} and the info block.  Circuit c's seeds use index circuit_offset + c.
+        plans: an explicit [(start, size, index)] list per circuit (prompts/33a step D: part i of a split run
+        samples the chunks of the unsplit chunk plan that lie in its range; `shots` is then their sum; `index` is
+        the chunk's number in the unsplit plan, prompts/33b R4).  stride: the seed stride -- the sizing's chunk
+        for a part of a split run (prompts/33b R4); default the largest chunk of `plans` (an unsplit run, as
+        before).  The seed of a chunk is tokens.chunk_seed(s0, circuit_offset + c, index, stride)."""
         if plans is None:
             plans = [chunk_plan(n, self.max_chunk, self.phis) for n in shots]
-        plans = [list(p) for p in plans]
-        stride = max([s for p in plans for _a, s in p] or [1])
+        plans = [[(int(t[0]), int(t[1]), int(t[2]) if len(t) > 2 else j) for j, t in enumerate(p)] for p in plans]
+        stride = int(stride) if stride is not None else max([t[1] for p in plans for t in p] or [1])
+        big = max([t[1] for p in plans for t in p] or [0])
+        if big > stride:
+            raise ValueError(f"seed stride {stride} below the largest chunk {big}: chunks would share shot streams")
         out = [{"label": lab, "requested": int(n), "chunks": [], "shots_done": 0} for lab, n in zip(labels, shots)]
         n_rounds = max([len(p) for p in plans] or [0])
         probe_point = None                      # (shots, seconds) of the largest discarded probe of circuit 0
@@ -285,17 +320,17 @@ class Sampler:
                              f"(basis {basis}); {done_shots} shots done")
                     break
             for c in todo:
-                a, s = plans[c][j]
-                seed = T.chunk_seed(self.s0, circuit_offset + c, j, stride)
+                a, s, gi = plans[c][j]
+                seed = T.chunk_seed(self.s0, circuit_offset + c, gi, stride)
                 t_c = time.time()
                 counts = self._run(circuits[c], s, seed, c)
-                out[c]["chunks"].append({"start": int(a), "shots": int(s), "seed": int(seed), "counts": counts,
-                                         "seconds": time.time() - t_c})
+                out[c]["chunks"].append({"start": int(a), "shots": int(s), "index": int(gi), "seed": int(seed),
+                                         "counts": counts, "seconds": time.time() - t_c})
                 out[c]["shots_done"] += int(s)
                 done_shots += int(s)
         wall = time.time() - t_start
-        info = {"calls": self.calls, "oom_retries": list(self.oom_retries), "stride": int(stride),
-                "max_chunk": self.max_chunk,
+        info = {"calls": self.calls, "oom_retries": list(self.oom_retries), "stride": int(stride), "s0": self.s0,
+                "circuit_offset": int(circuit_offset), "max_chunk": self.max_chunk,
                 "chunk_rule": CHUNK_RULE if self.phis == PHI else
                 f"plain chunks of <= max_chunk shots with boundaries at phi in {list(self.phis)} of N_c",
                 "rounds": n_rounds,

@@ -160,7 +160,7 @@ def test_part_slot_and_assembly(sandbox, monkeypatch):
     plan = m["data"]["plan_shots_by_circuit"]
     ch = out["runs"]["F4_B0a"]["part_descriptors"][0]["chunk"]
     for c, n in plan.items():
-        assert m["data"]["bounds"][c] == [0] + [int(x) for x in np.cumsum([s for _a, s in SM.chunk_plan(n, ch)])]
+        assert m["data"]["bounds"][c] == [0] + [int(x) for x in np.cumsum([s for _a, s, _i in SM.chunk_plan(n, ch)])]
     assert m["data"]["frun"]["E_tol"]["value"] == p1["data"]["frun"]["E_tol"]["value"]
     assert len(m["data"]["parts"]) == 2 and any(c["name"].startswith("P13") for c in m["criteria"])
 

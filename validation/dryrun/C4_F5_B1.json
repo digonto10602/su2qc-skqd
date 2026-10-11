@@ -11,7 +11,7 @@
   },
   {
    "name": "S2 wall time inside the walltime budget",
-   "value": "181 s",
+   "value": "272 s",
    "threshold": "<= min(walltime 3600 s, 3600 s) and <= 1.1 x budget + 120 s",
    "passed": true
   },
@@ -52,22 +52,57 @@
   "prompt": "prompts/33_2x3_four_class_perlmutter_campaign.md",
   "content": "E7(0.07) x O0 at the f=0.10 plan, B=1",
   "dry_run": true,
-  "created": "2026-10-06 23:53:09 UTC",
+  "created": "2026-10-11 18:30:32 UTC",
   "seeds": {
    "s0": 35300000,
-   "rule": "aer seed of chunk i of circuit c = s0 * 1e4 + c * 1e6 + i * stride, stride = chunk size, s0 = 33 000 000 + 1e5 x token index (prompts/33 2.3 s0; the circuit/chunk offsets are widened from 1e3 c so that circuits, chunks, tokens and the a/b halves are disjoint for <= 1e6 shots per circuit: the literal s0 + 1e3 c + i stride overlaps above 1000 shots per circuit)"
+   "s0_token": "C4_F5_B1",
+   "stride": 16,
+   "rule": "aer seed of chunk i of circuit c = s0 * 1e4 + c * 1e6 + i * stride, stride = chunk size, s0 = 33 000 000 + 1e5 x token index (prompts/33 2.3 s0; the circuit/chunk offsets are widened from 1e3 c so that circuits, chunks, tokens and the a/b halves are disjoint for <= 1e6 shots per circuit: the literal s0 + 1e3 c + i stride overlaps above 1000 shots per circuit).  prompts/33b R4: every part of a split class-4 run (part 1 on the F token, parts >= 2 on any C4_PART slot) uses s0 of the run's OWN F token, i = the chunk's index in the UNSPLIT chunk plan and stride = the sizing's chunk, so the parts concatenate to the unsplit run seed for seed and a slot can be re-used; the run's CV3 equal-shots sample uses the same s0 with circuit offsets 100 (k <= 4) / 200 (k = 5); an f-cell slot uses the slot's own s0 with circuit offset 4 x the cell's global index"
   },
   "dry_run_reductions": {
-   "shots_scale": 0.0005,
+   "shots_scale": 0.01,
    "max_shots_per_run": 16,
    "max_circuits_per_sector": 4,
    "max_shots_per_circuit": 32,
    "budget_minutes": 8.0,
    "reason": "a laptop path check, not a result: shots x 0.01 (prompts/33 A4), <= 16 shots per run() call, at most 4 circuits per sector, and at most 32 shots per circuit / unit -- noisy 20-21-qubit Aer runs at several seconds per shot on this CPU (the 1-shot warm-up of C4_F8_B0a took 52 s under load), so a 0.01-scaled plan of record (up to 676 shots for C4_F1_B1) would not fit the 10-minute dry-run bound"
   },
+  "preflight": {
+   "ok": true,
+   "modules": [
+    "threadpoolctl",
+    "numpy",
+    "scipy",
+    "qiskit",
+    "qiskit_aer",
+    "skqd.campaign33.tokens",
+    "skqd.campaign33.stats",
+    "skqd.campaign33.sampling",
+    "skqd.campaign33.circuits",
+    "skqd.campaign33.noise",
+    "skqd.campaign33.analysis",
+    "skqd.campaign33.tokens_run",
+    "skqd.campaign33.assemble",
+    "skqd.campaign33.cf_gpu",
+    "skqd.campaign33.engines",
+    "gate_CV"
+   ],
+   "env": "skqd",
+   "versions": {
+    "qiskit": "2.5.2",
+    "qiskit_aer": "0.17.2",
+    "numpy": "2.5.2",
+    "scipy": "1.18.0",
+    "threadpoolctl": "3.7.0",
+    "python": "3.12.14"
+   },
+   "seconds": 0.7894823551177979
+  },
   "gpu_mode_used": "cpu",
-  "seconds_per_shot": 6.985737840334575,
+  "gpu_mode_source": "CPU run",
+  "seconds_per_shot": 10.344312601089477,
   "frun": {
+   "run": "F5_B1",
    "scenario": "E7_0.07",
    "family": "NAT-O0",
    "family_rule": "prompts/33 1.5",
@@ -77,25 +112,19 @@
    "plan_tier": 0.1,
    "plan_tier_reason": "fixed by design (prompts/33 1.5: F5 at the f = 0.10 plan)",
    "shots_requested": {
-    "B1_ref57_k1": 1,
-    "B1_ref57_k4": 21,
-    "B1_ref27_k1": 1,
-    "B1_ref27_k2": 1
+    "B1_ref57_k1": 3,
+    "B1_ref57_k4": 16,
+    "B1_ref27_k1": 3,
+    "B1_ref27_k2": 3
    },
    "shots_done": {
-    "B1_ref57_k1": 1,
-    "B1_ref57_k4": 21,
-    "B1_ref27_k1": 1,
-    "B1_ref27_k2": 1
+    "B1_ref57_k1": 3,
+    "B1_ref57_k4": 16,
+    "B1_ref27_k1": 3,
+    "B1_ref27_k2": 3
    },
    "full": true,
-   "E_tol": {
-    "value": 0.011040137293009344,
-    "cv_2x3_plan": 0.0110401372930089,
-    "abs_diff": 4.440892098500626e-16,
-    "ok": true
-   },
-   "cv3_status": "not_evaluated: the equal-shots (6 per circuit) and k = 5 samples need 36 shots ~ 251 s, more than the 226 s left (budget)",
+   "cv3_status": "not_evaluated in a part: the equal-shots sample is its own slot content (cv3) when data/campaign33/sizing_33a.json assigns one; read at assembly",
    "noise": {
     "id": "E7_0.07",
     "class": "depolarizing + readout",
@@ -127,750 +156,271 @@
      {
       "start": 0,
       "shots": 1,
-      "seed": 353000000000
+      "index": 0,
+      "seed": 353000000000,
+      "seconds": 9.42691683769226
+     },
+     {
+      "start": 1,
+      "shots": 1,
+      "index": 1,
+      "seed": 353000000016,
+      "seconds": 10.139387130737305
+     },
+     {
+      "start": 2,
+      "shots": 1,
+      "index": 2,
+      "seed": 353000000032,
+      "seconds": 9.697849035263062
      }
     ],
     "B1_ref57_k4": [
      {
       "start": 0,
-      "shots": 1,
-      "seed": 353001000000
-     },
-     {
-      "start": 1,
       "shots": 2,
-      "seed": 353001000010
+      "index": 0,
+      "seed": 353001000000,
+      "seconds": 27.853131771087646
      },
      {
-      "start": 3,
+      "start": 2,
       "shots": 2,
-      "seed": 353001000020
+      "index": 1,
+      "seed": 353001000016,
+      "seconds": 28.881248474121094
      },
      {
-      "start": 5,
-      "shots": 6,
-      "seed": 353001000030
+      "start": 4,
+      "shots": 4,
+      "index": 2,
+      "seed": 353001000032,
+      "seconds": 34.9503870010376
      },
      {
-      "start": 11,
-      "shots": 10,
-      "seed": 353001000040
+      "start": 8,
+      "shots": 8,
+      "index": 3,
+      "seed": 353001000048,
+      "seconds": 75.66827201843262
      }
     ],
     "B1_ref27_k1": [
      {
       "start": 0,
       "shots": 1,
-      "seed": 353002000000
+      "index": 0,
+      "seed": 353002000000,
+      "seconds": 9.699646949768066
+     },
+     {
+      "start": 1,
+      "shots": 1,
+      "index": 1,
+      "seed": 353002000016,
+      "seconds": 9.585338354110718
+     },
+     {
+      "start": 2,
+      "shots": 1,
+      "index": 2,
+      "seed": 353002000032,
+      "seconds": 10.178500413894653
      }
     ],
     "B1_ref27_k2": [
      {
       "start": 0,
       "shots": 1,
-      "seed": 353003000000
+      "index": 0,
+      "seed": 353003000000,
+      "seconds": 11.838638544082642
+     },
+     {
+      "start": 1,
+      "shots": 1,
+      "index": 1,
+      "seed": 353003000016,
+      "seconds": 10.043315887451172
+     },
+     {
+      "start": 2,
+      "shots": 1,
+      "index": 2,
+      "seed": 353003000032,
+      "seconds": 10.644940614700317
      }
     ]
    },
    "sampling": {
-    "calls": 8,
+    "calls": 13,
     "oom_retries": [],
-    "stride": 10,
+    "stride": 16,
+    "s0": 35300000,
+    "circuit_offset": 0,
     "max_chunk": 16,
     "chunk_rule": "boundaries at round(phi N_c) for phi in (1/16, 1/8, 1/4, 1/2, 1) (gate_CV prefixes) and every chunk <= max_chunk shots; the prefix curves are exact sums of chunks",
-    "rounds": 5,
+    "rounds": 4,
     "stopped": null,
-    "wall_s": 167.65770816802979,
-    "shots_done": 24,
-    "seconds_per_shot": 6.985737840334575,
+    "wall_s": 258.60781502723694,
+    "shots_done": 25,
+    "seconds_per_shot": 10.344312601089477,
     "warmup": {
      "shots": 1,
-     "seconds": 8.556544780731201,
+     "seconds": 9.6596097946167,
      "discarded": true,
-     "seed": 353999000000
-    },
-    "seed_rule": "aer seed of chunk i of circuit c = s0 * 1e4 + c * 1e6 + i * stride, stride = chunk size, s0 = 33 000 000 + 1e5 x token index (prompts/33 2.3 s0; the circuit/chunk offsets are widened from 1e3 c so that circuits, chunks, tokens and the a/b halves are disjoint for <= 1e6 shots per circuit: the literal s0 + 1e3 c + i stride overlaps above 1000 shots per circuit)"
-   },
-   "cv": {
-    "cv0": {
-     "B_all_nested": true,
-     "counts_nondecreasing": true,
-     "E_R_all_nonincreasing": true,
-     "variational_ok": true,
-     "ok": true
-    },
-    "criteria": {
-     "CV1": {
-      "dE": 0.00021185940363643851,
-      "ratio": 0.019189924727710465,
-      "ok": true
-     },
-     "CV2": {
-      "type": "weinstein",
-      "width": 0.15,
-      "owner_confirmation": null,
-      "rH_half": 1.3057712401506711,
-      "rH_full": 1.305603938509933,
-      "weinstein_half": [
-       -4.608546877882666,
-       -3.302775637731995
-      ],
-      "weinstein_full": [
-       -4.608591435645565,
-       -3.3029874971356312
-      ],
-      "E0_in_weinstein_half": true,
-      "E0_in_weinstein_full": true,
-      "kt_width_half": null,
-      "kt_width_full": null,
-      "kt_rigorous_half": null,
-      "kt_rigorous_full": null,
-      "E0_in_kt_half": null,
-      "E0_in_kt_full": null,
-      "E_R_below_E1_half": false,
-      "E_R_below_E1_full": false,
-      "gap_half": false,
-      "gap_full": false,
-      "width_half": 1.3057712401506711,
-      "width_full": 1.305603938509933,
-      "E0_in_half": true,
-      "E0_in_full": true,
-      "ok": false
-     },
-     "CV4": {
-      "all_points_below_p2_5": false,
-      "n_points": 5,
-      "n_below": 2,
-      "margin_at_N": 0.14467510195793132,
-      "margin_over_E_tol": 13.104465833911334,
-      "W_at_N": 0.8032452009401087,
-      "W_rand_p97_5": 0.7835018152492479,
-      "ok": false
-     },
-     "CV5": {
-      "W_at_N": 0.8032452009401087,
-      "W_sig_at_N": 0.8032452009401087,
-      "W_all_at_N": 0.8032452009401087,
-      "ok": false,
-      "recall_S999_sig": 0.06315789473684211,
-      "recall_S999_all": 0.06315789473684211,
-      "recall_S99_sig": 0.11904761904761904,
-      "recall_S99_all": 0.11904761904761904
-     },
-     "basis": "all",
-     "CV3": {
-      "ok": null,
-      "status": "not_evaluated: the equal-shots k <= 4 and k = 5 samples were not taken (budget)"
-     }
-    },
-    "shots_curve": [
-     {
+     "seed": 353999000000,
+     "probes": [],
+     "probe_rule": "call_bound from the largest probe; a probe costs <= 0.1 of the time left at its pessimistic bound, at most 3 probes, size <= the largest round-0 call",
+     "bounding_point": {
       "shots": 1,
-      "mu_s": 9.5367431640625e-07,
-      "accepted": 0,
-      "n_distinct": 0,
-      "B_all_size": 3,
-      "basis": "all",
-      "expected_garbage_born": 0.000406265065066691,
-      "sig": {
-       "W_cluster": 0.7841670871906473,
-       "size": 3,
-       "E_R": -3.0,
-       "err": 0.826084443124147,
-       "rH": 1.620185174601965,
-       "weinstein": [
-        -4.620185174601965,
-        -3.0
-       ],
-       "E0_in_weinstein": true,
-       "E_R_below_E1": false,
-       "kt_rigorous": null,
-       "kt_width": null,
-       "E0_in_kt": null,
-       "kato_temple": null,
-       "gap_assumption_holds": false,
-       "W": 0.7633871651917183,
-       "eq6_bound": 5.20790966138662,
-       "recall_S999": 0.031578947368421054,
-       "recall_S99": 0.07142857142857142,
-       "false_positives": 0
-      },
-      "all": {
-       "W_cluster": 0.7841670871906473,
-       "size": 3,
-       "E_R": -3.0,
-       "err": 0.826084443124147,
-       "rH": 1.620185174601965,
-       "weinstein": [
-        -4.620185174601965,
-        -3.0
-       ],
-       "E0_in_weinstein": true,
-       "E_R_below_E1": false,
-       "kt_rigorous": null,
-       "kt_width": null,
-       "E0_in_kt": null,
-       "kato_temple": null,
-       "gap_assumption_holds": false,
-       "W": 0.7633871651917183,
-       "eq6_bound": 5.20790966138662,
-       "recall_S999": 0.031578947368421054,
-       "recall_S99": 0.07142857142857142,
-       "false_positives": 0
-      },
-      "random": {
-       "size": 3,
-       "n": 200,
-       "contains_R": true,
-       "sizes_ok": true,
-       "E_R": {
-        "n": 200,
-        "mean": -3.0,
-        "std": 0.0,
-        "p2_5": -3.0,
-        "p97_5": -3.0,
-        "min": -3.0,
-        "max": -3.0
-       },
-       "rH": {
-        "n": 200,
-        "mean": 1.6201851746019644,
-        "std": 6.678054204517532e-16,
-        "p2_5": 1.620185174601965,
-        "p97_5": 1.620185174601965,
-        "min": 1.620185174601965,
-        "max": 1.620185174601965
-       },
-       "W": {
-        "n": 200,
-        "mean": 0.7633871651917181,
-        "std": 2.2260180681725107e-16,
-        "p2_5": 0.7633871651917183,
-        "p97_5": 0.7633871651917183,
-        "min": 0.7633871651917183,
-        "max": 0.7633871651917183
-       },
-       "device_E_R_percentile": 100.0,
-       "device_W_percentile": 100.0,
-       "min_E_R": -3.0
-      },
-      "phi": 0.0625
-     },
-     {
-      "shots": 3,
-      "mu_s": 2.86102294921875e-06,
-      "accepted": 0,
-      "n_distinct": 0,
-      "B_all_size": 3,
-      "basis": "all",
-      "expected_garbage_born": 0.0012187940328658442,
-      "sig": {
-       "W_cluster": 0.7841670871906473,
-       "size": 3,
-       "E_R": -3.0,
-       "err": 0.826084443124147,
-       "rH": 1.620185174601965,
-       "weinstein": [
-        -4.620185174601965,
-        -3.0
-       ],
-       "E0_in_weinstein": true,
-       "E_R_below_E1": false,
-       "kt_rigorous": null,
-       "kt_width": null,
-       "E0_in_kt": null,
-       "kato_temple": null,
-       "gap_assumption_holds": false,
-       "W": 0.7633871651917183,
-       "eq6_bound": 5.20790966138662,
-       "recall_S999": 0.031578947368421054,
-       "recall_S99": 0.07142857142857142,
-       "false_positives": 0
-      },
-      "all": {
-       "W_cluster": 0.7841670871906473,
-       "size": 3,
-       "E_R": -3.0,
-       "err": 0.826084443124147,
-       "rH": 1.620185174601965,
-       "weinstein": [
-        -4.620185174601965,
-        -3.0
-       ],
-       "E0_in_weinstein": true,
-       "E_R_below_E1": false,
-       "kt_rigorous": null,
-       "kt_width": null,
-       "E0_in_kt": null,
-       "kato_temple": null,
-       "gap_assumption_holds": false,
-       "W": 0.7633871651917183,
-       "eq6_bound": 5.20790966138662,
-       "recall_S999": 0.031578947368421054,
-       "recall_S99": 0.07142857142857142,
-       "false_positives": 0
-      },
-      "random": {
-       "size": 3,
-       "n": 200,
-       "contains_R": true,
-       "sizes_ok": true,
-       "E_R": {
-        "n": 200,
-        "mean": -3.0,
-        "std": 0.0,
-        "p2_5": -3.0,
-        "p97_5": -3.0,
-        "min": -3.0,
-        "max": -3.0
-       },
-       "rH": {
-        "n": 200,
-        "mean": 1.6201851746019644,
-        "std": 6.678054204517532e-16,
-        "p2_5": 1.620185174601965,
-        "p97_5": 1.620185174601965,
-        "min": 1.620185174601965,
-        "max": 1.620185174601965
-       },
-       "W": {
-        "n": 200,
-        "mean": 0.7633871651917181,
-        "std": 2.2260180681725107e-16,
-        "p2_5": 0.7633871651917183,
-        "p97_5": 0.7633871651917183,
-        "min": 0.7633871651917183,
-        "max": 0.7633871651917183
-       },
-       "device_E_R_percentile": 100.0,
-       "device_W_percentile": 100.0,
-       "min_E_R": -3.0
-      },
-      "phi": 0.125
-     },
-     {
-      "shots": 5,
-      "mu_s": 4.76837158203125e-06,
-      "accepted": 1,
-      "n_distinct": 1,
-      "B_all_size": 4,
-      "basis": "all",
-      "expected_garbage_born": 0.0020313214508860256,
-      "sig": {
-       "W_cluster": 0.7978059486534786,
-       "size": 4,
-       "E_R": -3.1583123951777,
-       "err": 0.6677720479464471,
-       "rH": 1.461059807878843,
-       "weinstein": [
-        -4.6193722030565425,
-        -3.1583123951777
-       ],
-       "E0_in_weinstein": true,
-       "E_R_below_E1": false,
-       "kt_rigorous": null,
-       "kt_width": null,
-       "E0_in_kt": null,
-       "kato_temple": [
-        -16.64238456655028,
-        -3.1583123951777
-       ],
-       "gap_assumption_holds": false,
-       "W": 0.7855966631123958,
-       "eq6_bound": 4.585660594392017,
-       "recall_S999": 0.042105263157894736,
-       "recall_S99": 0.09523809523809523,
-       "false_positives": 0
-      },
-      "all": {
-       "W_cluster": 0.7978059486534786,
-       "size": 4,
-       "E_R": -3.1583123951777,
-       "err": 0.6677720479464471,
-       "rH": 1.461059807878843,
-       "weinstein": [
-        -4.6193722030565425,
-        -3.1583123951777
-       ],
-       "E0_in_weinstein": true,
-       "E_R_below_E1": false,
-       "kt_rigorous": null,
-       "kt_width": null,
-       "E0_in_kt": null,
-       "kato_temple": [
-        -16.64238456655028,
-        -3.1583123951777
-       ],
-       "gap_assumption_holds": false,
-       "W": 0.7855966631123958,
-       "eq6_bound": 4.585660594392017,
-       "recall_S999": 0.042105263157894736,
-       "recall_S99": 0.09523809523809523,
-       "false_positives": 0
-      },
-      "random": {
-       "size": 4,
-       "n": 200,
-       "contains_R": true,
-       "sizes_ok": true,
-       "E_R": {
-        "n": 200,
-        "mean": -3.0079676129823754,
-        "std": 0.03458582690756837,
-        "p2_5": -3.1583123951777,
-        "p97_5": -3.0,
-        "min": -3.1583123951777,
-        "max": -3.0
-       },
-       "rH": {
-        "n": 200,
-        "mean": 1.6102103528031932,
-        "std": 0.045991169687318055,
-        "p2_5": 1.4562022637090106,
-        "p97_5": 1.620185174601965,
-        "min": 1.2785522133252758,
-        "max": 1.620185174601965
-       },
-       "W": {
-        "n": 200,
-        "mean": 0.7642730105171646,
-        "std": 0.003814947372732885,
-        "p2_5": 0.7633871652548226,
-        "p97_5": 0.782050774509364,
-        "min": 0.7633871651917183,
-        "max": 0.7855966631123953
-       },
-       "device_E_R_percentile": 5.0,
-       "device_W_percentile": 100.0,
-       "min_E_R": -3.1583123951777
-      },
-      "phi": 0.25
-     },
-     {
-      "shots": 14,
-      "mu_s": 1.33514404296875e-05,
-      "accepted": 2,
-      "n_distinct": 2,
-      "B_all_size": 5,
-      "basis": "all",
-      "expected_garbage_born": 0.005687675653651247,
-      "sig": {
-       "W_cluster": 0.81001299644127,
-       "size": 5,
-       "E_R": -3.302775637731995,
-       "err": 0.5233088053921522,
-       "rH": 1.3057712401506711,
-       "weinstein": [
-        -4.608546877882666,
-        -3.302775637731995
-       ],
-       "E0_in_weinstein": true,
-       "E_R_below_E1": false,
-       "kt_rigorous": null,
-       "kt_width": null,
-       "E0_in_kt": null,
-       "kato_temple": [
-        -8.93413536131007,
-        -3.302775637731995
-       ],
-       "gap_assumption_holds": false,
-       "W": 0.8031378052097152,
-       "eq6_bound": 4.1185301587183725,
-       "recall_S999": 0.05263157894736842,
-       "recall_S99": 0.11904761904761904,
-       "false_positives": 0
-      },
-      "all": {
-       "W_cluster": 0.81001299644127,
-       "size": 5,
-       "E_R": -3.302775637731995,
-       "err": 0.5233088053921522,
-       "rH": 1.3057712401506711,
-       "weinstein": [
-        -4.608546877882666,
-        -3.302775637731995
-       ],
-       "E0_in_weinstein": true,
-       "E_R_below_E1": false,
-       "kt_rigorous": null,
-       "kt_width": null,
-       "E0_in_kt": null,
-       "kato_temple": [
-        -8.93413536131007,
-        -3.302775637731995
-       ],
-       "gap_assumption_holds": false,
-       "W": 0.8031378052097152,
-       "eq6_bound": 4.1185301587183725,
-       "recall_S999": 0.05263157894736842,
-       "recall_S99": 0.11904761904761904,
-       "false_positives": 0
-      },
-      "random": {
-       "size": 5,
-       "n": 200,
-       "contains_R": true,
-       "sizes_ok": true,
-       "E_R": {
-        "n": 200,
-        "mean": -3.0096547233811335,
-        "std": 0.03767324686388875,
-        "p2_5": -3.1583123951777,
-        "p97_5": -3.0,
-        "min": -3.1583123951777,
-        "max": -3.0
-       },
-       "rH": {
-        "n": 200,
-        "mean": 1.6084207585689014,
-        "std": 0.04831689839834452,
-        "p2_5": 1.4562022637090106,
-        "p97_5": 1.620185174601965,
-        "min": 1.2785522133252758,
-        "max": 1.620185174601965
-       },
-       "W": {
-        "n": 200,
-        "mean": 0.7645857787277248,
-        "std": 0.004401527841394365,
-        "p2_5": 0.7633871686735921,
-        "p97_5": 0.7832270555829383,
-        "min": 0.7633871658705724,
-        "max": 0.7862710293154783
-       },
-       "device_E_R_percentile": 0.0,
-       "device_W_percentile": 100.0,
-       "min_E_R": -3.1583123951777
-      },
-      "phi": 0.5
-     },
-     {
-      "shots": 24,
-      "mu_s": 2.288818359375e-05,
-      "accepted": 5,
-      "n_distinct": 4,
-      "B_all_size": 7,
-      "basis": "all",
-      "expected_garbage_born": 0.009750254627702848,
-      "sig": {
-       "W_cluster": 0.8101015600622786,
-       "size": 7,
-       "E_R": -3.3029874971356312,
-       "err": 0.5230969459885157,
-       "rH": 1.305603938509933,
-       "weinstein": [
-        -4.608591435645565,
-        -3.3029874971356312
-       ],
-       "E0_in_weinstein": true,
-       "E_R_below_E1": false,
-       "kt_rigorous": null,
-       "kt_width": null,
-       "E0_in_kt": null,
-       "kato_temple": [
-        -8.928967646044516,
-        -3.3029874971356312
-       ],
-       "gap_assumption_holds": false,
-       "W": 0.8032452009401087,
-       "eq6_bound": 4.1157329890881655,
-       "recall_S999": 0.06315789473684211,
-       "recall_S99": 0.11904761904761904,
-       "false_positives": 0
-      },
-      "all": {
-       "W_cluster": 0.8101015600622786,
-       "size": 7,
-       "E_R": -3.3029874971356312,
-       "err": 0.5230969459885157,
-       "rH": 1.305603938509933,
-       "weinstein": [
-        -4.608591435645565,
-        -3.3029874971356312
-       ],
-       "E0_in_weinstein": true,
-       "E_R_below_E1": false,
-       "kt_rigorous": null,
-       "kt_width": null,
-       "E0_in_kt": null,
-       "kato_temple": [
-        -8.928967646044516,
-        -3.3029874971356312
-       ],
-       "gap_assumption_holds": false,
-       "W": 0.8032452009401087,
-       "eq6_bound": 4.1157329890881655,
-       "recall_S999": 0.06315789473684211,
-       "recall_S99": 0.11904761904761904,
-       "false_positives": 0
-      },
-      "random": {
-       "size": 7,
-       "n": 200,
-       "contains_R": true,
-       "sizes_ok": true,
-       "E_R": {
-        "n": 200,
-        "mean": -3.0210312978448877,
-        "std": 0.055174408454710284,
-        "p2_5": -3.1583123951777,
-        "p97_5": -3.0,
-        "min": -3.302775637731995,
-        "max": -3.0
-       },
-       "rH": {
-        "n": 200,
-        "mean": 1.5912339997080986,
-        "std": 0.07310774252057302,
-        "p2_5": 1.4322946162319514,
-        "p97_5": 1.620185174601965,
-        "min": 1.2785522133252758,
-        "max": 1.620185174601965
-       },
-       "W": {
-        "n": 200,
-        "mean": 0.7659069807291481,
-        "std": 0.006370541983695426,
-        "p2_5": 0.7633878129441835,
-        "p97_5": 0.7835018152492479,
-        "min": 0.7633871713264029,
-        "max": 0.8020507373486818
-       },
-       "device_E_R_percentile": 0.0,
-       "device_W_percentile": 100.0,
-       "min_E_R": -3.302775637731995
-      },
-      "phi": 1.0
+      "seconds": 9.6596097946167
      }
-    ]
+    },
+    "seed_rule": "aer seed of chunk i of circuit c = s0 * 1e4 + c * 1e6 + i * stride, stride = chunk size, s0 = 33 000 000 + 1e5 x token index (prompts/33 2.3 s0; the circuit/chunk offsets are widened from 1e3 c so that circuits, chunks, tokens and the a/b halves are disjoint for <= 1e6 shots per circuit: the literal s0 + 1e3 c + i stride overlaps above 1000 shots per circuit).  prompts/33b R4: every part of a split class-4 run (part 1 on the F token, parts >= 2 on any C4_PART slot) uses s0 of the run's OWN F token, i = the chunk's index in the UNSPLIT chunk plan and stride = the sizing's chunk, so the parts concatenate to the unsplit run seed for seed and a slot can be re-used; the run's CV3 equal-shots sample uses the same s0 with circuit offsets 100 (k <= 4) / 200 (k = 5); an f-cell slot uses the slot's own s0 with circuit offset 4 x the cell's global index"
    },
-   "plan_prefix": "the whole run (plan of record)",
+   "chunk": 16,
+   "sizing_note": "part 1 of 2 per data/campaign33/dryrun/sizing_33a.json (written from validation/dryrun/C4_FCELLS_A.json job None; validation/dryrun/C4_FCELLS_B.json job None)",
+   "seeds": {
+    "s0": 35300000,
+    "s0_token": "C4_F5_B1",
+    "stride": 16,
+    "rule": "aer seed of chunk i of circuit c = s0 * 1e4 + c * 1e6 + i * stride, stride = chunk size, s0 = 33 000 000 + 1e5 x token index (prompts/33 2.3 s0; the circuit/chunk offsets are widened from 1e3 c so that circuits, chunks, tokens and the a/b halves are disjoint for <= 1e6 shots per circuit: the literal s0 + 1e3 c + i stride overlaps above 1000 shots per circuit).  prompts/33b R4: every part of a split class-4 run (part 1 on the F token, parts >= 2 on any C4_PART slot) uses s0 of the run's OWN F token, i = the chunk's index in the UNSPLIT chunk plan and stride = the sizing's chunk, so the parts concatenate to the unsplit run seed for seed and a slot can be re-used; the run's CV3 equal-shots sample uses the same s0 with circuit offsets 100 (k <= 4) / 200 (k = 5); an f-cell slot uses the slot's own s0 with circuit offset 4 x the cell's global index"
+   },
+   "E_tol": {
+    "value": 0.011040137293009344,
+    "cv_2x3_plan": 0.0110401372930089,
+    "abs_diff": 4.440892098500626e-16,
+    "ok": true
+   },
+   "cv": null,
+   "plan_prefix": "part 1 of 2: CV0-CV5 are read at assembly on the merged parts (validation/C33_F5_B1.json)",
    "at_N": {
-    "shots": 24,
+    "shots": 25,
     "certificate": {
      "type": "weinstein",
      "interval": [
-      -4.608591435645565,
-      -3.3029874971356312
+      -4.620185174601965,
+      -3.0
      ],
-     "width": 1.305603938509933,
+     "width": 1.620185174601965,
      "E0_inside": true,
      "variational_ok": true,
-     "E_R_minus_E0": 0.5230969459885157,
-     "recall_S999": 0.06315789473684211,
-     "recall_S99": 0.11904761904761904,
-     "W": 0.8032452009401087,
-     "B_all_size": 7
+     "E_R_minus_E0": 0.826084443124147,
+     "recall_S999": 0.042105263157894736,
+     "recall_S99": 0.07142857142857142,
+     "W": 0.7634673045031074,
+     "B_all_size": 4
     },
-    "B_all_size": 7,
-    "accepted": 5,
-    "n_distinct": 4
+    "B_all_size": 4,
+    "accepted": 2,
+    "n_distinct": 2
    },
    "clean_fraction": {
     "per_circuit": {
      "B1_ref57_k1": {
-      "shots": 1,
+      "shots": 3,
       "accepted": 0,
       "accepted_fraction": 0.0,
       "accepted_fraction_wilson95": [
-       0.0,
-       0.7934506856227626
+       5.551115123125783e-17,
+       0.5614970317550454
       ],
       "reference_hits": 0,
       "p_reference": 0.9121993484563767,
       "garbage_acceptance": 0.0004062652587890625,
       "dim": 426,
       "distinct_accepted": 0,
-      "rejected": 1,
+      "rejected": 3,
       "f0": null,
       "f_hit": -1.0454670001903172e-06,
       "f_hit_ci95": [
        -1.0454670001903172e-06,
-       4.043938977463575
+       1.3479789621765248
       ]
      },
      "B1_ref57_k4": {
-      "shots": 21,
-      "accepted": 5,
-      "accepted_fraction": 0.23809523809523808,
+      "shots": 16,
+      "accepted": 1,
+      "accepted_fraction": 0.0625,
       "accepted_fraction_wilson95": [
-       0.10628013022636468,
-       0.4509117368295075
+       0.01111934476464252,
+       0.28328737570298945
       ],
       "reference_hits": 0,
       "p_reference": 0.2225615988416464,
       "garbage_acceptance": 0.0004062652587890625,
       "dim": 426,
-      "distinct_accepted": 4,
-      "rejected": 16,
+      "distinct_accepted": 1,
+      "rejected": 15,
       "f0": null,
       "f_hit": -4.284990408811691e-06,
       "f_hit_ci95": [
        -4.284990408811691e-06,
-       0.7892645165487167
+       1.0359110170296935
       ]
      },
      "B1_ref27_k1": {
-      "shots": 1,
+      "shots": 3,
       "accepted": 0,
       "accepted_fraction": 0.0,
       "accepted_fraction_wilson95": [
-       0.0,
-       0.7934506856227626
+       5.551115123125783e-17,
+       0.5614970317550454
       ],
       "reference_hits": 0,
       "p_reference": 0.9121993484563767,
       "garbage_acceptance": 0.0004062652587890625,
       "dim": 426,
       "distinct_accepted": 0,
-      "rejected": 1,
+      "rejected": 3,
       "f0": null,
       "f_hit": -1.0454670001903172e-06,
       "f_hit_ci95": [
        -1.0454670001903172e-06,
-       4.043938977463575
+       1.3479789621765248
       ]
      },
      "B1_ref27_k2": {
-      "shots": 1,
-      "accepted": 0,
-      "accepted_fraction": 0.0,
+      "shots": 3,
+      "accepted": 1,
+      "accepted_fraction": 0.3333333333333333,
       "accepted_fraction_wilson95": [
-       0.0,
-       0.7934506856227626
+       0.06149194472039621,
+       0.7923403991979522
       ],
-      "reference_hits": 0,
+      "reference_hits": 1,
       "p_reference": 0.6913205015071237,
       "garbage_acceptance": 0.0004062652587890625,
       "dim": 426,
-      "distinct_accepted": 0,
-      "rejected": 1,
+      "distinct_accepted": 1,
+      "rejected": 2,
       "f0": null,
-      "f_hit": -1.3794966507244874e-06,
+      "f_hit": 0.4821676471800426,
       "f_hit_ci95": [
-       -1.3794966507244874e-06,
-       5.335988868256654
+       0.01220608333672175,
+       2.686472491301989
       ]
      }
     },
     "pooled_k1": {
      "n_reference": 0,
-     "shots": 2,
+     "shots": 6,
      "circuits": 2,
-     "expected_from_garbage": 1.9073486328125e-06,
+     "expected_from_garbage": 5.7220458984375e-06,
      "kappa": 1.0,
      "confidence": 0.95,
      "f_hit": -1.0454670001903172e-06,
      "f_hit_ci": [
       -1.0454670001903172e-06,
-      2.021968965998287
+      0.6739889583547622
      ],
      "estimator": "(sum n_ref - sum N a / dim) / (sum N p_ref readout_factor); Poisson (Garwood) interval on the pooled count",
      "r_nc": 1.1151352098004452,
      "f_hat_ideal": -9.375248768061092e-07,
      "f_hat_ideal_ci": [
       -9.375248768061092e-07,
-      1.8132052043806604
+      0.604401109776969
      ],
      "r_nc_95": [
       1.0285934561902321,
@@ -881,67 +431,210 @@
     "r_nc_source": "data/cf_trajectories/r_nc.json",
     "kappa": 1.0
    },
-   "accepted_counts_by_circuit": {
-    "B1_ref57_k1": {},
-    "B1_ref57_k4": {
-     "75": 1,
-     "94": 2,
-     "177": 1,
-     "1612": 1
-    },
-    "B1_ref27_k1": {},
-    "B1_ref27_k2": {}
-   },
-   "rejected_by_circuit": {
-    "B1_ref57_k1": 1,
-    "B1_ref57_k4": 16,
-    "B1_ref27_k1": 1,
-    "B1_ref27_k2": 1
-   },
-   "reference_hits_by_circuit": {
-    "B1_ref57_k1": 0,
-    "B1_ref57_k4": 0,
-    "B1_ref27_k1": 0,
-    "B1_ref27_k2": 0
-   },
    "bootstrap_at_N": {
     "err": {
      "ci95": [
-      0.5230969459885153,
-      0.6677720479464471
+      0.826084443124147,
+      0.826084443124147
      ],
-     "mean": 0.58823252078013
+     "mean": 0.826084443124147
     },
     "recall_S999": {
      "ci95": [
       0.042105263157894736,
-      0.06315789473684211
+      0.042105263157894736
      ],
-     "mean": 0.054210526315789466
+     "mean": 0.04210526315789474
     },
     "W": {
      "ci95": [
-      0.7809412540880648,
-      0.8032452009401087
+      0.7634673045031074,
+      0.7634673045031074
      ],
-     "mean": 0.7932134198674473
+     "mean": 0.7634673045031074
     },
     "B": 20,
     "seed": 33,
     "scheme": "shots resampled within each circuit (multinomial)"
    },
-   "results_npz": "results/campaign33/dryrun/C4_F5_B1/chunks.npz",
    "P14_information": {
-    "recall_S999": 0.06315789473684211,
-    "reason": "P14 recall of S999 >= 0.9 on B_all at N (information: f_hat_ideal lower end -9.375248768061092e-07 vs tier 0.1)"
+    "recall_S999": 0.042105263157894736,
+    "reason": "P14 recall of S999 >= 0.9 on B_all at N (information: f_hat_ideal lower end -9.375248768061092e-07 vs tier 0.1; part 1 of 2)"
    },
-   "CV1_CV5": {
-    "CV1": true,
-    "CV2": false,
-    "CV4": false,
-    "CV5": false,
-    "CV3": null
-   }
+   "CV1_CV5": {},
+   "accepted_counts_by_circuit": {
+    "B1_ref57_k1": {},
+    "B1_ref57_k4": {
+     "75": 1
+    },
+    "B1_ref27_k1": {},
+    "B1_ref27_k2": {
+     "27": 1
+    }
+   },
+   "rejected_by_circuit": {
+    "B1_ref57_k1": 3,
+    "B1_ref57_k4": 15,
+    "B1_ref27_k1": 3,
+    "B1_ref27_k2": 2
+   },
+   "reference_hits_by_circuit": {
+    "B1_ref57_k1": 0,
+    "B1_ref57_k4": 0,
+    "B1_ref27_k1": 0,
+    "B1_ref27_k2": 1
+   },
+   "part": {
+    "part": 1,
+    "parts": 2,
+    "ranges_by_circuit": {
+     "B1_ref57_k1": [
+      0,
+      3
+     ],
+     "B1_ref57_k4": [
+      0,
+      16
+     ],
+     "B1_ref27_k1": [
+      0,
+      3
+     ],
+     "B1_ref27_k2": [
+      0,
+      3
+     ]
+    },
+    "plan_shots_by_circuit": {
+     "B1_ref57_k1": 6,
+     "B1_ref57_k4": 32,
+     "B1_ref27_k1": 6,
+     "B1_ref27_k2": 6
+    },
+    "chunk": 16,
+    "plan_f010_by_circuit": null,
+    "source": "part 1 of 2 per data/campaign33/dryrun/sizing_33a.json (written from validation/dryrun/C4_FCELLS_A.json job None; validation/dryrun/C4_FCELLS_B.json job None)",
+    "from": "validation/dryrun/C4_FCELLS_A.json job None; validation/dryrun/C4_FCELLS_B.json job None"
+   },
+   "chunks_accepted": {
+    "B1_ref57_k1": [
+     {
+      "start": 0,
+      "shots": 1,
+      "index": 0,
+      "seed": 353000000000,
+      "accepted": {},
+      "rejected": 1
+     },
+     {
+      "start": 1,
+      "shots": 1,
+      "index": 1,
+      "seed": 353000000016,
+      "accepted": {},
+      "rejected": 1
+     },
+     {
+      "start": 2,
+      "shots": 1,
+      "index": 2,
+      "seed": 353000000032,
+      "accepted": {},
+      "rejected": 1
+     }
+    ],
+    "B1_ref57_k4": [
+     {
+      "start": 0,
+      "shots": 2,
+      "index": 0,
+      "seed": 353001000000,
+      "accepted": {},
+      "rejected": 2
+     },
+     {
+      "start": 2,
+      "shots": 2,
+      "index": 1,
+      "seed": 353001000016,
+      "accepted": {},
+      "rejected": 2
+     },
+     {
+      "start": 4,
+      "shots": 4,
+      "index": 2,
+      "seed": 353001000032,
+      "accepted": {},
+      "rejected": 4
+     },
+     {
+      "start": 8,
+      "shots": 8,
+      "index": 3,
+      "seed": 353001000048,
+      "accepted": {
+       "75": 1
+      },
+      "rejected": 7
+     }
+    ],
+    "B1_ref27_k1": [
+     {
+      "start": 0,
+      "shots": 1,
+      "index": 0,
+      "seed": 353002000000,
+      "accepted": {},
+      "rejected": 1
+     },
+     {
+      "start": 1,
+      "shots": 1,
+      "index": 1,
+      "seed": 353002000016,
+      "accepted": {},
+      "rejected": 1
+     },
+     {
+      "start": 2,
+      "shots": 1,
+      "index": 2,
+      "seed": 353002000032,
+      "accepted": {},
+      "rejected": 1
+     }
+    ],
+    "B1_ref27_k2": [
+     {
+      "start": 0,
+      "shots": 1,
+      "index": 0,
+      "seed": 353003000000,
+      "accepted": {},
+      "rejected": 1
+     },
+     {
+      "start": 1,
+      "shots": 1,
+      "index": 1,
+      "seed": 353003000016,
+      "accepted": {
+       "27": 1
+      },
+      "rejected": 0
+     },
+     {
+      "start": 2,
+      "shots": 1,
+      "index": 2,
+      "seed": 353003000032,
+      "accepted": {},
+      "rejected": 1
+     }
+    ]
+   },
+   "results_npz": "results/campaign33/dryrun/C4_F5_B1/chunks.npz"
   },
   "run": {
    "engine": "Qiskit Aer statevector (double precision)",
@@ -965,15 +658,16 @@
    "gpus": null,
    "tasks": null,
    "rank": null,
-   "wall_seconds": 180.87083745002747,
+   "wall_seconds": 272.2326514720917,
    "gpu_node_hours": null,
    "node_hours_charged_shared_qos": null,
    "parallel_efficiency_Ep": null,
    "parallel_efficiency_note": "one task: E(p) needs T_1 and T_p from two task counts (not measured)",
    "phases_s": {
-    "sampling_s": 176.21439456939697,
-    "bootstrap_s": 0.015616655349731445,
-    "analysis_s": 1.5456860065460205
+    "preflight_s": 0.7894823551177979,
+    "sampling_s": 268.26757645606995,
+    "bootstrap_and_readout_s": 1.117764949798584,
+    "analysis_s": 1.1243247985839844
    },
    "gpu_telemetry": {
     "source": "gpu_telemetry.csv",
@@ -987,40 +681,39 @@
     "qiskit_aer": "0.17.2",
     "numpy": "2.5.2",
     "scipy": "1.18.0",
+    "threadpoolctl": "3.7.0",
     "python": "3.12.14"
    },
-   "seconds_per_shot": 6.985737840334575,
+   "seconds_per_shot": 10.344312601089477,
    "budget_minutes": 8.0,
-   "shots_scale": 0.0005,
+   "shots_scale": 0.01,
    "max_shots_per_run": 16,
    "oom_retries": []
   },
   "physics_criteria_information_dry_run": [
    {
-    "name": "P13 E_R >= E0 - 1e-9 everywhere, prefixes nested (CV0), E0 inside the certificate of ruling 2 at N",
+    "name": "P13 (part 1 of 2) E_R >= E0 - 1e-9 on this part's shots (CV0 and the certificate are read at assembly on the merged parts)",
     "value": {
      "variational": true,
-     "cv0": true,
-     "E0_inside": true,
-     "certificate": "weinstein"
+     "E0_inside_information": true
     },
-    "threshold": "all true",
+    "threshold": "variational",
     "passed": true,
     "gating": false
    }
   ],
   "notes": [
-   "dry run: 4 of 12 circuits used (['B1_ref27_k1', 'B1_ref27_k2', 'B1_ref57_k1', 'B1_ref57_k4'])"
+   "part 1 of 2 per data/campaign33/dryrun/sizing_33a.json (written from validation/dryrun/C4_FCELLS_A.json job None; validation/dryrun/C4_FCELLS_B.json job None)"
   ]
  },
- "runtime_s": 180.87083745002747,
+ "runtime_s": 272.2326514720917,
  "environment": {
   "python": "3.12.14",
   "numpy": "2.5.2",
   "scipy": "1.18.0",
   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
   "cpu_count": 12,
-  "git_commit": "cb7753f",
-  "timestamp": "2026-10-06 17:56:10 MDT"
+  "git_commit": "7186860",
+  "timestamp": "2026-10-11 12:35:04 MDT"
  }
 }
