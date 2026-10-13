@@ -403,8 +403,29 @@ def _job(js):
     return ((((js or {}).get("data") or {}).get("run") or {}).get("ci") or {}).get("SLURM_JOB_ID")
 
 
+def cf_block(cf_path: str, with_cf: bool) -> tuple:
+    """prompts/33c step 3: the `cf` part contents of the C4_CF re-request, sized from the harvested C4_CF JSON
+    (cf_gpu.cf_part_plan).  Owner-gated: the items enter the slot queue (at its head: 33c section 4 puts the re-request
+    before the 33b deferred list) only with --with-cf, which requires --reassign.  Returns (out block, queue items)."""
+    from skqd.campaign33 import cf_gpu as CFG
+    p = cf_path if os.path.isabs(cf_path) else os.path.join(ROOT, cf_path)
+    js = _load_opt(p) if os.path.exists(p) else None
+    if js is None:
+        return {"status": f"absent: {_rel(p)} not present"}, []
+    plan = CFG.cf_part_plan(js)
+    items = [_item("cf", "CF", d, d["part"], d["parts"]) for d in plan["descriptors"]]
+    return ({"source": _rel(p), "K_per_part": plan["K_per_part"], "parts": plan["parts"], "K_total": plan["K_total"],
+             "k_min_reached": plan["k_min_reached"], "margin": CFG.CF_PART_MARGIN,
+             "status": ("queued (--with-cf): head of the slot queue" if with_cf else
+                        "owner-gated, not queued: prompts/33c section 4 (re-request only if the owner wants K = 2000, "
+                        "after the maintenance); run --reassign --with-cf to assign"),
+             "copies": [it["copy"] for it in items], "part_descriptors": plan["descriptors"]},
+            items if with_cf else [])
+
+
 def build(fcells_a: str, fcells_b: str, dry: bool, budget_s: float = None, force_parts: int = None,
-          runs_only: list = None, prev: dict = None, assign: bool = True) -> dict:
+          runs_only: list = None, prev: dict = None, assign: bool = True, with_cf: bool = False,
+          cf_path: str = None) -> dict:
     """The sizing (rates, runs, f-cell packing, cv3) and the slot queue; assign=True lays out generation 1
     (assign_generation1), assign=False leaves the queue in out['_queue'] for reassign()."""
     from campaign33 import DRY
@@ -567,8 +588,10 @@ def build(fcells_a: str, fcells_b: str, dry: bool, budget_s: float = None, force
             e["status"] = (f"not_evaluated: deferred by prompts/33b ({sp['parts']} parts at r_{s} = "
                            f"{rates[s]['s_per_shot']:.5g} s/shot)")
         cv3[run] = e
+    # ---- the C4_CF re-request (prompts/33c step 3; owner-gated)
+    cf_out, cf_items = cf_block(cf_path or os.path.join("validation", "dryrun" if dry else "", "C4_CF.json"), with_cf)
     # ---- the slot queue (A1e)
-    queue, seen = [], set()
+    queue, seen = list(cf_items), {it["copy"] for it in cf_items}
     for kind, key in SLOT_QUEUE:
         if kind == "fcells":
             sel = [it for it in fc_items if it["descriptor"]["group"] == "A"]
@@ -617,6 +640,7 @@ def build(fcells_a: str, fcells_b: str, dry: bool, budget_s: float = None, force
                                                    "cell_index_offset", "part", "parts")} for g in groups]},
            "cv3": cv3, "cv3_rule": {"CV3_SLOTS": list(CV3_SLOTS), "CV3_QUEUED_LAST": list(CV3_QUEUED_LAST),
                                     "source": "prompts/33b R6"},
+           "cf": cf_out,
            "allowlist_33a": "ci/allowed_jobs.campaign33a", "slots_available": len(slots)}
     out["_queue"] = queue
     return assign_generation1(out) if assign else out
@@ -834,7 +858,14 @@ def main(argv=None):
     ap.add_argument("--budget-s", type=float, default=None)
     ap.add_argument("--force-parts", type=int, default=None, help="testing / dry runs: split every run into >= n parts")
     ap.add_argument("--runs", nargs="*", default=None, help="only these runs (e.g. F1_B1)")
+    ap.add_argument("--with-cf", action="store_true",
+                    help="prompts/33c step 3 (owner-gated): queue the C4_CF re-request parts at the head of the slot "
+                         "queue; requires --reassign")
+    ap.add_argument("--cf", default=None, help="the harvested C4_CF JSON (default validation/[dryrun/]C4_CF.json)")
     a = ap.parse_args(argv)
+    if a.with_cf and not a.reassign:
+        print("refused: --with-cf only with --reassign (the cf parts go to free slots; generation 1 is fixed)")
+        return 2
     sub = "dryrun" if a.dry_run else ""
     fa = a.fcells_a or os.path.join("validation", sub, "C4_FCELLS_A.json")
     fb = a.fcells_b or os.path.join("validation", sub, "C4_FCELLS_B.json")
@@ -846,7 +877,8 @@ def main(argv=None):
         print(f"refused: {_rel(out_path)} records re-used slots (slot_history); a plain run would reset them to "
               "generation 1 -- use --reassign")
         return 2
-    out = build(fa, fb, a.dry_run, a.budget_s, a.force_parts, a.runs, prev=prev, assign=not a.reassign)
+    out = build(fa, fb, a.dry_run, a.budget_s, a.force_parts, a.runs, prev=prev, assign=not a.reassign,
+                with_cf=a.with_cf, cf_path=a.cf)
     if a.reassign:
         out = reassign(out, prev, parts_dir, a.status_dir or os.path.join(ROOT, "ci", "status"),
                        a.validation_dir or os.path.join(ROOT, "validation", sub))

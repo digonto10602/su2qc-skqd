@@ -118,13 +118,24 @@ def arm_run(ctx, cid, channel, K, seed, deadline):
     return {"chunks": [("in-memory (campaign33 C4_CF)", base)], "base": base, "trajs": recs}, q0p, info
 
 
-def run(ctx):
+def run(ctx, part=None):
+    """The C4_CF token (part None), or a `cf` part content of a C4_PART slot (prompts/33c step 3): K_per_arm
+    trajectories per arm, seeds from C4_CF's own base seed with chunk index = the part's seed_chunk_index (>= 1; the
+    harvested job 59736866 is index 0), and the compact per-trajectory arrays the assembly merges (merge_cf_parts)."""
     import gate_CF_traj as G
     from quantinuum_submit import A6_NOISE
 
     from campaign33 import add_table
     from . import stats as ST
-    K = max(2, ctx.scaled(K_TARGET))
+    if part is None:
+        K = max(2, ctx.scaled(K_TARGET))
+        s0, j_seed = ctx.s0, 0
+    else:
+        K = max(2, ctx.scaled(int(part["K_per_arm"])))
+        s0, j_seed = TK.base_seed(CF_TOKEN), int(part["seed_chunk_index"])
+        if j_seed < 1:
+            raise SystemExit("a cf part must use seed_chunk_index >= 1 (index 0 is the harvested C4_CF job)")
+    merge = {}
     arms, infos, stats = {}, {}, {}
     t_all = time.time()
     end = ctx.sampling_deadline(0.8)
@@ -136,11 +147,12 @@ def run(ctx):
         key = cid if ch == "depol" else f"{cid}__xx"
         left = len(ARMS) - i
         dl = None if end is None else time.time() + (end - time.time()) / left
-        seed = TK.chunk_seed(ctx.s0, i, 0, 1)
+        seed = TK.chunk_seed(s0, i, j_seed, 1)
         arm, man, info = arm_run(ctx, cid, ch, K, seed, dl)
         infos[key] = info
         st = G.arm_statistics(cid, arm, man, A6_NOISE, predict)
         arms[key] = st
+        merge[key] = compact_arm(arm, st)
         ctx.log(f"arm {key}: K {info['K']} of {K}, {info['seconds_per_trajectory']:.2f} s/trajectory, "
                 f"r(1e-3) {st['stats']['r_d1e-03']['value']:.4f}")
     ctx.phases["trajectories_s"] = time.time() - t_all
@@ -176,6 +188,13 @@ def run(ctx):
                      "engine": "Aer statevector per trajectory (" + ctx.device + "), checkpoints in memory",
                      "seconds_per_shot": None,
                      "K_target_per_arm": K, "bootstrap_B": B})
+    if part is not None:
+        ctx.data.update({"cf_part": {k: part.get(k) for k in ("part", "parts", "K_per_arm", "seed_chunk_index", "token",
+                                                              "slot", "seed_token_index", "sizing")},
+                         "merge_arrays": merge, "seeds_by_arm": {k: infos[k]["seed"] for k in infos},
+                         "part_note": (f"part {part['part']} of {part['parts']}: P16 / P17 and the owner item above are "
+                                       "this part's alone (information); the assembly merges the parts "
+                                       "(assemble.merge_cf -> validation/C33_CF.json)")})
     ctx.data["seconds_per_shot"] = float(np.mean([v["seconds_per_trajectory"] for v in infos.values()]))
     ctx.data["seconds_per_shot_note"] = "for C4_CF this is seconds per simulated trajectory"
     ctx.min_shots_ok = all(v["K"] >= K for v in infos.values())
@@ -187,6 +206,92 @@ def run(ctx):
                 v["floor_min_feff_over_fideal_S99"]["value"]] for k, v in per_arm.items()])
     add_table(ctx, "Pooled k = 1 r(1e-3) and r_nc", ["pooled r", "95 %", "new r_nc", "old r_nc", "old pooled 95 %"],
               [[pooled[f"r_{tb}"]["value"], pooled[f"r_{tb}"]["ci95"], new_rnc, float(old["r_nc"]), old_iv]])
+
+
+# --------------------------------------------------------------------------- prompts/33c step 3: the `cf` part content
+CF_TOKEN = "C4_CF"
+CF_PART_MARGIN = 0.95      # K per part = floor(margin x the fewest trajectories an arm of the harvested job reached)
+
+
+def compact_arm(arm: dict, st: dict) -> dict:
+    """What the assembly needs to merge an arm over parts: per trajectory p_tau(ref) post-readout (h) and TV_pre (tv)
+    (r(delta) and its bootstrap, gate_CF_traj.ideal_fraction / pooled_ratio), and the SUM over trajectories of the
+    post-readout sector probabilities on S99 (the point value of the P17 floor is linear in their mean)."""
+    P = np.asarray(st["_P"], float)
+    sec = arm["base"]["sector"]
+    S99 = [int(s) for s in sec["S99"]]
+    return {"K": int(len(st["_h"])), "h": [float(x) for x in st["_h"]], "tv_pre": [float(x) for x in st["_tv"]],
+            "f0_prime": float(st["f0_prime"]), "p_ref": float(st["p_ref"]), "S99": S99,
+            "pc_S99": [float(x) for x in np.asarray(st["_pc"], float)[S99]],
+            "sum_p_post_S99": [float(x) for x in P[:, S99].sum(axis=0)]}
+
+
+def merge_cf_parts(compacts: list, n_boot: int = None) -> dict:
+    """Merge the compact arms of the `cf` parts (list of {arm: compact_arm}) -> per-arm r(delta) with the bootstrap of
+    gate_CF_traj.arm_statistics (multinomial weights, BOOT_SEED, N_BOOT), the P17 floor point value, the pooled
+    k = 1 r (gate_CF_traj.pooled_ratio) and r_nc = its upper end.  A single part reproduces the in-job numbers."""
+    import gate_CF_traj as G
+    B = G.N_BOOT if n_boot is None else int(n_boot)
+    tb = G.delta_tag(G.DELTA_BAR)
+    keys = list(compacts[0])
+    merged, per_arm = {}, {}
+    for k in keys:
+        ps = [c[k] for c in compacts]
+        for f in ("f0_prime", "p_ref"):
+            if max(abs(p[f] - ps[0][f]) for p in ps) > 1e-15:
+                raise ValueError(f"arm {k}: {f} differs between parts")
+        if any(p["S99"] != ps[0]["S99"] for p in ps):
+            raise ValueError(f"arm {k}: S99 differs between parts")
+        h = np.concatenate([np.asarray(p["h"], float) for p in ps])
+        tv = np.concatenate([np.asarray(p["tv_pre"], float) for p in ps])
+        K = len(h)
+        f0, p_ref = ps[0]["f0_prime"], ps[0]["p_ref"]
+        sumP = np.sum([np.asarray(p["sum_p_post_S99"], float) for p in ps], axis=0)
+        pc = np.asarray(ps[0]["pc_S99"], float)
+        point = G.ideal_fraction(f0, np.full(K, 1.0 / K), h, tv, p_ref)
+        rng = np.random.default_rng(G.BOOT_SEED)
+        W = rng.multinomial(K, np.full(K, 1.0 / K), size=B) / K
+        boots = [G.ideal_fraction(f0, w, h, tv, p_ref) for w in W]
+        with np.errstate(divide="ignore", invalid="ignore"):
+            feff = np.where(pc > 0, f0 + (1 - f0) * (sumP / K) / np.where(pc > 0, pc, 1.0), np.nan)
+        floor = float(np.nanmin(feff) / point[f"f_ideal_{tb}"])
+        per_arm[k] = {"K": K, "K_by_part": [p["K"] for p in ps],
+                      "r": G.ival(point[f"r_{tb}"], [b[f"r_{tb}"] for b in boots]),
+                      "f_hit": G.ival(point["f_hit"], [b["f_hit"] for b in boots]),
+                      "f_ideal": G.ival(point[f"f_ideal_{tb}"], [b[f"f_ideal_{tb}"] for b in boots]),
+                      "floor_min_feff_over_fideal_S99": {"value": floor}}
+        merged[k] = {"h": h, "tv": tv, "f0": f0, "p_ref": p_ref}
+    parts = [{"id": c, "f0": merged[c]["f0"], "p_ref": merged[c]["p_ref"], "h": merged[c]["h"], "tv": merged[c]["tv"],
+              "shots": G.POOL_SHOTS[c]} for c in G.POOL_SHOTS if c in merged]
+    pooled = G.pooled_ratio(parts, n_boot=B) if len(parts) == len(G.POOL_SHOTS) else None
+    return {"arms": per_arm, "pooled": pooled, "r_nc_new": pooled[f"r_{tb}"]["ci95"][1] if pooled else None,
+            "bootstrap_B": B, "floor_min": G.FLOOR_MIN,
+            "rule": "trajectories concatenated per arm in part order; bootstrap and pooling as gate_CF_traj"}
+
+
+def cf_part_plan(cf_json: dict, k_target: int = K_TARGET, margin: float = CF_PART_MARGIN, tokens: dict = None) -> dict:
+    """The post-maintenance `cf` re-request (prompts/33c R4/step 3), sized from the harvested C4_CF: K per part =
+    floor(margin x min over arms of the trajectories reached in one job), parts n = ceil(k_target / K), so that the
+    merged parts reach >= k_target per arm.  Seeds: C4_CF's own base seed (33b R4: a part seeds from its run's own
+    token), chunk index = the part number 1..n (index 0 is the harvested job, so a later merge with it stays
+    disjoint)."""
+    runs = cf_json["data"]["trajectory_runs"]
+    k_min = min(int(v["K"]) for v in runs.values())
+    K = int(math.floor(margin * k_min))
+    n = int(math.ceil(k_target / K))
+    idx = TK.token_index(CF_TOKEN, tokens)
+    job = (((cf_json.get("run") or {}).get("ci") or {}).get("SLURM_JOB_ID")
+           or ((((cf_json.get("data") or {}).get("run") or {}).get("ci")) or {}).get("SLURM_JOB_ID"))
+    desc = [{"content": "cf", "token": CF_TOKEN, "run": "CF", "part": i, "parts": n, "K_per_arm": K,
+             "seed_chunk_index": i, "seed_token_index": idx,
+             "sizing": {"K_reached_by_arm": {k: int(v["K"]) for k, v in runs.items()}, "margin": margin,
+                        "k_target": k_target,
+                        "s_per_trajectory_by_arm": {k: v.get("seconds_per_trajectory") for k, v in runs.items()},
+                        "rule": "K = floor(margin x min_arm K reached); n = ceil(k_target / K)"},
+             "owner_gated": "prompts/33c section 4: only if the owner wants K = 2000 (after the maintenance)",
+             "written_by": "scripts/campaign33_resize.py", "from": f"validation/C4_CF.json job {job}"}
+            for i in range(1, n + 1)]
+    return {"K_per_part": K, "parts": n, "K_total": K * n, "descriptors": desc, "k_min_reached": k_min}
 
 
 def owner_item_r_nc(new_pooled_ci95, old_r_nc: float, old_pooled_ci95) -> dict:

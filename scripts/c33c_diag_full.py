@@ -120,12 +120,29 @@ def run(a, argv):
 def summarize(a, argv):
     """CPU arms (this script's JSONs) against the GPU arms of validation/C2_CAL.json: z of the mean weight and of
     every marginal (stats.structure_compare, the P4a statistic)."""
+    import glob
     from skqd.campaign33 import stats as ST
     cpu = {}
     for rep in ("kraus", "rm", "pta"):
-        p = os.path.join(OUT_DIR, f"full_IBM-T0_{CID}_{rep}_cpu.json")
-        if os.path.exists(p):
-            cpu[rep] = (os.path.relpath(p, ROOT), json.load(open(p)))
+        # segments (30-minute rule): full_..._<rep>_cpu.json and full_..._<rep>_cpu_seg<k>.json, disjoint seeds
+        files = sorted(glob.glob(os.path.join(OUT_DIR, f"full_IBM-T0_{CID}_{rep}_cpu*.json")))
+        if not files:
+            continue
+        docs = [json.load(open(p)) for p in files]
+        seeds = [c["seed"] + j for d in docs for c in d["calls"] for j in range(c["shots"])]
+        if len(set(seeds)) != len(seeds):
+            raise SystemExit(f"{rep}: segments share shot seeds")
+        tot = {}
+        for d in docs:
+            for k, v in d["counts"].items():
+                tot[int(k)] = tot.get(int(k), 0) + int(v)
+        clb = docs[0]["structure"]["physical_by_clbit"]
+        merged = {"status": "done" if all(d.get("status") == "done" for d in docs) else "partial",
+                  "structure": ST.garbage_structure(tot, len(clb), clb),
+                  "seconds_per_shot": sum(c["seconds"] for d in docs for c in d["calls"]) / max(1, len(seeds)),
+                  "versions": docs[0]["versions"], "segments": [os.path.relpath(p, ROOT) for p in files],
+                  "git_commits": sorted({d["git_commit"] for d in docs})}
+        cpu[rep] = (", ".join(merged["segments"]), merged)
     cal = json.load(open(C2_CAL))
     gpu = {rep: v["structure"] for rep, v in cal["data"]["arms"].items()}
     out = {"title": "prompts/33c R2 diagnostic summary: CPU (this laptop) vs GPU (C2_CAL job "

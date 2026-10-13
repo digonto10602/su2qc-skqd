@@ -1469,6 +1469,8 @@ def part_copy_name(part):
         return f"C33_{part['run']}_part{i}of{n}"
     if c == "cv3":
         return f"C33_{part['run']}_cv3" if n == 1 else f"C33_{part['run']}_cv3_part{i}of{n}"
+    if c == "cf":                      # prompts/33c step 3: the C4_CF re-request in parts
+        return f"C33_CF_part{i}of{n}"
     g = part.get("group", "A")
     return f"C33_fcells{'' if g == 'A' else g}_part{i}of{n}"
 
@@ -1478,6 +1480,8 @@ def expected_seed_token_index(part, slot):
     (no run) from the slot's own index."""
     if part.get("content") in ("frun", "cv3"):
         return TK.token_index(part.get("token") or ("C4_" + part["run"])), "the run's own F token"
+    if part.get("content") == "cf":
+        return TK.token_index("C4_CF"), "the run's own token C4_CF (prompts/33c step 3, the 33b R4 rule)"
     return TK.token_index(slot), "the slot's own token (f-cells have no run)"
 
 
@@ -1493,7 +1497,8 @@ def run_part(ctx):
         ctx.min_shots_ok = False
         return
     want_idx, rule = expected_seed_token_index(part, ctx.token)
-    tok_ok = part.get("content") not in ("frun", "cv3") or part.get("token") == "C4_" + str(part.get("run"))
+    tok_ok = (part.get("token") == "C4_CF" if part.get("content") == "cf" else
+              part.get("content") not in ("frun", "cv3") or part.get("token") == "C4_" + str(part.get("run")))
     ok_slot = int(part.get("seed_token_index", -1)) == want_idx and part.get("slot") == ctx.token and tok_ok
     ctx.R.add("P0 slot content written for this slot (prompts/33b R4: seed_token_index = the index of the run's own "
               "F token, or the slot's own for f-cells; slot = this token)",
@@ -1517,6 +1522,9 @@ def run_part(ctx):
         run_fcell_slot(ctx, part)
     elif part["content"] == "cv3":
         run_cv3_slot(ctx, part)
+    elif part["content"] == "cf":
+        from . import cf_gpu as CFG
+        CFG.run(ctx, part=part)
     else:
         raise SystemExit(f"unknown slot content {part['content']}")
 
