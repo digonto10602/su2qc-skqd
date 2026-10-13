@@ -1,0 +1,337 @@
+{
+ "gate": "QH_2x3",
+ "title": "2x3 native circuits as Helios Guppy/HUGR programs on Selene (Quest, IdealErrorModel), offline (prompts/35 T6; information)",
+ "status": "PASS",
+ "criteria": [
+  {
+   "name": "H1 2/2 HUGR packages written with sha256",
+   "value": {
+    "written": 2,
+    "of": 2
+   },
+   "threshold": "2",
+   "passed": true
+  },
+  {
+   "name": "H2 Selene counts: per-state 5 sigma test 0 failures and fraction outside the exact support 0 on every circuit; bit order fixed by CAL_x0 (X on qubit 0 -> key 1)",
+   "value": {
+    "ran": 2,
+    "of": 2,
+    "failures": 0,
+    "max_outside": 0.0,
+    "max_z": 2.6601302525620847,
+    "CAL_x0_counts": {
+     "1": 10
+    },
+    "errors": {}
+   },
+   "threshold": "0; 0; key 1",
+   "passed": true
+  },
+  {
+   "name": "H3 the HUGR -> pytket round-trip field present (either form)",
+   "value": {
+    "B0_ref25_k1": "not available in tket 0.13.2 (package route: to_tket1() of the package returns a 0-qubit circuit with 0 commands (the entry point allocates its qubits; the loaded pytket function is not extracted); circuit route: RuntimeError:     1: OpaqueOp:tket.qsystem.helios.PhasedX in Node(16) requires extension tket.qsystem.helios, but it could not be found in the extension list used during resolution. The available extensions are: arithmetic.conversions, arithmetic.float, arithmetic.float.types, arithmetic.int, arithmetic.int.types)",
+    "B1_ref57_k1": "not available in tket 0.13.2 (package route: to_tket1() of the package returns a 0-qubit circuit with 0 commands (the entry point allocates its qubits; the loaded pytket function is not extracted); circuit route: RuntimeError:     1: OpaqueOp:tket.qsystem.helios.PhasedX in Node(16) requires extension tket.qsystem.helios, but it could not be found in the extension list used during resolution. The available extensions are: arithmetic.conversions, arithmetic.float, arithmetic.float.types, arithmetic.int, arithmetic.int.types)"
+   },
+   "threshold": "present",
+   "passed": true
+  },
+  {
+   "name": "H4 hqc == 0",
+   "value": 0,
+   "threshold": "0",
+   "passed": true
+  }
+ ],
+ "data": {
+  "prompt": "prompts/35_quantinuum_all_circuits_test.md",
+  "qpu_seconds": 0,
+  "hqc": 0,
+  "ehqc": 0,
+  "per_circuit": {
+   "B0_ref25_k1": {
+    "id": "B0_ref25_k1",
+    "json_sha256_ok": true,
+    "program_template_sha256": "e0a243014375571b5a04035b998d12045b8d9b5e6e4aa023b0dc83cd468cce7d",
+    "compile_s": 24.828938961029053,
+    "raw_compile_package_sha256": "9bf0023c4ea5fb480f98783ae51137c8615ea3d3491b49bddec432dc3a3c484f",
+    "hugr_file": "data/quantinuum/circuits_2x3_helios/B0_ref25_k1.hugr.json.gz",
+    "hugr_sha256": "3aff8a252c104a868d73d39fc000efb11b4f899cebe2c5ecbfca8cdfc2cb4519",
+    "hugr_sha256_of": "the uncompressed JSON",
+    "package_extensions": [
+     "tket.quantum",
+     "tket.rotation",
+     "tket.bool",
+     "tket.result",
+     "tket.guppy",
+     "tket.qsystem.helios"
+    ],
+    "extension_note": "guppylang 0.21.16 `main.compile()` lists only the extensions it resolves itself; load_pytket (tket 0.13.2 CompilationState.from_tket1) emits PhasedX and ZZPhase as ops of `tket.qsystem.helios`, which neither selene-hugr-qis-compiler 0.2.11 nor tket's own registry carry, so the package is written with that extension embedded (tket_exts 0.12.4 `qsystem_helios()`), the way tket's CircBuild.finish_package packages it; the raw compile() output is recorded by its sha256",
+    "hugr_to_pytket": {
+     "package_route": "to_tket1() of the package returns a 0-qubit circuit with 0 commands (the entry point allocates its qubits; the loaded pytket function is not extracted)",
+     "circuit_route": "RuntimeError:     1: OpaqueOp:tket.qsystem.helios.PhasedX in Node(16) requires extension tket.qsystem.helios, but it could not be found in the extension list used during resolution. The available extensions are: arithmetic.conversions, arithmetic.float, arithmetic.float.types, arithmetic.int, arithmetic.int.types",
+     "status": "not available in tket 0.13.2 (package route: to_tket1() of the package returns a 0-qubit circuit with 0 commands (the entry point allocates its qubits; the loaded pytket function is not extracted); circuit route: RuntimeError:     1: OpaqueOp:tket.qsystem.helios.PhasedX in Node(16) requires extension tket.qsystem.helios, but it could not be found in the extension list used during resolution. The available extensions are: arithmetic.conversions, arithmetic.float, arithmetic.float.types, arithmetic.int, arithmetic.int.types)"
+    },
+    "selene_build_s": 57.51548743247986,
+    "selene_run_s": 1580.3788912296295,
+    "shots": 10,
+    "seed": 35500000,
+    "seconds_per_shot": 158.03788940906526,
+    "counts": {
+     "295456": 1,
+     "524832": 9
+    },
+    "decode_rule": "result('c', array[bool, n]): list index k = c[k] = qubit k (bit k of the key)",
+    "ok": true,
+    "wall_s": 1690.6871325969696,
+    "per_state": {
+     "n_shots": 10,
+     "n_sigma": 5.0,
+     "p_min": 0.001,
+     "tested_states": 10,
+     "max_z": 2.6601302525620847,
+     "failures": [],
+     "ok": true,
+     "fraction_outside_exact_support": 0.0
+    },
+    "reference_hits": 9,
+    "fragment": "circuit_B0_ref25_k1",
+    "created": "2026-10-13 21:53:38 UTC"
+   },
+   "B1_ref57_k1": {
+    "id": "B1_ref57_k1",
+    "json_sha256_ok": true,
+    "program_template_sha256": "e0a243014375571b5a04035b998d12045b8d9b5e6e4aa023b0dc83cd468cce7d",
+    "compile_s": 21.314162015914917,
+    "raw_compile_package_sha256": "288b5af748e460cc379d89c575f8333f84f45a8f6927d2585349185a968d8697",
+    "hugr_file": "data/quantinuum/circuits_2x3_helios/B1_ref57_k1.hugr.json.gz",
+    "hugr_sha256": "a468f55d788aaa153bf3f80d31ad4cf19ec9510c94c1ec999b9154478f2dfe61",
+    "hugr_sha256_of": "the uncompressed JSON",
+    "package_extensions": [
+     "tket.quantum",
+     "tket.rotation",
+     "tket.bool",
+     "tket.result",
+     "tket.guppy",
+     "tket.qsystem.helios"
+    ],
+    "extension_note": "guppylang 0.21.16 `main.compile()` lists only the extensions it resolves itself; load_pytket (tket 0.13.2 CompilationState.from_tket1) emits PhasedX and ZZPhase as ops of `tket.qsystem.helios`, which neither selene-hugr-qis-compiler 0.2.11 nor tket's own registry carry, so the package is written with that extension embedded (tket_exts 0.12.4 `qsystem_helios()`), the way tket's CircBuild.finish_package packages it; the raw compile() output is recorded by its sha256",
+    "hugr_to_pytket": {
+     "package_route": "to_tket1() of the package returns a 0-qubit circuit with 0 commands (the entry point allocates its qubits; the loaded pytket function is not extracted)",
+     "circuit_route": "RuntimeError:     1: OpaqueOp:tket.qsystem.helios.PhasedX in Node(16) requires extension tket.qsystem.helios, but it could not be found in the extension list used during resolution. The available extensions are: arithmetic.conversions, arithmetic.float, arithmetic.float.types, arithmetic.int, arithmetic.int.types",
+     "status": "not available in tket 0.13.2 (package route: to_tket1() of the package returns a 0-qubit circuit with 0 commands (the entry point allocates its qubits; the loaded pytket function is not extracted); circuit route: RuntimeError:     1: OpaqueOp:tket.qsystem.helios.PhasedX in Node(16) requires extension tket.qsystem.helios, but it could not be found in the extension list used during resolution. The available extensions are: arithmetic.conversions, arithmetic.float, arithmetic.float.types, arithmetic.int, arithmetic.int.types)"
+    },
+    "selene_build_s": 49.31872749328613,
+    "selene_run_s": 1456.1667578220367,
+    "shots": 10,
+    "seed": 35500001,
+    "seconds_per_shot": 145.6166759967804,
+    "counts": {
+     "135716": 1,
+     "524836": 9
+    },
+    "decode_rule": "result('c', array[bool, n]): list index k = c[k] = qubit k (bit k of the key)",
+    "ok": true,
+    "wall_s": 1552.3706500530243,
+    "per_state": {
+     "n_shots": 10,
+     "n_sigma": 5.0,
+     "p_min": 0.001,
+     "tested_states": 8,
+     "max_z": 2.0985923853395367,
+     "failures": [],
+     "ok": true,
+     "fraction_outside_exact_support": 0.0
+    },
+    "reference_hits": 9,
+    "fragment": "circuit_B1_ref57_k1",
+    "created": "2026-10-13 22:20:03 UTC"
+   }
+  },
+  "CAL_x0": {
+   "id": "CAL_x0",
+   "json_sha256_ok": true,
+   "program_template_sha256": "e0a243014375571b5a04035b998d12045b8d9b5e6e4aa023b0dc83cd468cce7d",
+   "compile_s": 0.25213027000427246,
+   "raw_compile_package_sha256": "c916a07715b7da14cea4516d5cabe6c5029c18f731ad0469e767442af027936b",
+   "hugr_file": "data/quantinuum/circuits_2x3_helios/CAL_x0.hugr.json.gz",
+   "hugr_sha256": "b3bac512d6aa02793bed64e5bd9217e99e17fc91f623fec23de8662ff5f3b3b0",
+   "hugr_sha256_of": "the uncompressed JSON",
+   "package_extensions": [
+    "tket.quantum",
+    "tket.rotation",
+    "tket.bool",
+    "tket.result",
+    "tket.guppy",
+    "tket.qsystem.helios"
+   ],
+   "extension_note": "guppylang 0.21.16 `main.compile()` lists only the extensions it resolves itself; load_pytket (tket 0.13.2 CompilationState.from_tket1) emits PhasedX and ZZPhase as ops of `tket.qsystem.helios`, which neither selene-hugr-qis-compiler 0.2.11 nor tket's own registry carry, so the package is written with that extension embedded (tket_exts 0.12.4 `qsystem_helios()`), the way tket's CircBuild.finish_package packages it; the raw compile() output is recorded by its sha256",
+   "hugr_to_pytket": {
+    "package_route": "to_tket1() of the package returns a 0-qubit circuit with 0 commands (the entry point allocates its qubits; the loaded pytket function is not extracted)",
+    "circuit_route": "RuntimeError:     1: OpaqueOp:tket.qsystem.helios.PhasedX in Node(35) requires extension tket.qsystem.helios, but it could not be found in the extension list used during resolution. The available extensions are: arithmetic.conversions, arithmetic.float, arithmetic.float.types, arithmetic.int, arithmetic.int.types",
+    "status": "not available in tket 0.13.2 (package route: to_tket1() of the package returns a 0-qubit circuit with 0 commands (the entry point allocates its qubits; the loaded pytket function is not extracted); circuit route: RuntimeError:     1: OpaqueOp:tket.qsystem.helios.PhasedX in Node(35) requires extension tket.qsystem.helios, but it could not be found in the extension list used during resolution. The available extensions are: arithmetic.conversions, arithmetic.float, arithmetic.float.types, arithmetic.int, arithmetic.int.types)"
+   },
+   "selene_build_s": 0.7576758861541748,
+   "selene_run_s": 9.550147294998169,
+   "shots": 10,
+   "seed": 35500900,
+   "seconds_per_shot": 0.9550149202346802,
+   "counts": {
+    "1": 10
+   },
+   "decode_rule": "result('c', array[bool, n]): list index k = c[k] = qubit k (bit k of the key)",
+   "ok": true,
+   "wall_s": 10.752238512039185,
+   "fragment": "circuit_CAL_x0",
+   "created": "2026-10-13 21:23:18 UTC"
+  },
+  "rate": {
+   "id": "B0_ref25_k1",
+   "json_sha256_ok": true,
+   "program_template_sha256": "e0a243014375571b5a04035b998d12045b8d9b5e6e4aa023b0dc83cd468cce7d",
+   "compile_s": 25.25072717666626,
+   "raw_compile_package_sha256": "9bf0023c4ea5fb480f98783ae51137c8615ea3d3491b49bddec432dc3a3c484f",
+   "hugr_file": "data/quantinuum/circuits_2x3_helios/B0_ref25_k1.hugr.json.gz",
+   "hugr_sha256": "3aff8a252c104a868d73d39fc000efb11b4f899cebe2c5ecbfca8cdfc2cb4519",
+   "hugr_sha256_of": "the uncompressed JSON",
+   "package_extensions": [
+    "tket.quantum",
+    "tket.rotation",
+    "tket.bool",
+    "tket.result",
+    "tket.guppy",
+    "tket.qsystem.helios"
+   ],
+   "extension_note": "guppylang 0.21.16 `main.compile()` lists only the extensions it resolves itself; load_pytket (tket 0.13.2 CompilationState.from_tket1) emits PhasedX and ZZPhase as ops of `tket.qsystem.helios`, which neither selene-hugr-qis-compiler 0.2.11 nor tket's own registry carry, so the package is written with that extension embedded (tket_exts 0.12.4 `qsystem_helios()`), the way tket's CircBuild.finish_package packages it; the raw compile() output is recorded by its sha256",
+   "hugr_to_pytket": {
+    "package_route": "to_tket1() of the package returns a 0-qubit circuit with 0 commands (the entry point allocates its qubits; the loaded pytket function is not extracted)",
+    "circuit_route": "RuntimeError:     1: OpaqueOp:tket.qsystem.helios.PhasedX in Node(16) requires extension tket.qsystem.helios, but it could not be found in the extension list used during resolution. The available extensions are: arithmetic.conversions, arithmetic.float, arithmetic.float.types, arithmetic.int, arithmetic.int.types",
+    "status": "not available in tket 0.13.2 (package route: to_tket1() of the package returns a 0-qubit circuit with 0 commands (the entry point allocates its qubits; the loaded pytket function is not extracted); circuit route: RuntimeError:     1: OpaqueOp:tket.qsystem.helios.PhasedX in Node(16) requires extension tket.qsystem.helios, but it could not be found in the extension list used during resolution. The available extensions are: arithmetic.conversions, arithmetic.float, arithmetic.float.types, arithmetic.int, arithmetic.int.types)"
+   },
+   "selene_build_s": 59.393924951553345,
+   "selene_run_s": 464.716433763504,
+   "shots": 3,
+   "seed": 35500999,
+   "seconds_per_shot": 154.90547879536948,
+   "counts": {
+    "524832": 3
+   },
+   "decode_rule": "result('c', array[bool, n]): list index k = c[k] = qubit k (bit k of the key)",
+   "ok": true,
+   "wall_s": 580.4528169631958,
+   "load_average_before": [
+    11.5947265625,
+    12.09130859375,
+    11.74609375
+   ],
+   "fragment": "rate",
+   "created": "2026-10-13 21:23:07 UTC"
+  },
+  "seed_rule": "35 500 000 + c",
+  "extension_note": "guppylang 0.21.16 `main.compile()` lists only the extensions it resolves itself; load_pytket (tket 0.13.2 CompilationState.from_tket1) emits PhasedX and ZZPhase as ops of `tket.qsystem.helios`, which neither selene-hugr-qis-compiler 0.2.11 nor tket's own registry carry, so the package is written with that extension embedded (tket_exts 0.12.4 `qsystem_helios()`), the way tket's CircBuild.finish_package packages it; the raw compile() output is recorded by its sha256",
+  "run_plan": {
+   "shots_per_circuit": 10,
+   "rate_s_per_shot": 154.90547879536948,
+   "load_average_before": [
+    11.5947265625,
+    12.09130859375,
+    11.74609375
+   ],
+   "rule": "2x2: prompts/35a R5, min(2000, floor(3600 / (28 s_shot))), floor 500.  2x3 (information, prompts/35 3.7 '100 shots\n    each or what 30 min allows'): one circuit per command, floor((1700 s - overhead) / s_shot), at most 100, floor 1.",
+   "measured_on": "B0_ref25_k1",
+   "note": "the rate of the aborted first run (20-shot floor > 30 min per circuit at this rate); one circuit per command",
+   "fragment": "run_plan",
+   "created": "2026-10-13 21:24:39 UTC"
+  },
+  "shot_plan": {
+   "circuits": 2,
+   "cap_s": 1700.0,
+   "planned_shots": 100,
+   "rule": "2x2: prompts/35a R5, min(2000, floor(3600 / (28 s_shot))), floor 500.  2x3 (information, prompts/35 3.7 '100 shots\n    each or what 30 min allows'): one circuit per command, floor((1700 s - overhead) / s_shot), at most 100, floor 1.",
+   "shots_used": [
+    10
+   ],
+   "wall_s_total": 3243.057782649994
+  },
+  "stack": {
+   "venv": "/home/digimonk/.local/share/su2qc-pecos/venv",
+   "pip_freeze_sha256": "3c3a9f804fda9704915163412f98df24546e9d3ede44a9b4a7bd02453cf97ae0",
+   "pip_freeze_n": 49,
+   "pip_freeze": [
+    "Jinja2==3.1.6",
+    "MarkupSafe==3.0.4",
+    "PyYAML==6.0.3",
+    "Pygments==2.21.0",
+    "annotated-types==0.8.0",
+    "graphviz==0.21",
+    "guppylang-internals==0.36.1",
+    "guppylang==0.21.16",
+    "hugr==0.16.0",
+    "lark==1.3.1",
+    "lief==1.0.0",
+    "llvmlite==0.50.0",
+    "markdown-it-py==4.2.0",
+    "mdurl==0.1.2",
+    "mpmath==1.3.0",
+    "networkx==3.7",
+    "numpy==2.5.3",
+    "pecos-rslib==0.8.0.dev8",
+    "phir==0.3.3",
+    "pydantic-extra-types==2.11.1",
+    "pydantic==2.13.5",
+    "pydantic_core==2.46.5",
+    "pydot==4.0.1",
+    "pyparsing==3.3.3",
+    "pyqir==0.12.6",
+    "pytket-phir==0.10.2",
+    "pytket-qir==2.0.2",
+    "pytket-quantinuum==0.59.3",
+    "pytket==2.18.4",
+    "pytket_pecos==0.3.3",
+    "quantum-pecos==0.8.0.dev8",
+    "qwasm==1.0.1",
+    "rich==15.0.0",
+    "scipy==1.18.1",
+    "selene-core==0.2.11",
+    "selene-hugr-qis-compiler==0.2.11",
+    "selene-sim==0.2.18",
+    "semver==3.1.0",
+    "setuptools==84.0.0",
+    "sympy==1.14.0",
+    "tket-exts==0.12.4",
+    "tket==0.13.2",
+    "tket_eccs==0.5.1",
+    "tqdm==4.70.1",
+    "types-tqdm==4.70.0.20260906",
+    "typing-inspection==0.4.4",
+    "typing_extensions==4.16.0",
+    "wasmtime==43.0.0",
+    "ziglang==0.16.0"
+   ],
+   "packages_installed_by_prompts_35_35a": [],
+   "pip_freeze_before_equals_after": "yes by construction: no pip command was run in this venv under prompts/35/35a",
+   "fix": "guppylang 0.21.16 `main.compile()` lists only the extensions it resolves itself; load_pytket (tket 0.13.2 CompilationState.from_tket1) emits PhasedX and ZZPhase as ops of `tket.qsystem.helios`, which neither selene-hugr-qis-compiler 0.2.11 nor tket's own registry carry, so the package is written with that extension embedded (tket_exts 0.12.4 `qsystem_helios()`), the way tket's CircBuild.finish_package packages it; the raw compile() output is recorded by its sha256",
+   "error_fixed": "selene_hugr_qis_compiler.HugrReadError: Error loading HUGR package. OpaqueOp:tket.qsystem.helios.ZZPhase requires extension tket.qsystem.helios, but it could not be found in the extension list used during resolution (selene_sim.build of the raw main.compile())",
+   "scope": "the pecos venv (~/.local/share/su2qc-pecos/venv) only",
+   "extension_added": {
+    "name": "tket.qsystem.helios",
+    "version": "0.5.1",
+    "from": "tket-exts 0.12.4"
+   }
+  },
+  "route": "frozen pytket JSON -> guppy.load_pytket inside a @guppy main that allocates the qubits, calls it, records result('c', bits) and discards the qubits -> main.compile() (HUGR package) -> selene_sim.build -> run_shots(Quest, IdealErrorModel)",
+  "what_pass_means": "the frozen native circuits survive the Helios Guppy/HUGR route offline and reproduce their exact distributions on Selene; not a Helios device or Helios-1E statement",
+  "status_note": "information (prompts/35 3.7: H1-H4 on 2 circuits)"
+ },
+ "runtime_s": 0.0,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.3",
+  "scipy": "1.18.1",
+  "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+  "cpu_count": 12,
+  "git_commit": "0265bf8",
+  "timestamp": "2026-10-13 16:20:04 MDT"
+ }
+}

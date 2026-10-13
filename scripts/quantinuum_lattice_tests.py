@@ -1184,12 +1184,12 @@ _PHYS = {}
 HUGR_RULE_R5 = ("prompts/35a R5: shots per circuit = min(2000, floor(3600 / (28 s_shot))), floor 500, s_shot measured on 100 "
                 "shots immediately before the run")
 HUGR_PLAN = {2: {"circuits": 28, "cap_s": 3600.0, "planned_shots": 2000},     # prompts/35 3.7 and the caps of section 2
-             3: {"circuits": 2, "cap_s": 1800.0, "planned_shots": 100}}
+             3: {"circuits": 2, "cap_s": 1700.0, "planned_shots": 100}}   # 2x3: per circuit, one command each
 
 
 def hugr_shots(rt, lat):
-    """2x2: prompts/35a R5, min(2000, floor(3600 / (28 s_shot))), floor 500.  2x3 (information): floor((1800 s - 3 x
-    per-circuit overhead) / (2 s_shot)), at most 100, floor 20."""
+    """2x2: prompts/35a R5, min(2000, floor(3600 / (28 s_shot))), floor 500.  2x3 (information, prompts/35 3.7 '100 shots
+    each or what 30 min allows'): one circuit per command, floor((1700 s - overhead) / s_shot), at most 100, floor 1."""
     if not rt or not rt.get("seconds_per_shot"):
         raise SystemExit("measure the rate first (prompts/35 3.7)")
     s = float(rt["seconds_per_shot"])
@@ -1197,8 +1197,8 @@ def hugr_shots(rt, lat):
         return max(500, min(2000, int(math.floor(3600.0 / (28.0 * s)))))
     p = HUGR_PLAN[lat]
     over = float(rt.get("compile_s", 0.0)) + float(rt.get("selene_build_s", 0.0))
-    n = int(math.floor((p["cap_s"] - (p["circuits"] + 1) * over) / (p["circuits"] * s)))
-    return max(20, min(p["planned_shots"], n))
+    n = int(math.floor((p["cap_s"] - over) / s))      # ONE circuit per <= 30-min command (2x3: Selene ~1e2 s/shot)
+    return max(1, min(p["planned_shots"], n))
 
 
 def hugr_stack_block():
@@ -1390,9 +1390,18 @@ def tier_slots(args):
                          "twoB": int(m["twoB"]), "reference": int(m["reference"]), "k": 1, "dt": float(m["dt"]),
                          "method": "save_statevector (full 2^28 vector)"})
             print(f"  {label}: {len(qc.data)} instructions [{time.time() - t0:.0f} s]", flush=True)
+        ver = (load_json(os.path.join(ROOT, "data", "quantinuum", "q0p_stages_2x4", "verify.json"))
+               if os.path.exists(os.path.join(ROOT, "data", "quantinuum", "q0p_stages_2x4", "verify.json")) else {})
         for src, m in (("opt3", mo), ("structured", ms)):
-            pairs.append({"native": f"{m['id']}:native", "source": f"{m['id']}:source",
-                          "B": m["Q1L"]["rounding"]["state_bound_B"], "B_from": f"data/quantinuum/circuits_2x4/{m['id']}.manifest.json Q1L.rounding"})
+            if "rounding" in m.get("Q1L", {}):
+                B, B_from = m["Q1L"]["rounding"]["state_bound_B"], f"data/quantinuum/circuits_2x4/{m['id']}.manifest.json Q1L.rounding"
+            else:                              # opt-3 circuits built before 35a: B from the Q0P_2x4 verify record
+                vr = (ver.get("per_circuit") or {})
+                rec_ = vr.get(m["id"]) or vr.get(m.get("base_id", ""))
+                if not rec_:
+                    raise SystemExit(f"{m['id']}: no rounding bound (run gate_Q0P_2x3.py --lattice 4 --stage verify)")
+                B, B_from = rec_["Q1L"]["rounding"]["state_bound_B"], "data/quantinuum/q0p_stages_2x4/verify.json per_circuit Q1L.rounding"
+            pairs.append({"native": f"{m['id']}:native", "source": f"{m['id']}:source", "B": B, "B_from": B_from})
     s2 = load_json(os.path.join(ROOT, "validation", "S2_2x4.json"))["data"]["gpu_validation"]["compiled"]["B0_ref0_k1|all_to_all"]
     runs.append({"label": "S2_2x4:B0_ref0_k1|all_to_all", "base_id": base_ids[0], "kind": "reproduction", "source": "S2_2x4-cz",
                  "qpy": s2["file"], "gz_sha256": sha256_file(os.path.join(ROOT, s2["file"])),
@@ -1647,8 +1656,10 @@ QSC_SETS = (
      "select": "all", "program": "pytket"},
     {"name": "QSC_2x3_H2-2SC", "device": "H2-2SC", "lattice": 3, "circuits": "data/quantinuum/circuits_2x3",
      "select": "all", "program": "pytket"},
-    {"name": "QSC_2x4_H2-2SC", "device": "H2-2SC", "lattice": 4, "circuits": "data/quantinuum/circuits_2x4",
-     "select": "k1", "program": "pytket"},
+    {"name": "QSC_2x4_opt3_H2-2SC", "device": "H2-2SC", "lattice": 4, "circuits": "data/quantinuum/circuits_2x4",
+     "select": "k1:opt3", "program": "pytket"},
+    {"name": "QSC_2x4_structured_H2-2SC", "device": "H2-2SC", "lattice": 4, "circuits": "data/quantinuum/circuits_2x4",
+     "select": "k1:structured", "program": "pytket"},
     {"name": "QSC_2x2_Helios-1SC", "device": "Helios-1SC", "lattice": 2, "circuits": "data/quantinuum/circuits_2x2_helios",
      "select": "all", "program": "hugr"},
 )
@@ -1667,8 +1678,11 @@ def tier_qsc(args):
         cmd = [py, os.path.join(ROOT, "scripts", "quantinuum_submit.py"), "--dry-run", "--records-only",
                "--device", s["device"], "--circuits", s["circuits"], "--out", out, "--program", s["program"]]
         idx = load_json(os.path.join(ROOT, s["circuits"], "index.json"))
-        if s["select"] == "k1":
-            cmd += ["--only"] + [c for c in idx["circuits"] if c.endswith("_k1")] + list(idx.get("calibration", []))
+        if s["select"].startswith("k1"):         # prompts/35b: the 15 k = 1 circuits of one 2x4 source + calibration
+            src = s["select"].split(":")[1]
+            _i, mans_, _c = family(s["lattice"])
+            cmd += (["--only"] + [c for c in idx["circuits"] if int(mans_[c]["k"]) == 1 and mans_[c].get("source") == src]
+                    + list(idx.get("calibration", [])))
         else:
             cmd += ["--all"]
         sess_p = os.path.join(ROOT, out, "session.json")
@@ -1684,7 +1698,7 @@ def tier_qsc(args):
             zz[j["circuit_id"]] = int(m["counts"]["n_zz"])
         owner_cmd = " ".join(["$V scripts/quantinuum_submit.py --syntax-check", "--device", s["device"], "--circuits",
                               s["circuits"]] + (["--program", "hugr"] if s["program"] == "hugr" else [])
-                             + (["--all"] if s["select"] == "all" else ["--only", "<the 15 k=1 ids + CAL_zeros CAL_x0>"])
+                             + (["--all"] if s["select"] == "all" else ["--only", f"<the 15 k=1 {s['select'].split(':')[1]} ids + CAL_zeros CAL_x0>"])
                              + ["--out", f"data/hardware/{s['name']}"])
         sets.append({"name": s["name"], "device": s["device"], "program": s["program"], "circuits_dir": s["circuits"],
                      "session": rel(sess_p), "n_jobs": len(sess["jobs"]), "n_circuits": len({j["circuit_id"] for j in sess["jobs"]}),
