@@ -1,0 +1,1270 @@
+{
+ "device_table": "data/quantinuum/devices_20261002.json",
+ "hqc": {
+  "recomputed_vs_manifest_max_abs": 0.0,
+  "mean_vs_index_abs": 0.0,
+  "N_m": [
+   24
+  ],
+  "N_m_expected": 24,
+  "per_shot": {
+   "mean": 0.610914285714286,
+   "min": 0.609,
+   "max": 0.613
+  },
+  "per_circuit": {
+   "B0_ref06_k1": 0.6116,
+   "B0_ref06_k2": 0.612,
+   "B0_ref06_k3": 0.611,
+   "B0_ref06_k4": 0.6094,
+   "B0_ref43_k1": 0.612,
+   "B0_ref43_k2": 0.6122,
+   "B0_ref43_k3": 0.6112,
+   "B0_ref43_k4": 0.6096,
+   "B0_ref30_k1": 0.6118,
+   "B0_ref30_k2": 0.6126,
+   "B0_ref30_k3": 0.6114,
+   "B0_ref30_k4": 0.6102,
+   "B0_ref21_k1": 0.612,
+   "B0_ref21_k2": 0.6128,
+   "B0_ref21_k3": 0.6108,
+   "B0_ref21_k4": 0.6102,
+   "B0_ref17_k1": 0.6126,
+   "B0_ref17_k2": 0.613,
+   "B0_ref17_k3": 0.6108,
+   "B0_ref17_k4": 0.6098,
+   "B1_ref14_k1": 0.6102,
+   "B1_ref14_k2": 0.6098,
+   "B1_ref14_k3": 0.6108,
+   "B1_ref14_k4": 0.609,
+   "B1_ref07_k1": 0.6094,
+   "B1_ref07_k2": 0.6096,
+   "B1_ref07_k3": 0.6106,
+   "B1_ref07_k4": 0.6092
+  },
+  "plan_totals_vs_formula_max_rel": 0.0
+ },
+ "devices": {
+  "quantinuum_h2_2": {
+   "device": "H2-2",
+   "eps2": 0.00083,
+   "eps1": 2.8e-05,
+   "eps_ro": 0.000935,
+   "qubits": 56,
+   "qubits_fit": true,
+   "f_gate_only_per_circuit": {
+    "B0_ref06_k1": 0.7928063694009052,
+    "B0_ref06_k2": 0.792761972865779,
+    "B0_ref06_k3": 0.7928729688654701,
+    "B0_ref06_k4": 0.7930505947906313,
+    "B0_ref43_k1": 0.792761972865779,
+    "B0_ref43_k2": 0.7927397755305386,
+    "B0_ref43_k3": 0.7928507684223418,
+    "B0_ref43_k4": 0.7930283893739772,
+    "B0_ref30_k1": 0.7927841708225619,
+    "B0_ref30_k2": 0.7926953827246169,
+    "B0_ref30_k3": 0.7928285686008261,
+    "B0_ref30_k4": 0.7929617768544552,
+    "B0_ref21_k1": 0.792761972865779,
+    "B0_ref21_k2": 0.7926731872539007,
+    "B0_ref21_k3": 0.7928951699302281,
+    "B0_ref21_k4": 0.7929617768544552,
+    "B0_ref17_k1": 0.7926953827246169,
+    "B0_ref17_k2": 0.7926509924046575,
+    "B0_ref17_k3": 0.7928951699302281,
+    "B0_ref17_k4": 0.7930061845790748,
+    "B1_ref14_k1": 0.7929617768544552,
+    "B1_ref14_k2": 0.7930061845790748,
+    "B1_ref14_k3": 0.7928951699302281,
+    "B1_ref14_k4": 0.7930950074892643,
+    "B1_ref07_k1": 0.7930505947906313,
+    "B1_ref07_k2": 0.7930283893739772,
+    "B1_ref07_k3": 0.7929173716166333,
+    "B1_ref07_k4": 0.7930728008290546
+   },
+   "f_gate_only_mean": 0.7928824943972907,
+   "f_gate_only_worst": 0.7926509924046575,
+   "f_gate_only_worst_id": "B0_ref17_k2",
+   "eps2_for_mean_f_0.1": 0.009005836041668259,
+   "eps2_for_worst_f_0.05": 0.011726758217647265,
+   "meets_mean_0.1_gate_only": true,
+   "meets_worst_0.05_gate_only": true,
+   "memory_ESTIMATE": {
+    "flag": "ESTIMATE",
+    "rate_per_qubit_per_s": 0.0016799999999999999,
+    "rounds": 201,
+    "rounds_gate_bound": 63,
+    "depth_2q": 201,
+    "scenarios": {
+     "low": {
+      "t_round_s": 0.0005,
+      "shot_time_s": 0.1005,
+      "S_idle_nats": 0.0020260799999999995,
+      "f_with_memory": 0.7912776773259094
+     },
+     "mid": {
+      "t_round_s": 0.0011,
+      "shot_time_s": 0.22110000000000002,
+      "S_idle_nats": 0.004457376,
+      "f_with_memory": 0.7893561838803295
+     },
+     "high": {
+      "t_round_s": 0.0044,
+      "shot_time_s": 0.8844000000000001,
+      "S_idle_nats": 0.017829504,
+      "f_with_memory": 0.7788710723185999
+     }
+    }
+   },
+   "formula": "device_req.clean_shot_fraction(n_zz, n_phasedx, n_meas, eps2, eps1, eps_ro) = (1-eps2)^n_zz (1-eps1)^n_phasedx (1-eps_ro)^n_meas (the device table's formula)"
+  },
+  "quantinuum_helios_1": {
+   "device": "Helios-1",
+   "eps2": 0.00079,
+   "eps1": 3e-05,
+   "eps_ro": 0.00048,
+   "qubits": 98,
+   "qubits_fit": true,
+   "f_gate_only_per_circuit": {
+    "B0_ref06_k1": 0.8045595863434611,
+    "B0_ref06_k2": 0.8045113134923841,
+    "B0_ref06_k3": 0.804632001051071,
+    "B0_ref06_k4": 0.8048251388040073,
+    "B0_ref43_k1": 0.8045113134923841,
+    "B0_ref43_k2": 0.8044871781529793,
+    "B0_ref43_k3": 0.8046078620910395,
+    "B0_ref43_k4": 0.8048009940498432,
+    "B0_ref30_k1": 0.8045354495558708,
+    "B0_ref30_k2": 0.8044389096463286,
+    "B0_ref30_k3": 0.8045837238551767,
+    "B0_ref30_k4": 0.8047285641333197,
+    "B0_ref21_k1": 0.8045113134923841,
+    "B0_ref21_k2": 0.8044147764790393,
+    "B0_ref21_k3": 0.8046561407352931,
+    "B0_ref21_k4": 0.8047285641333197,
+    "B0_ref17_k1": 0.8044389096463286,
+    "B0_ref17_k2": 0.8043906440357449,
+    "B0_ref17_k3": 0.8046561407352931,
+    "B0_ref17_k4": 0.8047768500200218,
+    "B1_ref14_k1": 0.8047285641333197,
+    "B1_ref14_k2": 0.8047768500200218,
+    "B1_ref14_k3": 0.8046561407352931,
+    "B1_ref14_k4": 0.8048734304854503,
+    "B1_ref07_k1": 0.8048251388040073,
+    "B1_ref07_k2": 0.8048009940498432,
+    "B1_ref07_k3": 0.8046802811437274,
+    "B1_ref07_k4": 0.8048492842825358
+   },
+   "f_gate_only_mean": 0.8046423591999817,
+   "f_gate_only_worst": 0.8043906440357449,
+   "f_gate_only_worst_id": "B0_ref17_k2",
+   "eps2_for_mean_f_0.1": 0.00902406191195312,
+   "eps2_for_worst_f_0.05": 0.011744852241407902,
+   "meets_mean_0.1_gate_only": true,
+   "meets_worst_0.05_gate_only": true,
+   "memory_ESTIMATE": {
+    "flag": "ESTIMATE",
+    "rate_per_qubit_per_s": 0.00909090909090909,
+    "rounds": 201,
+    "rounds_gate_bound": 63,
+    "depth_2q": 201,
+    "scenarios": {
+     "low": {
+      "t_round_s": 0.0005,
+      "shot_time_s": 0.1005,
+      "S_idle_nats": 0.010963636363636363,
+      "f_with_memory": 0.7958687362599349
+     },
+     "mid": {
+      "t_round_s": 0.0011,
+      "shot_time_s": 0.22110000000000002,
+      "S_idle_nats": 0.02412,
+      "f_with_memory": 0.7854665751082343
+     },
+     "high": {
+      "t_round_s": 0.0044,
+      "shot_time_s": 0.8844000000000001,
+      "S_idle_nats": 0.09648,
+      "f_with_memory": 0.7306378387922459
+     }
+    }
+   },
+   "formula": "device_req.clean_shot_fraction(n_zz, n_phasedx, n_meas, eps2, eps1, eps_ro) = (1-eps2)^n_zz (1-eps1)^n_phasedx (1-eps_ro)^n_meas (the device table's formula)"
+  },
+  "quantinuum_h1_1": {
+   "device": "H1-1",
+   "eps2": 0.00097,
+   "eps1": 1.8e-05,
+   "eps_ro": 0.0023,
+   "qubits": 20,
+   "qubits_fit": true,
+   "f_gate_only_per_circuit": {
+    "B0_ref06_k1": 0.7559995586574105,
+    "B0_ref06_k2": 0.7559723429182427,
+    "B0_ref06_k3": 0.7560403841032852,
+    "B0_ref06_k4": 0.7561492627375803,
+    "B0_ref43_k1": 0.7559723429182427,
+    "B0_ref43_k2": 0.7559587354160702,
+    "B0_ref43_k3": 0.7560267753763714,
+    "B0_ref43_k4": 0.756135652050851,
+    "B0_ref30_k1": 0.7559859506653547,
+    "B0_ref30_k2": 0.7559315211465258,
+    "B0_ref30_k3": 0.7560131668944147,
+    "B0_ref30_k4": 0.7560948214605997,
+    "B0_ref21_k1": 0.7559723429182427,
+    "B0_ref21_k2": 0.7559179143791452,
+    "B0_ref21_k3": 0.7560539930751606,
+    "B0_ref21_k4": 0.7560948214605997,
+    "B0_ref17_k1": 0.7559315211465258,
+    "B0_ref17_k2": 0.7559043078566864,
+    "B0_ref17_k3": 0.7560539930751606,
+    "B0_ref17_k4": 0.7561220416091141,
+    "B1_ref14_k1": 0.7560948214605997,
+    "B1_ref14_k2": 0.7561220416091141,
+    "B1_ref14_k3": 0.7560539930751606,
+    "B1_ref14_k4": 0.7561764848460336,
+    "B1_ref07_k1": 0.7561492627375803,
+    "B1_ref07_k2": 0.756135652050851,
+    "B1_ref07_k3": 0.7560676022920019,
+    "B1_ref07_k4": 0.7561628736693063
+   },
+   "f_gate_only_mean": 0.7560462207716512,
+   "f_gate_only_worst": 0.7559043078566864,
+   "f_gate_only_worst_id": "B0_ref17_k2",
+   "eps2_for_mean_f_0.1": 0.008957619311848141,
+   "eps2_for_worst_f_0.05": 0.011679082914091372,
+   "meets_mean_0.1_gate_only": true,
+   "meets_worst_0.05_gate_only": true,
+   "memory_ESTIMATE": {
+    "flag": "ESTIMATE",
+    "rate_per_qubit_per_s": 0.0030800000000000003,
+    "rounds": 201,
+    "rounds_gate_bound": 51,
+    "depth_2q": 201,
+    "scenarios": {
+     "low": {
+      "t_round_s": 0.0005,
+      "shot_time_s": 0.1005,
+      "S_idle_nats": 0.00371448,
+      "f_with_memory": 0.7532431114751877
+     },
+     "mid": {
+      "t_round_s": 0.0011,
+      "shot_time_s": 0.22110000000000002,
+      "S_idle_nats": 0.008171856,
+      "f_with_memory": 0.7498930953951345
+     },
+     "high": {
+      "t_round_s": 0.0044,
+      "shot_time_s": 0.8844000000000001,
+      "S_idle_nats": 0.032687424,
+      "f_with_memory": 0.7317325577213116
+     }
+    }
+   },
+   "formula": "device_req.clean_shot_fraction(n_zz, n_phasedx, n_meas, eps2, eps1, eps_ro) = (1-eps2)^n_zz (1-eps1)^n_phasedx (1-eps_ro)^n_meas (the device table's formula)"
+  },
+  "quantinuum_h2_1": {
+   "device": "H2-1",
+   "eps2": 0.0011,
+   "eps1": 1.9e-05,
+   "eps_ro": 0.001,
+   "qubits": 56,
+   "qubits_fit": true,
+   "f_gate_only_per_circuit": {
+    "B0_ref06_k1": 0.7428206487560178,
+    "B0_ref06_k2": 0.7427924218395233,
+    "B0_ref06_k3": 0.7428629911419974,
+    "B0_ref06_k4": 0.7429759159715099,
+    "B0_ref43_k1": 0.7427924218395233,
+    "B0_ref43_k2": 0.7427783087835084,
+    "B0_ref43_k3": 0.7428488767451656,
+    "B0_ref43_k4": 0.7429617994291063,
+    "B0_ref30_k1": 0.7428065351636914,
+    "B0_ref30_k2": 0.7427500834759175,
+    "B0_ref30_k3": 0.7428347626165075,
+    "B0_ref30_k4": 0.7429194514111614,
+    "B0_ref21_k1": 0.7427924218395233,
+    "B0_ref21_k2": 0.7427359712243315,
+    "B0_ref21_k3": 0.7428771058070077,
+    "B0_ref21_k4": 0.7429194514111614,
+    "B0_ref17_k1": 0.7427500834759175,
+    "B0_ref17_k2": 0.7427218592408783,
+    "B0_ref17_k3": 0.7428771058070077,
+    "B0_ref17_k4": 0.7429476831549172,
+    "B1_ref14_k1": 0.7429194514111614,
+    "B1_ref14_k2": 0.7429476831549172,
+    "B1_ref14_k3": 0.7428771058070077,
+    "B1_ref14_k4": 0.7430041498609801,
+    "B1_ref07_k1": 0.7429759159715099,
+    "B1_ref07_k2": 0.7429617994291063,
+    "B1_ref07_k3": 0.7428912207402018,
+    "B1_ref07_k4": 0.7429900327821327
+   },
+   "f_gate_only_mean": 0.7428690449389783,
+   "f_gate_only_worst": 0.7427218592408783,
+   "f_gate_only_worst_id": "B0_ref17_k2",
+   "eps2_for_mean_f_0.1": 0.009017438736986658,
+   "eps2_for_worst_f_0.05": 0.011738697170665901,
+   "meets_mean_0.1_gate_only": true,
+   "meets_worst_0.05_gate_only": true,
+   "memory_ESTIMATE": {
+    "flag": "ESTIMATE",
+    "rate_per_qubit_per_s": 0.0028,
+    "rounds": 201,
+    "rounds_gate_bound": 63,
+    "depth_2q": 201,
+    "scenarios": {
+     "low": {
+      "t_round_s": 0.0005,
+      "shot_time_s": 0.1005,
+      "S_idle_nats": 0.0033767999999999997,
+      "f_with_memory": 0.7403647553701908
+     },
+     "mid": {
+      "t_round_s": 0.0011,
+      "shot_time_s": 0.22110000000000002,
+      "S_idle_nats": 0.00742896,
+      "f_with_memory": 0.7373707491160588
+     },
+     "high": {
+      "t_round_s": 0.0044,
+      "shot_time_s": 0.8844000000000001,
+      "S_idle_nats": 0.02971584,
+      "f_with_memory": 0.7211188306881062
+     }
+    }
+   },
+   "formula": "device_req.clean_shot_fraction(n_zz, n_phasedx, n_meas, eps2, eps1, eps_ro) = (1-eps2)^n_zz (1-eps1)^n_phasedx (1-eps_ro)^n_meas (the device table's formula)"
+  }
+ },
+ "billing": {
+  "formula": "HQC = 5 + C (N_1q + 10 N_2q + 5 N_m) / 5000 per job",
+  "N_1q": "PhasedX count (Rz excluded: 'Rz operations excluded')",
+  "N_2q": "ZZPhase + ZZMax count",
+  "N_m": "initialisations + measurements (= 2 x n_qubits for one measurement per qubit)",
+  "C": "shots",
+  "job_base_hqc": 5.0,
+  "divisor": 5000.0,
+  "limits": {
+   "max_shots_per_job": 10000,
+   "max_hqc_per_job": 500000.0,
+   "max_hqc_per_shot_H2": 50
+  },
+  "source": [
+   "https://learn.microsoft.com/en-us/azure/quantum/provider-quantinuum",
+   "https://docs.quantinuum.com/systems/trainings/helios/getting_started/costing.html"
+  ],
+  "read_on": "2026-10-02",
+  "syntax_checkers": "Syntax Checkers usage is offered free-of-charge (Azure provider page)",
+  "azure_plans": {
+   "source": "https://learn.microsoft.com/en-us/azure/quantum/pricing",
+   "read_on": "2026-10-02",
+   "standard": "USD 125,000/month = 10k HQC + 100k eHQC",
+   "premium": "USD 175,000/month = 17k HQC",
+   "pay_as_you_go": "per HQC usage, rate by contact"
+  },
+  "usd_per_hqc_ESTIMATE": {
+   "value": 12.5,
+   "flag": "ESTIMATE",
+   "label": "Azure-Standard-equivalent (USD 125,000 / 10,000 HQC); the pay-as-you-go and research rates are not public"
+  }
+ },
+ "n_circuits": 28,
+ "d3prime_plans": {
+  "quantinuum_h2_2": {
+   "shots_by_circuit": {
+    "B0_ref06_k1": 267,
+    "B0_ref06_k2": 267,
+    "B0_ref06_k3": 267,
+    "B0_ref06_k4": 1700,
+    "B0_ref17_k1": 267,
+    "B0_ref17_k2": 267,
+    "B0_ref17_k3": 267,
+    "B0_ref17_k4": 1700,
+    "B0_ref21_k1": 267,
+    "B0_ref21_k2": 267,
+    "B0_ref21_k3": 267,
+    "B0_ref21_k4": 1700,
+    "B0_ref30_k1": 267,
+    "B0_ref30_k2": 267,
+    "B0_ref30_k3": 267,
+    "B0_ref30_k4": 1700,
+    "B0_ref43_k1": 267,
+    "B0_ref43_k2": 267,
+    "B0_ref43_k3": 267,
+    "B0_ref43_k4": 1700,
+    "B1_ref07_k1": 267,
+    "B1_ref07_k2": 267,
+    "B1_ref07_k3": 267,
+    "B1_ref07_k4": 4300,
+    "B1_ref14_k1": 267,
+    "B1_ref14_k2": 267,
+    "B1_ref14_k3": 267,
+    "B1_ref14_k4": 4300
+   },
+   "per_circuit": {
+    "B0_ref06_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.2972
+    },
+    "B0_ref06_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.404
+    },
+    "B0_ref06_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.137
+    },
+    "B0_ref06_k4": {
+     "shots": 1700,
+     "jobs": 1,
+     "hqc": 1040.98
+    },
+    "B0_ref17_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.5642
+    },
+    "B0_ref17_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.671
+    },
+    "B0_ref17_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.0836
+    },
+    "B0_ref17_k4": {
+     "shots": 1700,
+     "jobs": 1,
+     "hqc": 1041.66
+    },
+    "B0_ref21_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.404
+    },
+    "B0_ref21_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.6176
+    },
+    "B0_ref21_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.0836
+    },
+    "B0_ref21_k4": {
+     "shots": 1700,
+     "jobs": 1,
+     "hqc": 1042.34
+    },
+    "B0_ref30_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.35060000000001
+    },
+    "B0_ref30_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.5642
+    },
+    "B0_ref30_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.24380000000002
+    },
+    "B0_ref30_k4": {
+     "shots": 1700,
+     "jobs": 1,
+     "hqc": 1042.34
+    },
+    "B0_ref43_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.404
+    },
+    "B0_ref43_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.45739999999998
+    },
+    "B0_ref43_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.19039999999998
+    },
+    "B0_ref43_k4": {
+     "shots": 1700,
+     "jobs": 1,
+     "hqc": 1041.3200000000002
+    },
+    "B1_ref07_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 167.7098
+    },
+    "B1_ref07_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 167.7632
+    },
+    "B1_ref07_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.0302
+    },
+    "B1_ref07_k4": {
+     "shots": 4300,
+     "jobs": 1,
+     "hqc": 2624.56
+    },
+    "B1_ref14_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 167.9234
+    },
+    "B1_ref14_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 167.8166
+    },
+    "B1_ref14_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.0836
+    },
+    "B1_ref14_k4": {
+     "shots": 4300,
+     "jobs": 1,
+     "hqc": 2623.7
+    }
+   },
+   "by_sector": {
+    "B=0": {
+     "shots": 12505,
+     "jobs": 20,
+     "hqc": 7734.1126
+    },
+    "B=1": {
+     "shots": 10202,
+     "jobs": 8,
+     "hqc": 6255.5868
+    }
+   },
+   "shots_total": 22707,
+   "jobs": 28,
+   "hqc_total": 13989.699399999998,
+   "N4": {
+    "B=0": 1700,
+    "B=1": 4300
+   },
+   "f": 0.7928824943972907,
+   "margin": 0.7,
+   "floor": 267,
+   "round_to": 100,
+   "lambda_star": 6.295793621871989,
+   "readout_factor": 0.82,
+   "k4_reachability": {
+    "B=0": {
+     "states": 38,
+     "states_with_sum_k4_p_below_1e-6": 0,
+     "min_sum_k4_p": 0.007280502154735869
+    },
+    "B=1": {
+     "states": 20,
+     "states_with_sum_k4_p_below_1e-6": 0,
+     "min_sum_k4_p": 0.00306892096085015
+    }
+   },
+   "rule": "D3' (scripts/h0_support_plan.n4_of_sector): every sector state >= lambda* expected clean counts from the circuits at 0.82 x 0.7 x f",
+   "finite_campaign": true,
+   "device": "H2-2",
+   "f_source": "the device's gate-only mean f of the 28 frozen circuits (this JSON's devices.<d>)"
+  },
+  "quantinuum_helios_1": {
+   "shots_by_circuit": {
+    "B0_ref06_k1": 267,
+    "B0_ref06_k2": 267,
+    "B0_ref06_k3": 267,
+    "B0_ref06_k4": 1600,
+    "B0_ref17_k1": 267,
+    "B0_ref17_k2": 267,
+    "B0_ref17_k3": 267,
+    "B0_ref17_k4": 1600,
+    "B0_ref21_k1": 267,
+    "B0_ref21_k2": 267,
+    "B0_ref21_k3": 267,
+    "B0_ref21_k4": 1600,
+    "B0_ref30_k1": 267,
+    "B0_ref30_k2": 267,
+    "B0_ref30_k3": 267,
+    "B0_ref30_k4": 1600,
+    "B0_ref43_k1": 267,
+    "B0_ref43_k2": 267,
+    "B0_ref43_k3": 267,
+    "B0_ref43_k4": 1600,
+    "B1_ref07_k1": 267,
+    "B1_ref07_k2": 267,
+    "B1_ref07_k3": 267,
+    "B1_ref07_k4": 4200,
+    "B1_ref14_k1": 267,
+    "B1_ref14_k2": 267,
+    "B1_ref14_k3": 267,
+    "B1_ref14_k4": 4200
+   },
+   "per_circuit": {
+    "B0_ref06_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.2972
+    },
+    "B0_ref06_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.404
+    },
+    "B0_ref06_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.137
+    },
+    "B0_ref06_k4": {
+     "shots": 1600,
+     "jobs": 1,
+     "hqc": 980.0400000000001
+    },
+    "B0_ref17_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.5642
+    },
+    "B0_ref17_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.671
+    },
+    "B0_ref17_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.0836
+    },
+    "B0_ref17_k4": {
+     "shots": 1600,
+     "jobs": 1,
+     "hqc": 980.6800000000001
+    },
+    "B0_ref21_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.404
+    },
+    "B0_ref21_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.6176
+    },
+    "B0_ref21_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.0836
+    },
+    "B0_ref21_k4": {
+     "shots": 1600,
+     "jobs": 1,
+     "hqc": 981.3199999999999
+    },
+    "B0_ref30_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.35060000000001
+    },
+    "B0_ref30_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.5642
+    },
+    "B0_ref30_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.24380000000002
+    },
+    "B0_ref30_k4": {
+     "shots": 1600,
+     "jobs": 1,
+     "hqc": 981.3199999999999
+    },
+    "B0_ref43_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.404
+    },
+    "B0_ref43_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.45739999999998
+    },
+    "B0_ref43_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.19039999999998
+    },
+    "B0_ref43_k4": {
+     "shots": 1600,
+     "jobs": 1,
+     "hqc": 980.36
+    },
+    "B1_ref07_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 167.7098
+    },
+    "B1_ref07_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 167.7632
+    },
+    "B1_ref07_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.0302
+    },
+    "B1_ref07_k4": {
+     "shots": 4200,
+     "jobs": 1,
+     "hqc": 2563.64
+    },
+    "B1_ref14_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 167.9234
+    },
+    "B1_ref14_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 167.8166
+    },
+    "B1_ref14_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.0836
+    },
+    "B1_ref14_k4": {
+     "shots": 4200,
+     "jobs": 1,
+     "hqc": 2562.7999999999997
+    }
+   },
+   "by_sector": {
+    "B=0": {
+     "shots": 12005,
+     "jobs": 20,
+     "hqc": 7429.192599999999
+    },
+    "B=1": {
+     "shots": 10002,
+     "jobs": 8,
+     "hqc": 6133.766799999999
+    }
+   },
+   "shots_total": 22007,
+   "jobs": 28,
+   "hqc_total": 13562.959399999998,
+   "N4": {
+    "B=0": 1600,
+    "B=1": 4200
+   },
+   "f": 0.8046423591999817,
+   "margin": 0.7,
+   "floor": 267,
+   "round_to": 100,
+   "lambda_star": 6.295793621871989,
+   "readout_factor": 0.82,
+   "k4_reachability": {
+    "B=0": {
+     "states": 38,
+     "states_with_sum_k4_p_below_1e-6": 0,
+     "min_sum_k4_p": 0.007280502154735869
+    },
+    "B=1": {
+     "states": 20,
+     "states_with_sum_k4_p_below_1e-6": 0,
+     "min_sum_k4_p": 0.00306892096085015
+    }
+   },
+   "rule": "D3' (scripts/h0_support_plan.n4_of_sector): every sector state >= lambda* expected clean counts from the circuits at 0.82 x 0.7 x f",
+   "finite_campaign": true,
+   "device": "Helios-1",
+   "f_source": "the device's gate-only mean f of the 28 frozen circuits (this JSON's devices.<d>)"
+  },
+  "quantinuum_h1_1": {
+   "shots_by_circuit": {
+    "B0_ref06_k1": 267,
+    "B0_ref06_k2": 267,
+    "B0_ref06_k3": 267,
+    "B0_ref06_k4": 1700,
+    "B0_ref17_k1": 267,
+    "B0_ref17_k2": 267,
+    "B0_ref17_k3": 267,
+    "B0_ref17_k4": 1700,
+    "B0_ref21_k1": 267,
+    "B0_ref21_k2": 267,
+    "B0_ref21_k3": 267,
+    "B0_ref21_k4": 1700,
+    "B0_ref30_k1": 267,
+    "B0_ref30_k2": 267,
+    "B0_ref30_k3": 267,
+    "B0_ref30_k4": 1700,
+    "B0_ref43_k1": 267,
+    "B0_ref43_k2": 267,
+    "B0_ref43_k3": 267,
+    "B0_ref43_k4": 1700,
+    "B1_ref07_k1": 267,
+    "B1_ref07_k2": 267,
+    "B1_ref07_k3": 267,
+    "B1_ref07_k4": 4500,
+    "B1_ref14_k1": 267,
+    "B1_ref14_k2": 267,
+    "B1_ref14_k3": 267,
+    "B1_ref14_k4": 4500
+   },
+   "per_circuit": {
+    "B0_ref06_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.2972
+    },
+    "B0_ref06_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.404
+    },
+    "B0_ref06_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.137
+    },
+    "B0_ref06_k4": {
+     "shots": 1700,
+     "jobs": 1,
+     "hqc": 1040.98
+    },
+    "B0_ref17_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.5642
+    },
+    "B0_ref17_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.671
+    },
+    "B0_ref17_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.0836
+    },
+    "B0_ref17_k4": {
+     "shots": 1700,
+     "jobs": 1,
+     "hqc": 1041.66
+    },
+    "B0_ref21_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.404
+    },
+    "B0_ref21_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.6176
+    },
+    "B0_ref21_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.0836
+    },
+    "B0_ref21_k4": {
+     "shots": 1700,
+     "jobs": 1,
+     "hqc": 1042.34
+    },
+    "B0_ref30_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.35060000000001
+    },
+    "B0_ref30_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.5642
+    },
+    "B0_ref30_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.24380000000002
+    },
+    "B0_ref30_k4": {
+     "shots": 1700,
+     "jobs": 1,
+     "hqc": 1042.34
+    },
+    "B0_ref43_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.404
+    },
+    "B0_ref43_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.45739999999998
+    },
+    "B0_ref43_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.19039999999998
+    },
+    "B0_ref43_k4": {
+     "shots": 1700,
+     "jobs": 1,
+     "hqc": 1041.3200000000002
+    },
+    "B1_ref07_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 167.7098
+    },
+    "B1_ref07_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 167.7632
+    },
+    "B1_ref07_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.0302
+    },
+    "B1_ref07_k4": {
+     "shots": 4500,
+     "jobs": 1,
+     "hqc": 2746.3999999999996
+    },
+    "B1_ref14_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 167.9234
+    },
+    "B1_ref14_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 167.8166
+    },
+    "B1_ref14_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.0836
+    },
+    "B1_ref14_k4": {
+     "shots": 4500,
+     "jobs": 1,
+     "hqc": 2745.5
+    }
+   },
+   "by_sector": {
+    "B=0": {
+     "shots": 12505,
+     "jobs": 20,
+     "hqc": 7734.1126
+    },
+    "B=1": {
+     "shots": 10602,
+     "jobs": 8,
+     "hqc": 6499.2268
+    }
+   },
+   "shots_total": 23107,
+   "jobs": 28,
+   "hqc_total": 14233.339399999999,
+   "N4": {
+    "B=0": 1700,
+    "B=1": 4500
+   },
+   "f": 0.7560462207716512,
+   "margin": 0.7,
+   "floor": 267,
+   "round_to": 100,
+   "lambda_star": 6.295793621871989,
+   "readout_factor": 0.82,
+   "k4_reachability": {
+    "B=0": {
+     "states": 38,
+     "states_with_sum_k4_p_below_1e-6": 0,
+     "min_sum_k4_p": 0.007280502154735869
+    },
+    "B=1": {
+     "states": 20,
+     "states_with_sum_k4_p_below_1e-6": 0,
+     "min_sum_k4_p": 0.00306892096085015
+    }
+   },
+   "rule": "D3' (scripts/h0_support_plan.n4_of_sector): every sector state >= lambda* expected clean counts from the circuits at 0.82 x 0.7 x f",
+   "finite_campaign": true,
+   "device": "H1-1",
+   "f_source": "the device's gate-only mean f of the 28 frozen circuits (this JSON's devices.<d>)"
+  },
+  "quantinuum_h2_1": {
+   "shots_by_circuit": {
+    "B0_ref06_k1": 267,
+    "B0_ref06_k2": 267,
+    "B0_ref06_k3": 267,
+    "B0_ref06_k4": 1800,
+    "B0_ref17_k1": 267,
+    "B0_ref17_k2": 267,
+    "B0_ref17_k3": 267,
+    "B0_ref17_k4": 1800,
+    "B0_ref21_k1": 267,
+    "B0_ref21_k2": 267,
+    "B0_ref21_k3": 267,
+    "B0_ref21_k4": 1800,
+    "B0_ref30_k1": 267,
+    "B0_ref30_k2": 267,
+    "B0_ref30_k3": 267,
+    "B0_ref30_k4": 1800,
+    "B0_ref43_k1": 267,
+    "B0_ref43_k2": 267,
+    "B0_ref43_k3": 267,
+    "B0_ref43_k4": 1800,
+    "B1_ref07_k1": 267,
+    "B1_ref07_k2": 267,
+    "B1_ref07_k3": 267,
+    "B1_ref07_k4": 4600,
+    "B1_ref14_k1": 267,
+    "B1_ref14_k2": 267,
+    "B1_ref14_k3": 267,
+    "B1_ref14_k4": 4600
+   },
+   "per_circuit": {
+    "B0_ref06_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.2972
+    },
+    "B0_ref06_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.404
+    },
+    "B0_ref06_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.137
+    },
+    "B0_ref06_k4": {
+     "shots": 1800,
+     "jobs": 1,
+     "hqc": 1101.92
+    },
+    "B0_ref17_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.5642
+    },
+    "B0_ref17_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.671
+    },
+    "B0_ref17_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.0836
+    },
+    "B0_ref17_k4": {
+     "shots": 1800,
+     "jobs": 1,
+     "hqc": 1102.64
+    },
+    "B0_ref21_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.404
+    },
+    "B0_ref21_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.6176
+    },
+    "B0_ref21_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.0836
+    },
+    "B0_ref21_k4": {
+     "shots": 1800,
+     "jobs": 1,
+     "hqc": 1103.36
+    },
+    "B0_ref30_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.35060000000001
+    },
+    "B0_ref30_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.5642
+    },
+    "B0_ref30_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.24380000000002
+    },
+    "B0_ref30_k4": {
+     "shots": 1800,
+     "jobs": 1,
+     "hqc": 1103.36
+    },
+    "B0_ref43_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.404
+    },
+    "B0_ref43_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.45739999999998
+    },
+    "B0_ref43_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.19039999999998
+    },
+    "B0_ref43_k4": {
+     "shots": 1800,
+     "jobs": 1,
+     "hqc": 1102.28
+    },
+    "B1_ref07_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 167.7098
+    },
+    "B1_ref07_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 167.7632
+    },
+    "B1_ref07_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.0302
+    },
+    "B1_ref07_k4": {
+     "shots": 4600,
+     "jobs": 1,
+     "hqc": 2807.3199999999997
+    },
+    "B1_ref14_k1": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 167.9234
+    },
+    "B1_ref14_k2": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 167.8166
+    },
+    "B1_ref14_k3": {
+     "shots": 267,
+     "jobs": 1,
+     "hqc": 168.0836
+    },
+    "B1_ref14_k4": {
+     "shots": 4600,
+     "jobs": 1,
+     "hqc": 2806.4
+    }
+   },
+   "by_sector": {
+    "B=0": {
+     "shots": 13005,
+     "jobs": 20,
+     "hqc": 8039.0326
+    },
+    "B=1": {
+     "shots": 10802,
+     "jobs": 8,
+     "hqc": 6621.0468
+    }
+   },
+   "shots_total": 23807,
+   "jobs": 28,
+   "hqc_total": 14660.079399999997,
+   "N4": {
+    "B=0": 1800,
+    "B=1": 4600
+   },
+   "f": 0.7428690449389783,
+   "margin": 0.7,
+   "floor": 267,
+   "round_to": 100,
+   "lambda_star": 6.295793621871989,
+   "readout_factor": 0.82,
+   "k4_reachability": {
+    "B=0": {
+     "states": 38,
+     "states_with_sum_k4_p_below_1e-6": 0,
+     "min_sum_k4_p": 0.007280502154735869
+    },
+    "B=1": {
+     "states": 20,
+     "states_with_sum_k4_p_below_1e-6": 0,
+     "min_sum_k4_p": 0.00306892096085015
+    }
+   },
+   "rule": "D3' (scripts/h0_support_plan.n4_of_sector): every sector state >= lambda* expected clean counts from the circuits at 0.82 x 0.7 x f",
+   "finite_campaign": true,
+   "device": "H2-1",
+   "f_source": "the device's gate-only mean f of the 28 frozen circuits (this JSON's devices.<d>)"
+  }
+ },
+ "p_sector_statevector_vs_group_evolution_max_abs": {
+  "B0_ref06_k1": 4.218847493575595e-15,
+  "B0_ref06_k2": 6.772360450213455e-14,
+  "B0_ref06_k3": 8.604228440844963e-15,
+  "B0_ref06_k4": 1.3405943022348765e-14,
+  "B0_ref43_k1": 3.6637359812630166e-15,
+  "B0_ref43_k2": 4.6629367034256575e-14,
+  "B0_ref43_k3": 2.4702462297909733e-15,
+  "B0_ref43_k4": 1.3364309658925322e-14,
+  "B0_ref30_k1": 4.867634073590921e-15,
+  "B0_ref30_k2": 3.852473895449293e-14,
+  "B0_ref30_k3": 4.5102810375396984e-15,
+  "B0_ref30_k4": 8.43769498715119e-15,
+  "B0_ref21_k1": 8.104628079763643e-15,
+  "B0_ref21_k2": 4.6074255521943996e-14,
+  "B0_ref21_k3": 4.704570066849101e-15,
+  "B0_ref21_k4": 1.1379786002407855e-14,
+  "B0_ref17_k1": 2.220446049250313e-15,
+  "B0_ref17_k2": 3.452793606584237e-14,
+  "B0_ref17_k3": 5.190292640122607e-15,
+  "B0_ref17_k4": 1.0200174038743626e-14,
+  "B1_ref14_k1": 1.0880185641326534e-14,
+  "B1_ref14_k2": 1.0352829704629585e-14,
+  "B1_ref14_k3": 1.0658141036401503e-14,
+  "B1_ref14_k4": 1.1934897514720433e-14,
+  "B1_ref07_k1": 5.88418203051333e-15,
+  "B1_ref07_k2": 1.0019762797242038e-14,
+  "B1_ref07_k3": 1.1046719095020308e-14,
+  "B1_ref07_k4": 1.2101430968414206e-14
+ },
+ "sector_mass_min": 0.9999999999999757,
+ "runtime_s": 3.205003499984741,
+ "stage": "predict",
+ "created": "2026-10-13 15:46:45 UTC"
+}

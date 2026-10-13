@@ -34,3 +34,29 @@ it with `POLLER=ci/poll_concurrent.sh bash ci/install_skqd_ci.sh`).  Until the o
   `scripts/ci_check.sh TOKEN` shows the latest request of one token in full.  Per-token states are in
   `ci/status/<TOKEN>.json` (written by the CI only, like `ci/status.json`).
 - The prompts/33 campaign tokens are listed in `scripts/gate_tokens.json` and `ci/allowed_jobs.campaign33`.
+
+## The `skqd-pecos` env for token C3_LE (prompts/35 section 3.6 and owner action 1)
+Token `C3_LE` (2x3 f-cell circuits on pytket-quantinuum's local H2-1LE emulator) runs in its own conda env:
+`jobs/gate.sbatch` reads `jobs/env/C3_LE` (one line: `skqd-pecos`) and does `conda activate skqd-pecos` before
+`python scripts/run_gate.py C3_LE`.  The env does not exist on Perlmutter yet.  The package needs no install:
+`scripts/campaign33.py` puts `src/` and `scripts/` on `sys.path` itself (the same way the `skqd` env runs every
+other token), so the env needs only the engine and the modules of the `engine` preflight set
+(`scripts/campaign33.py PREFLIGHT_MODULES["engine"]`: numpy, skqd.report, skqd.campaign33.{tokens,stats,engines}).
+Paste on a Perlmutter login node (the command of `data/campaign33/engines.json C3_LE.perlmutter_env_if_kept`,
+**without** a `numpy<2` pin, which `engines.json C3_LE.attempts[0]` shows unsatisfiable):
+```
+module load python
+conda create -n skqd-pecos python=3.12 -y
+conda activate skqd-pecos
+pip install "pytket~=2.17" "pytket-quantinuum[pecos]==0.59.3" scipy threadpoolctl
+python -c "import pytket, pytket.extensions.quantinuum, pytket_pecos, scipy; print('skqd-pecos ok')"
+cd $SCRATCH/su2qc-skqd && CI_GATE=C3_LE python scripts/campaign33.py --token C3_LE --dry-run   # path check, CPU
+```
+No `PYTHONPATH` line is needed.  Tell the coordinator when the env exists; `C3_LE` is requested only after the
+last campaign-33 must-run request (prompts/35 R4).  The laptop smoke of the same engine path is
+`validation/QEMU_2x3_laptop_smoke.json`.
+
+## Token QV_2x4 (prompts/35 section 4; owner action 2)
+`scripts/gate_tokens.json` carries `QV_2x4` (class 3, 01:00:00, 1 GPU, env `skqd`; appended after the campaign-33
+tokens, whose indices and seeds are unchanged).  Its allowlist line is `ci/allowed_jobs.q35`; after the maintenance:
+`cat $SCRATCH/su2qc-skqd/ci/allowed_jobs.q35 >> ~/skqd-ci/allowed_jobs`.

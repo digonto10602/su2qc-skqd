@@ -268,6 +268,24 @@ class SparseState:
     def cz(self, a: int, b: int):
         self.cphase(a, b, np.pi)
 
+    def rzz(self, a: int, b: int, ang: float):
+        """`rzz`: exp(-i ang Z x Z / 2) (qiskit convention) -- e^{-i ang/2} where bits a and b agree,
+        e^{+i ang/2} where they differ (diagonal)."""
+        lo, hi = np.exp(-0.5j * float(ang)), np.exp(0.5j * float(ang))
+        a, b = int(a), int(b)
+        if self._t is not None:
+            if self._t == a or self._t == b:
+                m = self._mask(b if self._t == a else a)
+                self._c0 = self._c0 * np.where(m, hi, lo)     # paired bit 0: odd parity iff the other bit is 1
+                self._c1 = self._c1 * np.where(m, lo, hi)
+                return
+            g = np.where(self._mask(a) ^ self._mask(b), hi, lo)
+            self._c0 = self._c0 * g
+            self._c1 = self._c1 * g
+            return
+        odd = (((self.idx >> np.int64(a)) ^ (self.idx >> np.int64(b))) & 1).astype(bool)
+        self.amp = self.amp * np.where(odd, hi, lo)
+
     def gphase(self, ang: float):
         f = np.exp(1j * float(ang))
         if self._t is None:
@@ -293,6 +311,8 @@ def apply_ir(state: SparseState, gates: list) -> SparseState:
             state.cphase(qs[0], qs[1], par)
         elif name == "cz":
             state.cz(qs[0], qs[1])
+        elif name == "rzz":
+            state.rzz(qs[0], qs[1], par)
         elif name == "gphase":
             state.gphase(par)
         elif name == "h":

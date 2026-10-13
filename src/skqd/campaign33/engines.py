@@ -44,15 +44,18 @@ def bits_to_int(bits):
 class Pecos:
     name = "pytket-quantinuum H2-1LE local emulator (pytket-pecos / quantum-pecos), state-vector, noiseless"
 
-    def __init__(self):
+    def __init__(self, circuit_dir: str = None, ids=None):
+        """circuit_dir / ids (prompts/35 R5): any frozen family with an index.json (default: the 2x3 family and
+        the four f-cell circuits of token C3_LE, unchanged)."""
         from pytket import Circuit
         from pytket.extensions.quantinuum import QuantinuumBackend
         from pytket.extensions.quantinuum.backends.api_wrappers import QuantinuumAPIOffline
         self.be = QuantinuumBackend(device_name="H2-1LE", api_handler=QuantinuumAPIOffline())
-        idx = _load(os.path.join(Q0P_DIR, "index.json"))
+        cdir = Q0P_DIR if circuit_dir is None else circuit_dir
+        idx = _load(os.path.join(cdir, "index.json"))
         self.circ, self.sha = {}, {}
-        for cid in FCELL_SHOTS:
-            text = open(os.path.join(Q0P_DIR, cid + ".json")).read()
+        for cid in (list(FCELL_SHOTS) if ids is None else list(ids)):
+            text = open(os.path.join(cdir, cid + ".json")).read()
             sha = hashlib.sha256(text.encode()).hexdigest()
             if sha != idx["files"][cid]["json_sha256"]:
                 raise SystemExit(f"{cid}: frozen JSON sha256 mismatch")

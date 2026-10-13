@@ -207,3 +207,28 @@ def test_apply_ir_rejects_an_unknown_gate_and_a_multiqubit_unitary():
         apply_ir(st, [("unitary", [0, 1], np.eye(4))])
     apply_ir(st, [("measure", [0], None), ("delay", [0], None), ("id", [0], None)])
     assert st.support_size == 1
+
+
+def test_rzz_matches_the_qiskit_statevector():
+    """prompts/35 3.1(b): `rzz` (qiskit convention exp(-i phi Z x Z / 2)) on a random 6-qubit
+    {rz, rx, ry, rzz} circuit, sparse vs circuits_qiskit.statevector, to 1e-12 -- in SPARSE and in
+    PAIRED mode (an rx right before an rzz leaves the state paired on that qubit)."""
+    from skqd.circuits_qiskit import statevector
+
+    rng = np.random.default_rng(35)
+    n = 6
+    worst = 0.0
+    for trial in range(10):
+        gates = []
+        for _ in range(80):
+            kind = rng.integers(0, 4)
+            a, b = (int(x) for x in rng.choice(n, size=2, replace=False))
+            th = float(rng.uniform(-2 * np.pi, 2 * np.pi))
+            gates.append(("rzz", [a, b], th) if kind == 0 else (("rz", "rx", "ry")[kind - 1], [a], th))
+        sp = run_sparse(gates, n, init_int=0)
+        worst = max(worst, float(np.max(np.abs(sp.dense() - statevector(gates, n)))))
+    assert worst < 1e-12
+    # the diagonal itself: |01> picks up e^{+i phi/2}, |00> and |11> e^{-i phi/2}
+    for init, sign in ((0, -1), (1, +1), (2, +1), (3, -1)):
+        st = run_sparse([("rzz", [0, 1], 0.4)], 2, init_int=init)
+        assert abs(st.dense()[init] - np.exp(sign * 0.2j)) < 1e-15

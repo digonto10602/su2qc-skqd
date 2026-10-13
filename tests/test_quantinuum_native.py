@@ -309,3 +309,44 @@ def test_endianness_cross_check_on_pytket_qiskit_aer_backend():
     be = aer.AerBackend()
     h = be.process_circuit(be.get_compiled_circuit(c), n_shots=8, seed=1)
     assert dict(be.get_result(h).get_counts()) == {(1, 0, 0): 8}
+
+
+# --------------------------------------------------------------------------- prompts/35: Q1L
+@needs_pytket
+@pytest.mark.parametrize("mode", ["level0", "pure_rebase"])
+def test_local_equivalence_proves_a_compiled_random_4q_circuit(mode):
+    """Q1L on a random 4-qubit {rz, rx, ry, rzz} circuit compiled at level 0 and by the pure rebase:
+    identical two-qubit skeleton, equal one-qubit segment products, q[k] -> c[k]; and the statevectors
+    agree (the claim Q1L stands for)."""
+    rng = np.random.default_rng(351)
+    n = 4
+    g = random_ir(n, 60, rng)
+    c = qn.ir_to_pytket(g, n, measure=True)
+    cc = qn.compile_native(c, "H2-2", 0, pure_rebase=(mode == "pure_rebase"))
+    r = qn.local_equivalence(g, cc, n)
+    assert r["ok"] and r["skeleton_per_qubit_identical"], r
+    assert r["segments_max_residual"] < 1e-12 and r["n_rzz_ir"] == r["n_rzz_native"] == sum(x[0] == "rzz" for x in g)
+    sv = cq.statevector(qn.pytket_to_ir(cc)[0], n)
+    assert qn.global_phase_residual(sv, cq.statevector(g, n))["max_abs_dpsi"] < 1e-12
+
+
+@needs_pytket
+def test_local_equivalence_fails_on_a_reordered_circuit():
+    """Two non-commuting gates swapped (an rx moved across an rzz on its qubit) and a changed angle
+    must both fail Q1L; so must a circuit measured q[0] -> c[1]."""
+    rng = np.random.default_rng(352)
+    n = 4
+    g = random_ir(n, 40, rng)
+    g = g + [("rzz", [0, 1], 0.37), ("rx", [0], 0.81)]
+    swapped = g[:-2] + [("rx", [0], 0.81), ("rzz", [0, 1], 0.37)]
+    r = qn.local_equivalence(g, qn.ir_to_pytket(swapped, n, measure=True), n)
+    assert not r["ok"] and r["skeleton_per_qubit_identical"] and r["segments_max_residual"] > 1e-3
+    angle = g[:-2] + [("rzz", [0, 1], 0.37 + 1e-9), ("rx", [0], 0.81)]
+    r2 = qn.local_equivalence(g, qn.ir_to_pytket(angle, n, measure=True), n)
+    assert not r2["ok"] and not r2["skeleton_per_qubit_identical"] and r2["first_difference"]["qubit"] in (0, 1)
+    c = qn.ir_to_pytket(g, n, measure=False)
+    c.add_c_register("c", n)
+    for q in range(n):
+        c.Measure(q, (q + 1) % n)
+    r3 = qn.local_equivalence(g, c, n)
+    assert not r3["ok"] and not r3["measure_map_identity"]

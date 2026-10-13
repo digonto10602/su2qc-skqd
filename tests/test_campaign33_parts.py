@@ -29,7 +29,7 @@ SLOTS = [f"C4_PART_{i:02d}" for i in range(1, 21)]
 # --------------------------------------------------------------------------- the slots
 def test_twenty_slots_in_the_table():
     tok = TK.load_tokens()
-    assert list(TK.slot_tokens()) == SLOTS and list(tok)[-20:] == SLOTS
+    assert list(TK.slot_tokens()) == SLOTS and list(tok)[33:53] == SLOTS
     for t in SLOTS:
         v = tok[t]
         assert (v["class"], v["walltime"], v["gpus"], v["env"]) == (4, "01:00:00", 1, "skqd")

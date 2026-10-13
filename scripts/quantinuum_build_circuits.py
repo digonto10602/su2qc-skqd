@@ -42,6 +42,8 @@ from skqd import circuits_qiskit as cq  # noqa: E402
 from skqd import quantinuum_native as qn  # noqa: E402
 
 OUT = os.path.join(ROOT, "data", "quantinuum", "circuits_2x3")
+OUT_BY_LATTICE = {2: os.path.join(ROOT, "data", "quantinuum", "circuits_2x2"), 3: OUT,
+                  4: os.path.join(ROOT, "data", "quantinuum", "circuits_2x4")}    # prompts/35 3.1(a)
 G2 = 4.0
 TRANSPILE = {"basis_gates": ["rz", "rx", "ry", "rzz"], "coupling_map": None,
              "optimization_level": 3, "seed_transpiler": 7}
@@ -91,9 +93,34 @@ def write_text(path, text):
     os.replace(tmp, path)
 
 
+def write_gz(path, text):
+    """gzip with mtime 0 and no file name (deterministic bytes); the sha256 recorded elsewhere is the
+    one of the UNCOMPRESSED text (prompts/35 3.1(a))."""
+    import gzip
+
+    tmp = path + ".tmp"
+    with open(tmp, "wb") as raw:
+        with gzip.GzipFile(filename="", mode="wb", fileobj=raw, mtime=0, compresslevel=9) as fh:
+            fh.write(text.encode())
+    os.replace(tmp, path)
+
+
+def read_text(path):
+    """A frozen circuit file, plain or gzipped (2x4)."""
+    import gzip
+
+    if path.endswith(".gz"):
+        with gzip.open(path, "rb") as fh:
+            return fh.read().decode()
+    with open(path) as fh:
+        return fh.read()
+
+
 def build_one(i):
     from qiskit import transpile
 
+    if _G.get("lattice", 3) == 4:
+        return build_one_4(i)
     t0 = time.time()
     twoB, r, k, gates = _G["set"][i]
     cid = circuit_id(twoB, r, k)
@@ -173,11 +200,14 @@ def build_one(i):
     p = np.abs(sv_c) ** 2
     top = int(np.argmax(p))
     counts = levels[str(frozen)]["counts"]
+    lat = int(_G.get("lattice", 3))
+    if lat != 3:                     # prompts/35 3.1(a): the rzz count of the prototype transpile
+        counts = dict(counts, rzz_before=int(tq.count_ops().get("rzz", 0)))
     man = {
-        "id": cid, "kind": "signed_2x3_coarse_step", "lattice": "2x3", "sector": f"B={twoB // 2}",
+        "id": cid, "kind": f"signed_2x{lat}_coarse_step", "lattice": f"2x{lat}", "sector": f"B={twoB // 2}",
         "twoB": int(twoB), "reference": int(r), "k": int(k), "repetitions": 1,
         "dt": float(_G["dt"][twoB]), "g2": G2, "n_qubits": n,
-        "family": ("gate_S2D.circuit_set(3): CircuitFactory(Model(3), 4.0) default "
+        "family": (f"gate_S2D.circuit_set({lat}): CircuitFactory(Model({lat}), 4.0) default "
                    "(angle_mode exact, structured hopping), coarse_step(r, k, dt)"),
         "original_ir_counts": qn.ir_counts(gates), "original_ir_leakage": ref_leak,
         "transpile": {**TRANSPILE, "seconds": t_tr, "ops": {kk: int(v) for kk, v in tq.count_ops().items()},
@@ -232,6 +262,242 @@ def diagnose(pc, ir_t, ref, sv_c, emb, n):
     return out
 
 
+# =========================================================================== 2x4 (prompts/35 3.3)
+LEVELS_4 = (0,)            # level 2 is not compiled per circuit at 2x4 (cost; at 2x2/2x3 it never passes the state bar)
+SELECTION_RULE_4 = ("fewest ZZ gates among the levels that pass Q1L (local equivalence to the transpiled IR, "
+                    "quantinuum_native.local_equivalence, tol 1e-12, q[k] -> c[k], identity permutation); ties: "
+                    "fewer PhasedX, then the lower level; if no level passes, the pure rebase "
+                    "AutoRebase({Rz, PhasedX, ZZPhase}) (compile_mode 'pure_rebase')")
+DT_SOURCE_4 = ("gate_S2_2x4.dt_of(4, twoB): validation/E3.json, equal to Model(4).reference(4.0, twoB).dt to "
+               "<= 4e-16 and fixed so that the build is bit-reproducible (the sparse eigensolver is not)")
+
+
+def exact_coarse_4(M, r, k, dt):
+    """The exact coarse state exp(-i k dt H) |r> over the 2x4 basis (krylov.apply_groups, the
+    ideal_sector_distribution route at repetitions 1)."""
+    from skqd.exact import mass_default
+    from skqd.krylov import apply_groups, basis_vector, term_groups
+
+    if "groups" not in _G:
+        _G["groups"] = term_groups(M.terms, G2, mass_default(G2))
+    return apply_groups(_G["groups"], basis_vector(M.basis.dim, int(r)), int(k) * float(dt))
+
+
+def build_one_4(i):
+    """One 2x4 circuit: prototype transpile, levels, Q1L, frozen gzipped files, manifest.  No dense
+    statevector (R2): Q1S is the gate's sparse stage and the deferred GPU token QV_2x4."""
+    from qiskit import transpile
+
+    t0 = time.time()
+    twoB, r, k, _none = _G["set"][i]
+    cid = circuit_id(twoB, r, k)
+    man_path = os.path.join(OUT, cid + ".manifest.json")
+    if os.path.exists(man_path) and not _G["force"]:
+        return cid, "kept"
+    n, M = _G["n"], _G["model"]
+    dt = float(_G["dt"][twoB])
+    gates = _G["factory"].coarse_step(int(r), int(k), dt)
+    qc = cq.ir_to_qiskit(gates, n, measure=False)
+    tt = time.time()
+    tq = transpile(qc, **TRANSPILE)
+    t_tr = time.time() - tt
+    ir_t = qn.qiskit_to_ir(tq)
+    pc = qn.ir_to_pytket(ir_t, n, measure=True)
+    levels, compiled = {}, {}
+    for lvl in _G["levels"]:
+        rec = {"level": lvl}
+        tc = time.time()
+        try:
+            cc = qn.compile_native(pc, "H2-2", lvl)
+        except qn.NativeCompileError as exc:
+            rec.update({"error": f"{type(exc).__name__}: {exc}", "passes_Q1L": False})
+            levels[str(lvl)] = rec
+            continue
+        rec["compile_s"] = time.time() - tc
+        rec["counts"] = qn.native_counts(cc)
+        tl = time.time()
+        rec["Q1L"] = qn.local_equivalence(ir_t, cc, n, tol=RT_MAX)
+        rec["Q1L_s"] = time.time() - tl
+        rec["passes_Q1L"] = bool(rec["Q1L"]["ok"])
+        levels[str(lvl)] = rec
+        compiled[lvl] = cc
+    ok = [L for L in compiled if levels[str(L)]["passes_Q1L"]]
+    if ok:
+        frozen = min(ok, key=lambda L: (levels[str(L)]["counts"]["n_zz"], levels[str(L)]["counts"]["n_phasedx"], L))
+        cc, mode = compiled[frozen], f"level{frozen}"
+        q1l = levels[str(frozen)]["Q1L"]
+    else:
+        tc = time.time()
+        cc = qn.compile_native(pc, pure_rebase=True)
+        rec = {"compile_s": time.time() - tc, "counts": qn.native_counts(cc)}
+        rec["Q1L"] = qn.local_equivalence(ir_t, cc, n, tol=RT_MAX)
+        rec["passes_Q1L"] = bool(rec["Q1L"]["ok"])
+        levels["pure_rebase"] = rec
+        frozen, mode, q1l = "pure_rebase", "pure_rebase", rec["Q1L"]
+    # information (prompts/35 3.3 diagnosis): where a Q1L residual comes from -- the IR -> pytket writer
+    # (pytket stores a parameter within < 1e-11 half-turns of a multiple of 1/4 as that multiple) or the compiler
+    q1l_parts = {"ir_vs_pytket_input": qn.local_equivalence(ir_t, pc, n, tol=RT_MAX),
+                 "pytket_input_vs_native": qn.local_equivalence(qn.pytket_to_ir(pc)[0], cc, n, tol=RT_MAX)}
+    stop_q1l = not q1l["ok"]
+    counts = dict(qn.native_counts(cc), rzz_before=int(tq.count_ops().get("rzz", 0)))
+    qasm = qn.to_qasm(cc)
+    js_text = json.dumps(qn.to_json(cc), sort_keys=True)
+    other = {}
+    for dev in OTHER_DEVICES:
+        try:
+            be = qn.offline_backend(dev)          # raises DeviceNotAvailable for a device the offline list lacks
+            nq_dev = len(be.backend_info.architecture.nodes)
+            if nq_dev < n:                        # H1-1 (20 qubits): not compiled, recorded
+                other[dev] = {"compiled": False, "device_qubits": nq_dev,
+                              "error": f"the offline machine list gives {dev} {nq_dev} qubits < {n}",
+                              "kept": "the H2-2 circuit (same native gate set)"}
+                continue
+            cd = (qn.compile_native(pc, pure_rebase=True) if mode == "pure_rebase"
+                  else qn.compile_native(pc, dev, int(frozen)))
+            qd = qn.to_qasm(cd)
+            other[dev] = {"compiled": True, "qasm_sha256": sha256(qd), "byte_identical_to_H2-2": qd == qasm,
+                          "counts": qn.native_counts(cd)}
+        except Exception as exc:                  # recorded per device (DeviceNotAvailable, qubit count)
+            other[dev] = {"compiled": False, "error": f"{type(exc).__name__}: {str(exc)[:300]}",
+                          "kept": "the H2-2 circuit (same native gate set)"}
+    codec = _G["emb"].codec
+    ref_bits = tuple(int(x) for x in codec.encode(M.basis.labels[int(r)]))
+    ref_int = int(sum(b << q for q, b in enumerate(ref_bits)))
+    psi = exact_coarse_4(M, r, k, dt)
+    p = np.abs(psi) ** 2
+    top = int(np.argmax(p))
+    man = {
+        "id": cid, "kind": "signed_2x4_coarse_step", "lattice": "2x4", "sector": f"B={twoB // 2}",
+        "twoB": int(twoB), "reference": int(r), "k": int(k), "repetitions": 1, "dt": dt, "dt_source": DT_SOURCE_4,
+        "g2": G2, "n_qubits": n,
+        "family": ("gate_S2D.circuit_set(4): CircuitFactory(Model(4), 4.0) default (angle_mode exact, structured "
+                   "hopping), coarse_step(r, k, dt); the term IR from gate_S2_2x4.preload_factory (data/S2_2x4/cache, "
+                   "the same gate lists structured_term_gates returns)"),
+        "original_ir_counts": qn.ir_counts(gates),
+        "transpile": {**TRANSPILE, "seconds": t_tr, "ops": {kk: int(v) for kk, v in tq.count_ops().items()},
+                      "rzz": int(tq.count_ops().get("rzz", 0)), "global_phase": float(tq.global_phase),
+                      "state_vs_original_ir": "not computed at 2x4 (R2: no dense statevector); Q1S / QV_2x4"},
+        "levels": levels, "frozen_level": frozen, "compile_mode": mode, "selection_rule": SELECTION_RULE_4,
+        "Q1L": q1l, "Q1L_parts": q1l_parts, "STOP_Q1L": bool(stop_q1l), "device_name_compiled_for": "H2-2",
+        "compile_route": ("QuantinuumBackend(device, api_handler=QuantinuumAPIOffline(), compilation_config="
+                          "QuantinuumBackendCompilationConfig(allow_implicit_swaps=False, target_2qb_gate=ZZPhase, "
+                          "preserve_qubit_names=True)).get_compiled_circuit(circ, optimisation_level)"),
+        "counts": counts, "hqc_per_shot": qn.hqc_per_shot(counts),
+        "files": {"qasm": cid + ".qasm.gz", "json": cid + ".json.gz"}, "sha256_of": "the uncompressed text",
+        "qasm_sha256": sha256(qasm), "json_sha256": sha256(js_text),
+        "other_devices": other,
+        "reference_bits": list(ref_bits), "reference_int": ref_int,
+        "p_reference": float(p[int(r)]), "p_reference_source": "exact coarse state (krylov.apply_groups), basis index r",
+        "most_probable_basis_index": top, "p_most_probable": float(p[top]),
+        "versions": qn.versions(), "git_commit": _G["commit"],
+        "built": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()), "build_s": time.time() - t0,
+    }
+    write_gz(os.path.join(OUT, cid + ".qasm.gz"), qasm)
+    write_gz(os.path.join(OUT, cid + ".json.gz"), js_text)
+    write_text(man_path, json.dumps(man, indent=1))
+    if stop_q1l:
+        return cid, (f"Q1L FAILS ({mode}): segments max {q1l['segments_max_residual']}, first difference "
+                     f"{q1l['first_difference']} -- STOP (prompts/35 section 7)")
+    return cid, (f"built in {time.time() - t0:.0f} s ({mode}, ZZ {counts['n_zz']} = rzz_before "
+                 f"{counts['rzz_before']}: {counts['n_zz'] == counts['rzz_before']}, PhasedX {counts['n_phasedx']}, "
+                 f"Q1L segments max {q1l['segments_max_residual']:.1e})")
+
+
+def set_4():
+    """circuit_set(4)'s (twoB, r, k) grid without the gate lists (they are built per worker)."""
+    from skqd.exact import Model
+    from skqd.krylov import references
+
+    M = Model(4)
+    out = [(twoB, int(r), k, None) for twoB in (0, 2) for r in references(M.basis, twoB) for k in (1, 2, 3, 4)]
+    return M, out
+
+
+def main_4(args, t0):
+    import gate_S2_2x4 as S4
+
+    from skqd.reference_sim import CodewordEmbedding
+
+    M, cset = set_4()
+    S4._MODELS[4] = M
+    emb = CodewordEmbedding(M)
+    dts = {tb: float(S4.dt_of(4, tb)) for tb in (0, 2)}
+    ks = sorted(set(args.k or (1, 2, 3, 4)))
+    idx = [i for i, c in enumerate(cset) if c[2] in ks]
+    if args.sector:
+        idx = [i for i in idx if circuit_id(*cset[i][:3]).startswith(args.sector + "_")]
+    if args.only:
+        keep = set(args.only)
+        idx = [i for i in idx if circuit_id(*cset[i][:3]) in keep]
+    thetas = sorted({k * dts[tb] for tb in (0, 2) for k in ks})
+    _G.update({"set": cset, "model": M, "emb": emb, "n": int(emb.n), "force": args.force or bool(args.only),
+               "threads": args.threads, "commit": git_commit(), "dt": dts, "lattice": 4,
+               "levels": tuple(args.levels) if args.levels else LEVELS_4})
+    if not args.index_only:
+        _G["factory"] = S4.preload_factory(4, "exact", thetas)
+        from skqd.exact import mass_default
+        from skqd.krylov import term_groups
+
+        _G["groups"] = term_groups(M.terms, G2, mass_default(G2))
+        print(f"2x4 set: {len(cset)} circuits, {len(idx)} selected (k {ks}), {emb.n} qubits, levels "
+              f"{_G['levels']} ({time.time() - t0:.0f} s)", flush=True)
+        import multiprocessing as mp
+
+        with mp.get_context("fork").Pool(args.workers) as pool:
+            for cid, msg in pool.imap_unordered(build_one_4, idx):
+                print(f"  {cid}: {msg} [{time.time() - t0:.0f} s]", flush=True)
+        if not all(os.path.exists(os.path.join(OUT, c + ".manifest.json")) for c in ("CAL_zeros", "CAL_x0")):
+            calibration_circuits(int(emb.n))
+    write_index_4(cset, t0)
+    return 0
+
+
+def write_index_4(cset, t0):
+    """index.json over the BUILT circuits (prompts/35 3.3: `built_k`), sha256 of the uncompressed texts."""
+    ids_all = [circuit_id(*c[:3]) for c in cset]
+    ids = [c for c in ids_all if os.path.exists(os.path.join(OUT, c + ".manifest.json"))]
+    if not ids:
+        return
+    mans = [json.load(open(os.path.join(OUT, i + ".manifest.json"))) for i in ids]
+    cals = [json.load(open(os.path.join(OUT, c + ".manifest.json"))) for c in ("CAL_zeros", "CAL_x0")
+            if os.path.exists(os.path.join(OUT, c + ".manifest.json"))]
+    zz = [m["counts"]["n_zz"] for m in mans]
+    px = [m["counts"]["n_phasedx"] for m in mans]
+    hq = [m["hqc_per_shot"] for m in mans]
+    built_k = sorted({int(m["k"]) for m in mans})
+    complete_k = [k for k in built_k if all(os.path.exists(os.path.join(OUT, circuit_id(c[0], c[1], k) + ".manifest.json"))
+                                            for c in cset if c[2] == k)]
+    index = {
+        "produced_by": "scripts/quantinuum_build_circuits.py --lattice 4", "prompt": "prompts/35 3.3",
+        "lattice": "2x4", "circuits": ids, "circuits_planned": ids_all, "calibration": [c["id"] for c in cals],
+        "built_k": built_k, "complete_k": complete_k,
+        "files": {m["id"]: {"qasm": m["files"]["qasm"], "json": m["files"]["json"],
+                            "qasm_sha256": m["qasm_sha256"], "json_sha256": m["json_sha256"],
+                            "frozen_level": m.get("frozen_level"), "compile_mode": m.get("compile_mode", "level0")}
+                  for m in mans + cals},
+        "sha256_of": "the uncompressed text of every .qasm.gz / .json.gz (gzip mtime 0, level 9)",
+        "summary": {"n_circuits": len(mans),
+                    "n_zz": {"min": min(zz), "max": max(zz), "mean": float(np.mean(zz))},
+                    "n_phasedx": {"min": min(px), "max": max(px), "mean": float(np.mean(px))},
+                    "hqc_per_shot": {"min": min(hq), "max": max(hq), "mean": float(np.mean(hq))},
+                    "rzz_before": sorted({m["counts"]["rzz_before"] for m in mans}),
+                    "frozen_levels": sorted({str(m["frozen_level"]) for m in mans}),
+                    "compile_modes": sorted({m.get("compile_mode", "level0") for m in mans})},
+        "rebuild_command": ("~/.local/share/su2qc-quantinuum/venv/bin/python scripts/quantinuum_build_circuits.py "
+                            "--lattice 4 --only <id> [--out <dir>]  (deterministic at pytket 2.18.4 / qiskit 2.5.2: "
+                            "the sha256 above is the check)"),
+        "device_name_compiled_for": "H2-2", "transpile": TRANSPILE, "levels": list(_G["levels"]),
+        "selection_rule": SELECTION_RULE_4, "dt": _G["dt"], "dt_source": DT_SOURCE_4,
+        "versions": qn.versions(), "python": sys.executable,
+        "git_commit": git_commit(), "runtime_s_this_invocation": time.time() - t0,
+        "built": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+    }
+    write_text(os.path.join(OUT, "index.json"), json.dumps(index, indent=1))
+    print(f"wrote {OUT}/index.json: {len(ids)} circuits, built_k {built_k}, ZZ {index['summary']['n_zz']} "
+          f"({time.time() - t0:.0f} s)", flush=True)
+
+
+
 def calibration_circuits(n):
     """CAL_zeros (measure only) and CAL_x0 (X on qubit 0, then measure), compiled at level 0."""
     from pytket import Circuit
@@ -245,44 +511,70 @@ def calibration_circuits(n):
             c.Measure(q, q)
         cc = qn.compile_native(c, "H2-2", 0)
         ir, nn, qmap = qn.pytket_to_ir(cc)
-        sv = cq.statevector(ir, nn) if nn <= 12 else cq.statevector_aer(ir, nn)
-        key = int(np.argmax(np.abs(sv)))
+        if nn > 20:                  # 2x4: the 28-qubit basis state from the exact sparse path
+            from skqd.sparse_sim import run_sparse
+
+            st = run_sparse(ir, nn)
+            key = int(st.idx[int(np.argmax(np.abs(st.amp)))])
+        else:
+            sv = cq.statevector(ir, nn) if nn <= 12 else cq.statevector_aer(ir, nn)
+            key = int(np.argmax(np.abs(sv)))
         qasm, js = qn.to_qasm(cc), json.dumps(qn.to_json(cc), sort_keys=True)
         counts = qn.native_counts(cc)
+        gz = ".gz" if _G.get("lattice", 3) == 4 else ""
         man = {"id": cid, "kind": "calibration", "n_qubits": n, "x_on": xq,
                "expected_int": 0 if xq is None else (1 << xq), "statevector_argmax_int": key,
                "measure_map_identity": qmap == {q: q for q in range(n)},
                "counts": counts, "hqc_per_shot": qn.hqc_per_shot(counts), "frozen_level": 0,
-               "files": {"qasm": cid + ".qasm", "json": cid + ".json"},
+               "files": {"qasm": cid + ".qasm" + gz, "json": cid + ".json" + gz},
                "qasm_sha256": sha256(qasm), "json_sha256": sha256(js),
                "versions": qn.versions(), "git_commit": git_commit(),
                "built": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())}
-        write_text(os.path.join(OUT, cid + ".qasm"), qasm)
-        write_text(os.path.join(OUT, cid + ".json"), js)
+        if gz:
+            man["sha256_of"] = "the uncompressed text"
+            write_gz(os.path.join(OUT, cid + ".qasm.gz"), qasm)
+            write_gz(os.path.join(OUT, cid + ".json.gz"), js)
+        else:
+            write_text(os.path.join(OUT, cid + ".qasm"), qasm)
+            write_text(os.path.join(OUT, cid + ".json"), js)
         write_text(os.path.join(OUT, cid + ".manifest.json"), json.dumps(man, indent=1))
         out.append(man)
     return out
 
 
 def main():
+    global OUT
     ap = argparse.ArgumentParser()
+    ap.add_argument("--lattice", type=int, choices=(2, 3, 4), default=3,
+                    help="2x<L> ladder (prompts/35 R5; default 3 = the frozen prompts/26 family, unchanged)")
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--threads", type=int, default=2, help="Aer threads per worker")
     ap.add_argument("--only", nargs="*", default=None, help="circuit ids to (re)build")
     ap.add_argument("--force", action="store_true", help="rebuild existing manifests")
     ap.add_argument("--sector", choices=("B0", "B1"), default=None,
                     help="build one sector only (each half fits the 30-minute rule)")
+    ap.add_argument("--k", type=int, nargs="*", default=None,
+                    help="--lattice 4: the k values to build (prompts/35 3.3 build order k = 1, then 2, 3, 4)")
+    ap.add_argument("--levels", type=int, nargs="*", default=None,
+                    help="--lattice 4: the pytket optimisation levels to try (default LEVELS_4)")
+    ap.add_argument("--out", default=None, help="output directory (default data/quantinuum/circuits_2x<L>); "
+                                                "the rebuild check of an ignored 2x4 circuit writes elsewhere")
+    ap.add_argument("--index-only", action="store_true", help="--lattice 4: (re)write index.json from the manifests")
     args = ap.parse_args()
     t0 = time.time()
+    lat = int(args.lattice)
+    OUT = os.path.abspath(args.out) if args.out else OUT_BY_LATTICE[lat]
     os.makedirs(OUT, exist_ok=True)
     from gate_S2D import circuit_set
     from skqd.reference_sim import CodewordEmbedding
 
-    M, _F, cset = circuit_set(3)
+    if lat == 4:
+        return main_4(args, t0)
+    M, _F, cset = circuit_set(lat)
     emb = CodewordEmbedding(M)
     _G.update({"set": cset, "model": M, "emb": emb, "n": int(emb.n), "force": args.force,
                "threads": args.threads, "commit": git_commit(), "diagnose_index": 0,  # the first circuit carries the one-off diagnostics
-               "dt": {tb: float(M.reference(G2, tb).dt) for tb in (0, 2)}})
+               "dt": {tb: float(M.reference(G2, tb).dt) for tb in (0, 2)}, "lattice": lat})
     print(f"circuit set: {len(cset)} circuits, {emb.n} qubits ({time.time() - t0:.0f} s)", flush=True)
     idx = list(range(len(cset)))
     if args.sector:
@@ -298,15 +590,16 @@ def main():
         for cid, msg in pool.imap_unordered(build_one, idx):
             print(f"  {cid}: {msg} [{time.time() - t0:.0f} s]", flush=True)
     cals = calibration_circuits(int(emb.n))
-    # the offline machine list the compiler used (a second, dated source for the device table)
-    from pytket.extensions.quantinuum import QuantinuumAPIOffline
+    if lat == 3:
+        # the offline machine list the compiler used (a second, dated source for the device table)
+        from pytket.extensions.quantinuum import QuantinuumAPIOffline
 
-    write_text(os.path.join(ROOT, "data", "quantinuum", "offline_machine_list.json"), json.dumps({
-        "source": "pytket.extensions.quantinuum.QuantinuumAPIOffline().get_machine_list()",
-        "pytket-quantinuum": qn.versions()["pytket-quantinuum"],
-        "note": "embedded in the package, no network; the noise_specs dates are the package's",
-        "machines": QuantinuumAPIOffline().get_machine_list()}, indent=1))
-    # index (only once all 44 are on disk)
+        write_text(os.path.join(ROOT, "data", "quantinuum", "offline_machine_list.json"), json.dumps({
+            "source": "pytket.extensions.quantinuum.QuantinuumAPIOffline().get_machine_list()",
+            "pytket-quantinuum": qn.versions()["pytket-quantinuum"],
+            "note": "embedded in the package, no network; the noise_specs dates are the package's",
+            "machines": QuantinuumAPIOffline().get_machine_list()}, indent=1))
+    # index (only once all circuits are on disk)
     ids = [circuit_id(*c[:3]) for c in cset]
     missing = [i for i in ids if not os.path.exists(os.path.join(OUT, i + ".manifest.json"))]
     if missing:
@@ -318,7 +611,8 @@ def main():
     px = [m["counts"]["n_phasedx"] for m in mans]
     hq = [m["hqc_per_shot"] for m in mans]
     index = {
-        "produced_by": "scripts/quantinuum_build_circuits.py", "prompt": "prompts/26 A3",
+        "produced_by": "scripts/quantinuum_build_circuits.py",
+        "prompt": "prompts/26 A3" if lat == 3 else "prompts/35 3.1(a) / 3.2",
         "circuits": ids, "calibration": [c["id"] for c in cals],
         "files": {m["id"]: {"qasm_sha256": m["qasm_sha256"], "json_sha256": m["json_sha256"],
                             "frozen_level": m.get("frozen_level")} for m in mans + cals},
@@ -332,6 +626,9 @@ def main():
         "git_commit": git_commit(), "runtime_s_this_invocation": time.time() - t0,
         "built": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
     }
+    if lat != 3:
+        index["lattice"] = f"2x{lat}"
+        index["summary"]["rzz_before"] = sorted({m["counts"]["rzz_before"] for m in mans})
     write_text(os.path.join(OUT, "index.json"), json.dumps(index, indent=1))
     print(f"wrote {OUT}/index.json: ZZ {index['summary']['n_zz']}, PhasedX "
           f"{index['summary']['n_phasedx']}, HQC/shot {index['summary']['hqc_per_shot']} "

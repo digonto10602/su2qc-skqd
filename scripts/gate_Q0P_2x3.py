@@ -605,9 +605,13 @@ def stage_assemble_emulator(args):
 
 
 # =========================================================================== assembly
-def assemble():
+def assemble(save=True, checks_override=None):
+    """save=False (prompts/35 Q7): build the GateResult in memory and return it -- nothing is written;
+    checks_override replaces the verify fragment's Q7 checks (the re-run of the tests)."""
     t0 = time.time()
     V, P, E = fragment("verify"), fragment("predict"), fragment("emulator")
+    if checks_override is not None and V:
+        V = dict(V, checks=checks_override)
     R = GateResult(GATE, TITLE)
     data = {"what_pass_means": WHAT_PASS_MEANS, "prompt": "prompts/26_2x3_circuits_for_quantinuum_h2_helios.md",
             "stage_A": {}, "stage_E": (E or {"status": "not run"}), "stage_P": {"status": "not run (not under prompts/26)"}}
@@ -740,6 +744,8 @@ def assemble():
     data["verify"] = V
     R.data = data
     R.runtime_s = (V or {}).get("runtime_s", 0.0) + (P or {}).get("runtime_s", 0.0) + time.time() - t0
+    if not save:
+        return R
     path = R.save()
     write_report(f"{GATE}.md", report_text(R, data))
     print(f"{GATE}: {'PASS' if R.passed else 'FAIL'} -> {os.path.relpath(path, ROOT)}")
@@ -1521,16 +1527,756 @@ def prereg_v2_text(D, cv):
     return "\n".join(L)
 
 
+# =========================================================================== prompts/35: --lattice 2 / 4
+# Gates Q0P_2x2 and Q0P_2x4.  Every 2x3 path above is untouched (default --lattice 3); the 2x3 JSON is
+# re-checked in memory only (Q7: `assemble(save=False)`), never rewritten.
+PROMPT35 = "prompts/35_quantinuum_all_circuits_test.md"
+L_GATE = {2: "Q0P_2x2", 4: "Q0P_2x4"}
+L_N = {2: 28, 4: 60}                         # gate_S2D.circuit_set(L): 7 / 15 references x k = 1..4
+L_NM = {2: 24, 4: 56}                        # N_m = n_qubits + n_meas (prompts/35 3.1(c))
+L_TITLE = {2: "signed 2x2 circuits compiled to the Quantinuum native gate set, verified exactly and costed "
+              "(prompts/35 T1)",
+           4: "signed 2x4 circuits compiled to the Quantinuum native gate set, proven equal to their IR by local "
+              "equivalence and costed (prompts/35 T1)"}
+L_WHAT_2 = "compiled to the Quantinuum native set, verified exactly, costed; not a device statement"
+L_WHAT_4 = ("every built 2x4 circuit is proven equal to its IR by local equivalence (Q1L); the statevector check "
+            "(Q1S) was reached on {n} of {N} circuits on the laptop and is the deferred GPU token QV_2x4 for the "
+            "rest; not a device statement; no Quantinuum device can run these circuits at the signed clean-shot "
+            "fraction (Q5)")
+Q1S_CAP_S = 1800.0                           # prompts/35 3.3: 30 min per circuit
+Q1S_MEM_BYTES = 24 * 2 ** 30                 # address-space cap of one sparse child (62 GiB machine)
+F_MEAN_SIGNED, F_WORST_SIGNED = 0.10, 0.05   # the signed bars (quantinuum_device_table F_MEAN_MIN / F_WORST_MIN)
+Q2_NOTE = ("prompts/35 Q2 as written asks rzz_before(k) = k x rzz_before(k = 1) 'the coarse step is repeated, "
+           "h0_build_circuits.repeated_coarse_step'.  The signed family is gate_S2D.circuit_set(L) = "
+           "CircuitFactory.coarse_step(r, k, dt) (src/skqd/circuits_ir.py L898): ONE coarse step at the angle "
+           "theta = k dt, the same gate skeleton for every k (krylov.ideal_sector_distribution, repetitions = 1; the "
+           "2x3 family has rzz 2158 on all 44, validation/Q0P_2x3.json Q2).  The executor evaluates Q2 on the "
+           "family's construction -- rzz_before(k) = rzz_before(k = 1) for every reference -- and records the "
+           "as-written relation separately (it is false by construction); planner to ratify")
+
+
+def L_circ(lat):
+    return os.path.join(ROOT, "data", "quantinuum", f"circuits_2x{lat}")
+
+
+def L_stages(lat):
+    return os.path.join(ROOT, "data", "quantinuum", f"q0p_stages_2x{lat}")
+
+
+def lsave(lat, name, d):
+    os.makedirs(L_stages(lat), exist_ok=True)
+    d = dict(d)
+    d["stage"] = name
+    d["created"] = time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())
+    p = os.path.join(L_stages(lat), name + ".json")
+    with open(p + ".tmp", "w") as fh:
+        json.dump(d, fh, indent=1, default=lambda o: o.item() if hasattr(o, "item") else str(o))
+    os.replace(p + ".tmp", p)
+
+
+def lfrag(lat, name):
+    p = os.path.join(L_stages(lat), name + ".json")
+    return load_json(p) if os.path.exists(p) else None
+
+
+def lmanifests(lat):
+    d = L_circ(lat)
+    idx = load_json(os.path.join(d, "index.json"))
+    mans = {c: load_json(os.path.join(d, c + ".manifest.json")) for c in idx["circuits"]}
+    cals = {c: load_json(os.path.join(d, c + ".manifest.json")) for c in idx.get("calibration", [])}
+    return idx, mans, cals
+
+
+def frozen_text(lat, name):
+    from quantinuum_build_circuits import read_text
+    return read_text(os.path.join(L_circ(lat), name))
+
+
+def _counts_wo_rzz(c):
+    return {k: v for k, v in c.items() if k != "rzz_before"}
+
+
+def _gates_of(lat, cid):
+    """The IR gate list of one circuit: the circuit set (2x2) or the cached 2x4 factory (built per call)."""
+    twoB, r, k, gates = _G["by_id"][cid]
+    if gates is None:
+        gates = _G["factory"].coarse_step(int(r), int(k), float(_G["dt"][twoB]))
+    return twoB, r, k, gates
+
+
+def verify_one_L(cid):
+    """Q1-Q3 (2x2) / Q1L, Q3 (2x4) for one frozen circuit, recomputed from the files on disk."""
+    from qiskit import transpile
+
+    from skqd import circuits_qiskit as cq
+    from quantinuum_build_circuits import TRANSPILE
+
+    lat = _G["lat"]
+    man = _G["mans"][cid]
+    twoB, r, k, gates = _gates_of(lat, cid)
+    n = _G["n"]
+    t0 = time.time()
+    out = {"id": cid}
+    qasm = frozen_text(lat, man["files"]["qasm"])
+    js_text = frozen_text(lat, man["files"]["json"])
+    out["qasm_sha256_ok"] = sha256_text(qasm) == man["qasm_sha256"]
+    out["json_sha256_ok"] = sha256_text(js_text) == man["json_sha256"]
+    tq = transpile(cq.ir_to_qiskit(gates, n, measure=False), **TRANSPILE)
+    ir_t = qn.qiskit_to_ir(tq)
+    out["rzz_before_compilation"] = int(tq.count_ops().get("rzz", 0))
+    c = qn.from_json(json.loads(js_text))
+    try:
+        qn.check_native(c)
+        out["native"] = True
+    except qn.NativeCompileError as exc:
+        out["native"] = False
+        out["native_error"] = str(exc)
+    out["counts"] = qn.native_counts(c)
+    out["counts_match_manifest"] = out["counts"] == _counts_wo_rzz(man["counts"])
+    ir, nn, qmap = qn.pytket_to_ir(c)
+    out["measure_map_identity"] = qmap == {q: q for q in range(n)}
+    out["implicit_permutation_identity"] = all(a == b for a, b in c.implicit_qubit_permutation().items())
+    out["Q1L"] = qn.local_equivalence(ir_t, c, n, tol=Q3_RT)
+    out["Q1L_parts"] = {"ir_vs_pytket_input": qn.local_equivalence(ir_t, qn.ir_to_pytket(ir_t, n, True), n, tol=Q3_RT)}
+    if lat == 2:
+        emb = _G["emb"]
+        ref = cq.statevector(gates, n)                       # exact (qiskit.quantum_info), 12 qubits
+        sv = cq.statevector(ir, nn)
+        out["state_vs_original_ir"] = qn.global_phase_residual(sv, ref)
+        out["leakage"] = float(emb.leakage(sv))
+        out["original_ir_leakage"] = float(emb.leakage(ref))
+        c2 = qn.from_json(json.loads(json.dumps(qn.to_json(c))))
+        sv2 = cq.statevector(qn.pytket_to_ir(c2)[0], n)
+        out["json_round_trip_max_abs_dpsi_raw"] = float(np.max(np.abs(sv2 - sv)))
+        cq_ = qn.from_qasm(qasm)
+        svq = cq.statevector(qn.pytket_to_ir(cq_)[0], n)
+        out["qasm_vs_json"] = qn.global_phase_residual(svq, sv)
+        out["qasm_counts_equal"] = qn.native_counts(cq_)["ops"] == out["counts"]["ops"]
+        p = np.abs(sv) ** 2
+        out["p_reference"] = float(p[int(man["reference_int"])])
+        sec_idx = _G["sector_indices"][int(twoB)]
+        out["p_sector"] = [float(x) for x in p[emb.ints[sec_idx]]]
+        out["sector_mass"] = float(np.sum(out["p_sector"]))
+        out["p_reference_matches_manifest"] = abs(out["p_reference"] - man["p_reference"]) < 1e-12
+    else:
+        out["round_trips_checked"] = int(k) == 1
+        if int(k) == 1:                                       # Q3 at 2x4: gz -> text -> circuit -> Q1L again
+            c2 = qn.from_json(json.loads(json.dumps(qn.to_json(c))))
+            cq_ = qn.from_qasm(qasm)
+            out["json_round_trip_Q1L"] = qn.local_equivalence(ir_t, c2, n, tol=Q3_RT)
+            out["qasm_round_trip_Q1L"] = qn.local_equivalence(ir_t, cq_, n, tol=Q3_RT)
+            out["qasm_vs_frozen_Q1L"] = qn.local_equivalence(ir, cq_, n, tol=Q3_RT)
+            out["qasm_counts_equal"] = qn.native_counts(cq_)["ops"] == out["counts"]["ops"]
+    out["seconds"] = time.time() - t0
+    return out
+
+
+def stage_verify_L(args):
+    import multiprocessing as mp
+
+    from quantinuum_build_circuits import circuit_id
+
+    from skqd.reference_sim import CodewordEmbedding
+
+    lat = args.lattice
+    t0 = time.time()
+    if args.checks_only:
+        lsave(lat, "checks", run_checks_L(lat))
+        return assemble_L(lat)
+    idx, mans, cals = lmanifests(lat)
+    if lat == 2:
+        from gate_S2D import circuit_set
+        M, _F, cset = circuit_set(2)
+        _G.update({"by_id": {circuit_id(*c[:3]): c for c in cset}})
+    else:
+        import gate_S2_2x4 as S4
+        from quantinuum_build_circuits import set_4
+        M, cset = set_4()
+        S4._MODELS[4] = M
+        dts = {tb: float(S4.dt_of(4, tb)) for tb in (0, 2)}
+        ids = [c for c in (args.only or idx["circuits"])]
+        thetas = sorted({int(mans[c]["k"]) * dts[int(mans[c]["twoB"])] for c in ids})
+        _G.update({"by_id": {circuit_id(*c[:3]): c for c in cset}, "dt": dts,
+                   "factory": S4.preload_factory(4, "exact", thetas)})
+    emb = CodewordEmbedding(M)
+    _G.update({"lat": lat, "mans": mans, "n": int(emb.n), "emb": emb,
+               "sector_indices": {tb: np.asarray(M.reference(G2, tb).indices, dtype=int) for tb in (0, 2)}
+               if lat == 2 else None})
+    planned = sorted(circuit_id(*c[:3]) for c in cset)
+    if lat == 2 and planned != sorted(idx["circuits"]):
+        raise SystemExit("the frozen index does not list the 28 circuits of gate_S2D.circuit_set(2)")
+    todo = list(args.only) if args.only else list(idx["circuits"])
+    prev = lfrag(lat, "verify") or {}
+    per = dict(prev.get("per_circuit", {})) if args.only else {}
+    print(f"verify 2x{lat}: {len(todo)} circuits ({time.time() - t0:.0f} s)", flush=True)
+    with mp.get_context("fork").Pool(args.workers) as pool:
+        for rec in pool.imap_unordered(verify_one_L, todo):
+            per[rec["id"]] = rec
+            msg = (f"dpsi {rec['state_vs_original_ir']['max_abs_dpsi']:.1e}, " if lat == 2 else "")
+            print(f"  {rec['id']}: {msg}Q1L {rec['Q1L']['ok']} (segments {rec['Q1L']['segments_max_residual']}) "
+                  f"[{time.time() - t0:.0f} s]", flush=True)
+            if lat == 4:                                      # resumable: save after every circuit
+                lsave(lat, "verify", dict(prev, per_circuit=per))
+    cal = {}
+    for cid, m in cals.items():
+        txt = frozen_text(lat, m["files"]["qasm"])
+        cal[cid] = {"qasm_sha256_ok": sha256_text(txt) == m["qasm_sha256"],
+                    "expected_int": m["expected_int"], "statevector_argmax_int": m["statevector_argmax_int"],
+                    "ok": m["expected_int"] == m["statevector_argmax_int"] and m["measure_map_identity"]}
+    frag = {"per_circuit": per, "calibration": cal, "endianness": endianness_test(),
+            "index_sha256": sha256_text(open(os.path.join(L_circ(lat), "index.json")).read()),
+            "versions": qn.versions(), "python": sys.executable,
+            "runtime_s": (prev.get("runtime_s", 0.0) if args.only else 0.0) + time.time() - t0,
+            "statevector_engine": ("circuits_qiskit.statevector (qiskit.quantum_info, exact)" if lat == 2 else
+                                   "none (R2): Q1L = quantinuum_native.local_equivalence; Q1S in --stage q1s")}
+    lsave(lat, "verify", frag)
+    return assemble_L(lat)
+
+
+# --------------------------------------------------------------------------- Q1S (2x4, sparse, capped)
+def _q1s_child(cid, conn):
+    import resource
+
+    from skqd.sparse_sim import run_sparse
+    try:
+        resource.setrlimit(resource.RLIMIT_AS, (Q1S_MEM_BYTES, Q1S_MEM_BYTES))
+        lat = 4
+        man = _G["mans"][cid]
+        t0 = time.time()
+        c = qn.from_json(json.loads(frozen_text(lat, man["files"]["json"])))
+        ir, n, _ = qn.pytket_to_ir(c)
+        st = run_sparse(ir, n)
+        t_sim = time.time() - t0
+        from quantinuum_build_circuits import exact_coarse_4
+        import quantinuum_build_circuits as QB
+        QB._G["groups"] = _G["groups"]
+        psi = exact_coarse_4(_G["model"], int(man["reference"]), int(man["k"]), float(man["dt"]))
+        amp = st.dense_on(_G["emb"].ints)
+        res = qn.global_phase_residual(amp, psi)
+        conn.send({"state_verified": True, "max_abs_dpsi": res["max_abs_dpsi"], "one_minus_overlap": res["one_minus_overlap"],
+                   "leakage": float(1.0 - np.sum(np.abs(amp) ** 2)), "norm": float(st.norm()),
+                   "sparse_wall_s": t_sim, "final_support": int(st.support_size),
+                   "n_pairings": int(getattr(st, "n_pairings", -1)), "n_sorts": int(getattr(st, "n_sorts", -1)),
+                   "ok": bool(res["max_abs_dpsi"] < Q1_DPSI and (1.0 - np.sum(np.abs(amp) ** 2)) < Q1_LEAK)})
+    except MemoryError:
+        conn.send({"state_verified": False, "memory_capped_at_bytes": Q1S_MEM_BYTES})
+    except Exception as exc:                                   # recorded, never swallowed silently
+        conn.send({"state_verified": False, "error": f"{type(exc).__name__}: {str(exc)[:300]}"})
+    conn.close()
+
+
+def stage_q1s(args):
+    """Q1S of prompts/35 3.3: the sparse statevector of the native circuit (pytket_to_ir, run_sparse with
+    rzz) against the exact coarse state on the codewords; one child process per circuit, 30-min cap."""
+    import multiprocessing as mp
+
+    import gate_S2_2x4 as S4
+    from quantinuum_build_circuits import set_4
+
+    from skqd.exact import mass_default
+    from skqd.krylov import term_groups
+    from skqd.reference_sim import CodewordEmbedding
+
+    lat = 4
+    t0 = time.time()
+    idx, mans, _cals = lmanifests(lat)
+    M, _cset = set_4()
+    S4._MODELS[4] = M
+    _G.update({"mans": mans, "model": M, "emb": CodewordEmbedding(M), "groups": term_groups(M.terms, G2, mass_default(G2))})
+    k1 = [c for c in idx["circuits"] if c.endswith("_k1")]
+    first = [next(c for c in k1 if c.startswith("B0_")), next(c for c in k1 if c.startswith("B1_"))]
+    order = first + [c for c in k1 if c not in first] + [c for c in idx["circuits"] if not c.endswith("_k1")]
+    if args.only:
+        order = [c for c in order if c in set(args.only)]
+    prev = lfrag(lat, "q1s") or {"per_circuit": {}}
+    per = prev["per_circuit"]
+    budget = float(args.budget_s) if args.budget_s else None
+    cap = float(args.cap_s) if args.cap_s else Q1S_CAP_S
+    for cid in order:
+        if cid in per and not args.force_q1s:
+            continue
+        if budget is not None and time.time() - t0 + cap > budget:
+            print(f"  budget: {cid} not started ({time.time() - t0:.0f} s used of {budget:.0f})", flush=True)
+            break
+        a, b = mp.get_context("fork").Pipe(duplex=False)
+        p = mp.get_context("fork").Process(target=_q1s_child, args=(cid, b))
+        ts = time.time()
+        p.start()
+        rec = a.recv() if a.poll(cap) else None
+        if rec is None:
+            p.kill()
+            p.join()
+            rec = {"state_verified": False, "sparse_capped_at_s": cap}
+        p.join()
+        rec["wall_s"] = time.time() - ts
+        per[cid] = rec
+        lsave(lat, "q1s", {"per_circuit": per, "cap_s": cap, "memory_cap_bytes": Q1S_MEM_BYTES,
+                           "order_rule": "B0 and B1 first k = 1 circuits, then the other k = 1, then k >= 2 (prompts/35 3.3)",
+                           "engine": "skqd.sparse_sim.run_sparse on quantinuum_native.pytket_to_ir of the frozen JSON "
+                                     "(rzz added by prompts/35 3.1(b)); exact state krylov.apply_groups"})
+        print(f"  {cid}: {rec} [{time.time() - t0:.0f} s]", flush=True)
+    return assemble_L(lat)
+
+
+# --------------------------------------------------------------------------- Q7 checks (lattice 2 / 4)
+def token_index_check():
+    """Every token of master's scripts/gate_tokens.json keeps its index (hence its seed) in the current file
+    (prompts/35 3.9: QV_2x4 is appended)."""
+    from skqd.campaign33 import tokens as T
+    r = subprocess.run(["git", "show", "master:scripts/gate_tokens.json"], cwd=ROOT, capture_output=True, text=True)
+    if r.returncode != 0:
+        return {"ok": False, "error": r.stderr.strip()[:300]}
+    before = [t for t in json.loads(r.stdout) if not t.startswith("_")]
+    now = T.load_tokens()
+    moved = {t: [i, T.token_index(t, now)] for i, t in enumerate(before) if t not in now or T.token_index(t, now) != i}
+    return {"ok": not moved, "n_tokens_master": len(before), "n_tokens_now": len(now), "moved": moved,
+            "C4_PART_20_index": {"master": before.index("C4_PART_20") if "C4_PART_20" in before else None,
+                                 "now": T.token_index("C4_PART_20", now)},
+            "appended": [t for t in now if t not in before],
+            "base_seed_C4_PART_20": T.base_seed("C4_PART_20", now)}
+
+
+def stack_pins_check():
+    """The five pins of `coding` and its pip freeze against the frozen inputs of prompts/26 A1
+    (scripts/quantinuum_stack_check.py `pins` / `freeze`, re-run)."""
+    import quantinuum_stack_check as SC
+    pins_now = SC.pins(CODING_PY)
+    fb_path = sorted(glob.glob(os.path.join(ROOT, "data", "quantinuum", "stack_check_inputs", "coding_freeze_before_*.txt")))[-1]
+    fb = sorted(line for line in open(fb_path).read().splitlines() if line.strip())
+    fn = SC.freeze(CODING_PY)
+    return {"pins_now": pins_now, "pins_expected": SC.PINS_EXPECTED, "pins_unchanged": pins_now == SC.PINS_EXPECTED,
+            "coding_freeze_before": os.path.relpath(fb_path, ROOT), "coding_freeze_identical": fb == fn,
+            "coding_freeze_diff": {"removed": sorted(set(fb) - set(fn)), "added": sorted(set(fn) - set(fb))}}
+
+
+def reproduce_2x3(checks):
+    """prompts/35 Q7: the 2x3 gate re-assembled in memory from its committed fragments, with the Q7 checks
+    re-run now, against the committed validation/Q0P_2x3.json -- criterion by criterion.  Q1-Q6 values must be
+    identical strings; Q7's value carries the pytest summary (test counts and wall time) and can only be
+    compared by its result."""
+    R = assemble(save=False, checks_override=checks)
+    d = load_json(os.path.join(ROOT, "validation", "Q0P_2x3.json"))
+    rows, ok = [], len(R.criteria) == len(d["criteria"])
+    for a, b in zip(R.criteria, d["criteria"]):
+        q7 = a.name.startswith("Q7")
+        same = (a.name == b["name"] and a.threshold == b["threshold"] and a.passed == b["passed"]
+                and (q7 or a.value == b["value"]))
+        rows.append({"criterion": a.name[:3], "value_identical": a.value == b["value"], "passed_identical": a.passed == b["passed"],
+                     "compared": "result only (pytest summary text)" if q7 else "value, threshold, result", "ok": same})
+        ok = ok and same
+    return {"q0p_2x3_reproduced": bool(ok), "status_committed": d["status"], "status_now": "PASS" if R.passed else "FAIL",
+            "criteria": rows, "file_rewritten": False}
+
+
+def run_checks_L(lat):
+    t0 = time.time()
+    ch = run_tests()
+    out = {"tests": ch, "stack": stack_pins_check(), "token_indices": token_index_check(),
+           "q0p_2x3": reproduce_2x3(ch)}
+    out["seconds"] = time.time() - t0
+    return out
+
+
+# --------------------------------------------------------------------------- predict (any env)
+def device_rows_L(lat, mans):
+    """Per device of the device table: gate-only f per circuit from the frozen counts (device_req.clean_shot_fraction,
+    the table's formula), mean / worst, the eps2 for mean 0.1 / worst 0.05, the memory scenarios (ESTIMATE)."""
+    import quantinuum_device_table as qt
+
+    from skqd.device_req import clean_shot_fraction
+    table = load_json(DEVICES)
+    out = {}
+    for name, sp in table["specs"].items():
+        if not name.startswith("quantinuum_"):
+            continue
+        e2, e1, ero = sp["eps2"], sp["eps1"], qt.eps_ro_of(sp)
+        per = {c: clean_shot_fraction(m["counts"]["n_zz"], m["counts"]["n_phasedx"], m["counts"]["n_meas"], e2, e1, ero)
+               for c, m in mans.items()}
+        def fmean(x):
+            return float(np.mean([clean_shot_fraction(m["counts"]["n_zz"], m["counts"]["n_phasedx"], m["counts"]["n_meas"],
+                                                      x, e1, ero) for m in mans.values()]))
+        def fworst(x):
+            return float(min(clean_shot_fraction(m["counts"]["n_zz"], m["counts"]["n_phasedx"], m["counts"]["n_meas"],
+                                                 x, e1, ero) for m in mans.values()))
+        f_mean, f_worst = float(np.mean(list(per.values()))), float(min(per.values()))
+        n2 = int(round(np.mean([m["counts"]["n_zz"] for m in mans.values()])))
+        d2 = int(max(m["counts"]["depth_2q"] for m in mans.values()))
+        nq = int(next(iter(mans.values()))["counts"]["n_qubits"])
+        row = {"device": sp["device_name"], "eps2": e2, "eps1": e1, "eps_ro": ero, "qubits": sp["qubits"],
+               "qubits_fit": sp["qubits"] >= nq, "f_gate_only_per_circuit": per, "f_gate_only_mean": f_mean,
+               "f_gate_only_worst": f_worst, "f_gate_only_worst_id": min(per, key=per.get),
+               "eps2_for_mean_f_0.1": qt.solve_eps2(fmean, F_MEAN_SIGNED),
+               "eps2_for_worst_f_0.05": qt.solve_eps2(fworst, F_WORST_SIGNED),
+               "meets_mean_0.1_gate_only": f_mean >= F_MEAN_SIGNED, "meets_worst_0.05_gate_only": f_worst >= F_WORST_SIGNED,
+               "memory_ESTIMATE": qt.memory_block(name, f_mean, nq, n2, d2, sp["zones"]),
+               "formula": "device_req.clean_shot_fraction(n_zz, n_phasedx, n_meas, eps2, eps1, eps_ro) = "
+                          "(1-eps2)^n_zz (1-eps1)^n_phasedx (1-eps_ro)^n_meas (the device table's formula)"}
+        if lat == 4:
+            row["eps2_per_circuit"] = {
+                c: {"f_0.1": qt.solve_eps2(lambda x, m=m: clean_shot_fraction(m["counts"]["n_zz"], m["counts"]["n_phasedx"],
+                                                                            m["counts"]["n_meas"], x, e1, ero), F_MEAN_SIGNED),
+                    "f_0.05": qt.solve_eps2(lambda x, m=m: clean_shot_fraction(m["counts"]["n_zz"], m["counts"]["n_phasedx"],
+                                                                             m["counts"]["n_meas"], x, e1, ero), F_WORST_SIGNED)}
+                for c, m in mans.items()}
+            row["log10_f_gate_only_mean"] = float(np.log10(f_mean)) if f_mean > 0 else None
+        out[name] = row
+    return out, table
+
+
+def stage_predict_L(args):
+    lat = args.lattice
+    t0 = time.time()
+    idx, mans, cals = lmanifests(lat)
+    hqc_by_id = {c: m["hqc_per_shot"] for c, m in mans.items()}
+    recomputed = {c: qn.hqc_per_shot(m["counts"]) for c, m in mans.items()}
+    nm = {c: int(m["counts"]["n_qubits"]) + int(m["counts"]["n_meas"]) for c, m in mans.items()}
+    hqc = {"recomputed_vs_manifest_max_abs": max(abs(recomputed[c] - m["hqc_per_shot"]) for c, m in mans.items()),
+           "mean_vs_index_abs": abs(float(np.mean(list(recomputed.values()))) - idx["summary"]["hqc_per_shot"]["mean"]),
+           "N_m": sorted(set(nm.values())), "N_m_expected": L_NM[lat],
+           "per_shot": {"mean": float(np.mean(list(recomputed.values()))), "min": min(recomputed.values()),
+                        "max": max(recomputed.values())},
+           "per_circuit": recomputed}
+    devices, table = device_rows_L(lat, mans)
+    frag = {"device_table": os.path.relpath(DEVICES, ROOT), "hqc": hqc, "devices": devices,
+            "billing": table["billing"], "n_circuits": len(mans)}
+    if lat == 2:
+        from skqd.exact import Model
+        V = lfrag(lat, "verify")
+        if not V:
+            raise SystemExit("run --stage verify first (the D3' plan reads its frozen-circuit distributions)")
+        model = Model(2)
+        dists, xcheck = sector_p(model, mans, V, list(mans))
+        plans = {}
+        for name, row in devices.items():
+            pl = d3_plan(mans, dists, row["f_gate_only_mean"], hqc_by_id)
+            pl["device"] = row["device"]
+            pl["f_source"] = "the device's gate-only mean f of the 28 frozen circuits (this JSON's devices.<d>)"
+            plans[name] = pl
+        def formula_total(plan):
+            tot = 0.0
+            for c, s in plan["shots_by_circuit"].items():
+                full, rest = divmod(int(s), qn.MAX_SHOTS_PER_JOB)
+                tot += full * qn.hqc_job(mans[c]["counts"], qn.MAX_SHOTS_PER_JOB)
+                if rest:
+                    tot += qn.hqc_job(mans[c]["counts"], rest)
+            return tot
+        hqc["plan_totals_vs_formula_max_rel"] = max(abs(formula_total(v) - v["hqc_total"]) / max(1.0, v["hqc_total"])
+                                                    for v in plans.values())
+        frag.update({"d3prime_plans": plans, "p_sector_statevector_vs_group_evolution_max_abs": xcheck,
+                     "sector_mass_min": min(d_["mass"] for d_ in dists.values())})
+    else:
+        frag["sampled_shots"] = 0
+        frag["r3"] = ("R3: at 2x4 every Quantinuum scenario gives f ~ 0 (gate-only f per device below); the table "
+                      "samples nothing")
+    frag["runtime_s"] = time.time() - t0
+    lsave(lat, "predict", frag)
+    return assemble_L(lat)
+
+
+# --------------------------------------------------------------------------- assembly (lattice 2 / 4)
+def assemble_L(lat):
+    from skqd.report import GateResult, write_report
+    t0 = time.time()
+    gate = L_GATE[lat]
+    V, P, C = lfrag(lat, "verify"), lfrag(lat, "predict"), lfrag(lat, "checks")
+    S = lfrag(lat, "q1s") if lat == 4 else None
+    R = GateResult(gate, L_TITLE[lat])
+    idx, mans, cals = lmanifests(lat)
+    data = {"prompt": PROMPT35, "lattice": f"2x{lat}", "qpu_seconds": 0, "hqc": 0, "ehqc": 0,
+            "frozen": {"dir": os.path.relpath(L_circ(lat), ROOT), "index_summary": idx["summary"],
+                       "versions": idx["versions"], "selection_rule": idx["selection_rule"],
+                       "built_k": idx.get("built_k", [1, 2, 3, 4]), "n_built": len(mans), "n_planned": L_N[lat]}}
+    per = (V or {}).get("per_circuit", {})
+    nbuilt = len(mans)
+    # ---- Q1 (2x2) / Q1L + Q1S (2x4)
+    if lat == 2:
+        if V:
+            dpsi = max(v["state_vs_original_ir"]["max_abs_dpsi"] for v in per.values())
+            leak = max(abs(v["leakage"]) for v in per.values())
+            okmap = all(v["measure_map_identity"] and v["implicit_permutation_identity"] and v["native"] for v in per.values())
+            worst = max(per, key=lambda c: per[c]["state_vs_original_ir"]["max_abs_dpsi"])
+            build_dpsi = max(m["levels"][str(m["frozen_level"])]["state_vs_original_ir"]["max_abs_dpsi"] for m in mans.values())
+            cal_ok = all(v["ok"] for v in V["calibration"].values()) and len(V["calibration"]) == 2
+            q1l_info = max(v["Q1L"]["segments_max_residual"] or 0.0 for v in per.values())
+            q1 = (len(per) == L_N[lat] and dpsi < Q1_DPSI and leak < Q1_LEAK and okmap and build_dpsi < Q1_DPSI and cal_ok)
+            R.add("Q1 28 + 2 frozen native circuits exact: max abs(dpsi) (global phase removed) vs the pre-conversion IR "
+                  "statevector, leakage, q[k]->c[k], identity permutation, native op set; the 2 calibration circuits give "
+                  "their expected key",
+                  f"{len(per)} circuits; max abs(dpsi) {dpsi:.2e} ({worst}; build {build_dpsi:.2e}); leakage {leak:.2e}; "
+                  f"maps/permutations/op set {'all ok' if okmap else 'NOT ok'}; calibration {'ok' if cal_ok else 'NOT ok'}",
+                  f"28; < {Q1_DPSI:g}; < {Q1_LEAK:g}; identity", q1)
+            data["Q1"] = {"max_abs_dpsi": dpsi, "worst_id": worst, "max_leakage": leak, "build_max_abs_dpsi": build_dpsi,
+                          "maps_ok": okmap, "calibration": V["calibration"],
+                          "Q1L_information_segments_max": q1l_info,
+                          "Q1L_information_all_ok": all(v["Q1L"]["ok"] for v in per.values())}
+        else:
+            R.add("Q1 frozen circuits exact", "verify stage not run", "run --stage verify", False)
+    else:
+        if V:
+            q1l = {c: v["Q1L"] for c, v in per.items()}
+            seg = max((v["segments_max_residual"] if v["segments_max_residual"] is not None else float("inf"))
+                      for v in q1l.values()) if q1l else None
+            build_ok = all(m["Q1L"]["ok"] for m in mans.values())
+            okmap = all(v["native"] and v["Q1L"]["measure_map_identity"] and v["Q1L"]["implicit_permutation_identity"]
+                        for v in per.values())
+            fails = sorted(c for c, v in q1l.items() if not v["ok"])
+            cal_ok = all(v["ok"] for v in V["calibration"].values()) and len(V["calibration"]) == 2
+            q1 = (len(per) == nbuilt and not fails and build_ok and okmap and cal_ok and nbuilt > 0)
+            writer = max(v["Q1L_parts"]["ir_vs_pytket_input"]["segments_max_residual"] or 0.0 for v in per.values())
+            R.add("Q1L every built circuit proven equal to its transpiled IR by local equivalence (per-qubit rzz skeleton, "
+                  "one-qubit segment products to 1e-12 up to phase, q[k]->c[k], identity permutation, native op set), "
+                  "recomputed from the frozen files and at build",
+                  f"{len(per)} of {nbuilt} built ({L_N[lat]} planned); failures {fails or 'none'}; max segment residual "
+                  f"{seg:.2e} (of which the IR -> pytket writer alone {writer:.2e}); build Q1L {'all ok' if build_ok else 'NOT ok'}; "
+                  f"maps/op set {'ok' if okmap else 'NOT ok'}; calibration {'ok' if cal_ok else 'NOT ok'}",
+                  f"all built; < {Q3_RT:g}; identity", q1)
+            data["Q1L"] = {"per_circuit": {c: {k: v[k] for k in ("ok", "segments_max_residual", "skeleton_per_qubit_identical",
+                                                                 "skeleton_global_order_identical", "first_difference",
+                                                                 "n_rzz_ir", "n_rzz_native")} for c, v in q1l.items()},
+                           "max_segment_residual": seg, "writer_max_segment_residual": writer, "failures": fails,
+                           "compile_modes": sorted({m.get("compile_mode", "level0") for m in mans.values()}),
+                           "what_it_proves": ("native circuit == the IR after the prototype transpile (qiskit opt 3, "
+                                              "seed 7); the transpile itself is verified by statevector at 2x2 (Q0P_2x2 "
+                                              "Q1) and 2x3 (Q0P_2x3 Q1) and at 2x4 only through Q1S / QV_2x4"),
+                           "snapping_note": ("pytket stores any parameter within < 1e-11 half-turns of a multiple of "
+                                             "1/4 as that multiple (measured on pytket 2.18.4: Circuit.Rz(0.5 + 3e-12) "
+                                             "reads back 0.5); the IR -> pytket writer residual above is that rounding")}
+        else:
+            R.add("Q1L local equivalence", "verify stage not run", "run --stage verify", False)
+        sp = (S or {}).get("per_circuit", {})
+        verified = sorted(c for c, v in sp.items() if v.get("state_verified"))
+        bad = sorted(c for c, v in sp.items() if v.get("state_verified") and not v.get("ok"))
+        deferred = sorted(c for c in mans if c not in verified)
+        q1s = bool(S) and not bad
+        dmax = max((sp[c]["max_abs_dpsi"] for c in verified), default=None)
+        lmax = max((sp[c]["leakage"] for c in verified), default=None)
+        R.add("Q1S recorded per circuit: the sparse statevector of the native circuit vs the exact coarse state "
+              "(state_verified_ids / deferred_ids; a verified circuit must meet max abs(dpsi) < 1e-10, leakage < 1e-9)",
+              f"verified {len(verified)} of {nbuilt}" + (f" (max abs(dpsi) {dmax:.2e}, leakage {lmax:.2e})" if verified else "")
+              + f"; deferred {len(deferred)} (QV_2x4 for the k = 1, Q1L for k >= 2); failing {bad or 'none'}",
+              "recorded; verified ones < 1e-10 / < 1e-9", q1s)
+        data["Q1S"] = {"state_verified_ids": verified, "deferred_ids": deferred, "failing_ids": bad,
+                       "per_circuit": sp, "cap_s": (S or {}).get("cap_s"), "deferred_to": "QV_2x4 (k = 1); Q1L only for k >= 2"}
+    # ---- Q2
+    rzz_b = {c: int(m["counts"]["rzz_before"]) for c, m in mans.items()}
+    rzz_v = {c: v["rzz_before_compilation"] for c, v in per.items()}
+    frozen_zz = {c: m["counts"]["n_zz"] for c, m in mans.items()}
+    k1 = {(m["twoB"], m["reference"]): rzz_b[c] for c, m in mans.items() if int(m["k"]) == 1}
+    same_as_k1 = {c: (rzz_b[c] == k1.get((m["twoB"], m["reference"]))) for c, m in mans.items()}
+    k_times = {c: (rzz_b[c] == int(m["k"]) * k1.get((m["twoB"], m["reference"]), -1)) for c, m in mans.items()}
+    levels = {c: {L: v["counts"]["n_zz"] for L, v in m["levels"].items() if "counts" in v} for c, m in mans.items()}
+    q2 = (len(rzz_b) == nbuilt and all(same_as_k1.values()) and all(rzz_v.get(c) == rzz_b[c] for c in rzz_b)
+          and all(frozen_zz[c] <= rzz_b[c] for c in rzz_b) and bool(V) and all(levels[c] for c in levels))
+    R.add("Q2 rzz_before recorded on every circuit (build and re-transpiled) and equal for k = 1..4 of a reference "
+          "(the family is one coarse step at angle k dt -- see data.Q2.note); frozen ZZ <= rzz_before; ZZ per level recorded",
+          f"rzz_before {sorted(set(rzz_b.values()))} (verify {sorted(set(rzz_v.values())) or 'n/a'}); equal to the k = 1 "
+          f"value: {sum(same_as_k1.values())} of {len(same_as_k1)}; as written (k x the k = 1 value): "
+          f"{sum(k_times.values())} of {len(k_times)}; frozen ZZ {sorted(set(frozen_zz.values()))}; ZZ by level "
+          f"{ {L: sorted({v[L] for v in levels.values() if L in v}) for L in sorted({L for v in levels.values() for L in v})} }",
+          "recorded; = the k = 1 value; <= rzz_before", q2)
+    data["Q2"] = {"rzz_before_build": rzz_b, "rzz_before_verify": rzz_v, "frozen_zz": frozen_zz, "zz_by_level": levels,
+                  "equal_to_k1": same_as_k1, "as_written_k_times_k1": k_times,
+                  "as_written_holds": all(k_times.values()), "note": Q2_NOTE}
+    # ---- Q3
+    if V:
+        sha_ok = all(v["qasm_sha256_ok"] and v["json_sha256_ok"] for v in per.values())
+        cnt_ok = all(v["counts_match_manifest"] for v in per.values())
+        en = V["endianness"]
+        if lat == 2:
+            rt_json = max(max(v["json_round_trip_max_abs_dpsi_raw"] for v in per.values()),
+                          max(m["round_trips"]["json_max_abs_dpsi_raw"] for m in mans.values()))
+            rt_qasm = max(max(v["qasm_vs_json"]["max_abs_dpsi"] for v in per.values()),
+                          max(m["round_trips"]["qasm"]["max_abs_dpsi"] for m in mans.values()))
+            qc_ok = all(v["qasm_counts_equal"] for v in per.values())
+            q3 = rt_json < Q3_RT and rt_qasm < Q3_RT and sha_ok and cnt_ok and qc_ok and en["ok"]
+            R.add("Q3 JSON and QASM round trips identical; files match their sha256; endianness X on q0 -> key 1",
+                  f"JSON {rt_json:.2e}, QASM {rt_qasm:.2e} (QASM drops the global phase); sha256 {'ok' if sha_ok else 'MISMATCH'}; "
+                  f"counts {'equal' if (cnt_ok and qc_ok) else 'DIFFER'}; keys {en['key_statevector']}/{en['key_backendresult']}/"
+                  f"{en['key_qiskit_reader']}", f"< {Q3_RT:g}; ok; key 1", q3)
+            data["Q3"] = {"json_round_trip": rt_json, "qasm_round_trip": rt_qasm, "sha_ok": sha_ok, "endianness": en}
+        else:
+            k1v = {c: v for c, v in per.items() if v.get("round_trips_checked")}
+            rt_ok = all(v["json_round_trip_Q1L"]["ok"] and v["qasm_round_trip_Q1L"]["ok"] and v["qasm_counts_equal"]
+                        for v in k1v.values())
+            rt_max = max([max(v["json_round_trip_Q1L"]["segments_max_residual"] or 0.0,
+                              v["qasm_round_trip_Q1L"]["segments_max_residual"] or 0.0) for v in k1v.values()] or [0.0])
+            qf = max([v["qasm_vs_frozen_Q1L"]["segments_max_residual"] or 0.0 for v in k1v.values()] or [0.0])
+            n_k1 = sum(1 for m in mans.values() if int(m["k"]) == 1)
+            q3 = rt_ok and sha_ok and cnt_ok and en["ok"] and len(k1v) == n_k1 and n_k1 > 0
+            R.add("Q3 round trips on the k = 1 circuits (gz -> text -> from_json / circuit_from_qasm_str -> pytket_to_ir "
+                  "-> Q1L again); every file matches its sha256 (uncompressed text); endianness X on q0 -> key 1",
+                  f"{len(k1v)} of {n_k1} k = 1 circuits; JSON/QASM Q1L {'all ok' if rt_ok else 'NOT ok'} (max segment residual "
+                  f"{rt_max:.2e}; QASM vs frozen {qf:.2e}); sha256 {'ok' if sha_ok else 'MISMATCH'} on {len(per)}; counts "
+                  f"{'equal' if cnt_ok else 'DIFFER'}; keys {en['key_statevector']}/{en['key_backendresult']}/{en['key_qiskit_reader']}",
+                  f"all k = 1; < {Q3_RT:g}; ok; key 1", q3)
+            data["Q3"] = {"k1_round_trips": {c: {"json": v["json_round_trip_Q1L"]["segments_max_residual"],
+                                                 "qasm": v["qasm_round_trip_Q1L"]["segments_max_residual"],
+                                                 "qasm_vs_frozen": v["qasm_vs_frozen_Q1L"]["segments_max_residual"]}
+                                             for c, v in k1v.items()}, "sha_ok": sha_ok, "endianness": en}
+    else:
+        R.add("Q3 round trips and endianness", "verify stage not run", "run --stage verify", False)
+    # ---- Q5
+    if P:
+        h = P["hqc"]
+        devs = P["devices"]
+        if lat == 2:
+            q5 = (h["recomputed_vs_manifest_max_abs"] <= Q45_TOL and h["mean_vs_index_abs"] <= Q45_TOL
+                  and h["N_m"] == [L_NM[lat]] and h["plan_totals_vs_formula_max_rel"] <= Q45_TOL
+                  and all(d_ in P["d3prime_plans"] for d_ in devs) and len(devs) == 4)
+            R.add("Q5 hqc_per_shot recomputed from the manifests = index value (N_m = 24); gate-only f per device per "
+                  "circuit and family mean from the frozen counts; the D3' plan at 0.7 f for each device with its HQC",
+                  f"per shot {h['per_shot']['mean']:.4f} mean ({h['per_shot']['min']:.4f}-{h['per_shot']['max']:.4f}); "
+                  f"manifest abs diff {h['recomputed_vs_manifest_max_abs']:.1e}, index abs diff {h['mean_vs_index_abs']:.1e}; "
+                  f"N_m {h['N_m']}; f mean " + ", ".join(f"{v['device']} {v['f_gate_only_mean']:.4f}" for v in devs.values())
+                  + "; D3' HQC " + ", ".join(f"{P['d3prime_plans'][k]['device']} {P['d3prime_plans'][k]['hqc_total']:.0f}"
+                                            for k in devs) + f"; plan totals relative diff {h['plan_totals_vs_formula_max_rel']:.1e}",
+                  f"<= {Q45_TOL:g}; N_m = 24; 4 devices", q5)
+        else:
+            q5 = (h["recomputed_vs_manifest_max_abs"] <= Q45_TOL and h["mean_vs_index_abs"] <= Q45_TOL
+                  and h["N_m"] == [L_NM[lat]] and len(devs) == 4
+                  and all(len(v["eps2_per_circuit"]) == nbuilt for v in devs.values()))
+            R.add("Q5 hqc_per_shot recomputed = index value (N_m = 56); gate-only f per device and the eps2 for mean f = 0.1 "
+                  "/ 0.05 per circuit (R3)",
+                  f"per shot {h['per_shot']['mean']:.4f} mean ({h['per_shot']['min']:.4f}-{h['per_shot']['max']:.4f}); "
+                  f"manifest abs diff {h['recomputed_vs_manifest_max_abs']:.1e}, index abs diff {h['mean_vs_index_abs']:.1e}; "
+                  f"N_m {h['N_m']}; gate-only f mean " + ", ".join(f"{v['device']} {v['f_gate_only_mean']:.2e}" for v in devs.values())
+                  + "; eps2 for mean f 0.1 " + ", ".join(f"{v['device']} {v['eps2_for_mean_f_0.1']:.2e}" for v in devs.values()),
+                  f"<= {Q45_TOL:g}; N_m = 56; table complete", q5)
+        data["Q5"] = P
+    else:
+        R.add("Q5 HQC and f", "predict stage not run", "run --stage predict", False)
+    # ---- Q7
+    if C:
+        ch, st, tk, rp = C["tests"], C["stack"], C["token_indices"], C["q0p_2x3"]
+        q7 = (ch["pytest_coding"]["returncode"] == 0 and ch["pytest_venv"]["returncode"] == 0
+              and ch["check_package"]["returncode"] == 0 and st["pins_unchanged"] and st["coding_freeze_identical"]
+              and tk["ok"] and rp["q0p_2x3_reproduced"])
+        R.add("Q7 pytest -q tests (coding and venv) and check_package.py pass; the pins and the coding freeze unchanged; "
+              "Q0P_2x3 reproduced in memory criterion by criterion; campaign-33 token indices unchanged",
+              f"coding: {ch['pytest_coding']['summary']}; venv: {ch['pytest_venv']['summary']}; check_package rc "
+              f"{ch['check_package']['returncode']}; pins unchanged {st['pins_unchanged']}, freeze identical "
+              f"{st['coding_freeze_identical']}; q0p_2x3_reproduced {rp['q0p_2x3_reproduced']}; token indices unchanged "
+              f"{tk['ok']} (C4_PART_20 {tk['C4_PART_20_index']['master']} -> {tk['C4_PART_20_index']['now']})",
+              "all pass; unchanged; true; true", q7)
+        data["Q7"] = C
+        data["q0p_2x3_reproduced"] = rp["q0p_2x3_reproduced"]
+        data["token_indices_unchanged"] = tk["ok"]
+    else:
+        R.add("Q7 tests, pins, Q0P_2x3 reproduction, token indices", "not run (--stage verify --checks-only)", "all pass", False)
+    n_ver = len((data.get("Q1S") or {}).get("state_verified_ids", []))
+    data["what_pass_means"] = L_WHAT_2 if lat == 2 else L_WHAT_4.format(n=n_ver, N=nbuilt)
+    data["verify"] = V
+    R.data = data
+    R.runtime_s = sum((x or {}).get("runtime_s", 0.0) for x in (V, P)) + time.time() - t0
+    path = R.save()
+    write_report(f"{gate}.md", report_text_L(R, data, lat))
+    print(f"{gate}: {'PASS' if R.passed else 'FAIL'} -> {os.path.relpath(path, ROOT)}")
+    for c in R.criteria:
+        print(f"  [{'PASS' if c.passed else 'FAIL'}] {c.name[:90]}: {str(c.value)[:300]}")
+    return 0 if R.passed else 1
+
+
+def report_text_L(R, D, lat):
+    s = D["frozen"]["index_summary"]
+    L = [f"# Gate {R.gate} — {R.title}", "",
+         f"Status: **{'PASS' if R.passed else 'FAIL'}** ({len(R.criteria)} criteria).  Generated by "
+         f"`scripts/gate_Q0P_2x3.py --lattice {lat}` from `validation/{R.gate}.json`; no number here is typed by hand.  "
+         f"{env_block()}", "", f"Prompt: `{PROMPT35}`.  QPU seconds {D['qpu_seconds']}, HQC {D['hqc']}.", "",
+         f"What PASS means: \"{D['what_pass_means']}\".", "", "## Criteria", "", R.criteria_table(), "",
+         "## The frozen circuits", "",
+         f"`{D['frozen']['dir']}/`: {D['frozen']['n_built']} of {D['frozen']['n_planned']} circuits built "
+         f"(k = {D['frozen']['built_k']}) + `CAL_zeros`, `CAL_x0`; pytket {D['frozen']['versions'].get('pytket')} / "
+         f"pytket-quantinuum {D['frozen']['versions'].get('pytket-quantinuum')}, offline API handler, H2-2.  Selection rule: "
+         f"{D['frozen']['selection_rule']}.", "",
+         md_table(["quantity", "min", "mean", "max"],
+                  [["ZZPhase per circuit", s["n_zz"]["min"], fmt(s["n_zz"]["mean"]), s["n_zz"]["max"]],
+                   ["PhasedX per circuit", s["n_phasedx"]["min"], fmt(s["n_phasedx"]["mean"]), s["n_phasedx"]["max"]],
+                   ["HQC per shot", fmt(s["hqc_per_shot"]["min"]), fmt(s["hqc_per_shot"]["mean"]),
+                    fmt(s["hqc_per_shot"]["max"])]]), "",
+         f"Q2 note: {D['Q2']['note']}.", ""]
+    if lat == 4 and "Q1L" in D:
+        L += [f"Q1L: {D['Q1L']['what_it_proves']}.  {D['Q1L']['snapping_note']}.", ""]
+    P = D.get("Q5")
+    if P:
+        L += ["## Devices (gate-only f of the frozen family; memory term = ESTIMATE)", "",
+              md_table(["device", "qubits fit", "f mean", "f worst", "mid memory (ESTIMATE)", "mean >= 0.1", "worst >= 0.05",
+                        "eps2 for mean 0.1", "eps2 for worst 0.05"],
+                       [[v["device"], v["qubits_fit"], fmt(v["f_gate_only_mean"]), fmt(v["f_gate_only_worst"]),
+                         fmt(v["memory_ESTIMATE"]["scenarios"]["mid"]["f_with_memory"]), v["meets_mean_0.1_gate_only"],
+                         v["meets_worst_0.05_gate_only"], fmt(v["eps2_for_mean_f_0.1"]), fmt(v["eps2_for_worst_f_0.05"])]
+                        for v in P["devices"].values()]), ""]
+        if lat == 2:
+            L += ["## Rule D3' at 0.7 f per device (HQC = 5 + C (N_1q + 10 N_2q + 5 N_m)/5000 per job)", "",
+                  md_table(["device", "f", "N4 B=0", "N4 B=1", "shots", "jobs", "HQC"],
+                           [[v["device"], fmt(v["f"]), v["N4"]["B=0"], v["N4"]["B=1"], fmt(v["shots_total"]), v["jobs"],
+                             fmt(v["hqc_total"])] for v in P["d3prime_plans"].values()]), ""]
+        else:
+            L += [P.get("r3", ""), ""]
+    if "Q1S" in D:
+        q = D["Q1S"]
+        L += ["## Q1S (sparse statevector, laptop)", "",
+              md_table(["circuit", "state verified", "max abs(dpsi)", "leakage", "wall s", "capped at s / error"],
+                       [[c, v.get("state_verified"), fmt(v.get("max_abs_dpsi")), fmt(v.get("leakage")), fmt(v.get("wall_s")),
+                         v.get("sparse_capped_at_s") or v.get("error") or v.get("memory_capped_at_bytes") or ""]
+                        for c, v in q["per_circuit"].items()]), "",
+              f"Deferred to QV_2x4 / Q1L only: {len(q['deferred_ids'])} circuits.", ""]
+    return "\n".join(L)
+
+
+def stage_prereg_md_L(args):
+    lat = args.lattice
+    P = lfrag(lat, "predict")
+    if not P:
+        raise SystemExit("run --stage predict first")
+    L = [f"# Q0P_2x{lat} preregistration block (prompts/35 3.2) — generated from data/quantinuum/q0p_stages_2x{lat}/predict.json",
+         "", f"Created {P['created']}.  Every number below is copied by `scripts/gate_Q0P_2x3.py --lattice {lat} --stage "
+         "prereg-md` from the JSON; none is typed.  PREDICTIONS from vendor-published error rates (gate-only); the memory "
+         "term is an ESTIMATE.", "",
+         md_table(["device", "f mean", "f worst", "low", "mid", "high"],
+                  [[v["device"], fmt(v["f_gate_only_mean"]), fmt(v["f_gate_only_worst"])]
+                   + [fmt(v["memory_ESTIMATE"]["scenarios"][s_]["f_with_memory"]) for s_ in ("low", "mid", "high")]
+                   for v in P["devices"].values()]), ""]
+    if lat == 2:
+        L += ["## Rule D3' at 0.7 f (per device)", "",
+              md_table(["device", "circuit", "shots", "jobs", "HQC"],
+                       [[v["device"], c, x["shots"], x["jobs"], fmt(x["hqc"])] for v in P["d3prime_plans"].values()
+                        for c, x in v["per_circuit"].items()]), ""]
+    write_report(f"Q0P_2x{lat}_prereg.md", "\n".join(L))
+    print(f"wrote reports/Q0P_2x{lat}_prereg.md")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--stage", required=True, choices=("verify", "predict", "prereg-md", "assemble-emulator", "assemble",
-                                                       "plan28"))
+                                                       "plan28", "q1s"))
+    ap.add_argument("--lattice", type=int, choices=(2, 3, 4), default=3,
+                    help="prompts/35 R5: 2 -> validation/Q0P_2x2.json, 4 -> validation/Q0P_2x4.json; 3 (default) = the "
+                         "prompts/26 gate, unchanged")
+    ap.add_argument("--only", nargs="*", default=None, help="--lattice 2/4 verify or q1s: these circuit ids only")
+    ap.add_argument("--cap-s", type=float, default=None, help="--stage q1s: per-circuit cap (default 1800 s)")
+    ap.add_argument("--budget-s", type=float, default=None, help="--stage q1s: do not start a circuit past this budget")
+    ap.add_argument("--force-q1s", action="store_true", help="--stage q1s: redo circuits already recorded")
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--threads", type=int, default=2)
     ap.add_argument("--skip-tests", action="store_true")
     ap.add_argument("--checks-only", action="store_true",
                     help="verify: keep the per-circuit results, re-run only the tests / pins (Q7)")
     args = ap.parse_args()
+    if args.lattice != 3:
+        if args.stage == "verify":
+            return stage_verify_L(args)
+        if args.stage == "predict":
+            return stage_predict_L(args)
+        if args.stage == "prereg-md":
+            return stage_prereg_md_L(args)
+        if args.stage == "q1s" and args.lattice == 4:
+            return stage_q1s(args)
+        if args.stage == "assemble":
+            return assemble_L(args.lattice)
+        raise SystemExit(f"--stage {args.stage} is not defined for --lattice {args.lattice}")
+    if args.stage == "q1s":
+        raise SystemExit("--stage q1s is the 2x4 sparse check (--lattice 4)")
     if args.stage == "verify":
         return stage_verify(args)
     if args.stage == "predict":

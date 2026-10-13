@@ -203,13 +203,25 @@ def check_native(circ) -> None:
         raise NativeCompileError(f"non-identity implicit qubit permutation: {moved}")
 
 
-def compile_native(circ, device_name: str = "H2-2", optimisation_level: int = 2):
+def compile_native(circ, device_name: str = "H2-2", optimisation_level: int = 2, pure_rebase: bool = False):
     """QuantinuumBackend(device_name, api_handler=QuantinuumAPIOffline()).get_compiled_circuit
     with allow_implicit_swaps=False, ZZPhase as the two-qubit gate and the qubit names kept.
-    Raises NativeCompileError if the result is not native or permutes the qubits."""
+    Raises NativeCompileError if the result is not native or permutes the qubits.
+
+    pure_rebase=True (prompts/35 3.3): no backend pass at all, only
+    `AutoRebase({Rz, PhasedX, ZZPhase})` -- every gate is rewritten in place, nothing is reordered,
+    merged or cancelled (the fallback when level 0 changes the two-qubit skeleton);
+    `optimisation_level` and `device_name` are then not used."""
     _pytket()
-    be = offline_backend(device_name)
-    out = be.get_compiled_circuit(circ.copy(), optimisation_level=int(optimisation_level))
+    if pure_rebase:
+        from pytket import OpType
+        from pytket.passes import AutoRebase
+
+        out = circ.copy()
+        AutoRebase({OpType.Rz, OpType.PhasedX, OpType.ZZPhase}).apply(out)
+    else:
+        be = offline_backend(device_name)
+        out = be.get_compiled_circuit(circ.copy(), optimisation_level=int(optimisation_level))
     check_native(out)
     return out
 
@@ -278,6 +290,126 @@ def pytket_to_ir(circ):
             raise ValueError(f"pytket_to_ir: unsupported operation {t.name}")
     n = circ.n_qubits
     return gates, n, qmap
+
+
+# --------------------------------------------------------------------------- local equivalence (prompts/35 Q1L)
+_ONE_Q = ("rz", "rx", "ry", "x", "h")
+
+
+def _one_q_matrix(name, par):
+    if name == "rz":
+        return np.array([[np.exp(-0.5j * par), 0.0], [0.0, np.exp(0.5j * par)]], dtype=complex)
+    if name == "rx":
+        c, s = math.cos(par / 2.0), math.sin(par / 2.0)
+        return np.array([[c, -1j * s], [-1j * s, c]], dtype=complex)
+    if name == "ry":
+        c, s = math.cos(par / 2.0), math.sin(par / 2.0)
+        return np.array([[c, -s], [s, c]], dtype=complex)
+    if name == "x":
+        return np.array([[0.0, 1.0], [1.0, 0.0]], dtype=complex)
+    if name == "h":
+        r = 1.0 / math.sqrt(2.0)
+        return np.array([[r, r], [r, -r]], dtype=complex)
+    raise ValueError(f"local_equivalence: unsupported one-qubit gate {name}")
+
+
+def _skeleton(gates: list, n: int):
+    """Per qubit: the ordered list of two-qubit gates touching it (partner, angle mod 2 pi, occurrence),
+    and the 2x2 products of the one-qubit gates between them (n_2q(q) + 1 segments per qubit); the
+    global order of the rzz gates; gphase gates are dropped (global)."""
+    I2 = np.eye(2, dtype=complex)
+    seg = {q: [I2.copy()] for q in range(n)}
+    seq = {q: [] for q in range(n)}
+    glob = []
+    for name, qs, par in gates:
+        if name == "gphase":
+            continue
+        if name == "rzz":
+            a, b = int(qs[0]), int(qs[1])
+            ang = float(par)
+            glob.append((min(a, b), max(a, b), ang, (a, b)))
+            for q, o in ((a, b), (b, a)):
+                seq[q].append((o, ang))
+                seg[q].append(I2.copy())
+        elif name in _ONE_Q:
+            q = int(qs[0])
+            seg[q][-1] = _one_q_matrix(name, float(par)) @ seg[q][-1]
+        else:
+            raise ValueError(f"local_equivalence: unsupported gate {name}")
+    return seq, seg, glob
+
+
+def _angle_diff(a: float, b: float) -> float:
+    """|a - b| modulo 2 pi (rzz(t + 2 pi) = -rzz(t): a global phase)."""
+    d = (float(a) - float(b)) % (2.0 * math.pi)
+    return min(d, 2.0 * math.pi - d)
+
+
+def _phase_free_residual(A, B) -> float:
+    """max |A - e^{i phi} B| with phi = arg tr(B^dag A) (global phase of a 2x2 product removed)."""
+    t = complex(np.trace(B.conj().T @ A))
+    ph = t / abs(t) if abs(t) > 0 else 1.0
+    return float(np.max(np.abs(A - ph * B)))
+
+
+def local_equivalence(ir_gates: list, native_circ, n: int, tol: float = 1e-12) -> dict:
+    """Q1L of prompts/35 3.3: an exact (not statistical) equivalence proof of an IR gate list in
+    {rz, rx, ry, rzz, x, h, gphase} (the circuit after the prototype transpile) and a compiled native
+    pytket circuit, read back with `pytket_to_ir`.
+
+    (i)  two-qubit skeleton: for every qubit, the ordered sequence of rzz gates touching it (partner and
+         angle, angle compared modulo 2 pi to `tol`) is identical in both -- this is the circuit DAG of the
+         two-qubit gates; all rzz gates commute with each other, so the per-qubit order is what fixes the
+         unitary (the global order is recorded as information: pytket's command order is a topological
+         order and may interleave commuting gates differently);
+    (ii) for every qubit and every segment between its consecutive two-qubit gates, the 2x2 product of
+         the one-qubit gates equals the IR's to `tol` after removing that segment's phase;
+    (iii) measurement map q[k] -> c[k] and identity implicit permutation.
+    Equal per-qubit segments around an identical skeleton give equal unitaries up to one global phase."""
+    ir_n, nn, qmap = pytket_to_ir(native_circ)
+    if nn != n:
+        raise ValueError(f"local_equivalence: {nn} qubits in the native circuit, {n} expected")
+    s_ir, g_ir, gl_ir = _skeleton(ir_gates, n)
+    s_nat, g_nat, gl_nat = _skeleton(ir_n, n)
+    first_diff = None
+    max_angle = 0.0
+    skel_ok = True
+    for q in range(n):
+        a, b = s_ir[q], s_nat[q]
+        if len(a) != len(b):
+            skel_ok = False
+            first_diff = first_diff or {"qubit": q, "reason": f"{len(a)} rzz in the IR, {len(b)} native"}
+            continue
+        for j, ((pa, ta), (pb, tb)) in enumerate(zip(a, b)):
+            d = _angle_diff(ta, tb)
+            max_angle = max(max_angle, d) if pa == pb else max_angle
+            if pa != pb or d >= tol:
+                skel_ok = False
+                if first_diff is None:
+                    first_diff = {"qubit": q, "position": j, "ir": [pa, ta], "native": [pb, tb]}
+    max_seg = 0.0
+    n_seg = 0
+    worst_seg = None
+    if skel_ok:
+        for q in range(n):
+            for j, (A, B) in enumerate(zip(g_ir[q], g_nat[q])):
+                r = _phase_free_residual(A, B)
+                n_seg += 1
+                if r > max_seg:
+                    max_seg, worst_seg = r, {"qubit": q, "segment": j}
+    glob_same = (len(gl_ir) == len(gl_nat)
+                 and all(x[:2] == y[:2] and _angle_diff(x[2], y[2]) < tol for x, y in zip(gl_ir, gl_nat)))
+    orient_same = len(gl_ir) == len(gl_nat) and all(x[3] == y[3] for x, y in zip(gl_ir, gl_nat))
+    meas_ok = qmap == {q: q for q in range(n)}
+    perm_ok = all(a == b for a, b in native_circ.implicit_qubit_permutation().items())
+    seg_ok = bool(skel_ok and max_seg < tol)
+    return {"n_rzz_ir": len(gl_ir), "n_rzz_native": len(gl_nat),
+            "skeleton_per_qubit_identical": bool(skel_ok), "skeleton_max_angle_diff": max_angle,
+            "skeleton_global_order_identical": bool(glob_same), "pair_orientation_identical": bool(orient_same),
+            "segments_compared": n_seg, "segments_max_residual": max_seg if skel_ok else None,
+            "worst_segment": worst_seg, "first_difference": first_diff,
+            "measure_map_identity": meas_ok, "implicit_permutation_identity": bool(perm_ok),
+            "tol": tol, "ok": bool(seg_ok and meas_ok and perm_ok)}
 
 
 def native_counts(circ) -> dict:

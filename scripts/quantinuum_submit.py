@@ -118,8 +118,13 @@ def load_manifest(cdir, cid):
 def load_frozen(cdir, man):
     """The frozen pytket circuit from its JSON; the sha256 must match the manifest."""
     path = os.path.join(cdir, man["files"]["json"])
-    with open(path) as fh:
-        text = fh.read()
+    if path.endswith(".gz"):                  # the 2x4 family (prompts/35 3.1(a)): sha256 of the uncompressed text
+        import gzip
+        with gzip.open(path, "rb") as fh:
+            text = fh.read().decode()
+    else:
+        with open(path) as fh:
+            text = fh.read()
     if hashlib.sha256(text.encode()).hexdigest() != man["json_sha256"]:
         raise SystemExit(f"{path}: sha256 differs from the manifest -- the frozen circuit was changed")
     return qn.from_json(json.loads(text))
@@ -145,7 +150,16 @@ def backend_config_fields(device, args, max_cost):
 
 def plan_jobs(args, cdir, index, device):
     """[(job record)] -- one job per circuit and per chunk of at most 10,000 shots."""
-    ids = list(args.only) if args.only else (pilot_ids(index) + list(index.get("calibration", [])))
+    if getattr(args, "all", False):
+        if args.only:
+            raise SystemExit("--all and --only exclude each other")
+        ids = list(index["circuits"]) + list(index.get("calibration", []))
+    else:
+        ids = list(args.only) if args.only else (pilot_ids(index) + list(index.get("calibration", [])))
+    program = getattr(args, "program", "pytket")
+    if (program == "hugr") != device.startswith("Helios"):
+        raise SystemExit(f"--program {program} does not match device {device}: the Helios devices take Guppy/HUGR "
+                         f"programs (--program hugr), the H-series devices pytket circuits (--program pytket)")
     plan_shots = None
     if args.shots_plan:
         with open(args.shots_plan if os.path.isabs(args.shots_plan) else os.path.join(ROOT, args.shots_plan)) as fh:
@@ -167,12 +181,17 @@ def plan_jobs(args, cdir, index, device):
                                  f"--max-cost {cap}: the job would be cut off; raise --max-cost")
             if est > qn.MAX_HQC_PER_JOB:
                 raise SystemExit(f"{cid}: {est:.0f} HQC per job exceeds the 500,000 HQC job limit")
-            jobs.append({"circuit_id": cid, "chunk": ch, "n_shots": int(s), "device_name": device,
-                         "qasm_sha256": man["qasm_sha256"], "json_sha256": man["json_sha256"],
-                         "hqc_estimate": est, "max_cost": cap,
-                         "backend_config": backend_config_fields(device, args, cap),
-                         "aer_seed": int(args.seed + ch * qn.MAX_SHOTS_PER_JOB),
-                         "job_id": None, "submitted": None, "status": None})
+            job = {"circuit_id": cid, "chunk": ch, "n_shots": int(s), "device_name": device,
+                   "qasm_sha256": man["qasm_sha256"], "json_sha256": man["json_sha256"],
+                   "hqc_estimate": est, "max_cost": cap,
+                   "backend_config": backend_config_fields(device, args, cap),
+                   "aer_seed": int(args.seed + ch * qn.MAX_SHOTS_PER_JOB),
+                   "job_id": None, "submitted": None, "status": None}
+            if program == "hugr":                 # prompts/35 3.1(f): the HUGR package file of 3.7
+                job.update({"program": "hugr", "hugr_file": man["files"]["hugr"], "hugr_sha256": man["hugr_sha256"],
+                            "backend_config": {"type": "HeliosConfig", "system_name": device, "max_cost": cap,
+                                               "attempt_batching": bool(args.attempt_batching)}})
+            jobs.append(job)
     return jobs
 
 
@@ -277,6 +296,15 @@ def phase_dry_run(args):
                "bit_order": ("pytket BackendResult.get_counts() tuples are BasisOrder.ilo (c[0], c[1], ...); "
                              "written as qiskit keys (c[0] rightmost)")}
     save_session(outdir, session)
+    if getattr(args, "records_only", False) or getattr(args, "program", "pytket") == "hugr":
+        # prompts/35 3.8: the job records only (no local execution; a HUGR program has no Aer route)
+        for j in jobs:
+            j["status"] = "RECORD ONLY (not executed)"
+        session.update({"records_only": True, "executed_on": None, "noise_model": None, "completed": now()})
+        save_session(outdir, session)
+        print(f"dry run (records only): {len(jobs)} job(s), {sum(j['n_shots'] for j in jobs)} shots, "
+              f"{session['hqc_estimate_total']:.1f} HQC estimated -> {os.path.relpath(outdir, ROOT)}")
+        return 0
     circuits = {j["circuit_id"]: load_frozen(cdir, load_manifest(cdir, j["circuit_id"])) for j in jobs}
     t0 = time.time()
     results = run_aer(circuits, jobs, args.threads)
@@ -319,6 +347,8 @@ def phase_remote(args, kind):
         device = args.device or "H2-2SC"
         if device not in SYNTAX_CHECKERS:
             raise SystemExit(f"--syntax-check takes a syntax checker {SYNTAX_CHECKERS}, not {device}")
+        if device.startswith("Helios") and args.program != "hugr":
+            raise SystemExit("Helios-1SC checks Guppy/HUGR programs: it requires --program hugr (prompts/35 3.1(f))")
     elif kind == "emulate":
         device = args.device or "H2-2E"
         if device not in EMULATORS:
@@ -364,9 +394,20 @@ def phase_remote(args, kind):
     project = qnx.projects.get_or_create(name=args.project)
     for j in jobs:
         man = load_manifest(cdir, j["circuit_id"])
-        circ = load_frozen(cdir, man)
-        ref = qnx.circuits.upload(circuit=circ, name=f"{j['circuit_id']}", project=project)
-        cfg = QuantinuumConfig(**{k: v for k, v in j["backend_config"].items() if k != "type" and v is not None})
+        if j.get("program") == "hugr":            # prompts/35 3.1(f); not run under prompts/35 (no login)
+            import gzip
+
+            from hugr.package import Package
+            path = os.path.join(cdir, j["hugr_file"])
+            text = gzip.open(path, "rb").read().decode() if path.endswith(".gz") else open(path).read()
+            if hashlib.sha256(text.encode()).hexdigest() != j["hugr_sha256"]:
+                raise SystemExit(f"{path}: sha256 differs from the manifest -- the HUGR package was changed")
+            ref = qnx.hugr.upload(hugr_package=Package.from_json(text), name=f"{j['circuit_id']}", project=project)
+            cfg = qnx.HeliosConfig(**{k: v for k, v in j["backend_config"].items() if k != "type" and v is not None})
+        else:
+            circ = load_frozen(cdir, man)
+            ref = qnx.circuits.upload(circuit=circ, name=f"{j['circuit_id']}", project=project)
+            cfg = QuantinuumConfig(**{k: v for k, v in j["backend_config"].items() if k != "type" and v is not None})
         job = qnx.start_execute_job(programs=[ref], n_shots=[j["n_shots"]], backend_config=cfg,
                                     name=f"su2qc-{j['circuit_id']}-c{j['chunk']}-{kind}", project=project,
                                     max_cost=[j["max_cost"]])
@@ -488,6 +529,13 @@ def build_parser():
     g.add_argument("--retrieve", action="store_true")
     g.add_argument("--status", action="store_true")
     ap.add_argument("--circuits", default=CIRCUITS)
+    ap.add_argument("--all", action="store_true",
+                    help="prompts/35 3.1(f): every circuit and calibration id of the directory's index.json")
+    ap.add_argument("--program", choices=("pytket", "hugr"), default="pytket",
+                    help="prompts/35 3.1(f): hugr wires the Guppy/HUGR package files (circuits_2x<L>_helios) into the job "
+                         "records; required by (and only allowed for) the Helios devices")
+    ap.add_argument("--records-only", action="store_true",
+                    help="--dry-run: write the job records (session.json) without the local Aer execution")
     ap.add_argument("--out", default=None)
     ap.add_argument("--device", default=None, help="H2-2 / H2-2E / H2-2SC / H1-1 ... (phase default)")
     ap.add_argument("--only", nargs="*", default=None, help="circuit ids (default: the two pilot k=1 + calibration)")
