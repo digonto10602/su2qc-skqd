@@ -1,0 +1,174 @@
+{
+ "title": "prompts/33c R2 diagnostic summary: CPU (this laptop) vs GPU (C2_CAL job )",
+ "git_commit": "60ccd40",
+ "command": "python scripts/c33c_diag_full.py --summarize",
+ "versions": {
+  "python": "3.12.14",
+  "qiskit": "1.4.3",
+  "qiskit_aer": "0.15.1",
+  "numpy": "2.5.3"
+ },
+ "machine": {
+  "host": "pichkaCommander",
+  "processor": "x86_64",
+  "cpu_count": 12
+ },
+ "created": "2026-10-13 19:36:01 UTC",
+ "gpu_source": "validation/C2_CAL.json",
+ "gpu_versions": {
+  "qiskit": "1.4.3",
+  "qiskit_aer": "0.15.1",
+  "numpy": "2.5.3",
+  "scipy": "1.18.1",
+  "threadpoolctl": "3.7.0",
+  "python": "3.12.14"
+ },
+ "arms": {
+  "cpu_kraus": {
+   "source": "data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg2.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg3.json",
+   "shots": 19,
+   "status": "done",
+   "mean_hamming_weight": 7.473684210526316,
+   "se_mean_hamming_weight": 0.558655555371602,
+   "sd_hamming_weight": 2.4351231101124045,
+   "seconds_per_shot": 173.92319881288628,
+   "versions": {
+    "python": "3.12.14",
+    "qiskit": "1.4.3",
+    "qiskit_aer": "0.15.1",
+    "numpy": "2.5.3"
+   }
+  },
+  "cpu_rm": {
+   "source": "data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_rm_cpu.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_rm_cpu_seg2.json",
+   "shots": 24,
+   "status": "done",
+   "mean_hamming_weight": 6.916666666666667,
+   "se_mean_hamming_weight": 0.5707758090131267,
+   "sd_hamming_weight": 2.7962189792128487,
+   "seconds_per_shot": 84.03293083111446,
+   "versions": {
+    "python": "3.12.14",
+    "qiskit": "1.4.3",
+    "qiskit_aer": "0.15.1",
+    "numpy": "2.5.3"
+   }
+  },
+  "gpu_pta": {
+   "source": "validation/C2_CAL.json data.arms.pta.structure",
+   "shots": 512,
+   "mean_hamming_weight": 9.95703125,
+   "se_mean_hamming_weight": 0.10213173006827322,
+   "sd_hamming_weight": 2.3109772449788806
+  },
+  "gpu_rm": {
+   "source": "validation/C2_CAL.json data.arms.rm.structure",
+   "shots": 1024,
+   "mean_hamming_weight": 7.419921875,
+   "se_mean_hamming_weight": 0.07661781505287477,
+   "sd_hamming_weight": 2.4517700816919925
+  },
+  "gpu_kraus": {
+   "source": "validation/C2_CAL.json data.arms.kraus.structure",
+   "shots": 640,
+   "mean_hamming_weight": 2.3984375,
+   "se_mean_hamming_weight": 0.13584955580764982,
+   "sd_hamming_weight": 3.436752123794628
+  }
+ },
+ "comparisons": {
+  "cpu_kraus_vs_cpu_rm": {
+   "shots": [
+    19,
+    24
+   ],
+   "mean_hamming_weight": [
+    7.473684210526316,
+    6.916666666666667
+   ],
+   "delta_mean_hamming_weight": 0.557017543859649,
+   "z_mean_hamming_weight": 0.6974274270885936,
+   "max_abs_z_marginal": 2.592393162886242,
+   "clbits_outside": [],
+   "pass": true
+  },
+  "cpu_kraus_vs_gpu_kraus": {
+   "shots": [
+    19,
+    640
+   ],
+   "mean_hamming_weight": [
+    7.473684210526316,
+    2.3984375
+   ],
+   "delta_mean_hamming_weight": 5.075246710526316,
+   "z_mean_hamming_weight": 8.827502199027856,
+   "max_abs_z_marginal": 4.074054157241735,
+   "clbits_outside": [
+    6,
+    13,
+    16,
+    18,
+    19
+   ],
+   "pass": false
+  },
+  "cpu_rm_vs_gpu_rm": {
+   "shots": [
+    24,
+    1024
+   ],
+   "mean_hamming_weight": [
+    6.916666666666667,
+    7.419921875
+   ],
+   "delta_mean_hamming_weight": -0.503255208333333,
+   "z_mean_hamming_weight": -0.8738659113420364,
+   "max_abs_z_marginal": 13.153120018081097,
+   "clbits_outside": [
+    1,
+    2
+   ],
+   "pass": false
+  },
+  "cpu_rm_vs_gpu_kraus": {
+   "shots": [
+    24,
+    640
+   ],
+   "mean_hamming_weight": [
+    6.916666666666667,
+    2.3984375
+   ],
+   "delta_mean_hamming_weight": 4.518229166666667,
+   "z_mean_hamming_weight": 7.700829513276149,
+   "max_abs_z_marginal": 6.266603154118714,
+   "clbits_outside": [
+    1,
+    2,
+    4,
+    6,
+    12,
+    13,
+    15,
+    18
+   ],
+   "pass": false
+  },
+  "cpu_kraus_vs_gpu_rm": {
+   "shots": [
+    19,
+    1024
+   ],
+   "mean_hamming_weight": [
+    7.473684210526316,
+    7.419921875
+   ],
+   "delta_mean_hamming_weight": 0.05376233552631593,
+   "z_mean_hamming_weight": 0.09534272650663894,
+   "max_abs_z_marginal": 2.82851130424167,
+   "clbits_outside": [],
+   "pass": true
+  }
+ }
+}

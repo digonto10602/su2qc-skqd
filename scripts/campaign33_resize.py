@@ -13,7 +13,7 @@ f-cell tokens -- never by hand -- and lay the parts out on the 20 re-usable C4_P
 Inputs (every number is named with its JSON path in the output): `data.ladder.points` of C4_FCELLS_A (one run()
 call per point at chunks 476 / 952 / 1428 per GPU mode); `data.cells.<cell>.chunks[*].{shots, seconds}` and
 `data.cells.<cell>.seconds` of every f-cell JSON present (C4_FCELLS_A, C4_FCELLS_B); `data.cells_dropped` of both;
-`data.s3_redo.{seconds, shots}` of C4_FCELLS_B (the E8 rate, once harvested); validation/S3.json
+`data.s3_redo.{seconds, shots}` of C4_FCELLS_B (recorded in the E8 label, prompts/33c R5); validation/S3.json
 `data.cost.seconds_per_shot_best_ladder` (the E8 upper-bound label); the plan of record (validation/CV_2x3_plan.json
 via tokens_run.cv_plan at the tier tokens_run.plan_tier reads from the f-cell JSONs) and the S3 quota (2e5 per
 sector).
@@ -24,8 +24,9 @@ Rules.
   successful; r_ladder = b + c / chunk.
 * Scenario rates (prompts/33b R2): r_s = r_ladder x rho_s, rho_s = max over the measured families of
   b_{s,fam} / b_{E1,NAT-O0} (per-cell least-squares slopes over the recorded chunks), rho_E1 >= 1.  No cell:
-  E6a/b/c and E7(f) take rho_E1 labelled `assumed: E1 (...)`; E8 takes rho_E1 labelled `upper bound: ...` until
-  C4_FCELLS_B's s3_redo gives its measured seconds / shots.
+  E6a/b/c and E7(f) take rho_E1 labelled `assumed: E1 (...)`; E8 takes rho_E1 labelled `upper bound: ...`, and
+  once C4_FCELLS_B's s3_redo exists `upper bound (S3 and FCELLS_B s3_redo)` with the redo's seconds / shots
+  recorded (prompts/33c R5: its 14-shot calls are per-call dominated, so rho_E8 stays rho_E1).
 * N_max(kind, s) = share x (budget - setup) / (1.25 r_s), share 0.6 (plan runs) or 0.75 (quota / f-cells / cv3);
   parts n = ceil(N / N_max), raised while a part exceeds N_max after rounding; the per-circuit part boundaries are
   the first chunk starts >= i N_c / n of the unsplit chunk plan (skqd.campaign33.sampling.split_ranges).
@@ -304,19 +305,25 @@ def scenario_rates(fcells_jsons: list, ladder_fit: dict, chunk: int, s3_rate: di
         if ref is None:
             label = e1_label + "; " + label
         rates[s] = {"s_per_shot": r_lad * rho_e1, "rho": rho_e1, "source": "rho_E1", "fit": None, "label": label}
-    # E8 measured by C4_FCELLS_B's s3_redo (its recorded seconds and shots)
+    # E8 and C4_FCELLS_B's s3_redo (prompts/33c R5): the redo's 14-shot calls are overhead-dominated (3 200 shots in
+    # 141 s), gate S3 measured 0.0199 s/shot at 476-shot calls; both lie below the E1 ladder rate, so rho_E8 stays
+    # rho_E1 and the label names both measurements (an upper bound, never the redo's per-call-dominated rate)
     for path, js, job in fcells_jsons:
         s3r = ((js or {}).get("data") or {}).get("s3_redo")
         if s3r and s3r.get("seconds") and s3r.get("shots") and "E8" in rates:
             r = float(s3r["seconds"]) / float(s3r["shots"])
-            rates["E8"] = {"s_per_shot": r, "rho": r / r_lad, "source": f"{path} (job {job}) data.s3_redo.seconds / "
-                           "data.s3_redo.shots", "fit": None,
-                           "label": (f"measured: the faithful S3 redo, {s3r['shots']} shots in {s3r['seconds']:.1f} s "
-                                     f"(chunk {s3r.get('chunk')}, per-call set-up included)")}
+            rates["E8"] = dict(rates["E8"], s3_redo_s_per_shot=r,
+                               s3_redo_source=f"{path} (job {job}) data.s3_redo.seconds / data.s3_redo.shots",
+                               label=("upper bound (S3 and FCELLS_B s3_redo): rho_E1; gate S3 "
+                                      + (f"{s3_rate['s_per_shot']:.4g} s/shot at 476-shot calls ({s3_rate['source']})"
+                                         if s3_rate else "(validation/S3.json absent)")
+                                      + f"; C4_FCELLS_B s3_redo {s3r['shots']} shots in {float(s3r['seconds']):.1f} s "
+                                        f"= {r:.4g} s/shot at {s3r.get('chunk')}-shot calls (per-call set-up "
+                                        "dominated); prompts/33c R5"))
     rule = ("r_s = r_ladder x rho_s, r_ladder = b + c / chunk (E1 ladder of C4_FCELLS_A), rho_s = max over the "
             f"measured families of b_(s,fam) / b_({REF_CELL}) from least-squares t = c + b n over the recorded "
             "chunks of every f-cell present, rho_E1 >= 1; no cell: E6/E7 rho_E1 (assumed), E8 rho_E1 (upper bound) "
-            "until C4_FCELLS_B's s3_redo (prompts/33b R2)")
+            "(prompts/33b R2), kept after C4_FCELLS_B's s3_redo, which is recorded in the label (prompts/33c R5)")
     return {"scenario_rates": rates, "rate_rule": rule, "cell_fits": fits, "r_ladder": r_lad}
 
 
@@ -396,8 +403,29 @@ def _job(js):
     return ((((js or {}).get("data") or {}).get("run") or {}).get("ci") or {}).get("SLURM_JOB_ID")
 
 
+def cf_block(cf_path: str, with_cf: bool) -> tuple:
+    """prompts/33c step 3: the `cf` part contents of the C4_CF re-request, sized from the harvested C4_CF JSON
+    (cf_gpu.cf_part_plan).  Owner-gated: the items enter the slot queue (at its head: 33c section 4 puts the re-request
+    before the 33b deferred list) only with --with-cf, which requires --reassign.  Returns (out block, queue items)."""
+    from skqd.campaign33 import cf_gpu as CFG
+    p = cf_path if os.path.isabs(cf_path) else os.path.join(ROOT, cf_path)
+    js = _load_opt(p) if os.path.exists(p) else None
+    if js is None:
+        return {"status": f"absent: {_rel(p)} not present"}, []
+    plan = CFG.cf_part_plan(js)
+    items = [_item("cf", "CF", d, d["part"], d["parts"]) for d in plan["descriptors"]]
+    return ({"source": _rel(p), "K_per_part": plan["K_per_part"], "parts": plan["parts"], "K_total": plan["K_total"],
+             "k_min_reached": plan["k_min_reached"], "margin": CFG.CF_PART_MARGIN,
+             "status": ("queued (--with-cf): head of the slot queue" if with_cf else
+                        "owner-gated, not queued: prompts/33c section 4 (re-request only if the owner wants K = 2000, "
+                        "after the maintenance); run --reassign --with-cf to assign"),
+             "copies": [it["copy"] for it in items], "part_descriptors": plan["descriptors"]},
+            items if with_cf else [])
+
+
 def build(fcells_a: str, fcells_b: str, dry: bool, budget_s: float = None, force_parts: int = None,
-          runs_only: list = None, prev: dict = None, assign: bool = True) -> dict:
+          runs_only: list = None, prev: dict = None, assign: bool = True, with_cf: bool = False,
+          cf_path: str = None) -> dict:
     """The sizing (rates, runs, f-cell packing, cv3) and the slot queue; assign=True lays out generation 1
     (assign_generation1), assign=False leaves the queue in out['_queue'] for reassign()."""
     from campaign33 import DRY
@@ -560,8 +588,10 @@ def build(fcells_a: str, fcells_b: str, dry: bool, budget_s: float = None, force
             e["status"] = (f"not_evaluated: deferred by prompts/33b ({sp['parts']} parts at r_{s} = "
                            f"{rates[s]['s_per_shot']:.5g} s/shot)")
         cv3[run] = e
+    # ---- the C4_CF re-request (prompts/33c step 3; owner-gated)
+    cf_out, cf_items = cf_block(cf_path or os.path.join("validation", "dryrun" if dry else "", "C4_CF.json"), with_cf)
     # ---- the slot queue (A1e)
-    queue, seen = [], set()
+    queue, seen = list(cf_items), {it["copy"] for it in cf_items}
     for kind, key in SLOT_QUEUE:
         if kind == "fcells":
             sel = [it for it in fc_items if it["descriptor"]["group"] == "A"]
@@ -610,6 +640,7 @@ def build(fcells_a: str, fcells_b: str, dry: bool, budget_s: float = None, force
                                                    "cell_index_offset", "part", "parts")} for g in groups]},
            "cv3": cv3, "cv3_rule": {"CV3_SLOTS": list(CV3_SLOTS), "CV3_QUEUED_LAST": list(CV3_QUEUED_LAST),
                                     "source": "prompts/33b R6"},
+           "cf": cf_out,
            "allowlist_33a": "ci/allowed_jobs.campaign33a", "slots_available": len(slots)}
     out["_queue"] = queue
     return assign_generation1(out) if assign else out
@@ -827,7 +858,14 @@ def main(argv=None):
     ap.add_argument("--budget-s", type=float, default=None)
     ap.add_argument("--force-parts", type=int, default=None, help="testing / dry runs: split every run into >= n parts")
     ap.add_argument("--runs", nargs="*", default=None, help="only these runs (e.g. F1_B1)")
+    ap.add_argument("--with-cf", action="store_true",
+                    help="prompts/33c step 3 (owner-gated): queue the C4_CF re-request parts at the head of the slot "
+                         "queue; requires --reassign")
+    ap.add_argument("--cf", default=None, help="the harvested C4_CF JSON (default validation/[dryrun/]C4_CF.json)")
     a = ap.parse_args(argv)
+    if a.with_cf and not a.reassign:
+        print("refused: --with-cf only with --reassign (the cf parts go to free slots; generation 1 is fixed)")
+        return 2
     sub = "dryrun" if a.dry_run else ""
     fa = a.fcells_a or os.path.join("validation", sub, "C4_FCELLS_A.json")
     fb = a.fcells_b or os.path.join("validation", sub, "C4_FCELLS_B.json")
@@ -839,7 +877,8 @@ def main(argv=None):
         print(f"refused: {_rel(out_path)} records re-used slots (slot_history); a plain run would reset them to "
               "generation 1 -- use --reassign")
         return 2
-    out = build(fa, fb, a.dry_run, a.budget_s, a.force_parts, a.runs, prev=prev, assign=not a.reassign)
+    out = build(fa, fb, a.dry_run, a.budget_s, a.force_parts, a.runs, prev=prev, assign=not a.reassign,
+                with_cf=a.with_cf, cf_path=a.cf)
     if a.reassign:
         out = reassign(out, prev, parts_dir, a.status_dir or os.path.join(ROOT, "ci", "status"),
                        a.validation_dir or os.path.join(ROOT, "validation", sub))

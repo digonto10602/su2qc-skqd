@@ -19,12 +19,14 @@ EXPECTED = ["C1_IDEAL", "C2_CAL", "C2_GATE", "C2_ECHO", "C2_STAR", "C2_XY4", "C2
 
 
 SLOTS = [f"C4_PART_{i:02d}" for i in range(1, 21)]      # prompts/33a step D1: appended after the 33
+ADDED = ["C2_KCHK"]                                     # prompts/33d R3: appended after the slots
 
 
 def test_table_is_complete_and_in_the_order_of_section_1_5():
     tok = T.load_tokens()
-    assert list(tok)[:33] == EXPECTED and list(T.campaign_tokens()) == EXPECTED
-    assert list(tok)[33:] == SLOTS and list(T.slot_tokens()) == SLOTS and len(tok) == 53
+    assert list(tok)[:33] == EXPECTED and list(T.campaign_tokens()) == EXPECTED + ADDED
+    assert list(tok)[33:53] == SLOTS and list(T.slot_tokens()) == SLOTS
+    assert list(tok)[53:] == ADDED and len(tok) == 54, "prompts/33d: C2_KCHK appended (no index moves)"
 
 
 def test_every_entry_is_valid():
@@ -45,7 +47,9 @@ def test_allowlist_file_is_generated_from_the_table():
 def test_allowlist_matches_prompt_section_7a():
     lines = open(os.path.join(ROOT, "prompts", "33_2x3_four_class_perlmutter_campaign.md")).read().splitlines()
     i = lines.index("C1_IDEAL     00:30:00 1")
-    assert "\n".join(lines[i:i + 33]) + "\n" == T.allowlist_text()
+    # the 33 lines of prompts/33 7a, then the line prompts/33d section 4 adds (C2_KCHK)
+    assert T.allowlist_text().splitlines()[:33] == lines[i:i + 33]
+    assert T.allowlist_text().splitlines()[33:] == ["C2_KCHK      01:00:00 1"]
 
 
 def test_env_files():

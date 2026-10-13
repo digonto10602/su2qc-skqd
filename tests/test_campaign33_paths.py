@@ -105,21 +105,77 @@ def test_c2_cal_run2_and_a_c2_cell(sandbox, monkeypatch):
     assert set(D["comparisons"]["P4c_vs_K1"]) == {"pta", "rm", "kraus", "K1_device"}
     names = [c["name"] for c in d["criteria"]]
     assert any(n.startswith("P0 ") for n in names) and any(n.startswith("P4r ") for n in names)
-    # ---- a production cell reads the run-2 decision
+    # ---- a production cell reads the C2_KCHK decision (prompts/33d), here a stub with a validated Kraus GPU path
     monkeypatch.setattr(N, "f0_ibm", lambda *a, **k: {"g0": None, "f0": None, "stub": True})
+    write_kchk(tmp, "rm", "kraus_gpu_native")
     for tok in ("C2_ECHO", "C2_XY4"):
         rc = run_dry(tok)
         c = json.load(open(tmp / "validation" / "dryrun" / f"{tok}.json"))
         assert rc == 0 and c["status"] == "PASS", [x for x in c["criteria"] if not x["passed"]]
         C = c["data"]
-        assert C["representation_used"] == D["decision"]["production_representation"]
-        assert set(C["arms"]) == {"kraus_reference", "production"}
+        assert C["representation_used"] == "rm" and set(C["arms"]) == {"kraus_reference", "production"}
+        assert sorted(C["per_run"]) == sorted(f"{cid}|{conv}" for cid in TR.K1_IDS for conv in C["conventions"])
+        assert set(C["rm_vs_kraus_in_cell"]) == set(C["per_run"])
+        assert C["primary_class2_cell"] == (tok == "C2_XY4") and C["information_only"] is False
         for v in C["per_run"].values():
             cp = v["comparison_power"]
             assert cp["counts"] == "underpowered" and cp["circuit"] == ("like_for_like" if tok == "C2_XY4"
                                                                          else "different_circuit_variant")
             assert v["z_vs_K1"]["evaluated"] and v["measured_K1"]["accepted"] in (58, 45)
         assert C["arms"]["production"]["equal_shots"]
+
+
+def write_kchk(tmp, prod, path, stub=True):
+    d = {"status": "PASS", "data": {"stub": stub, "bug_confirmed": True,
+                                    "decision": {"production_representation": prod, "validated_kraus_gpu_path": path,
+                                                 "production_seconds_per_shot": None,
+                                                 "validated_path_seconds_per_shot": None}}}
+    (tmp / "validation" / "dryrun" / "C2_KCHK.json").write_text(json.dumps(d))
+
+
+@pytest.mark.parametrize("case", ["rm|kraus_gpu_native", "rm|kraus_gpu_cusv_nofusion", "rm|none", "blocked|none",
+                                  "absent"])
+def test_c2_xy4_reads_the_c2_kchk_decision(sandbox, monkeypatch, case):
+    """prompts/33d R1/R3 / step 2: C2_XY4 = I-XY4 on IBM-T3, echo half only, both K1 circuits, production RM from
+    C2_KCHK; a Kraus reference arm on the validated Kraus GPU path (mode native / custatevec_nofusion), none when no
+    path was validated; S0 FAILs (and nothing is sampled) when C2_KCHK is absent or says blocked."""
+    tmp, _ = sandbox
+    assert TR.C2_CELLS["C2_XY4"] == ("I-XY4", "IBM-T3", ("echo",)) and TR.C2_MIN_SHOTS["rm"] == 1000
+    built = []
+    monkeypatch.setattr(N, "ibm_spec", lambda rec, cell, rep, conv="echo", *a, **k: built.append((cell, rep, conv))
+                        or fake_spec(rep))
+    monkeypatch.setattr(N, "f0_ibm", lambda *a, **k: {"g0": None, "f0": None, "stub": True})
+    if case != "absent":
+        prod, path = case.split("|")
+        write_kchk(tmp, prod, path)
+    rc = run_dry("C2_XY4")
+    c = json.load(open(tmp / "validation" / "dryrun" / "C2_XY4.json"))
+    s0 = [x for x in c["criteria"] if x["name"].startswith("S0 representation decided")]
+    assert len(s0) == 1
+    C = c["data"]
+    if case in ("absent", "blocked|none"):
+        assert rc == 1 and c["status"] == "FAIL" and s0[0]["passed"] is False
+        assert "arms" not in C and not built, "the cell must not sample without a decision"
+        return
+    assert rc == 0 and c["status"] == "PASS", [x for x in c["criteria"] if not x["passed"]]
+    assert s0[0]["passed"] is True and C["representation_used"] == "rm"
+    assert C["conventions"] == ["echo"] and C["family"] == "IBM-T3"
+    assert sorted(C["per_run"]) == ["B0_ref117_k1|echo", "B1_ref29_k1|echo"]
+    assert C["arms"]["production"]["planned_representation"] == "rm"
+    if path == "none":
+        assert set(C["arms"]) == {"production"} and C["reference_arm"]["name"] is None and not C["rm_vs_kraus_in_cell"]
+    else:
+        assert set(C["arms"]) == {"kraus_reference", "production"}
+        assert C["arms"]["kraus_reference"]["planned_representation"] == "kraus"
+        assert C["reference_arm"]["validated_kraus_gpu_path"] == path
+        assert sorted(C["rm_vs_kraus_in_cell"]) == sorted(C["per_run"])
+        p4 = [x for x in C["physics_criteria_information_dry_run"] if x["name"].startswith("P4a' in-cell RM vs Kraus")]
+        assert len(p4) == 1
+    assert {(cell, conv) for cell, _r, conv in built} == {("I-XY4", "echo")}
+    assert C["representation_decision_for_later_cells"] == "rm"
+    for v in C["per_run"].values():
+        assert v["comparison_power"]["circuit"] == "like_for_like"
+    assert C["primary_class2_cell"] is True and C["information_only"] is False
 
 
 def test_c2_cell_falls_back_to_kraus_on_the_run1_record(sandbox):

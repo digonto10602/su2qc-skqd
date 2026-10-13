@@ -91,6 +91,64 @@ def cv3_files(run, dry) -> dict:
             "complete": all(present)}
 
 
+def cf_files(dry) -> dict:
+    """prompts/33c step 3: the `cf` parts C33_CF_part<i>of<n>.json (the largest n found is the sizing in force)."""
+    import glob
+    import re
+    found = {}
+    for f in glob.glob(vpath("C33_CF_part*of*", dry)):
+        m = re.search(r"C33_CF_part(\d+)of(\d+)\.json$", f)
+        if m:
+            found.setdefault(int(m.group(2)), {})[int(m.group(1))] = f
+    if not found:
+        return {"files": [], "parts": 0, "present": [], "complete": False}
+    n = max(found)
+    files = [vpath(f"C33_CF_part{i}of{n}", dry) for i in range(1, n + 1)]
+    present = [os.path.exists(f) for f in files]
+    return {"files": [os.path.relpath(f, ROOT) for f in files], "parts": n, "present": present,
+            "complete": all(present)}
+
+
+def merge_cf(dry, n_boot=None) -> dict:
+    """Merge the `cf` parts (prompts/33c step 3) -> validation/C33_CF.json: per-arm r(1e-3) with the bootstrap
+    interval, P16 / P17 as C4_CF evaluates them, the pooled k = 1 r, r_nc = its upper end, and the owner item
+    (cf_gpu.owner_item_r_nc against data/cf_trajectories/r_nc.json).  Pending while a part is missing."""
+    from skqd.report import GateResult
+
+    from .cf_gpu import merge_cf_parts, owner_item_r_nc
+    info = cf_files(dry)
+    if not info["parts"] or not info["complete"]:
+        return {"status": "pending" if info["parts"] else "absent", **info}
+    t0 = time.time()
+    docs = [load(f) for f in info["files"]]
+    comp = [d["data"]["merge_arrays"] for d in docs]
+    m = merge_cf_parts(comp, n_boot=n_boot if n_boot is not None else (20 if dry else None))
+    rnc = load("data/cf_trajectories/r_nc.json")
+    gate = ("dryrun/" if dry else "") + "C33_CF"
+    R = GateResult(gate, ("DRY RUN: " if dry else "") + f"Campaign 33 C4_CF re-request: the {info['parts']} cf parts "
+                   "merged (prompts/33c step 3)")
+    seeds = [sorted(d["data"]["seeds_by_arm"].values()) for d in docs]
+    flat = [s for ss in seeds for s in ss]
+    R.add("every part present, its K reached (S6 of each part) and the seeds of all parts disjoint",
+          {"parts": len(docs), "status": [d.get("status") for d in docs], "distinct_seeds": len(set(flat)),
+           "seeds": len(flat)}, f"{info['parts']} parts PASS, seeds distinct",
+          all(d.get("status") == "PASS" for d in docs) and len(set(flat)) == len(flat))
+    arms = m["arms"]
+    tb = "r_d1e-03"
+    R.add("P16 r per arm with 95 % bootstrap intervals; pooled r; new r_nc = its upper end",
+          {k: v["r"]["value"] for k, v in arms.items()}, "fields present",
+          all("ci95" in v["r"] for v in arms.values()) and m["pooled"] is not None and "ci95" in m["pooled"][tb])
+    R.add(f"P17 floor theorem (CF_traj C4'): min_S99 f_eff / f_ideal(1e-3) >= {m['floor_min']} on every arm",
+          {k: v["floor_min_feff_over_fideal_S99"]["value"] for k, v in arms.items()}, f">= {m['floor_min']}",
+          all(v["floor_min_feff_over_fideal_S99"]["value"] >= m["floor_min"] for v in arms.values()))
+    oi = owner_item_r_nc(m["pooled"][tb]["ci95"], rnc["r_nc"], rnc["pooled_r_ci95"]) if m["pooled"] else None
+    R.data = {"parts": info["files"], "dry_run": dry, **m, "owner_item_r_nc": oi,
+              "r_nc_in_use": rnc["r_nc"], "created": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())}
+    R.runtime_s = time.time() - t0
+    R.save()
+    return {"status": "PASS" if R.passed else "FAIL", "json": os.path.relpath(vpath("C33_CF", dry), ROOT), **info}
+
+
 def merge_cv3(info: dict) -> tuple:
     """Merge the cv3 parts of a run (prompts/33b step A3): the equal-shots totals per circuit summed over the
     parts, after checking that every part has the same N_eq and circuits and that the parts' ranges tile
@@ -430,13 +488,29 @@ def comparisons(dry, merged):
     cf = load("validation/CF_traj.json")["data"]
     rnc = load("data/cf_trajectories/r_nc.json")
     new = tj("C4_CF")
+    cfm = cf_files(dry)
+    cfm_d = load(vpath("C33_CF", dry)) if cfm["complete"] else None
+    cfm["status"] = (cfm_d or {}).get("status") or ("pending" if cfm["parts"] else "absent")
+    new_iv = _g(new, "data", "pooled", "r_d1e-03", "ci95")
+    from .cf_gpu import owner_item_r_nc
+    oi = owner_item_r_nc(new_iv, rnc["r_nc"], rnc["pooled_r_ci95"]) if new_iv else None
     rows.append({"old": f"CF_traj pooled r(1e-3) {rnc['pooled_r_point']:.4f} {rnc['pooled_r_ci95']}, r_nc {rnc['r_nc']:.4f}",
                  "redo": "C4_CF (K = 2000 per arm)", "status": "done" if new else "pending",
-                 "pooled_r": ST.compare(_g(new, "data", "pooled", "r_d1e-03", "value"),
-                                        _g(new, "data", "pooled", "r_d1e-03", "ci95"),
+                 "pooled_r": ST.compare(_g(new, "data", "pooled", "r_d1e-03", "value"), new_iv,
                                         rnc["pooled_r_point"], rnc["pooled_r_ci95"]),
                  "r_nc_new": _g(new, "data", "r_nc_new"),
-                 "owner_item": _g(new, "data", "owner_item_r_nc_outside_old_interval")})
+                 # prompts/33c R4 (b): evaluated here from the stored intervals; the harvested JSON is not rewritten
+                 "owner_item": oi["fires"] if oi else None, "owner_item_rules": oi,
+                 "owner_item_field_as_harvested": _g(new, "data", "owner_item_r_nc_outside_old_interval"),
+                 "r_nc_in_use": rnc["r_nc"], "r_nc_in_use_source": "data/cf_trajectories/r_nc.json (owner item: "
+                 "replacement is the owner's decision, prompts/33c section 5)",
+                 "k4_note": oi["k4_note"] if oi else None,
+                 "k4_r": _g(new, "data", "arms", "B0_ref25_k4", "r"),
+                 "merged_cf_parts": ({"json": "validation/C33_CF.json", "status": cfm.get("status"),
+                                      "pooled_r": _g(cfm_d, "data", "pooled", "r_d1e-03"),
+                                      "r_nc_new": _g(cfm_d, "data", "r_nc_new"),
+                                      "owner_item": _g(cfm_d, "data", "owner_item_r_nc", "fires")}
+                                     if cfm_d else None)})
     # CV_2x3_plan / Q0P_2x3_plan P3 -> C4_F5
     cvp = load("validation/CV_2x3_plan.json")["data"]["criteria_by_seed"]["f=0.10"]
     q3 = load("validation/Q0P_2x3_plan.json")["data"]["emulated_check"]["per_seed"]
@@ -509,13 +583,16 @@ def main(dry=False):
         statuses[t] = ("DROPPED" if (d.get("data") or {}).get("dropped") else d.get("status"))
     for run, v in split.items():
         statuses[f"C33_{run}"] = v["status"] if v["status"] != "pending" else None
+    cfm = merge_cf(dry)                      # prompts/33c step 3 (absent until the owner's re-request has run)
+    if cfm["status"] not in ("absent", "pending"):
+        statuses["C33_CF"] = cfm["status"]
     merged, P = merge_halves(tokens, dry, P0)
     rows = matrix_rows(tokens, dry)
     comp = comparisons(dry, merged)
     gate = ("dryrun/" if dry else "") + GATE
     R = GateResult(gate, ("DRY RUN skeleton: " if dry else "") +
                    "2x3 four-class campaign: matrix, S3-quota merges and the comparison with every earlier 2x3 result")
-    R.add("every token JSON present", f"{sum(present.values())} of {len(tokens)}", "33 of 33", all(present.values()))
+    R.add("every token JSON present", f"{sum(present.values())} of {len(tokens)}", f"{len(tokens)} of {len(tokens)}", all(present.values()))
     R.add("every present token PASS (tokens dropped by data/campaign33/engines.json excluded)",
           {t: s for t, s in statuses.items() if s and s != "PASS"} or "all PASS",
           "no FAIL", all(s in ("PASS", "DROPPED") for s in statuses.values() if s))
@@ -527,7 +604,7 @@ def main(dry=False):
                 R.add(f"P15 gate-S3 criterion {sec}: recall S999 >= 0.9 at 2e5 and E0 inside Weinstein",
                       [m["recall_S999"], m["E0_in_weinstein"]], ">= 0.9 and inside", m["P15_gate_S3_criterion"]["pass"])
     R.data = {"dry_run": dry, "tokens": tokens, "present": present, "statuses": statuses, "merged_s3_quota": merged,
-              "split_runs": split,
+              "split_runs": split, "cf_parts": cfm,
               "matrix": rows, "comparison": comp, "prompt": "prompts/33 A7 / section 6",
               "created": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())}
     R.runtime_s = time.time() - t0
