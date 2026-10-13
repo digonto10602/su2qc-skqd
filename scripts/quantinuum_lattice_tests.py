@@ -51,7 +51,7 @@ SEED_T2, SEED_T4, SEED_FC, SEED_POR, SEED_QV, SEED_T6 = (35_000_000, 35_100_000,
 SEED_RULES = {"T2": "35 000 000 + 1000 c + chunk (c = index in the sorted id list)",
               "T3_fcells": "35 200 000 + 1000 s + c (s = scenario index in SCENARIOS, c = index in the sorted ids)",
               "T3_plan_of_record": "35 300 000 + 1000 s + c", "T3_rate": "44 200 000 (one call per scenario)",
-              "T4": "35 100 000 + c", "T6": "35 500 000 + c", "QV_2x4": "35 400 000 + 1000 (k - 1) + c (token QV_2x4_K<k>)"}
+              "T4": "35 100 000 + c", "T6": "35 500 000 + c", "QV_2x4": "no random numbers in slot runs (statevectors only); the dry run's sampling is not used"}
 N_T2 = 20000
 N_FCELL = 2000
 N_SIGMA, P_MIN = 5.0, 1e-3
@@ -558,7 +558,9 @@ def fcell(P, m, cnt, N, spec, qc, seed, dt):
 
 def tier_noise_4(args):
     """QN_2x4 (R3): analytic only -- f0 per circuit and scenario from the native counts (noise.f0_quantinuum on
-    the circuit read back from the frozen JSON) and the gate-only f per device (Q0P_2x4 predict); 0 shots."""
+    the circuit read back from the frozen JSON) and the gate-only f per device, per source (prompts/35b R4: opt3,
+    structured; E7 matched at each source's own mean counts); 0 shots.  Resumable: rows already computed are kept
+    (a bare id of the pre-35b record is the opt-3 source)."""
     from skqd import circuits_qiskit as cq
     from skqd import quantinuum_native as qn
     from skqd.campaign33 import noise as N
@@ -566,27 +568,41 @@ def tier_noise_4(args):
     t0 = time.time()
     idx, mans, _ = family(lat)
     ids = sorted(idx["circuits"])
+    prev = frag("QN_2x4", "analytic") or {}
     table = {}
+    for c, row in (prev.get("f0") or {}).items():
+        table[c + ".opt3" if (c not in mans and c + ".opt3" in mans) else c] = row
+    by_src = {}
+    for c, m in mans.items():
+        by_src.setdefault(m.get("source", "opt3"), {})[c] = m
     for cid in ids:
+        if cid in table:
+            continue
+        if args.budget_s and time.time() - t0 > float(args.budget_s):
+            break
         m = mans[cid]
         c = qn.from_json(json.loads(read_frozen(lat, m["files"]["json"])))
         ir, n, _ = qn.pytket_to_ir(c)
         qc = cq.ir_to_qiskit(ir, n, measure=True)
         row = {}
         for sid in SCENARIOS:
-            spec = spec_of(sid, n, mans, lat)
+            spec = spec_of(sid, n, by_src[m.get("source", "opt3")], lat)
             f0 = N.f0_quantinuum(qc, spec, ref_bits=m["reference_bits"])
             row[sid] = {"f0": f0["f0"], "g0": f0["g0"], "log10_f0": (math.log10(f0["f0"]) if f0["f0"] > 0 else None),
                         "n_2q": f0.get("n_2q"), "n_1q_noisy": f0.get("n_1q_noisy")}
         table[cid] = row
+        save_frag("QN_2x4", "analytic_partial", {"f0": table})
         print(f"  {cid}: E1 f0 {row['E1']['f0']:.3e} [{time.time() - t0:.0f} s]", flush=True)
     import gate_Q0P_2x3 as GQ                 # the device rows of Q0P_2x4's predict stage, computed here from the same
-    devices, _tab = GQ.device_rows_L(4, mans)  # frozen counts (Q0P_2x4 itself is held by the prompts/35a STOP)
-    save_frag("QN_2x4", "analytic", {"f0": table, "scenarios": list(SCENARIOS), "devices": devices,
-                                     "devices_source": "gate_Q0P_2x3.device_rows_L(4, manifests) (the device table's formula)",
+    devices = {s_: GQ.device_rows_L(4, ms)[0] for s_, ms in by_src.items()}   # frozen counts, per source
+    save_frag("QN_2x4", "analytic", {"f0": table, "scenarios": list(SCENARIOS), "devices_by_source": devices,
+                                     "devices": devices.get("structured") or devices.get("opt3"),
+                                     "devices_source": ("gate_Q0P_2x3.device_rows_L(4, manifests of one source) (the device "
+                                                        "table's formula); `devices` = the structured source's rows when built"),
                                      "circuits_built": sorted(mans), "built_k": idx.get("built_k"),
-                                     "sampled_shots": 0, "wall_s": time.time() - t0, "environment": env_record(),
-                                     "e7_counts": mean_counts(mans)})
+                                     "sampled_shots": 0, "wall_s": float(prev.get("wall_s", 0.0)) + time.time() - t0,
+                                     "environment": env_record(),
+                                     "e7_counts": {s_: mean_counts(ms) for s_, ms in by_src.items()}})
     return assemble_QN_2x4()
 
 
@@ -1288,8 +1304,8 @@ def assemble_QH(lat):
 
 # --------------------------------------------------------------------------- tier: gpu-verify (token QV_2x4)
 def native_qiskit_any(lat, cid, man):
-    """The native circuit as a qiskit circuit: the QPY v13 bundle when it exists (k = 1, prompts/35 3.1(g)), else the
-    frozen pytket JSON through the pytket-free reader (prompts/35a R1: QV_2x4_K2..K4 on the CI's skqd env)."""
+    """The native circuit as a qiskit circuit: the QPY v13 bundle when it exists, else the frozen pytket JSON through
+    the pytket-free reader (prompts/35a R1)."""
     from skqd import circuits_qiskit as cq
     from skqd import quantinuum_native as qn
     ip = os.path.join(qpy_dir(lat), "index.json")
@@ -1306,111 +1322,292 @@ def native_qiskit_any(lat, cid, man):
                                                    "json_sha256": man["json_sha256"]}
 
 
-def gpu_estimate(lat, k):
-    """prompts/35a R1: predicted GPU seconds of one QV_2x4_K<k> job = sum over its circuits of the instruction count of
-    the pytket_to_ir -> ir_to_qiskit circuit (rz + 3 PhasedX + ZZPhase + measures + 1 barrier, from the manifests) x
-    the measured 2.32e-4 s per instruction (validation/S2_2x4.json data.gpu_validation.telemetry_summary)."""
-    s4 = load_json(os.path.join(ROOT, "validation", "S2_2x4.json"))["data"]["gpu_validation"]["telemetry_summary"]
-    spi = float(s4["s_per_instruction"])
-    idx, mans, _ = family(lat)
-    ids = [c for c in idx["circuits"] if int(mans[c]["k"]) == int(k)]
-    ninstr = {c: int(mans[c]["counts"]["n_rz"] + 3 * mans[c]["counts"]["n_phasedx"] + mans[c]["counts"]["n_zz"]
-                     + mans[c]["counts"]["n_meas"] + 1) for c in ids}
-    return {"circuits": len(ids), "instructions_per_circuit": ninstr, "s_per_instruction": spi,
-            "predicted_s": spi * sum(ninstr.values()), "source": "validation/S2_2x4.json data.gpu_validation.telemetry_summary.s_per_instruction",
-            "rule": gpu_estimate.__doc__.strip()}
+S_PER_INSTRUCTION_SRC = "validation/S2_2x4.json data.gpu_validation.telemetry_summary.s_per_instruction"
+SLOT_SHARE, SLOT_WALL_S = 0.75, 3600.0
+N_SLOTS = 8
+PARTS_DIR = os.path.join(ROOT, "ci", "parts")
 
 
-def tier_gpu_verify(args):
-    """QV_2x4_K<k>: per 2x4 native circuit of one k the Aer statevector on the GPU (cuStateVec) projected on the codewords
-    against the exact coarse state (max abs(dpsi) up to phase, leakage), then noiseless measurement sampling of 6250
-    shots drawn from that statevector (numpy, seeded: |psi|^2 is the exact noiseless measurement distribution, so no
-    second simulation) and the per-state 5 sigma test (p_s >= 1e-3).  --dry-run: --lattice 2 on the CPU, same JSON."""
+def s_per_instruction():
+    return float(load_json(os.path.join(ROOT, "validation", "S2_2x4.json"))["data"]["gpu_validation"]
+                 ["telemetry_summary"]["s_per_instruction"])
+
+
+def slot01_ids():
+    """B0_ref0_k1 and B1_ref0_k1 of prompts/35b (the first reference of each sector, k = 1) as base ids."""
+    from skqd.exact import Model
+    from skqd.krylov import references
+    from quantinuum_build_circuits import circuit_id
+    M = Model(4)
+    return [circuit_id(tb, int(references(M.basis, tb)[0]), 1) for tb in (0, 2)], M
+
+
+def tier_slots(args):
+    """prompts/35b section 4 (venv: pytket + qiskit 2.5.2): the QPY v13 bundles of slot QV_2x4_01 -- per circuit
+    (B0_ref0_k1, B1_ref0_k1) the opt-3-source native circuit, its opt-3 source (the prototype transpile), the
+    structured-source native circuit and the structured IR itself -- plus the S2_2x4 reproduction circuit as committed;
+    writes ci/parts/QV_2x4_01.json (the runs, the native/source pairs with their bound B, the prediction) and the
+    placeholders QV_2x4_02..08 (filled after slot 01 chooses the source)."""
+    from qiskit import transpile
+
+    import gate_S2_2x4 as S4
+    from quantinuum_build_circuits import TRANSPILE
+
+    from skqd import circuits_qiskit as cq
+    from skqd import quantinuum_native as qn
+    from skqd.campaign33.circuits import dump_qpy13, sha256_file
+    t0 = time.time()
+    base_ids, M = slot01_ids()
+    S4._MODELS[4] = M
+    idx, mans, _ = family(4)
+    dts = {tb: float(S4.dt_of(4, tb)) for tb in (0, 2)}
+    F = S4.preload_factory(4, "exact", sorted(set(dts.values())))
+    out_dir = qpy_dir(4)
+    os.makedirs(out_dir, exist_ok=True)
+    spi = s_per_instruction()
+    runs, pairs = [], []
+    for base in base_ids:
+        mo, ms = mans[base + ".opt3"], mans[base + ".structured"]
+        gates = F.coarse_step(int(mo["reference"]), 1, dts[int(mo["twoB"])])
+        src_struct = cq.ir_to_qiskit(gates, 28, measure=False)
+        src_opt3 = transpile(src_struct, **TRANSPILE)
+        if int(src_opt3.count_ops().get("rzz", 0)) != int(mo["counts"]["rzz_before"]):
+            raise SystemExit(f"{base}: the re-transpiled opt-3 source differs from the build (rzz count)")
+        items = []
+        for src, m in (("opt3", mo), ("structured", ms)):
+            c = qn.from_json(json.loads(read_frozen(4, m["files"]["json"])))
+            if sha256_text(read_frozen(4, m["files"]["json"])) != m["json_sha256"]:
+                raise SystemExit(f"{m['id']}: frozen JSON sha256 mismatch")
+            ir, n, _ = qn.pytket_to_ir(c)
+            items.append((f"{m['id']}:native", "native", src, cq.ir_to_qiskit(ir, n, measure=False), m))
+        items.append((f"{base}.opt3:source", "source", "opt3", src_opt3, mo))
+        items.append((f"{base}.structured:source", "source", "structured", src_struct, ms))
+        for label, kind, src, qc, m in items:
+            path = os.path.join(out_dir, label.replace(":", ".") + ".qpy.gz")
+            rec = dump_qpy13(qc, path)
+            runs.append({"label": label, "base_id": base, "kind": kind, "source": src, "qpy": rel(path),
+                         "gz_sha256": rec["gz_sha256"], "qpy_header": rec["header"], "n_instructions": int(len(qc.data)),
+                         "twoB": int(m["twoB"]), "reference": int(m["reference"]), "k": 1, "dt": float(m["dt"]),
+                         "method": "save_statevector (full 2^28 vector)"})
+            print(f"  {label}: {len(qc.data)} instructions [{time.time() - t0:.0f} s]", flush=True)
+        for src, m in (("opt3", mo), ("structured", ms)):
+            pairs.append({"native": f"{m['id']}:native", "source": f"{m['id']}:source",
+                          "B": m["Q1L"]["rounding"]["state_bound_B"], "B_from": f"data/quantinuum/circuits_2x4/{m['id']}.manifest.json Q1L.rounding"})
+    s2 = load_json(os.path.join(ROOT, "validation", "S2_2x4.json"))["data"]["gpu_validation"]["compiled"]["B0_ref0_k1|all_to_all"]
+    runs.append({"label": "S2_2x4:B0_ref0_k1|all_to_all", "base_id": base_ids[0], "kind": "reproduction", "source": "S2_2x4-cz",
+                 "qpy": s2["file"], "gz_sha256": sha256_file(os.path.join(ROOT, s2["file"])),
+                 "sha256_expected": s2["sha256"], "n_instructions": int(s2["n_instructions"]),
+                 "twoB": 0, "reference": int(mans[base_ids[0] + ".opt3"]["reference"]), "k": 1, "dt": dts[0],
+                 "expected_phase_aligned": float(s2["max_abs_difference_vs_coarse_states_phase_aligned"]),
+                 "expected_from": "validation/S2_2x4.json data.gpu_validation.compiled['B0_ref0_k1|all_to_all']",
+                 "method": "save_amplitudes on the codewords (the S2_2x4 method, gate_S2_2x4.py L1615-1648)"})
+    pred = spi * sum(r["n_instructions"] for r in runs)
+    part = {"slot": "QV_2x4_01", "prompt": "prompts/35b_2x4_exactness_ruling.md section 4", "lattice": "2x4",
+            "content": "the decision job: which 2x4 source is frozen", "runs": runs, "pairs": pairs,
+            "prediction": {"s_per_instruction": spi, "source": S_PER_INSTRUCTION_SRC, "predicted_s": pred,
+                           "budget_s": SLOT_SHARE * SLOT_WALL_S, "fits": pred <= SLOT_SHARE * SLOT_WALL_S},
+            "criteria": {
+                "V1": "every run completed on the GPU with the policy telemetry",
+                "V2": ("S2_2x4 reproduction: the committed CZ-basis circuit of S2_2x4 (data/S2_2x4/..._v13.qpy.gz) gives "
+                       "max abs(dpsi) phase-aligned = the recorded 1.528e-9 to 1e-12 (same qiskit 1.4.3 / Aer 0.15.1). "
+                       "Executor's note: prompts/35b section 4 names 'its opt-3 source' for this check, but the S2_2x4 "
+                       "number belongs to the CZ-basis transpile, not to the rz/rx/ry/rzz opt-3 source of the Quantinuum "
+                       "family; the S2_2x4 circuit is therefore run as its own reproduction run (the opt-3 source is run "
+                       "and recorded as well)"),
+                "V3": "native-vs-own-source max abs(dpsi) (full vector, phase removed) <= B + 1e-12 for both sources, else STOP",
+                "V4": ("the frozen source is the one whose native circuits meet max abs(dpsi) < 1e-10 and leakage < 1e-9 "
+                       "against krylov.coarse_states on both circuits; both -> the smaller maximum; neither -> STOP, the "
+                       "planner rules in writing with the measured numbers")},
+            "run_count_note": ("prompts/35b says 'six statevector runs' and lists four kinds per circuit for two circuits; "
+                               "this part carries the eight listed runs plus the S2_2x4 reproduction run (nine)"),
+            "created": now(), "git_commit": git_commit_short()}
+    os.makedirs(PARTS_DIR, exist_ok=True)
+    with open(os.path.join(PARTS_DIR, "QV_2x4_01.json"), "w") as fh:
+        json.dump(part, fh, indent=1)
+    for k in range(2, N_SLOTS + 1):
+        p = os.path.join(PARTS_DIR, f"QV_2x4_{k:02d}.json")
+        if not os.path.exists(p):
+            with open(p, "w") as fh:
+                json.dump({"slot": f"QV_2x4_{k:02d}", "prompt": "prompts/35b section 4", "runs": [], "pairs": [],
+                           "status": ("placeholder: filled after QV_2x4_01 has chosen the source (the chosen source's "
+                                      "remaining k = 1 circuits and, if built, k >= 2, with the per-state noiseless test)")},
+                          fh, indent=1)
+    print(f"ci/parts/QV_2x4_01.json: {len(runs)} runs, predicted {pred:.0f} s of {SLOT_SHARE * SLOT_WALL_S:.0f} s")
+    return 0
+
+
+def git_commit_short():
+    r = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, capture_output=True, text=True)
+    return r.stdout.strip() or "n/a"
+
+
+def _statevector_gpu(qc, device, threads, ints=None):
+    """Aer statevector (double; cuStateVec on the GPU) of the unitary part; with `ints` only those amplitudes."""
     from qiskit_aer import AerSimulator
 
     from skqd.campaign33 import circuits as C
+    cc = C.unitary_part(qc)
+    kw = dict(method="statevector", precision="double")
+    if device == "GPU":
+        kw.update(device="GPU", cuStateVec_enable=True)
+    else:
+        kw["max_parallel_threads"] = int(threads)
+    sim = AerSimulator(**kw)
+    if ints is None:
+        cc.save_statevector()
+        res = sim.run(cc, shots=1).result()
+        return np.asarray(res.data(0)["statevector"].data), res
+    cc.save_amplitudes([int(x) for x in ints])
+    res = sim.run(cc, shots=1).result()
+    return np.asarray(res.data(0)["amplitudes"], dtype=complex), res
+
+
+def dry_part_2x2():
+    """The same structure at 2x2 (laptop CPU path check): native QPY bundles and their IR sources for two k = 1
+    circuits."""
+    from gate_S2D import circuit_set
+    from quantinuum_build_circuits import circuit_id
+    _M, _F, cset = circuit_set(2)
+    idx, mans, _ = family(2)
+    ids = [c for c in sorted(idx["circuits"]) if c.endswith("_k1")][:2]
+    runs, pairs = [], []
+    for cid in ids:
+        m = mans[cid]
+        runs.append({"label": f"{cid}:native", "base_id": cid, "kind": "native", "source": "ir-opt3", "qpy": None,
+                     "twoB": m["twoB"], "reference": m["reference"], "k": 1, "dt": m["dt"]})
+        runs.append({"label": f"{cid}:source", "base_id": cid, "kind": "source", "source": "ir", "qpy": None,
+                     "twoB": m["twoB"], "reference": m["reference"], "k": 1, "dt": m["dt"]})
+        pairs.append({"native": f"{cid}:native", "source": f"{cid}:source", "B": None})
+    gates = {circuit_id(*c[:3]): c[3] for c in cset}
+    return {"slot": "dryrun-2x2", "runs": runs, "pairs": pairs}, gates, mans
+
+
+def tier_gpu_verify(args):
+    """Token QV_2x4_NN (prompts/35b section 4): the runs of ci/parts/QV_2x4_NN.json on the Aer GPU statevector --
+    each against krylov.coarse_states (max abs(dpsi) up to phase on the codewords, leakage), the native-vs-own-source
+    distances against B, the S2_2x4 reproduction -- and the frozen-source decision of slot 01 (V4).  --dry-run:
+    --lattice 2 on the CPU, the same JSON structure."""
+    from qiskit_aer import AerSimulator
+
+    from skqd import circuits_qiskit as cq
+    from skqd import quantinuum_native as qn
+    from skqd.campaign33 import circuits as C
+    from skqd.campaign33.circuits import load_qpy, sha256_file
     from skqd.hpc import ci_context, gpu_count, gpu_telemetry, slurm_layout
     from skqd.report import GateResult
     lat = args.lattice
-    kk = int(args.k or 1)
     dry = bool(args.dry_run)
     t0 = time.time()
-    phases = {}
     ci = ci_context()
     avail = list(AerSimulator().available_devices())
     device = "GPU" if ("GPU" in avail and not dry) else "CPU"
-    idx, mans, _ = family(lat)
-    ids = sorted(c for c in idx["circuits"] if int(mans[c]["k"]) == kk)
+    slot = f"QV_2x4_{int(args.slot or 1):02d}"
     if dry:
-        ids = ids[:2] if lat == 2 else ids[:1]
-    t = time.time()
+        part, ir_by_id, mans = dry_part_2x2()
+    else:
+        part = load_json(os.path.join(PARTS_DIR, slot + ".json"))
+        if not part.get("runs"):
+            raise SystemExit(f"{slot}: no runs in ci/parts/{slot}.json ({part.get('status')})")
     P = Phys(lat)
-    phases["model_s"] = time.time() - t
     from skqd.exact import mass_default
     from skqd.krylov import apply_groups, basis_vector, term_groups
     groups = term_groups(P.M.terms, G2, mass_default(G2))
-    per, seeds = {}, {}
-    t_ex, t_sa = 0.0, 0.0
-    shots = QV_SHOTS if not dry else 200
-    for c_i, cid in enumerate(ids):
-        m = mans[cid]
-        qc, src = native_qiskit_any(lat, cid, m)
+    exact_cache, per, vecs, phases = {}, {}, {}, {"load_s": 0.0, "statevector_s": 0.0, "compare_s": 0.0}
+    keep = {p_[k] for p_ in part["pairs"] for k in ("native", "source")}
+    for r in part["runs"]:
         t = time.time()
-        psi_q = C.statevector(qc, device=device, threads=int(args.threads))
-        psi_ex = apply_groups(groups, basis_vector(P.M.basis.dim, int(m["reference"])), int(m["k"]) * float(m["dt"]))
-        ex = C.exactness(psi_q, psi_ex, P.emb, C.measure_map(qc) == {i: i for i in range(P.n)})
-        t_ex += time.time() - t
+        if dry:
+            base = r["base_id"]
+            if r["kind"] == "native":
+                qc, _e = load_native_qiskit(2, base)
+            else:
+                qc = cq.ir_to_qiskit(ir_by_id[base], P.n, measure=False)
+            sha = None
+        else:
+            path = os.path.join(ROOT, r["qpy"])
+            sha = sha256_file(path)
+            if sha != r["gz_sha256"]:
+                raise SystemExit(f"{r['label']}: QPY sha256 mismatch")
+            qc = load_qpy(path)[0]
+        phases["load_s"] += time.time() - t
+        key = (int(r["twoB"]), int(r["reference"]), int(r["k"]))
+        if key not in exact_cache:
+            exact_cache[key] = apply_groups(groups, basis_vector(P.M.basis.dim, key[1]), key[2] * float(r["dt"]))
+        psi_ex = exact_cache[key]
         t = time.time()
-        seed = SEED_QV + 1000 * (kk - 1) + c_i
-        p = np.abs(psi_q) ** 2
-        del psi_q
-        rng = np.random.default_rng(seed)
-        draws = rng.choice(p.size, size=int(shots), p=p / p.sum())
-        del p
-        cnt = {}
-        for x in draws.tolist():
-            cnt[int(x)] = cnt.get(int(x), 0) + 1
-        probs = {int(P.emb.ints[i]): float(abs(psi_ex[i]) ** 2) for i in P.sector[int(m["twoB"])]["indices"]}
-        ps = per_state(cnt, probs, int(shots))
-        t_sa += time.time() - t
-        per[cid] = {"exactness": ex, "per_state": ps, "seed": seed, "shots": int(shots), "input": src}
-        seeds[cid] = seed
-        print(f"  {cid}: dpsi {ex['max_abs_dpsi_up_to_phase']:.2e} leak {ex['leakage']:.2e} max z {ps['max_z']:.2f} "
+        if r["kind"] == "reproduction":
+            amps, res = _statevector_gpu(qc, device, args.threads, ints=P.emb.ints)
+            ov = complex(np.vdot(psi_ex, amps))
+            rec = {"max_abs_dpsi_raw": float(np.abs(amps - psi_ex).max()),
+                   "max_abs_dpsi_phase_aligned": float(np.abs(amps * np.exp(-1j * np.angle(ov)) - psi_ex).max()),
+                   "leakage": float(1.0 - np.sum(np.abs(amps) ** 2))}
+            rec["reproduces"] = abs(rec["max_abs_dpsi_phase_aligned"] - float(r["expected_phase_aligned"])) <= 1e-12
+            rec["expected_phase_aligned"] = r["expected_phase_aligned"]
+        else:
+            sv, res = _statevector_gpu(qc, device, args.threads)
+            ex = C.exactness(sv, psi_ex, P.emb, True)
+            rec = {"max_abs_dpsi": ex["max_abs_dpsi_up_to_phase"], "leakage": ex["leakage"],
+                   "meets_bar": bool(ex["max_abs_dpsi_up_to_phase"] < 1e-10 and ex["leakage"] < 1e-9)}
+            if r["label"] in keep:
+                vecs[r["label"]] = sv
+            else:
+                del sv
+        phases["statevector_s"] += time.time() - t
+        rec.update({"label": r["label"], "kind": r["kind"], "source": r["source"], "n_instructions": int(len(qc.data)),
+                    "seconds": time.time() - t, "qpy_gz_sha256": sha,
+                    "aer_success": bool(getattr(res, "success", True))})
+        per[r["label"]] = rec
+        print(f"  {r['label']}: {json.dumps({k: rec[k] for k in rec if k.startswith('max') or k == 'leakage'})} "
               f"[{time.time() - t0:.0f} s]", flush=True)
-    phases.update({"exactness_s": t_ex, "sampling_s": t_sa})
+    t = time.time()
+    pair_rec = []
+    for p_ in part["pairs"]:
+        a, b = vecs.get(p_["native"]), vecs.get(p_["source"])
+        d = qn.global_phase_residual(a, b)["max_abs_dpsi"] if (a is not None and b is not None) else None
+        B = p_.get("B")
+        pair_rec.append({"native": p_["native"], "source": p_["source"], "max_abs_dpsi_native_vs_source": d, "B": B,
+                         "consistent": (d is not None and (B is None or d <= B + 1e-12))})
+    vecs.clear()
+    phases["compare_s"] = time.time() - t
     wall = time.time() - t0
     tel = gpu_telemetry() if device == "GPU" else None
-    token = f"QV_2x4_K{kk}"
-    gate = token if not dry else f"dryrun/{token}"
+    gate = slot if not dry else f"dryrun/{slot}"
     R = GateResult(gate, ("DRY RUN (laptop CPU path check at 2x2): " if dry else "")
-                   + f"the 15 native k = {kk} 2x4 circuits: Aer GPU statevector vs the exact coarse states and noiseless "
-                     "per-state sampling (prompts/35 section 4, prompts/35a R1)")
-    dmax = max(v["exactness"]["max_abs_dpsi_up_to_phase"] for v in per.values())
-    lmax = max(v["exactness"]["leakage"] for v in per.values())
-    nf = sum(len(v["per_state"]["failures"]) for v in per.values())
-    R.add("V1 max abs(dpsi) (up to phase) < 1e-10 and leakage < 1e-9 on every circuit (projected on the codewords)",
-          {"circuits": len(per), "max_abs_dpsi": dmax, "max_leakage": lmax}, "< 1e-10; < 1e-9",
-          dmax < 1e-10 and lmax < 1e-9 and all(v["exactness"]["ok"] for v in per.values()))
-    R.add("V2 noiseless per-state 5 sigma test (p_s >= 1e-3) at %d shots, 0 failures; 0 outside the exact support" % shots,
-          {"failures": nf, "max_z": max(v["per_state"]["max_z"] for v in per.values()),
-           "max_outside": max(v["per_state"]["fraction_outside_exact_support"] for v in per.values())},
-          "0; 0", nf == 0 and max(v["per_state"]["fraction_outside_exact_support"] for v in per.values()) == 0.0)
+                   + f"{slot}: 2x4 native and source statevectors on the Aer GPU vs the exact coarse states (prompts/35b section 4)")
     run = {"engine": f"AerSimulator statevector double, device {device}" + (", cuStateVec" if device == "GPU" else ""),
            "device": device, "available_devices": avail, "gpus": (gpu_count(slurm_layout()) if device == "GPU" else 0),
-           "wall_s": wall, "phases": phases, "seconds_per_shot": t_sa / max(1, shots * len(per)),
-           "sampling_rule": "numpy Generator.choice over |psi|^2 of the statevector (one simulation per circuit)",
+           "wall_s": wall, "phases": phases, "seconds_per_shot": None,
+           "s_per_instruction": phases["statevector_s"] / max(1, sum(v["n_instructions"] for v in per.values())),
            "peak_gpu_memory_mib": (tel or {}).get("peak_memory_mib"), "mean_gpu_utilization": (tel or {}).get("mean_utilization_pct"),
-           "gpu_telemetry": tel, "required_gpu_memory_mb": 4096 if lat == 4 else None, "E_p": None,
-           "prediction": gpu_estimate(4, kk) if lat == 4 else None,
-           "ci": ci, "versions": versions(("qiskit", "qiskit-aer", "numpy", "scipy"))}
-    R.add("V3 telemetry: wall, phases, s/shot, GPUs" + ("" if dry else ", peak GPU memory, utilisation (policy fields)"),
-          {k: run[k] for k in ("wall_s", "seconds_per_shot", "gpus", "peak_gpu_memory_mib", "mean_gpu_utilization")},
-          "present" + (" (GPU fields null on the CPU dry run)" if dry else ""),
-          all(run[k] is not None for k in ("wall_s", "seconds_per_shot"))
-          and (dry or (run["gpus"] == 1 and run["peak_gpu_memory_mib"] is not None and run["mean_gpu_utilization"] is not None)))
-    R.data = {"prompt": PROMPT + " + prompts/35a_quantinuum_tests_rulings.md R1", "token": token, "k": kk, "dry_run": dry,
-              "lattice": f"2x{lat}", "qpu_seconds": 0, "hqc": 0, "per_circuit": per, "seeds": seeds,
-              "seed_rule": SEED_RULES["QV_2x4"], "run": run}
+           "gpu_telemetry": tel, "E_p": None, "prediction": part.get("prediction"), "ci": ci,
+           "versions": versions(("qiskit", "qiskit-aer", "numpy", "scipy"))}
+    v1 = all(v["aer_success"] for v in per.values()) and len(per) == len(part["runs"]) and (
+        dry or (device == "GPU" and run["gpus"] == 1 and run["peak_gpu_memory_mib"] is not None))
+    R.add("V1 every run completed" + ("" if dry else " on the GPU with the policy telemetry"),
+          {"runs": len(per), "of": len(part["runs"]), "device": device, "peak_gpu_memory_mib": run["peak_gpu_memory_mib"]},
+          "all; GPU; telemetry", v1)
+    repro = [v for v in per.values() if v["kind"] == "reproduction"]
+    R.add("V2 S2_2x4 reproduction: max abs(dpsi) phase-aligned of the committed CZ-basis circuit = the recorded value to 1e-12",
+          {v["label"]: [v["max_abs_dpsi_phase_aligned"], v["expected_phase_aligned"]] for v in repro} or "no reproduction run (dry)",
+          "|measured - recorded| <= 1e-12", all(v["reproduces"] for v in repro) if repro else dry)
+    v3 = all(p_["consistent"] for p_ in pair_rec)
+    R.add("V3 native-vs-own-source max abs(dpsi) <= B + 1e-12 for both sources (else STOP: conversion or bound wrong)",
+          [{k: p_[k] for k in ("native", "max_abs_dpsi_native_vs_source", "B")} for p_ in pair_rec], "<= B + 1e-12", v3)
+    by_src = {}
+    for v in per.values():
+        if v["kind"] == "native":
+            by_src.setdefault(v["source"], []).append(v)
+    ok_src = {s_: all(v["meets_bar"] for v in vs) for s_, vs in by_src.items()}
+    worst = {s_: max(v["max_abs_dpsi"] for v in vs) for s_, vs in by_src.items()}
+    passing = [s_ for s_ in ok_src if ok_src[s_]]
+    chosen = min(passing, key=lambda s_: worst[s_]) if passing else None
+    R.add("V4 the frozen source: its native circuits meet max abs(dpsi) < 1e-10 and leakage < 1e-9 on both circuits "
+          "(both -> the smaller maximum; neither -> STOP, the planner rules)",
+          {"max_abs_dpsi_by_source": worst, "meets_bar": ok_src, "chosen": chosen}, "a source meets the bar", chosen is not None)
+    R.data = {"prompt": "prompts/35b_2x4_exactness_ruling.md section 4", "token": slot, "dry_run": dry,
+              "lattice": f"2x{lat}", "qpu_seconds": 0, "hqc": 0, "per_run": per, "pairs": pair_rec,
+              "frozen_source": chosen, "run": run, "part": {k: v for k, v in part.items() if k != "runs"},
+              "stop": (not v3) or chosen is None}
     if dry:
         os.makedirs(os.path.join(ROOT, "validation", "dryrun"), exist_ok=True)
         os.makedirs(os.path.join(ROOT, "reports", "dryrun"), exist_ok=True)
@@ -1418,38 +1615,29 @@ def tier_gpu_verify(args):
 
 
 def tier_qv_tokens(args):
-    """prompts/35a R1: the four tokens QV_2x4_K1..K4 in scripts/gate_tokens.json (QV_2x4 of prompts/35 renamed K1),
-    appended after the campaign-33 tokens, estimate_minutes from `gpu_estimate` (the k's own manifests when its 15 are
-    built; else K1's, the instruction count being k-independent), and ci/allowed_jobs.q35 with four lines."""
+    """prompts/35b section 4: the eight generic slots QV_2x4_01..08 in scripts/gate_tokens.json (the QV_2x4_K1..K4 of
+    35a R1 removed), appended after the campaign-33 tokens; estimate_minutes of slot 01 from its part's prediction,
+    the others the 45-min budget (their content is written after slot 01); ci/allowed_jobs.q35 with eight lines."""
     p = os.path.join(ROOT, "scripts", "gate_tokens.json")
-    t = open(p).read()
-    d = json.loads(t)
+    d = json.loads(open(p).read())
     head = [k for k in d if not k.startswith("QV_2x4")]
     out = {k: d[k] for k in head}
-    src = {}
-    for k in (1, 2, 3, 4):
-        est = gpu_estimate(4, k)
-        if est["circuits"] != 15:
-            est = gpu_estimate(4, 1)
-            src[k] = "K1 manifests (the k manifests are not all built; prompts/35a R1: k-independent count)"
-        else:
-            src[k] = f"the 15 k = {k} manifests"
-        out[f"QV_2x4_K{k}"] = {
-            "script": "scripts/quantinuum_lattice_tests.py", "args": ["--lattice", "4", "--tier", "gpu-verify", "--k", str(k)],
-            "class": 3, "walltime": "01:00:00", "gpus": 1, "env": "skqd",
-            "estimate_minutes": int(math.ceil(est["predicted_s"] / 60.0)),
-            "content": (f"prompts/35 section 4 + prompts/35a R1: Aer GPU statevector (cuStateVec) of the 15 native k = {k} 2x4 "
-                        f"circuits vs the exact coarse states, then noiseless per-state sampling at 6250 shots drawn from the "
-                        f"statevector; estimate = instruction count ({src[k]}) x 2.32e-4 s/instruction (validation/S2_2x4.json); "
-                        f"appended after the campaign-33 tokens (indices and seeds unchanged); allowlist ci/allowed_jobs.q35")}
-    s = json.dumps(out, indent=1)
-    if list(out)[:len(head)] != head:
-        raise SystemExit("token order changed")
+    p01 = os.path.join(PARTS_DIR, "QV_2x4_01.json")
+    pred = load_json(p01)["prediction"]["predicted_s"] if os.path.exists(p01) else None
+    for k in range(1, N_SLOTS + 1):
+        t = f"QV_2x4_{k:02d}"
+        est = int(math.ceil(pred / 60.0)) if (k == 1 and pred) else int(SLOT_SHARE * SLOT_WALL_S / 60.0)
+        out[t] = {"script": "scripts/quantinuum_lattice_tests.py", "args": ["--lattice", "4", "--tier", "gpu-verify", "--slot", f"{k:02d}"],
+                  "class": 3, "walltime": "01:00:00", "gpus": 1, "env": "skqd", "estimate_minutes": est,
+                  "content": (f"prompts/35b section 4: generic 2x4 GPU slot {k:02d}; its runs are ci/parts/{t}.json in the "
+                              f"requested commit" + (" (slot 01: the decision job, the frozen 2x4 source)" if k == 1 else "")
+                              + "; appended after the campaign-33 tokens (indices and seeds unchanged); allowlist "
+                              "ci/allowed_jobs.q35")}
     with open(p, "w") as fh:
-        fh.write(s)
+        fh.write(json.dumps(out, indent=1))
     with open(os.path.join(ROOT, "ci", "allowed_jobs.q35"), "w") as fh:
-        fh.write("".join(f"QV_2x4_K{k}   01:00:00 1\n" for k in (1, 2, 3, 4)))
-    print({k: (v["estimate_minutes"], src.get(int(k[-1]))) for k, v in out.items() if k.startswith("QV")})
+        fh.write("".join(f"QV_2x4_{k:02d}   01:00:00 1\n" for k in range(1, N_SLOTS + 1)))
+    print({k: v["estimate_minutes"] for k, v in out.items() if k.startswith("QV")})
     return 0
 
 
@@ -1526,7 +1714,7 @@ def tier_qsc(args):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--lattice", type=int, choices=(2, 3, 4), required=True)
-    ap.add_argument("--tier", required=True, choices=("export", "noiseless", "noise", "pecos", "hugr", "gpu-verify", "qsc", "qv-tokens", "assemble"))
+    ap.add_argument("--tier", required=True, choices=("export", "noiseless", "noise", "pecos", "hugr", "gpu-verify", "qsc", "qv-tokens", "slots", "assemble"))
     ap.add_argument("--part", default=None)
     ap.add_argument("--only", nargs="*", default=None)
     ap.add_argument("--scenarios", nargs="*", default=None)
@@ -1535,7 +1723,7 @@ def main(argv=None):
     ap.add_argument("--budget-s", type=float, default=None)
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
-    ap.add_argument("--k", type=int, choices=(1, 2, 3, 4), default=None, help="--tier gpu-verify: the k of token QV_2x4_K<k>")
+    ap.add_argument("--slot", type=int, default=None, help="--tier gpu-verify: the slot NN of token QV_2x4_NN (prompts/35b)")
     ap.add_argument("--note", default=None, help="the reason recorded with an explicit --shots (hugr tier)")
     args = ap.parse_args(argv)
     if args.tier == "export":
@@ -1552,6 +1740,8 @@ def main(argv=None):
         return tier_qsc(args)
     if args.tier == "qv-tokens":
         return tier_qv_tokens(args)
+    if args.tier == "slots":
+        return tier_slots(args)
     if args.tier == "gpu-verify":
         return tier_gpu_verify(args)
     if args.lattice == 2:

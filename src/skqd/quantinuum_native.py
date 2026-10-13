@@ -402,14 +402,27 @@ def _frame_equivalence(g_ir: dict, g_nat: dict, glob: list, n: int) -> dict:
             C[a], C[b] = Z @ C[a], Z @ C[b]
             flips += 1
     nseg = 0
+    step_worst = worst                          # the per-segment (local) residual: frames off the commutant at an rzz
+    drift, drift_rate, dpos = 0.0, 0.0, None
     for q in range(n):
         j = jq[q]
         M = g_nat[q][j] @ C[q] @ g_ir[q][j].conj().T
         r = _phase_free_residual(M, np.eye(2, dtype=complex))
         nseg += j + 1
-        if r > worst:
-            worst, wpos = r, {"qubit": q, "segment": j, "kind": "final frame not proportional to I"}
-    return {"max_residual": float(worst), "segments": nseg, "worst": wpos, "n_sign_flips": flips}
+        if r / (j + 1) > drift_rate:
+            drift_rate, dpos = r / (j + 1), {"qubit": q, "segments": j + 1, "final_drift": r}
+        drift = max(drift, r)
+    # The final frame carries the SUM of the per-segment differences along the qubit (the frames' diagonal phases are
+    # only seen at the end): the image of the per-segment bar under the triangle inequality is final <= n_seg(q) x tol,
+    # i.e. the per-segment average drift_rate, which is what is compared with the per-segment bar (prompts/35b R4).
+    worst = max(step_worst, drift_rate)
+    if drift_rate >= step_worst:
+        wpos = dict(dpos or {}, kind="final frame drift per segment (accumulated over the qubit's segments)")
+    return {"max_residual": float(worst), "segments": nseg, "worst": wpos, "n_sign_flips": flips,
+            "step_max_residual": float(step_worst), "final_drift_max": float(drift),
+            "final_drift_per_segment_max": float(drift_rate),
+            "rule": ("per-segment residual = max(frame off the rzz commutant at any rzz, final drift / n_segments of the "
+                     "qubit); the final drift is the triangle-inequality sum of the per-segment differences")}
 
 
 def _angle_diff(a: float, b: float) -> float:
@@ -463,10 +476,13 @@ def local_equivalence(ir_gates: list, native_circ, n: int, tol: float = 1e-12, c
     max_seg = 0.0
     n_seg = 0
     worst_seg = None
+    frame_info = None
     if skel_ok:
         if canonical:                          # prompts/35b R4: frame tracking through the commutant of rzz (exact)
             fr = _frame_equivalence(g_ir, g_nat, gl_ir, n)
             max_seg, n_seg, worst_seg = fr["max_residual"], fr["segments"], fr["worst"]
+            frame_info = {k: fr[k] for k in ("step_max_residual", "final_drift_max", "final_drift_per_segment_max",
+                                             "n_sign_flips", "rule")}
         else:
             for q in range(n):
                 for j, (A, B) in enumerate(zip(g_ir[q], g_nat[q])):
@@ -486,7 +502,8 @@ def local_equivalence(ir_gates: list, native_circ, n: int, tol: float = 1e-12, c
             "segments_compared": n_seg, "segments_max_residual": max_seg if skel_ok else None,
             "worst_segment": worst_seg, "first_difference": first_diff,
             "measure_map_identity": meas_ok, "implicit_permutation_identity": bool(perm_ok),
-            "tol": tol, "canonical_rz_frames": bool(canonical), "ok": bool(seg_ok and meas_ok and perm_ok)}
+            "tol": tol, "frame_tracking": bool(canonical), "frame_info": frame_info,
+            "ok": bool(seg_ok and meas_ok and perm_ok)}
 
 
 CANON_TOL_HALF_TURNS = 1e-11      # pytket stores an angle within < 1e-11 half-turns of a multiple of 1/4 as that multiple
@@ -632,7 +649,8 @@ def local_equivalence_35a(ir_gates: list, native_circ, n: int, structured: bool 
                            "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)", "first_difference": first},
             "ii_segments_vs_readback": {"ok": bool(seg["ok"]), "segments_max_residual": seg["segments_max_residual"],
                                         "segments_compared": seg["segments_compared"], "tol": 1e-12,
-                                        "skeleton_identical": seg["skeleton_per_qubit_identical"]},
+                                        "skeleton_identical": seg["skeleton_per_qubit_identical"],
+                                        "worst": seg["worst_segment"], "frame_info": seg["frame_info"]},
             "iii_rounding": dict(rnd, bar=STATE_BAR, ok=bool(B is not None and B < STATE_BAR),
                                  status="recorded (prompts/35b R2: GPU consistency criterion, not a Q1L criterion)"),
             "rounding": {k: rnd[k] for k in ("n_rounded_gates", "max_abs_delta", "sum_abs_delta", "state_bound_B",

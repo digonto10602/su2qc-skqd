@@ -26,6 +26,7 @@ invocation (--sector B0, then --sector B1) to stay inside the 30-minute rule: wi
 threads on the i7-8750H a circuit takes ~3 min (level-2 compilation ~60 s, six 20-qubit statevectors).
 """
 import argparse
+import glob
 import hashlib
 import json
 import os
@@ -284,6 +285,103 @@ def exact_coarse_4(M, r, k, dt):
     return apply_groups(_G["groups"], basis_vector(M.basis.dim, int(r)), int(k) * float(dt))
 
 
+SOURCES_4 = ("opt3", "structured")          # prompts/35b R4: the source is the id suffix (<id>.<source>)
+SOURCE_TEXT = {
+    "opt3": ("the prototype transpile of the structured IR (qiskit opt 3, basis rz/rx/ry/rzz, seed 7), then pytket "
+             "level 0 (prompts/35 3.1(a))"),
+    "structured": ("the exact structured IR of circuit_set(4) itself (cx, ry, one-qubit unitary, p, cp, x; no qiskit "
+                   "opt-3) through ir_to_pytket (CX, Ry, Unitary1qBox, U1, CU1, X), then pytket level 0 (prompts/35b R4)")}
+
+
+def sid_of(cid, source):
+    return f"{cid}.{source}"
+
+
+def migrate_opt3_suffix():
+    """prompts/35b R4: the 2x4 circuits built before 35b (opt-3 source, bare ids) get the source suffix: files
+    <id>.qasm.gz / .json.gz / .manifest.json -> <id>.opt3.*; manifest id, files and `source` updated.  The circuit
+    texts (and their sha256) are unchanged.  Idempotent."""
+    moved = []
+    for p in sorted(glob.glob(os.path.join(OUT, "B*_k*.manifest.json"))):
+        base = os.path.basename(p)[:-len(".manifest.json")]
+        if base.count(".") or not os.path.exists(p):
+            continue
+        man = json.load(open(p))
+        new = sid_of(base, "opt3")
+        for kind in ("qasm", "json"):
+            old_f = man["files"][kind]
+            new_f = old_f.replace(base + ".", new + ".", 1)
+            os.replace(os.path.join(OUT, old_f), os.path.join(OUT, new_f))
+            man["files"][kind] = new_f
+        man.update({"id": new, "base_id": base, "source": "opt3", "source_text": SOURCE_TEXT["opt3"]})
+        write_text(os.path.join(OUT, new + ".manifest.json"), json.dumps(man, indent=1))
+        os.remove(p)
+        moved.append(new)
+    return moved
+
+
+def build_one_4s(i):
+    """One 2x4 circuit of the STRUCTURED source (prompts/35b R4): the structured IR written by ir_to_pytket, pytket
+    level 0, Q1L (35b R2, structured), gzipped files, manifest; no dense statevector."""
+    t0 = time.time()
+    twoB, r, k, _none = _G["set"][i]
+    base = circuit_id(twoB, r, k)
+    cid = sid_of(base, "structured")
+    man_path = os.path.join(OUT, cid + ".manifest.json")
+    if os.path.exists(man_path) and not _G["force"]:
+        return cid, "kept"
+    n, M = _G["n"], _G["model"]
+    dt = float(_G["dt"][twoB])
+    gates = _G["factory"].coarse_step(int(r), int(k), dt)
+    ir_c = qn.ir_counts(gates)
+    pc = qn.ir_to_pytket(gates, n, measure=True)
+    tc = time.time()
+    cc = qn.compile_native(pc, "H2-2", 0)
+    t_comp = time.time() - tc
+    tl = time.time()
+    q1l = qn.local_equivalence_35a(gates, cc, n, structured=True)
+    t_q1l = time.time() - tl
+    n2_src = int(ir_c.get("cx", 0) + ir_c.get("cp", 0) + ir_c.get("cz", 0) + ir_c.get("rzz", 0))
+    counts = dict(qn.native_counts(cc), rzz_before=n2_src)
+    qasm = qn.to_qasm(cc)
+    js_text = json.dumps(qn.to_json(cc), sort_keys=True)
+    codec = _G["emb"].codec
+    ref_bits = tuple(int(x) for x in codec.encode(M.basis.labels[int(r)]))
+    ref_int = int(sum(b << q for q, b in enumerate(ref_bits)))
+    psi = exact_coarse_4(M, r, k, dt)
+    p = np.abs(psi) ** 2
+    top = int(np.argmax(p))
+    man = {
+        "id": cid, "base_id": base, "source": "structured", "source_text": SOURCE_TEXT["structured"],
+        "kind": "signed_2x4_coarse_step", "lattice": "2x4", "sector": f"B={twoB // 2}",
+        "twoB": int(twoB), "reference": int(r), "k": int(k), "repetitions": 1, "dt": dt, "dt_source": DT_SOURCE_4,
+        "g2": G2, "n_qubits": n,
+        "family": ("gate_S2D.circuit_set(4): CircuitFactory(Model(4), 4.0) default (angle_mode exact, structured "
+                   "hopping), coarse_step(r, k, dt); the term IR from gate_S2_2x4.preload_factory"),
+        "original_ir_counts": ir_c,
+        "rzz_before_rule": "two-qubit gates of the structured source (cx + cp): each becomes one ZZPhase (prompts/35b R4)",
+        "levels": {"0": {"level": 0, "compile_s": t_comp, "counts": qn.native_counts(cc), "Q1L": q1l, "Q1L_s": t_q1l,
+                         "passes_Q1L": bool(q1l["ok"])}},
+        "levels_attempted": {"0": qn.native_counts(cc), "2": "not attempted at 2x4 (prompts/35a R4)"},
+        "frozen_level": 0, "compile_mode": "level0", "selection_rule": SELECTION_RULE_4,
+        "Q1L": q1l, "Q1L_rule": "prompts/35b R2 (i)+(ii), structured=True", "STOP_Q1L": not bool(q1l["ok"]),
+        "device_name_compiled_for": "H2-2", "counts": counts, "hqc_per_shot": qn.hqc_per_shot(counts),
+        "files": {"qasm": cid + ".qasm.gz", "json": cid + ".json.gz"}, "sha256_of": "the uncompressed text",
+        "qasm_sha256": sha256(qasm), "json_sha256": sha256(js_text),
+        "reference_bits": list(ref_bits), "reference_int": ref_int,
+        "p_reference": float(p[int(r)]), "p_reference_source": "exact coarse state (krylov.apply_groups), basis index r",
+        "most_probable_basis_index": top, "p_most_probable": float(p[top]),
+        "versions": qn.versions(), "git_commit": _G["commit"],
+        "built": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()), "build_s": time.time() - t0,
+    }
+    write_gz(os.path.join(OUT, cid + ".qasm.gz"), qasm)
+    write_gz(os.path.join(OUT, cid + ".json.gz"), js_text)
+    write_text(man_path, json.dumps(man, indent=1))
+    return cid, (f"built in {time.time() - t0:.0f} s (structured, ZZ {counts['n_zz']} vs source 2q {n2_src}, PhasedX "
+                 f"{counts['n_phasedx']}, Q1L {q1l['ok']} (segments {q1l['ii_segments_vs_readback']['segments_max_residual']}), "
+                 f"B {q1l['rounding']['state_bound_B']:.1e}, rounded {q1l['rounding']['n_rounded_gates']})")
+
+
 def build_one_4(i):
     """One 2x4 circuit: prototype transpile, levels, Q1L, frozen gzipped files, manifest.  No dense
     statevector (R2): Q1S is the gate's sparse stage and the deferred GPU token QV_2x4."""
@@ -291,7 +389,8 @@ def build_one_4(i):
 
     t0 = time.time()
     twoB, r, k, _none = _G["set"][i]
-    cid = circuit_id(twoB, r, k)
+    base = circuit_id(twoB, r, k)
+    cid = sid_of(base, "opt3")                    # prompts/35b R4: the source in the id suffix
     man_path = os.path.join(OUT, cid + ".manifest.json")
     if os.path.exists(man_path) and not _G["force"]:
         return cid, "kept"
@@ -366,7 +465,8 @@ def build_one_4(i):
     p = np.abs(psi) ** 2
     top = int(np.argmax(p))
     man = {
-        "id": cid, "kind": "signed_2x4_coarse_step", "lattice": "2x4", "sector": f"B={twoB // 2}",
+        "id": cid, "base_id": base, "source": "opt3", "source_text": SOURCE_TEXT["opt3"],
+        "kind": "signed_2x4_coarse_step", "lattice": "2x4", "sector": f"B={twoB // 2}",
         "twoB": int(twoB), "reference": int(r), "k": int(k), "repetitions": 1, "dt": dt, "dt_source": DT_SOURCE_4,
         "g2": G2, "n_qubits": n,
         "family": ("gate_S2D.circuit_set(4): CircuitFactory(Model(4), 4.0) default (angle_mode exact, structured "
@@ -440,15 +540,23 @@ def main_4(args, t0):
         _G["groups"] = term_groups(M.terms, G2, mass_default(G2))
         if args.level2_probe:
             return level2_probe_4(args.level2_probe, 1800.0)
-        print(f"2x4 set: {len(cset)} circuits, {len(idx)} selected (k {ks}), {emb.n} qubits, levels "
+        print(f"2x4 set ({args.source} source): {len(cset)} circuits, {len(idx)} selected (k {ks}), {emb.n} qubits, levels "
               f"{_G['levels']} ({time.time() - t0:.0f} s)", flush=True)
         import multiprocessing as mp
 
+        moved = migrate_opt3_suffix()
+        if moved:
+            print(f"  prompts/35b R4: {len(moved)} opt-3 circuits renamed to <id>.opt3.*", flush=True)
+        builder = build_one_4s if args.source == "structured" else build_one_4
         with mp.get_context("fork").Pool(args.workers) as pool:
-            for cid, msg in pool.imap_unordered(build_one_4, idx):
+            for cid, msg in pool.imap_unordered(builder, idx):
                 print(f"  {cid}: {msg} [{time.time() - t0:.0f} s]", flush=True)
         if not all(os.path.exists(os.path.join(OUT, c + ".manifest.json")) for c in ("CAL_zeros", "CAL_x0")):
             calibration_circuits(int(emb.n))
+    if args.index_only:
+        moved = migrate_opt3_suffix()
+        if moved:
+            print(f"  prompts/35b R4: {len(moved)} opt-3 circuits renamed to <id>.opt3.*", flush=True)
     write_index_4(cset, t0)
     return 0
 
@@ -494,58 +602,69 @@ def level2_probe_4(cid, cap_s):
 
 
 def write_index_4(cset, t0):
-    """index.json over the BUILT circuits (prompts/35 3.3: `built_k`), sha256 of the uncompressed texts."""
-    ids_all = [circuit_id(*c[:3]) for c in cset]
-    ids = [c for c in ids_all if os.path.exists(os.path.join(OUT, c + ".manifest.json"))]
-    if not ids:
-        return
-    mans = [json.load(open(os.path.join(OUT, i + ".manifest.json"))) for i in ids]
-    cals = [json.load(open(os.path.join(OUT, c + ".manifest.json"))) for c in ("CAL_zeros", "CAL_x0")
-            if os.path.exists(os.path.join(OUT, c + ".manifest.json"))]
-    # prompts/35a R4: every manifest records the level-2 attempt (scripted from level2_probe.json, never typed)
+    """index.json over the BUILT circuits of both sources (prompts/35 3.3 `built_k`; prompts/35b R4 the source in the
+    id suffix, R6 `paused_by`), sha256 of the uncompressed texts; per-source summaries."""
     pp = os.path.join(OUT, "level2_probe.json")
     probe = json.load(open(pp)) if os.path.exists(pp) else None
-    for m in mans:
-        if probe is None:
-            break
+    l2 = None
+    if probe is not None:
         l2 = (f"capped at {probe['cap_s']:.0f} s on {probe['id']} (prompts/35a R4; attempt wall {probe['wall_s']:.0f} s)"
               if not probe.get("finished") else f"finished in {probe['compile_s']:.0f} s on {probe['id']}")
-        la = {"0": m["levels"].get("0", {}).get("counts"), "2": l2}
-        changed = m.get("levels_attempted") != la or m.get("selection_rule") != SELECTION_RULE_4
-        m["levels_attempted"] = la
-        m["selection_rule"] = SELECTION_RULE_4
-        if "i_skeleton" not in m.get("Q1L", {}):
-            m["Q1L_rule"] = ("prompts/35 raw form at build (before prompts/35a); the restated Q1L (35a R2) is recomputed "
-                             "from the frozen files by gate_Q0P_2x3.py --lattice 4 --stage verify")
-            changed = True
-        if changed:
-            write_text(os.path.join(OUT, m["id"] + ".manifest.json"), json.dumps(m, indent=1))
-    zz = [m["counts"]["n_zz"] for m in mans]
-    px = [m["counts"]["n_phasedx"] for m in mans]
-    hq = [m["hqc_per_shot"] for m in mans]
-    built_k = sorted({int(m["k"]) for m in mans})
-    complete_k = [k for k in built_k if all(os.path.exists(os.path.join(OUT, circuit_id(c[0], c[1], k) + ".manifest.json"))
-                                            for c in cset if c[2] == k)]
+    cals = [json.load(open(os.path.join(OUT, c + ".manifest.json"))) for c in ("CAL_zeros", "CAL_x0")
+            if os.path.exists(os.path.join(OUT, c + ".manifest.json"))]
+    sources, all_ids, files = {}, [], {}
+    for src in SOURCES_4:
+        ids_all = [sid_of(circuit_id(*c[:3]), src) for c in cset]
+        ids = [c for c in ids_all if os.path.exists(os.path.join(OUT, c + ".manifest.json"))]
+        if not ids:
+            continue
+        mans = [json.load(open(os.path.join(OUT, i + ".manifest.json"))) for i in ids]
+        for m in mans:                         # prompts/35a R4 record of the level-2 attempt (scripted from the probe)
+            la = {"0": m["levels"].get("0", {}).get("counts"),
+                  "2": l2 if src == "opt3" else "not attempted at 2x4 (prompts/35a R4)"}
+            if l2 is not None and (m.get("levels_attempted") != la or m.get("selection_rule") != SELECTION_RULE_4):
+                m["levels_attempted"] = la
+                m["selection_rule"] = SELECTION_RULE_4
+                write_text(os.path.join(OUT, m["id"] + ".manifest.json"), json.dumps(m, indent=1))
+        zz = [m["counts"]["n_zz"] for m in mans]
+        px = [m["counts"]["n_phasedx"] for m in mans]
+        hq = [m["hqc_per_shot"] for m in mans]
+        built_k = sorted({int(m["k"]) for m in mans})
+        complete_k = [k for k in built_k if all(os.path.exists(os.path.join(OUT, sid_of(circuit_id(c[0], c[1], k), src)
+                                                                            + ".manifest.json")) for c in cset if c[2] == k)]
+        sources[src] = {
+            "circuits": ids, "circuits_planned": ids_all, "built_k": built_k, "complete_k": complete_k,
+            "paused_by": "prompts/35b R6" if src == "opt3" else "prompts/35b R6 (k >= 2 after QV_2x4_01, or earlier in 30-min chunks)",
+            "source_text": SOURCE_TEXT[src],
+            "summary": {"n_circuits": len(mans),
+                        "n_zz": {"min": min(zz), "max": max(zz), "mean": float(np.mean(zz))},
+                        "n_phasedx": {"min": min(px), "max": max(px), "mean": float(np.mean(px))},
+                        "hqc_per_shot": {"min": min(hq), "max": max(hq), "mean": float(np.mean(hq))},
+                        "rzz_before": sorted({m["counts"]["rzz_before"] for m in mans}),
+                        "frozen_levels": sorted({m["frozen_level"] for m in mans}, key=str),
+                        "compile_modes": sorted({m.get("compile_mode", "level0") for m in mans})}}
+        all_ids += ids
+        files.update({m["id"]: {"qasm": m["files"]["qasm"], "json": m["files"]["json"], "qasm_sha256": m["qasm_sha256"],
+                                "json_sha256": m["json_sha256"], "frozen_level": m.get("frozen_level"),
+                                "compile_mode": m.get("compile_mode", "level0"), "source": src} for m in mans})
+    files.update({c["id"]: {"qasm": c["files"]["qasm"], "json": c["files"]["json"], "qasm_sha256": c["qasm_sha256"],
+                            "json_sha256": c["json_sha256"], "frozen_level": 0, "source": "calibration"} for c in cals})
+    if not all_ids:
+        return
     index = {
-        "produced_by": "scripts/quantinuum_build_circuits.py --lattice 4", "prompt": "prompts/35 3.3",
-        "lattice": "2x4", "circuits": ids, "circuits_planned": ids_all, "calibration": [c["id"] for c in cals],
-        "built_k": built_k, "complete_k": complete_k,
-        "files": {m["id"]: {"qasm": m["files"]["qasm"], "json": m["files"]["json"],
-                            "qasm_sha256": m["qasm_sha256"], "json_sha256": m["json_sha256"],
-                            "frozen_level": m.get("frozen_level"), "compile_mode": m.get("compile_mode", "level0")}
-                  for m in mans + cals},
+        "produced_by": "scripts/quantinuum_build_circuits.py --lattice 4", "prompt": "prompts/35 3.3, prompts/35a, prompts/35b",
+        "lattice": "2x4", "circuits": all_ids, "calibration": [c["id"] for c in cals], "sources": sources,
+        "frozen_source": None,
+        "frozen_source_rule": "chosen by the measurement of slot QV_2x4_01 (prompts/35b section 4), not now",
+        "built_k": sorted({k for s in sources.values() for k in s["built_k"]}),
+        "files": files,
         "sha256_of": "the uncompressed text of every .qasm.gz / .json.gz (gzip mtime 0, level 9)",
-        "summary": {"n_circuits": len(mans),
-                    "n_zz": {"min": min(zz), "max": max(zz), "mean": float(np.mean(zz))},
-                    "n_phasedx": {"min": min(px), "max": max(px), "mean": float(np.mean(px))},
-                    "hqc_per_shot": {"min": min(hq), "max": max(hq), "mean": float(np.mean(hq))},
-                    "rzz_before": sorted({m["counts"]["rzz_before"] for m in mans}),
-                    "frozen_levels": sorted({m["frozen_level"] for m in mans}, key=str),
-                    "compile_modes": sorted({m.get("compile_mode", "level0") for m in mans})},
+        "summary": sources[next(iter(sources))]["summary"],
+        "summary_note": "the first built source's summary (kept for the generic readers); per source under `sources`",
         "level2_probe": probe,
         "rebuild_command": ("~/.local/share/su2qc-quantinuum/venv/bin/python scripts/quantinuum_build_circuits.py "
-                            "--lattice 4 --only <id> [--out <dir>]  (deterministic at pytket 2.18.4 / qiskit 2.5.2: "
-                            "the sha256 above is the check)"),
+                            "--lattice 4 --source <opt3|structured> --only <base id> [--out <dir>] (deterministic at "
+                            "pytket 2.18.4 / qiskit 2.5.2: the sha256 above is the check)"),
         "device_name_compiled_for": "H2-2", "transpile": TRANSPILE, "levels": list(_G["levels"]),
         "selection_rule": SELECTION_RULE_4, "dt": _G["dt"], "dt_source": DT_SOURCE_4,
         "versions": qn.versions(), "python": sys.executable,
@@ -553,8 +672,8 @@ def write_index_4(cset, t0):
         "built": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
     }
     write_text(os.path.join(OUT, "index.json"), json.dumps(index, indent=1))
-    print(f"wrote {OUT}/index.json: {len(ids)} circuits, built_k {built_k}, ZZ {index['summary']['n_zz']} "
-          f"({time.time() - t0:.0f} s)", flush=True)
+    print(f"wrote {OUT}/index.json: " + "; ".join(f"{s} {len(v['circuits'])} built_k {v['built_k']} ZZ {v['summary']['n_zz']}"
+                                                   for s, v in sources.items()) + f" ({time.time() - t0:.0f} s)", flush=True)
 
 
 
@@ -620,6 +739,9 @@ def main():
     ap.add_argument("--out", default=None, help="output directory (default data/quantinuum/circuits_2x<L>); "
                                                 "the rebuild check of an ignored 2x4 circuit writes elsewhere")
     ap.add_argument("--index-only", action="store_true", help="--lattice 4: (re)write index.json from the manifests")
+    ap.add_argument("--source", choices=("opt3", "structured"), default="opt3",
+                    help="--lattice 4: the circuit source (prompts/35b R4): opt3 = the prototype transpile, structured = the "
+                         "structured IR without qiskit opt-3")
     ap.add_argument("--level2-probe", default=None, metavar="ID",
                     help="--lattice 4: time pytket level 2 on one circuit with a 30-min cap (level2_probe.json)")
     args = ap.parse_args()

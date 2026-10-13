@@ -379,7 +379,7 @@ def test_q1l_35a_separates_pytket_rounding_from_the_conversion():
 
 @needs_pytket
 def test_pytket_json_reader_equals_pytket_to_ir():
-    """prompts/35a R1: the pytket-free JSON reader (for the CI env of QV_2x4_K2..K4) gives exactly the IR, qubit count
+    """prompts/35a R1: the pytket-free JSON reader (for the CI env of the QV_2x4 GPU slots) gives exactly the IR, qubit count
     and measurement map of pytket_to_ir, on a random compiled circuit and on two frozen 2x2 circuits if present."""
     import json as _json
     rng = np.random.default_rng(354)

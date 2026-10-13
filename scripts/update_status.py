@@ -52,13 +52,13 @@ GATES = [  # gate, description (manual Step 10), where it runs
     ("QEMU_2x2", "prompts/35 T4: the 28 native 2x2 circuits on pytket-quantinuum's local H2-1LE emulator (pecos, noiseless state vector); per-state test", "laptop"),
     ("QH_2x2", "prompts/35 T6 (+35a R5): the 28 native 2x2 circuits as Helios Guppy/HUGR programs on Selene (Quest, IdealErrorModel), offline; per-state test", "laptop"),
     ("QH_2x3", "prompts/35 T6, information: the two k = 1 f-cell 2x3 circuits as Guppy/HUGR programs on Selene", "laptop"),
-    ("Q0P_2x4", "prompts/35 T1 (+35a R2, R4): the signed 2x4 family compiled at level 0, Q1L local equivalence with the rigorous pytket rounding bound, Q1S sparse statevector where reached, HQC and gate-only f (0 HQC)", "laptop"),
+    ("Q0P_2x4", "prompts/35 T1 (+35a, 35b): the signed 2x4 family from two sources (qiskit opt-3 transpile, structured IR) compiled at level 0; Q1L conversion proof; the state bar Q1 is measured by the GPU slot QV_2x4_01 (FAIL until then); HQC and gate-only f (0 HQC)", "laptop"),
     ("QN_2x4", "prompts/35 T3 at 2x4, analytic (R3): fault-free fraction per circuit and Quantinuum scenario and gate-only f per device; nothing sampled", "laptop"),
     ("QEMU_2x4", "prompts/35 T4 at 2x4: infeasible on the local emulator (rate and qubit count recorded)", "laptop"),
     ("QH_2x4", "prompts/35 T6 at 2x4: not attempted (28-qubit statevector on the laptop)", "laptop"),
     ("QEMU_2x3_laptop_smoke", "prompts/35 3.6: the C3_LE engine path (pytket-pecos H2-1LE) on the laptop pecos venv in dry mode; the token itself waits for the owner's skqd-pecos env", "laptop"),
     ("QSC_prepared", "prompts/35 T5: the four syntax-check job sets (H2-2SC x 2x2/2x3/2x4 k=1, Helios-1SC x 2x2 HUGR) as local job records; needs the owner's Nexus login", "laptop"),
-    ("QV_2x4_K1", "prompts/35 section 4 + 35a R1: Aer GPU statevector and noiseless per-state sampling of the 15 native k = 1 2x4 circuits (deferred GPU token; K2-K4 likewise)", "Perlmutter GPU"),
+    ("QV_2x4_01", "prompts/35b section 4: the 2x4 decision slot -- native and source statevectors of B0_ref0_k1 and B1_ref0_k1 for both sources on the Aer GPU vs the exact coarse states, the S2_2x4 reproduction, the frozen source (deferred GPU token; slots 02-08 follow)", "Perlmutter GPU"),
 ]
 
 
