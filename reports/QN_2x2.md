@@ -10,9 +10,25 @@ What PASS means: "the 28 frozen 2x2 native circuits sample their exact distribut
 |---|---|---|---|
 | N1 per-state 5 sigma test |n_s/N - p_s| <= 5 sqrt(p_s(1-p_s)/N), p_s >= 1e-3, on all 28 noiseless circuits; fraction outside the exact support | {'circuits': 28, 'states_tested': 514, 'max_z': 3.5853696661645125, 'failures': 0, 'max_fraction_outside_exact_support': 0.0} | 28 circuits; 0 failures (Bonferroni: P(any |z| > 5 | no bug) < 6e-7 x states tested); outside 0 | PASS |
 | N2 noiseless SKQD at the H0_2x2 plan of record (133907 shots): recall of S999 >= 0.9 in both sectors, E0 inside the Kato-Temple (B=0) / Weinstein (B=1) interval, E_R >= E0 - 1e-9 | {'B=0': {'recall_S999': 1.0, 'E_R_minus_E0': 0.0, 'interval': [-3.6407665507263425, -3.6407665507263425], 'E0_inside': True}, 'B=1': {'recall_S999': 1.0, 'E_R_minus_E0': 0.0, 'interval': [-1.8615880345350224, -1.8615880345350193], 'E0_inside': True}} | >= 0.9; inside; variational | PASS |
-| N3 f-cells | not run (--tier noise --part fcells) | complete | FAIL |
+| N3 every f-cell (28 circuits x the scenarios run) has f_hit, its 95 % Garwood interval, f0, r_nc and its seed; E1 all-circuit reference hits against the Poisson 95 % band at the 2x3 r_nc (information) | {'scenarios': ['E1', 'E2', 'E3', 'E4', 'E5a', 'E5b', 'E5c', 'E6a', 'E6b', 'E6c', 'E7_0.10_lat'], 'cells': 308, 'E1_band': {'hits': 22751, 'expected': 24432.966050677922, 'band95': [24127, 24740], 'verdict': 'tension'}} | complete; band = information ('tension' does not fail) | PASS |
 | N4 plan-of-record runs | not run (--tier noise --part por) | fields; variational | FAIL |
 | N5 qpu_seconds == 0, hqc == 0; seeds and s/shot recorded; scenarios_run listed | {'qpu_seconds': 0, 'hqc': 0, 'seeds': True, 's_per_shot': {'E1': 0.023439979553222655, 'E5b': 0.02779885721206665}, 'scenarios_run': None} | 0; 0; recorded; listed | FAIL |
+
+## f-cells (2000 shots per circuit and scenario; pooled over the 28 circuits)
+
+| scenario | k = 1 f_hit (mean of circuits) | mean f0 | mean r_nc (k = 1) | accepted fraction (mean) |
+|---|---|---|---|---|
+| E1 | 0.8378 | 0.807 | 1.038 | 0.8578 |
+| E2 | 0.8418 | 0.8173 | 1.03 | 0.8652 |
+| E3 | 0.7666 | 0.7125 | 1.075 | 0.7941 |
+| E4 | 0.8524 | 0.8177 | 1.042 | 0.8738 |
+| E5a | 0.8342 | 0.8043 | 1.037 | 0.8543 |
+| E5b | 0.8374 | 0.801 | 1.045 | 0.8504 |
+| E5c | 0.8298 | 0.7834 | 1.059 | 0.8485 |
+| E6a | 0.9196 | 0.8984 | 1.024 | 0.9312 |
+| E6b | 0.6936 | 0.6511 | 1.065 | 0.732 |
+| E6c | 0.4998 | 0.4237 | 1.18 | 0.551 |
+| E7_0.10_lat | 0.1762 | 0.1159 | 1.52 | 0.2345 |
 
 ## 2x3 cross reference
 
