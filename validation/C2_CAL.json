@@ -1,7 +1,7 @@
 {
  "gate": "C2_CAL",
  "title": "Campaign 33 token C2_CAL (class 2): 21-qubit timing ladder {8,32,128,512} on B0_ref117_k1 (IBM-T0), Kraus vs PTA, cuStateVec vs batched; sizes C2_*",
- "status": "FAIL",
+ "status": "PASS",
  "criteria": [
   {
    "name": "P0 run-1 record archived unedited and referenced (supersedes + sha256)",
@@ -32,20 +32,20 @@
   {
    "name": "P4a RM vs Kraus garbage structure: |z| <= 3 on the mean Hamming weight and every marginal (decides the production representation; PASS or FAIL are both a decision)",
    "value": {
-    "pass": null,
-    "z_w": null,
-    "max_abs_z_marginal": null,
+    "pass": false,
+    "z_w": 32.196020649340085,
+    "max_abs_z_marginal": 18.058239322781933,
     "production": "kraus"
    },
    "threshold": "decided (both arms sampled)",
-   "passed": false
+   "passed": true
   },
   {
    "name": "P4b PTA vs Kraus, same statistic (information; expected to fail: PTA is unital)",
    "value": {
-    "pass": null,
-    "z_w": null,
-    "max_abs_z_marginal": null
+    "pass": false,
+    "z_w": 44.47309559150446,
+    "max_abs_z_marginal": 21.70899467801984
    },
    "threshold": "information",
    "passed": true
@@ -54,8 +54,8 @@
    "name": "P4c each arm vs the K1 measurement (z of the weight and marginals, readout share; information)",
    "value": {
     "pta": 1.8171368100745533,
-    "rm": null,
-    "kraus": null
+    "rm": -30.552998930766726,
+    "kraus": -54.19501871202047
    },
    "threshold": "fields present",
    "passed": true
@@ -65,13 +65,13 @@
    "value": {
     "points": {
      "pta": 4,
-     "rm": 0,
-     "kraus": 0
+     "rm": 8,
+     "kraus": 5
     },
-    "kraus_shots_done": 0
+    "kraus_shots_done": 640
    },
    "threshold": ">= 2 each; Kraus >= 384",
-   "passed": false
+   "passed": true
   },
   {
    "name": "S1 the run happened on the requested device (GPU under the CI)",
@@ -81,7 +81,7 @@
   },
   {
    "name": "S2 wall time inside the walltime budget",
-   "value": "230 s",
+   "value": "1816 s",
    "threshold": "<= min(walltime 2700 s, 3600 s) and <= 1.1 x budget + 120 s",
    "passed": true
   },
@@ -91,11 +91,11 @@
     "engine": true,
     "device": true,
     "wall_seconds": true,
-    "seconds_per_shot": false,
+    "seconds_per_shot": true,
     "gpus": true
    },
    "threshold": "every policy field non-null on the CI; present on the laptop",
-   "passed": false
+   "passed": true
   },
   {
    "name": "S4 every seed and every chunk recorded",
@@ -113,11 +113,11 @@
    "name": "S6 shots >= the token's minimum",
    "value": {
     "pta": 512,
-    "rm": 0,
-    "kraus": 0
+    "rm": 1024,
+    "kraus": 640
    },
    "threshold": "no reduction below the minimum",
-   "passed": false
+   "passed": true
   }
  ],
  "data": {
@@ -126,10 +126,10 @@
   "prompt": "prompts/33_2x3_four_class_perlmutter_campaign.md",
   "content": "21-qubit timing ladder {8,32,128,512} on B0_ref117_k1 (IBM-T0), Kraus vs PTA, cuStateVec vs batched; sizes C2_*",
   "dry_run": false,
-  "created": "2026-10-09 19:36:12 UTC",
+  "created": "2026-10-13 14:49:24 UTC",
   "seeds": {
    "s0": 33100000,
-   "rule": "aer seed of chunk i of circuit c = s0 * 1e4 + c * 1e6 + i * stride, stride = chunk size, s0 = 33 000 000 + 1e5 x token index (prompts/33 2.3 s0; the circuit/chunk offsets are widened from 1e3 c so that circuits, chunks, tokens and the a/b halves are disjoint for <= 1e6 shots per circuit: the literal s0 + 1e3 c + i stride overlaps above 1000 shots per circuit)"
+   "rule": "aer seed of chunk i of circuit c = s0 * 1e4 + c * 1e6 + i * stride, stride = chunk size, s0 = 33 000 000 + 1e5 x token index (prompts/33 2.3 s0; the circuit/chunk offsets are widened from 1e3 c so that circuits, chunks, tokens and the a/b halves are disjoint for <= 1e6 shots per circuit: the literal s0 + 1e3 c + i stride overlaps above 1000 shots per circuit).  prompts/33b R4: every part of a split class-4 run (part 1 on the F token, parts >= 2 on any C4_PART slot) uses s0 of the run's OWN F token, i = the chunk's index in the UNSPLIT chunk plan and stride = the sizing's chunk, so the parts concatenate to the unsplit run seed for seed and a slot can be re-used; the run's CV3 equal-shots sample uses the same s0 with circuit offsets 100 (k <= 4) / 200 (k = 5); an f-cell slot uses the slot's own s0 with circuit offset 4 x the cell's global index"
   },
   "preflight": {
    "ok": true,
@@ -160,7 +160,7 @@
     "threadpoolctl": "3.7.0",
     "python": "3.12.14"
    },
-   "seconds": 15.869984865188599
+   "seconds": 7.064992666244507
   },
   "gpu_mode_used": "custatevec",
   "calibration_run": 2,
@@ -182,29 +182,29 @@
     "points": [
      {
       "shots": 128,
-      "seconds": 36.000861406326294,
-      "seconds_per_shot": 0.28125672973692417,
+      "seconds": 36.94324326515198,
+      "seconds_per_shot": 0.2886190880089998,
       "seed": 331500000000,
       "start": 0
      },
      {
       "shots": 128,
-      "seconds": 37.024309158325195,
-      "seconds_per_shot": 0.2892524152994156,
+      "seconds": 36.09852385520935,
+      "seconds_per_shot": 0.28201971761882305,
       "seed": 331500000128,
       "start": 128
      },
      {
       "shots": 128,
-      "seconds": 36.468435287475586,
-      "seconds_per_shot": 0.284909650683403,
+      "seconds": 37.021485328674316,
+      "seconds_per_shot": 0.2892303541302681,
       "seed": 331500000256,
       "start": 256
      },
      {
       "shots": 128,
-      "seconds": 36.9530873298645,
-      "seconds_per_shot": 0.2886959947645664,
+      "seconds": 36.88433909416199,
+      "seconds_per_shot": 0.2881588991731405,
       "seed": 331500000384,
       "start": 384
      }
@@ -213,14 +213,20 @@
     "stopped": null,
     "warmup": {
      "shots": 1,
-     "seconds": 4.045237064361572,
+     "seconds": 4.09007453918457,
      "discarded": true,
-     "seed": 331999000000
+     "seed": 331999000000,
+     "probes": [],
+     "probe_rule": "call_bound from the largest probe; a probe costs <= 0.1 of the time left at its pessimistic bound, at most 3 probes, size <= the largest round-0 call",
+     "bounding_point": {
+      "shots": 1,
+      "seconds": 4.09007453918457
+     }
     },
-    "seconds": 150.49628520011902,
-    "sampling_wall_s": 146.44676113128662,
-    "seconds_per_shot_mean": 0.2860288303345442,
-    "seconds_per_shot_at_largest_point": 0.2860286976210773,
+    "seconds": 151.04213643074036,
+    "sampling_wall_s": 146.94771575927734,
+    "seconds_per_shot_mean": 0.28700725734233856,
+    "seconds_per_shot_at_largest_point": 0.2870070147328079,
     "largest_point_shots": 128,
     "simulator_options": {
      "method": "statevector",
@@ -353,26 +359,30 @@
      {
       "start": 0,
       "shots": 128,
+      "index": 0,
       "seed": 331500000000,
-      "seconds": 36.000861406326294
+      "seconds": 36.94324326515198
      },
      {
       "start": 128,
       "shots": 128,
+      "index": 1,
       "seed": 331500000128,
-      "seconds": 37.024309158325195
+      "seconds": 36.09852385520935
      },
      {
       "start": 256,
       "shots": 128,
+      "index": 2,
       "seed": 331500000256,
-      "seconds": 36.468435287475586
+      "seconds": 37.021485328674316
      },
      {
       "start": 384,
       "shots": 128,
+      "index": 3,
       "seed": 331500000384,
-      "seconds": 36.9530873298645
+      "seconds": 36.88433909416199
      }
     ]
    },
@@ -383,26 +393,93 @@
     "deadline_stopped": false,
     "minimum_shots": 1024,
     "chunk": 128,
-    "shots_done": 0,
-    "points": [],
-    "calls": 0,
-    "stopped": {
-     "round": 0,
-     "reason": "deadline",
-     "predicted_round_s": 1571.0601501464844,
-     "rate_s_per_shot": 12.27390742301941
-    },
+    "shots_done": 1024,
+    "points": [
+     {
+      "shots": 128,
+      "seconds": 45.345399618148804,
+      "seconds_per_shot": 0.35426093451678753,
+      "seed": 331501000000,
+      "start": 0
+     },
+     {
+      "shots": 128,
+      "seconds": 44.464269399642944,
+      "seconds_per_shot": 0.3473771046847105,
+      "seed": 331501000128,
+      "start": 128
+     },
+     {
+      "shots": 128,
+      "seconds": 45.772825717926025,
+      "seconds_per_shot": 0.3576002009212971,
+      "seed": 331501000256,
+      "start": 256
+     },
+     {
+      "shots": 128,
+      "seconds": 45.406288146972656,
+      "seconds_per_shot": 0.3547366261482239,
+      "seed": 331501000384,
+      "start": 384
+     },
+     {
+      "shots": 128,
+      "seconds": 46.48139977455139,
+      "seconds_per_shot": 0.36313593573868275,
+      "seed": 331501000512,
+      "start": 512
+     },
+     {
+      "shots": 128,
+      "seconds": 44.18988823890686,
+      "seconds_per_shot": 0.34523350186645985,
+      "seed": 331501000640,
+      "start": 640
+     },
+     {
+      "shots": 128,
+      "seconds": 46.055259227752686,
+      "seconds_per_shot": 0.35980671271681786,
+      "seed": 331501000768,
+      "start": 768
+     },
+     {
+      "shots": 128,
+      "seconds": 44.70081377029419,
+      "seconds_per_shot": 0.34922510758042336,
+      "seed": 331501000896,
+      "start": 896
+     }
+    ],
+    "calls": 8,
+    "stopped": null,
     "warmup": {
      "shots": 1,
-     "seconds": 12.27390742301941,
+     "seconds": 11.638801574707031,
      "discarded": true,
-     "seed": 331999000000
+     "seed": 331999000000,
+     "probes": [
+      {
+       "shots": 9,
+       "seconds": 13.863806247711182,
+       "seed": 331999000128,
+       "discarded": true,
+       "round0_bound_before_s": 1489.7666015625,
+       "seconds_left_before": 1126.0289914608002
+      }
+     ],
+     "probe_rule": "call_bound from the largest probe; a probe costs <= 0.1 of the time left at its pessimistic bound, at most 3 probes, size <= the largest round-0 call",
+     "bounding_point": {
+      "shots": 9,
+      "seconds": 13.863806247711182
+     }
     },
-    "seconds": 12.274067878723145,
-    "sampling_wall_s": 7.867813110351562e-06,
-    "seconds_per_shot_mean": 12.27390742301941,
-    "seconds_per_shot_at_largest_point": null,
-    "largest_point_shots": 0,
+    "seconds": 387.9289221763611,
+    "sampling_wall_s": 362.41639161109924,
+    "seconds_per_shot_mean": 0.3539222574327141,
+    "seconds_per_shot_at_largest_point": 0.35392201552167535,
+    "largest_point_shots": 128,
     "simulator_options": {
      "method": "statevector",
      "precision": "double",
@@ -440,25 +517,154 @@
      "rm_rule": "T2 := min(T2, T1) per qubit on the target and on the delays (after the T2 convention and Aer's 2 T1 clip), so thermal_relaxation_error is Aer's reset mixture {I, Z, reset0, reset1} everywhere (no Kraus); non-unital like Kraus; overstates dephasing where T2 > T1 (prompts/33a R2)"
     },
     "structure": {
-     "shots": 0,
-     "n_bits": 20
+     "shots": 1024,
+     "n_bits": 20,
+     "mean_hamming_weight": 7.419921875,
+     "sd_hamming_weight": 2.4517700816919925,
+     "se_mean_hamming_weight": 0.07661781505287477,
+     "unital_limit": 10.0,
+     "deficit_vs_unital": 2.580078125,
+     "marginals_by_clbit": [
+      0.23828125,
+      0.14453125,
+      0.1201171875,
+      0.2451171875,
+      0.5185546875,
+      0.0908203125,
+      0.4296875,
+      0.392578125,
+      0.41015625,
+      0.5048828125,
+      0.4375,
+      0.3994140625,
+      0.498046875,
+      0.4599609375,
+      0.4091796875,
+      0.3984375,
+      0.439453125,
+      0.3935546875,
+      0.451171875,
+      0.4384765625
+     ],
+     "se_marginals_by_clbit": [
+      0.013313501132339978,
+      0.010988362441863098,
+      0.010159328800989324,
+      0.013442395615909352,
+      0.015614237655119888,
+      0.008979794122246455,
+      0.015469733312930554,
+      0.015260131776860668,
+      0.0153706834828011,
+      0.015624254924175893,
+      0.015502449088269086,
+      0.015305561858550126,
+      0.015624880790255698,
+      0.015574821724567874,
+      0.015365077808203599,
+      0.015299262728411424,
+      0.015510016796353835,
+      0.015266813075786102,
+      0.015550315706231218,
+      0.015506263434539966
+     ],
+     "physical_by_clbit": [
+      92,
+      69,
+      54,
+      52,
+      53,
+      68,
+      73,
+      94,
+      50,
+      72,
+      71,
+      79,
+      51,
+      74,
+      70,
+      93,
+      75,
+      58,
+      95,
+      59
+     ],
+     "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
     },
-    "accepted": 0,
-    "distinct_accepted": 0,
+    "accepted": 4,
+    "distinct_accepted": 4,
     "reference_hits": 0,
-    "rejected": 0,
+    "rejected": 1020,
     "rejections": {
-     "flag": 0,
-     "link": 0,
-     "sector": 0,
+     "flag": 615,
+     "link": 396,
+     "sector": 9,
      "unknown": 0
     },
     "roundtrip": {
-     "accepted_states": 0,
+     "accepted_states": 4,
      "mismatches": 0,
      "ok": true
     },
-    "chunks": []
+    "chunks": [
+     {
+      "start": 0,
+      "shots": 128,
+      "index": 0,
+      "seed": 331501000000,
+      "seconds": 45.345399618148804
+     },
+     {
+      "start": 128,
+      "shots": 128,
+      "index": 1,
+      "seed": 331501000128,
+      "seconds": 44.464269399642944
+     },
+     {
+      "start": 256,
+      "shots": 128,
+      "index": 2,
+      "seed": 331501000256,
+      "seconds": 45.772825717926025
+     },
+     {
+      "start": 384,
+      "shots": 128,
+      "index": 3,
+      "seed": 331501000384,
+      "seconds": 45.406288146972656
+     },
+     {
+      "start": 512,
+      "shots": 128,
+      "index": 4,
+      "seed": 331501000512,
+      "seconds": 46.48139977455139
+     },
+     {
+      "start": 640,
+      "shots": 128,
+      "index": 5,
+      "seed": 331501000640,
+      "seconds": 44.18988823890686
+     },
+     {
+      "start": 768,
+      "shots": 128,
+      "index": 6,
+      "seed": 331501000768,
+      "seconds": 46.055259227752686
+     },
+     {
+      "start": 896,
+      "shots": 128,
+      "index": 7,
+      "seed": 331501000896,
+      "seconds": 44.70081377029419
+     }
+    ]
    },
    "kraus": {
     "representation": "kraus",
@@ -467,26 +673,80 @@
     "deadline_stopped": true,
     "minimum_shots": 384,
     "chunk": 128,
-    "shots_done": 0,
-    "points": [],
-    "calls": 0,
+    "shots_done": 640,
+    "points": [
+     {
+      "shots": 128,
+      "seconds": 245.85389614105225,
+      "seconds_per_shot": 1.9207335636019707,
+      "seed": 331502000000,
+      "start": 0
+     },
+     {
+      "shots": 128,
+      "seconds": 230.82770657539368,
+      "seconds_per_shot": 1.803341457620263,
+      "seed": 331502000128,
+      "start": 128
+     },
+     {
+      "shots": 128,
+      "seconds": 229.82307291030884,
+      "seconds_per_shot": 1.7954927571117878,
+      "seed": 331502000256,
+      "start": 256
+     },
+     {
+      "shots": 128,
+      "seconds": 241.8012557029724,
+      "seconds_per_shot": 1.889072310179472,
+      "seed": 331502000384,
+      "start": 384
+     },
+     {
+      "shots": 128,
+      "seconds": 229.41836857795715,
+      "seconds_per_shot": 1.7923310045152903,
+      "seed": 331502000512,
+      "start": 512
+     }
+    ],
+    "calls": 5,
     "stopped": {
-     "round": 0,
+     "round": 5,
      "reason": "deadline",
-     "predicted_round_s": 1688.244873046875,
-     "rate_s_per_shot": 13.189413070678711
+     "predicted_round_s": 245.85389614105225,
+     "seconds_left": 133.07233810424805,
+     "bound_basis": "own chunks",
+     "rate_s_per_shot": 1.9207335636019707,
+     "rule": "call_bound: t(s) <= t_p max(1, s / s_p) from the measured point"
     },
     "warmup": {
      "shots": 1,
-     "seconds": 13.189413070678711,
+     "seconds": 13.069808006286621,
      "discarded": true,
-     "seed": 331999000000
+     "seed": 331999000000,
+     "probes": [
+      {
+       "shots": 10,
+       "seconds": 33.49876642227173,
+       "seed": 331999000128,
+       "discarded": true,
+       "round0_bound_before_s": 1672.9354248046875,
+       "seconds_left_before": 1344.295714378357
+      }
+     ],
+     "probe_rule": "call_bound from the largest probe; a probe costs <= 0.1 of the time left at its pessimistic bound, at most 3 probes, size <= the largest round-0 call",
+     "bounding_point": {
+      "shots": 10,
+      "seconds": 33.49876642227173
+     }
     },
-    "seconds": 13.189546585083008,
-    "sampling_wall_s": 7.152557373046875e-06,
-    "seconds_per_shot_mean": 13.189413070678711,
-    "seconds_per_shot_at_largest_point": null,
-    "largest_point_shots": 0,
+    "seconds": 1224.2958719730377,
+    "sampling_wall_s": 1177.724561214447,
+    "seconds_per_shot_mean": 1.8401946268975735,
+    "seconds_per_shot_at_largest_point": 1.8401942186057567,
+    "largest_point_shots": 128,
     "simulator_options": {
      "method": "statevector",
      "precision": "double",
@@ -524,25 +784,133 @@
      "rm_rule": null
     },
     "structure": {
-     "shots": 0,
-     "n_bits": 20
+     "shots": 640,
+     "n_bits": 20,
+     "mean_hamming_weight": 2.3984375,
+     "sd_hamming_weight": 3.436752123794628,
+     "se_mean_hamming_weight": 0.13584955580764982,
+     "unital_limit": 10.0,
+     "deficit_vs_unital": 7.6015625,
+     "marginals_by_clbit": [
+      0.0890625,
+      0.0421875,
+      0.0578125,
+      0.0859375,
+      0.1421875,
+      0.0328125,
+      0.1515625,
+      0.1,
+      0.128125,
+      0.184375,
+      0.1375,
+      0.134375,
+      0.171875,
+      0.140625,
+      0.121875,
+      0.1171875,
+      0.1765625,
+      0.13125,
+      0.1140625,
+      0.1390625
+     ],
+     "se_marginals_by_clbit": [
+      0.011259049908139869,
+      0.007945882861165232,
+      0.009225492436361291,
+      0.0110787131256967,
+      0.013805015780264772,
+      0.007041821479976567,
+      0.014174763478722823,
+      0.011858541225631423,
+      0.013211558881749628,
+      0.015328734219544598,
+      0.013612594696640315,
+      0.013481373688294433,
+      0.014912975913141464,
+      0.013741452421357703,
+      0.012931398583909534,
+      0.012714078678019079,
+      0.015072127814785622,
+      0.013347719696403203,
+      0.012565593281715129,
+      0.013677314766027153
+     ],
+     "physical_by_clbit": [
+      92,
+      69,
+      54,
+      52,
+      53,
+      68,
+      73,
+      94,
+      50,
+      72,
+      71,
+      79,
+      51,
+      74,
+      70,
+      93,
+      75,
+      58,
+      95,
+      59
+     ],
+     "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
     },
-    "accepted": 0,
-    "distinct_accepted": 0,
+    "accepted": 1,
+    "distinct_accepted": 1,
     "reference_hits": 0,
-    "rejected": 0,
+    "rejected": 639,
     "rejections": {
-     "flag": 0,
-     "link": 0,
-     "sector": 0,
+     "flag": 128,
+     "link": 135,
+     "sector": 376,
      "unknown": 0
     },
     "roundtrip": {
-     "accepted_states": 0,
+     "accepted_states": 1,
      "mismatches": 0,
      "ok": true
     },
-    "chunks": []
+    "chunks": [
+     {
+      "start": 0,
+      "shots": 128,
+      "index": 0,
+      "seed": 331502000000,
+      "seconds": 245.85389614105225
+     },
+     {
+      "start": 128,
+      "shots": 128,
+      "index": 1,
+      "seed": 331502000128,
+      "seconds": 230.82770657539368
+     },
+     {
+      "start": 256,
+      "shots": 128,
+      "index": 2,
+      "seed": 331502000256,
+      "seconds": 229.82307291030884
+     },
+     {
+      "start": 384,
+      "shots": 128,
+      "index": 3,
+      "seed": 331502000384,
+      "seconds": 241.8012557029724
+     },
+     {
+      "start": 512,
+      "shots": 128,
+      "index": 4,
+      "seed": 331502000512,
+      "seconds": 229.41836857795715
+     }
+    ]
    }
   },
   "rm_check": {
@@ -611,14 +979,134 @@
   },
   "comparisons": {
    "P4a_rm_vs_kraus": {
-    "evaluated": false,
-    "reason": "an arm has no shots",
-    "pass": null
+    "evaluated": true,
+    "n_sigma": 3.0,
+    "shots": [
+     1024,
+     640
+    ],
+    "mean_hamming_weight": [
+     7.419921875,
+     2.3984375
+    ],
+    "delta_mean_hamming_weight": 5.021484375,
+    "z_mean_hamming_weight": 32.196020649340085,
+    "z_marginals_by_clbit": [
+     8.558063845493596,
+     7.547318961795404,
+     4.5401538617667185,
+     9.138063636785859,
+     18.058239322781933,
+     5.083245120340746,
+     13.25552615680782,
+     15.13904616528504,
+     13.914907507513457,
+     14.643039362272896,
+     14.54138663075817,
+     12.994489508177505,
+     15.100974581719417,
+     15.374691979355436,
+     14.3062233561241,
+     14.138428658605527,
+     12.155634822656932,
+     12.934804038868158,
+     16.861656994787882,
+     14.480963455182687
+    ],
+    "max_abs_z_marginal": 18.058239322781933,
+    "clbits_outside": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19
+    ],
+    "weight_ok": false,
+    "marginals_ok": false,
+    "pass": false,
+    "n_marginal_tests": 20,
+    "family_wise_false_alarm_marginals": 0.053995921265203826,
+    "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)"
    },
    "P4b_pta_vs_kraus": {
-    "evaluated": false,
-    "reason": "an arm has no shots",
-    "pass": null
+    "evaluated": true,
+    "n_sigma": 3.0,
+    "shots": [
+     512,
+     640
+    ],
+    "mean_hamming_weight": [
+     9.95703125,
+     2.3984375
+    ],
+    "delta_mean_hamming_weight": 7.55859375,
+    "z_mean_hamming_weight": 44.47309559150446,
+    "z_marginals_by_clbit": [
+     16.886614886987946,
+     20.6879221023636,
+     18.629963505894874,
+     15.359036013638937,
+     14.185575732313676,
+     21.70899467801984,
+     12.755034828535077,
+     14.129355727925692,
+     14.142137658866217,
+     12.321241622845568,
+     14.882203903422637,
+     13.526204133375279,
+     12.973325521994271,
+     11.975577607478504,
+     15.229734450919816,
+     14.033605254082596,
+     12.092069660052552,
+     13.535022697149957,
+     13.382940139568216,
+     16.386713703301787
+    ],
+    "max_abs_z_marginal": 21.70899467801984,
+    "clbits_outside": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19
+    ],
+    "weight_ok": false,
+    "marginals_ok": false,
+    "pass": false,
+    "n_marginal_tests": 20,
+    "family_wise_false_alarm_marginals": 0.053995921265203826,
+    "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)"
    },
    "P4c_vs_K1": {
     "pta": {
@@ -678,15 +1166,69 @@
     },
     "rm": {
      "vs_K1": {
-      "evaluated": false,
-      "reason": "an arm has no shots",
-      "pass": null
+      "evaluated": true,
+      "n_sigma": 3.0,
+      "shots": [
+       1024,
+       100000
+      ],
+      "mean_hamming_weight": [
+       7.419921875,
+       9.77099
+      ],
+      "delta_mean_hamming_weight": -2.3510681249999994,
+      "z_mean_hamming_weight": -30.552998930766726,
+      "z_marginals_by_clbit": [
+       -20.048324012499048,
+       -31.890070786158535,
+       -34.741712420679335,
+       -17.721693938982096,
+       1.2963281473966912,
+       -44.47499378487231,
+       -0.9995587109395783,
+       -6.705324446612346,
+       -5.77497705170492,
+       0.8076148601689448,
+       -1.4330311311417097,
+       -4.748621301620966,
+       0.3684814270976024,
+       -1.6665203768309138,
+       -4.155144754480997,
+       -6.845734945058506,
+       -4.004186760050385,
+       -5.560561403827753,
+       -3.471941484797557,
+       -4.096029142634353
+      ],
+      "max_abs_z_marginal": 44.47499378487231,
+      "clbits_outside": [
+       0,
+       1,
+       2,
+       3,
+       5,
+       7,
+       8,
+       11,
+       14,
+       15,
+       16,
+       17,
+       18,
+       19
+      ],
+      "weight_ok": false,
+      "marginals_ok": false,
+      "pass": false,
+      "n_marginal_tests": 20,
+      "family_wise_false_alarm_marginals": 0.053995921265203826,
+      "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)"
      },
      "readout_share": {
       "readout_shift_bits": 0.06313500000000083,
-      "deficit_bits": null,
-      "share": null,
-      "remainder_bits": null,
+      "deficit_bits": 2.580078125,
+      "share": 0.024470189250568073,
+      "remainder_bits": 2.516943124999999,
       "mean_P00": 0.9862955,
       "mean_P11": 0.9799819999999999,
       "rule": "(n/2)[(1 - mean P11) - (1 - mean P00)] for a uniform string; share = shift / deficit"
@@ -694,15 +1236,75 @@
     },
     "kraus": {
      "vs_K1": {
-      "evaluated": false,
-      "reason": "an arm has no shots",
-      "pass": null
+      "evaluated": true,
+      "n_sigma": 3.0,
+      "shots": [
+       640,
+       100000
+      ],
+      "mean_hamming_weight": [
+       2.3984375,
+       9.77099
+      ],
+      "delta_mean_hamming_weight": -7.372552499999999,
+      "z_mean_hamming_weight": -54.19501871202047,
+      "z_marginals_by_clbit": [
+       -36.765664055497254,
+       -56.33068000087059,
+       -44.81939758014357,
+       -35.657854030441094,
+       -25.62185491456299,
+       -64.22592234771795,
+       -20.59144861844679,
+       -33.05477034317266,
+       -27.902417155726106,
+       -19.975606926447544,
+       -23.521685072508216,
+       -24.909200721750842,
+       -21.363926068081994,
+       -24.97280119909229,
+       -26.980375910125616,
+       -30.1703193003029,
+       -21.466252574390243,
+       -25.86512809588538,
+       -30.903097648970668,
+       -26.383418199375953
+      ],
+      "max_abs_z_marginal": 64.22592234771795,
+      "clbits_outside": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17,
+       18,
+       19
+      ],
+      "weight_ok": false,
+      "marginals_ok": false,
+      "pass": false,
+      "n_marginal_tests": 20,
+      "family_wise_false_alarm_marginals": 0.053995921265203826,
+      "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)"
      },
      "readout_share": {
       "readout_shift_bits": 0.06313500000000083,
-      "deficit_bits": null,
-      "share": null,
-      "remainder_bits": null,
+      "deficit_bits": 7.6015625,
+      "share": 0.008305529290853141,
+      "remainder_bits": 7.538427499999999,
       "mean_P00": 0.9862955,
       "mean_P11": 0.9799819999999999,
       "rule": "(n/2)[(1 - mean P11) - (1 - mean P00)] for a uniform string; share = shift / deficit"
@@ -814,24 +1416,25 @@
    },
    "seconds_per_shot": {
     "pta": {
-     "custatevec": 0.2860286976210773
+     "custatevec": 0.2870070147328079
     },
     "rm": {
-     "custatevec": null
+     "custatevec": 0.35392201552167535
     },
     "kraus": {
-     "custatevec": null
+     "custatevec": 1.8401942186057567
     }
    },
-   "p4a_pass": null,
-   "p4a_evaluated": false,
+   "p4a_pass": false,
+   "p4a_evaluated": true,
    "batched": "closed (prompts/33a R1: slower than cuStateVec at every point of job 59491475; do not retry)",
    "pta": "information only, never the production channel (prompts/33a R2: unital)",
    "rule": "production = rm iff P4a passes (RM vs Kraus: |z| <= 3 on the mean Hamming weight and on every per-clbit marginal), else kraus; mode = cuStateVec (job 59491475's record)"
   },
   "circuit": "IBM-T0 B0_ref117_k1",
   "model": "I-ECHO (record T2 echo)",
-  "seconds_per_shot": null,
+  "seconds_per_shot": 1.8401942186057567,
+  "seconds_per_shot_source": "kraus arm (custatevec) at its largest point",
   "seed_circuit_offsets": {
    "pta": 500,
    "rm": 501,
@@ -884,8 +1487,8 @@
    "gpu_mode": "custatevec",
    "ci": {
     "CI_GATE": "C2_CAL",
-    "SLURM_JOB_ID": "59570318",
-    "SLURM_JOB_NODELIST": "nid003316"
+    "SLURM_JOB_ID": "59736871",
+    "SLURM_JOB_NODELIST": "nid001780"
    },
    "slurm": {
     "gpus_per_task": null,
@@ -895,27 +1498,27 @@
     "tasks": 1,
     "rank": 0,
     "cpus_per_task": 32,
-    "nodelist": "nid003316"
+    "nodelist": "nid001780"
    },
    "gpus": 1,
    "tasks": 1,
    "rank": 0,
-   "wall_seconds": 229.7097761631012,
-   "gpu_node_hours": 0.063808271156417,
-   "node_hours_charged_shared_qos": 0.01595206778910425,
+   "wall_seconds": 1816.2458493709564,
+   "gpu_node_hours": 0.5045127359363768,
+   "node_hours_charged_shared_qos": 0.1261281839840942,
    "parallel_efficiency_Ep": null,
    "parallel_efficiency_note": "one task: E(p) needs T_1 and T_p from two task counts (not measured)",
    "phases_s": {
-    "preflight_s": 15.869984865188599,
-    "noise_model_build_s": 34.66866993904114,
-    "rm_check_s": 14.023497581481934,
-    "arms_s": 176.94189548492432
+    "preflight_s": 7.064992666244507,
+    "noise_model_build_s": 35.370779037475586,
+    "rm_check_s": 12.97842288017273,
+    "arms_s": 1765.2059264183044
    },
    "gpu_telemetry": {
-    "source": "/pscratch/sd/d/digonto/skqd-ci-runs/3a768f9eca4c-20261008210739-C2_CAL/gpu_telemetry.csv",
-    "samples": 25,
+    "source": "/pscratch/sd/d/digonto/skqd-ci-runs/20b38879ea5d-20261013142626-C2_CAL/gpu_telemetry.csv",
+    "samples": 176,
     "peak_memory_mib": 2295.0,
-    "mean_utilization_pct": 48.0,
+    "mean_utilization_pct": 81.77272727272727,
     "max_utilization_pct": 100.0
    },
    "versions": {
@@ -926,7 +1529,7 @@
     "threadpoolctl": "3.7.0",
     "python": "3.12.14"
    },
-   "seconds_per_shot": null,
+   "seconds_per_shot": 1.8401942186057567,
    "budget_minutes": 35.0,
    "shots_scale": 1.0,
    "max_shots_per_run": 476,
@@ -936,7 +1539,7 @@
   "physics_criteria_information_dry_run": null,
   "notes": []
  },
- "runtime_s": 229.7097761631012,
+ "runtime_s": 1816.2458493709564,
  "environment": {
   "python": "3.12.14",
   "numpy": "2.5.3",
@@ -944,6 +1547,6 @@
   "platform": "Linux-6.4.0-150600.23.125_15.0.29-cray_shasta_c-x86_64-with-glibc2.38",
   "cpu_count": 128,
   "git_commit": "n/a",
-  "timestamp": "2026-10-09 12:40:02 PDT"
+  "timestamp": "2026-10-13 08:19:40 PDT"
  }
 }
