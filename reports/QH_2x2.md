@@ -1,6 +1,6 @@
 # Gate QH_2x2 — 2x2 native circuits as Helios Guppy/HUGR programs on Selene (Quest, IdealErrorModel), offline (prompts/35 T6)
 
-Status: **FAIL**.  Generated from `validation/QH_2x2.json`.
+Status: **PASS**.  Generated from `validation/QH_2x2.json`.
 
 What PASS means: "the frozen native circuits survive the Helios Guppy/HUGR route offline and reproduce their exact distributions on Selene; not a Helios device or Helios-1E statement".
 
@@ -10,9 +10,9 @@ Route: frozen pytket JSON -> guppy.load_pytket inside a @guppy main that allocat
 
 | check | value | criterion | result |
 |---|---|---|---|
-| H1 28/28 HUGR packages written with sha256 | {'written': 9, 'of': 28} | 28 | FAIL |
-| H2 Selene counts: per-state 5 sigma test 0 failures and fraction outside the exact support 0 on every circuit; bit order fixed by CAL_x0 (X on qubit 0 -> key 1) | {'ran': 9, 'of': 28, 'failures': 0, 'max_outside': 0.0, 'max_z': 2.805713919849029, 'CAL_x0_counts': {'1': 10}, 'errors': {}} | 0; 0; key 1 | FAIL |
-| H3 the HUGR -> pytket round-trip field present (either form) | {'B0_ref06_k1': 'not available in tket 0.13.2 (package route: to_tket1() of the package returns a 0-qubit circuit with 0 commands (the entry point allocates its qubits; the loaded pytket function is not extracted); circuit route: RuntimeError:     1: OpaqueOp:tket.qsystem.helios.ZZPhase in Node(10) requires extension tket.qsystem.helios, but it could not be found in the extension list used during resolution. The available extensions are: arithmetic.conversions, arithmetic.float, arithmetic.float.types, arithmetic.int, arithmetic.int.types)', 'B0_ref06_k2': 'not available in tket 0.13.2 (package route: to_tket1() of the package returns a 0-qubit circuit with 0 commands (the entry point allocates its qubits; the loaded pytket function is not extracted); circuit route: RuntimeError:     1: OpaqueOp:tket.qsystem.helios.ZZPhase in Node(10) requires extension tket.qsystem.helios, but it could not be found in the extension list used during resolution. The available extensions are: arithmetic.conversions, arithmetic.float, arithmetic.float.types, arithmetic.int, arithmetic.int.types)', 'B0_ref06_k3': 'not available in tket 0.13.2 (package route: to_tket1() of the package returns a 0-qubit circuit with 0 commands (the entry point allocates its qubits; the loaded pytket function is not extracted); circuit route: RuntimeError:     1: OpaqueOp:tket.qsystem.helios.ZZPhase in Node(10) requires extension tket.qsystem.helios, but it could not be found in the extension list used during resolution. The available extensions are: arithmetic.conversions, arithmetic.float, arithmetic.float.types, arithmetic.int, arithmetic.int.types)', 'B0_ref06_k4': 'not available in tket 0.13.2 (package route: to_tket1() of the package returns a 0-qubit circuit with 0 commands (the entry point allocates its qubits; the loaded pytket function is not extracted); circuit route: RuntimeError:     1: OpaqueOp:tket.qsystem.helios.ZZPhase in Node(10) requires extension tket.qsystem.helios, but it could not be found in the extension list used during resolution. The available extensions are: arithmetic.conversions, arithmetic.float, arithmetic.float.types, arithmetic.int, arithmetic.int.types)'} | present | FAIL |
+| H1 28/28 HUGR packages written with sha256 | {'written': 28, 'of': 28} | 28 | PASS |
+| H2 Selene counts: per-state 5 sigma test 0 failures and fraction outside the exact support 0 on every circuit; bit order fixed by CAL_x0 (X on qubit 0 -> key 1) | {'ran': 28, 'of': 28, 'failures': 0, 'max_outside': 0.0, 'max_z': 3.6697998536966656, 'CAL_x0_counts': {'1': 10}, 'errors': {}} | 0; 0; key 1 | PASS |
+| H3 the HUGR -> pytket round-trip field present (either form) | {'B0_ref06_k1': 'not available in tket 0.13.2 (package route: to_tket1() of the package returns a 0-qubit circuit with 0 commands (the entry point allocates its qubits; the loaded pytket function is not extracted); circuit route: RuntimeError:     1: OpaqueOp:tket.qsystem.helios.ZZPhase in Node(10) requires extension tket.qsystem.helios, but it could not be found in the extension list used during resolution. The available extensions are: arithmetic.conversions, arithmetic.float, arithmetic.float.types, arithmetic.int, arithmetic.int.types)', 'B0_ref06_k2': 'not available in tket 0.13.2 (package route: to_tket1() of the package returns a 0-qubit circuit with 0 commands (the entry point allocates its qubits; the loaded pytket function is not extracted); circuit route: RuntimeError:     1: OpaqueOp:tket.qsystem.helios.ZZPhase in Node(10) requires extension tket.qsystem.helios, but it could not be found in the extension list used during resolution. The available extensions are: arithmetic.conversions, arithmetic.float, arithmetic.float.types, arithmetic.int, arithmetic.int.types)', 'B0_ref06_k3': 'not available in tket 0.13.2 (package route: to_tket1() of the package returns a 0-qubit circuit with 0 commands (the entry point allocates its qubits; the loaded pytket function is not extracted); circuit route: RuntimeError:     1: OpaqueOp:tket.qsystem.helios.ZZPhase in Node(10) requires extension tket.qsystem.helios, but it could not be found in the extension list used during resolution. The available extensions are: arithmetic.conversions, arithmetic.float, arithmetic.float.types, arithmetic.int, arithmetic.int.types)', 'B0_ref06_k4': 'not available in tket 0.13.2 (package route: to_tket1() of the package returns a 0-qubit circuit with 0 commands (the entry point allocates its qubits; the loaded pytket function is not extracted); circuit route: RuntimeError:     1: OpaqueOp:tket.qsystem.helios.ZZPhase in Node(10) requires extension tket.qsystem.helios, but it could not be found in the extension list used during resolution. The available extensions are: arithmetic.conversions, arithmetic.float, arithmetic.float.types, arithmetic.int, arithmetic.int.types)'} | present | PASS |
 | H4 hqc == 0 | 0 | 0 | PASS |
 
 | circuit | shots | s/shot | max z | outside | reference hits | round trip |
@@ -26,3 +26,22 @@ Route: frozen pytket JSON -> guppy.load_pytket inside a @guppy main that allocat
 | B0_ref17_k3 | 1599 | 0.1098 | 1.749 | 0.0 | 500 | not available in tket 0.13.2 (package route: to_tket1() of t |
 | B0_ref17_k4 | 1599 | 0.0912 | 2.24 | 0.0 | 170 | not available in tket 0.13.2 (package route: to_tket1() of t |
 | B0_ref21_k1 | 1599 | 0.1269 | 0.9177 | 0.0 | 1404 | not available in tket 0.13.2 (package route: to_tket1() of t |
+| B0_ref21_k2 | 1599 | 0.08263 | 2.068 | 0.0 | 968 | not available in tket 0.13.2 (package route: to_tket1() of t |
+| B0_ref21_k3 | 1599 | 0.08827 | 1.939 | 0.0 | 484 | not available in tket 0.13.2 (package route: to_tket1() of t |
+| B0_ref21_k4 | 1599 | 0.08682 | 2.932 | 0.0 | 178 | not available in tket 0.13.2 (package route: to_tket1() of t |
+| B0_ref30_k1 | 1599 | 0.09312 | 0.8505 | 0.0 | 1415 | not available in tket 0.13.2 (package route: to_tket1() of t |
+| B0_ref30_k2 | 1599 | 0.08364 | 1.816 | 0.0 | 971 | not available in tket 0.13.2 (package route: to_tket1() of t |
+| B0_ref30_k3 | 1599 | 0.07721 | 3.67 | 0.0 | 513 | not available in tket 0.13.2 (package route: to_tket1() of t |
+| B0_ref30_k4 | 1599 | 0.08699 | 1.742 | 0.0 | 186 | not available in tket 0.13.2 (package route: to_tket1() of t |
+| B0_ref43_k1 | 1599 | 0.08312 | 1.831 | 0.0 | 1425 | not available in tket 0.13.2 (package route: to_tket1() of t |
+| B0_ref43_k2 | 1599 | 0.06939 | 1.596 | 0.0 | 973 | not available in tket 0.13.2 (package route: to_tket1() of t |
+| B0_ref43_k3 | 1599 | 0.06798 | 2.39 | 0.0 | 502 | not available in tket 0.13.2 (package route: to_tket1() of t |
+| B0_ref43_k4 | 1599 | 0.06674 | 1.852 | 0.0 | 168 | not available in tket 0.13.2 (package route: to_tket1() of t |
+| B1_ref07_k1 | 1599 | 0.06715 | 1.901 | 0.0 | 1424 | not available in tket 0.13.2 (package route: to_tket1() of t |
+| B1_ref07_k2 | 1599 | 0.09159 | 1.651 | 0.0 | 983 | not available in tket 0.13.2 (package route: to_tket1() of t |
+| B1_ref07_k3 | 1599 | 0.09482 | 2.607 | 0.0 | 521 | not available in tket 0.13.2 (package route: to_tket1() of t |
+| B1_ref07_k4 | 1599 | 0.07989 | 2.717 | 0.0 | 198 | not available in tket 0.13.2 (package route: to_tket1() of t |
+| B1_ref14_k1 | 1599 | 0.0802 | 1.227 | 0.0 | 1425 | not available in tket 0.13.2 (package route: to_tket1() of t |
+| B1_ref14_k2 | 1599 | 0.07859 | 1.345 | 0.0 | 986 | not available in tket 0.13.2 (package route: to_tket1() of t |
+| B1_ref14_k3 | 1599 | 0.08017 | 1.176 | 0.0 | 536 | not available in tket 0.13.2 (package route: to_tket1() of t |
+| B1_ref14_k4 | 1599 | 0.08205 | 1.637 | 0.0 | 204 | not available in tket 0.13.2 (package route: to_tket1() of t |

@@ -1,0 +1,57 @@
+{
+ "id": "B1_ref14_k2",
+ "json_sha256_ok": true,
+ "program_template_sha256": "e0a243014375571b5a04035b998d12045b8d9b5e6e4aa023b0dc83cd468cce7d",
+ "compile_s": 3.435457944869995,
+ "raw_compile_package_sha256": "883533626a1dc21d4089855cc4e18c2edcb0e549197284ca914f073ab95c8606",
+ "hugr_file": "data/quantinuum/circuits_2x2_helios/B1_ref14_k2.hugr.json.gz",
+ "hugr_sha256": "b0015ac0f481d58f7db199218031042d597be1c94ae3b9ab187b604258a60a16",
+ "hugr_sha256_of": "the uncompressed JSON",
+ "package_extensions": [
+  "tket.quantum",
+  "tket.rotation",
+  "tket.bool",
+  "tket.result",
+  "tket.guppy",
+  "tket.qsystem.helios"
+ ],
+ "extension_note": "guppylang 0.21.16 `main.compile()` lists only the extensions it resolves itself; load_pytket (tket 0.13.2 CompilationState.from_tket1) emits PhasedX and ZZPhase as ops of `tket.qsystem.helios`, which neither selene-hugr-qis-compiler 0.2.11 nor tket's own registry carry, so the package is written with that extension embedded (tket_exts 0.12.4 `qsystem_helios()`), the way tket's CircBuild.finish_package packages it; the raw compile() output is recorded by its sha256",
+ "hugr_to_pytket": {
+  "package_route": "to_tket1() of the package returns a 0-qubit circuit with 0 commands (the entry point allocates its qubits; the loaded pytket function is not extracted)",
+  "circuit_route": "RuntimeError:     1: OpaqueOp:tket.qsystem.helios.ZZPhase in Node(10) requires extension tket.qsystem.helios, but it could not be found in the extension list used during resolution. The available extensions are: arithmetic.conversions, arithmetic.float, arithmetic.float.types, arithmetic.int, arithmetic.int.types",
+  "status": "not available in tket 0.13.2 (package route: to_tket1() of the package returns a 0-qubit circuit with 0 commands (the entry point allocates its qubits; the loaded pytket function is not extracted); circuit route: RuntimeError:     1: OpaqueOp:tket.qsystem.helios.ZZPhase in Node(10) requires extension tket.qsystem.helios, but it could not be found in the extension list used during resolution. The available extensions are: arithmetic.conversions, arithmetic.float, arithmetic.float.types, arithmetic.int, arithmetic.int.types)"
+ },
+ "selene_build_s": 6.408818006515503,
+ "selene_run_s": 125.66169476509094,
+ "shots": 1599,
+ "seed": 35500025,
+ "seconds_per_shot": 0.07858767727153461,
+ "counts": {
+  "292": 986,
+  "639": 3,
+  "788": 285,
+  "1188": 235,
+  "1487": 1,
+  "2047": 28,
+  "2084": 9,
+  "2308": 15,
+  "3732": 36,
+  "4063": 1
+ },
+ "decode_rule": "result('c', array[bool, n]): list index k = c[k] = qubit k (bit k of the key)",
+ "ok": true,
+ "wall_s": 140.06451535224915,
+ "per_state": {
+  "n_shots": 1599,
+  "n_sigma": 5.0,
+  "p_min": 0.001,
+  "tested_states": 9,
+  "max_z": 1.3451766810883232,
+  "failures": [],
+  "ok": true,
+  "fraction_outside_exact_support": 0.0
+ },
+ "reference_hits": 986,
+ "fragment": "circuit_B1_ref14_k2",
+ "created": "2026-10-13 21:05:49 UTC"
+}

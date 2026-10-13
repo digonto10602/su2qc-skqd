@@ -1540,9 +1540,15 @@ L_TITLE = {2: "signed 2x2 circuits compiled to the Quantinuum native gate set, v
               "equivalence and costed (prompts/35 T1)"}
 L_WHAT_2 = "compiled to the Quantinuum native set, verified exactly, costed; not a device statement"
 L_WHAT_4 = ("every built 2x4 circuit is proven equal to its IR by local equivalence (Q1L); the statevector check "
-            "(Q1S) was reached on {n} of {N} circuits on the laptop and is the deferred GPU tokens QV_2x4_K1..K4 for the "
+            "(Q1S) was reached on {n} of {N} circuits on the laptop and is the deferred GPU slots QV_2x4_01..08 for the "
             "rest; not a device statement; no Quantinuum device can run these circuits at the signed clean-shot "
             "fraction (Q5)")
+L_WHAT_4_35B = ("prompts/35b R3: every built 2x4 circuit of both sources (opt-3 transpile, structured IR) is proven to be "
+                "its source with pytket's angles canonicalised (Q1L (i)+(ii)); the physics bar Q1 -- the native state "
+                "against krylov.coarse_states, max abs(dpsi) < 1e-10, leakage < 1e-9 -- is NOT measured on the laptop and "
+                "is the GPU slot QV_2x4_01, which also chooses the frozen source; until then this gate is FAIL by "
+                "construction; not a device statement; no Quantinuum device runs these circuits at the signed clean-shot "
+                "fraction")
 Q1S_CAP_S = 1800.0                           # prompts/35 3.3: 30 min per circuit
 Q1S_MEM_BYTES = 24 * 2 ** 30                 # address-space cap of one sparse child (62 GiB machine)
 F_MEAN_SIGNED, F_WORST_SIGNED = 0.10, 0.05   # the signed bars (quantinuum_device_table F_MEAN_MIN / F_WORST_MIN)
@@ -1575,6 +1581,17 @@ def lfrag(lat, name):
     return load_json(p) if os.path.exists(p) else None
 
 
+def _suffix_keys(per: dict, mans: dict) -> dict:
+    """prompts/35b R4: verify records keyed by a bare 2x4 id (built before the source suffix) belong to <id>.opt3."""
+    out = {}
+    for c, v in per.items():
+        if c not in mans and c + ".opt3" in mans:
+            c = c + ".opt3"
+            v = dict(v, id=c)
+        out[c] = v
+    return out
+
+
 def lmanifests(lat):
     d = L_circ(lat)
     idx = load_json(os.path.join(d, "index.json"))
@@ -1593,8 +1610,9 @@ def _counts_wo_rzz(c):
 
 
 def _gates_of(lat, cid):
-    """The IR gate list of one circuit: the circuit set (2x2) or the cached 2x4 factory (built per call)."""
-    twoB, r, k, gates = _G["by_id"][cid]
+    """The IR gate list of one circuit: the circuit set (2x2) or the cached 2x4 factory (built per call); a 2x4 id
+    carries its source as a suffix (prompts/35b R4: <base id>.<opt3|structured>)."""
+    twoB, r, k, gates = _G["by_id"][_G["mans"][cid].get("base_id", cid)]
     if gates is None:
         gates = _G["factory"].coarse_step(int(r), int(k), float(_G["dt"][twoB]))
     return twoB, r, k, gates
@@ -1617,9 +1635,16 @@ def verify_one_L(cid):
     js_text = frozen_text(lat, man["files"]["json"])
     out["qasm_sha256_ok"] = sha256_text(qasm) == man["qasm_sha256"]
     out["json_sha256_ok"] = sha256_text(js_text) == man["json_sha256"]
-    tq = transpile(cq.ir_to_qiskit(gates, n, measure=False), **TRANSPILE)
-    ir_t = qn.qiskit_to_ir(tq)
-    out["rzz_before_compilation"] = int(tq.count_ops().get("rzz", 0))
+    structured = man.get("source") == "structured"
+    out["source"] = man.get("source", "opt3" if lat == 4 else "ir-opt3")
+    if structured:                             # prompts/35b R4: the structured IR itself is the source
+        ir_t = gates
+        ic = qn.ir_counts(gates)
+        out["rzz_before_compilation"] = int(ic.get("cx", 0) + ic.get("cp", 0) + ic.get("cz", 0) + ic.get("rzz", 0))
+    else:
+        tq = transpile(cq.ir_to_qiskit(gates, n, measure=False), **TRANSPILE)
+        ir_t = qn.qiskit_to_ir(tq)
+        out["rzz_before_compilation"] = int(tq.count_ops().get("rzz", 0))
     c = qn.from_json(json.loads(js_text))
     try:
         qn.check_native(c)
@@ -1632,7 +1657,7 @@ def verify_one_L(cid):
     ir, nn, qmap = qn.pytket_to_ir(c)
     out["measure_map_identity"] = qmap == {q: q for q in range(n)}
     out["implicit_permutation_identity"] = all(a == b for a, b in c.implicit_qubit_permutation().items())
-    out["Q1L"] = qn.local_equivalence_35a(ir_t, c, n)        # prompts/35a R2 (2x2: information next to Q1)
+    out["Q1L"] = qn.local_equivalence_35a(ir_t, c, n, structured=structured)   # 35b R2 (2x2: information next to Q1)
     if lat == 2:
         emb = _G["emb"]
         ref = cq.statevector(gates, n)                       # exact (qiskit.quantum_info), 12 qubits
@@ -1658,8 +1683,8 @@ def verify_one_L(cid):
         if int(k) == 1:                                       # Q3 at 2x4: gz -> text -> circuit -> Q1L again
             c2 = qn.from_json(json.loads(json.dumps(qn.to_json(c))))
             cq_ = qn.from_qasm(qasm)
-            out["json_round_trip_Q1L"] = qn.local_equivalence_35a(ir_t, c2, n)
-            out["qasm_round_trip_Q1L"] = qn.local_equivalence_35a(ir_t, cq_, n)
+            out["json_round_trip_Q1L"] = qn.local_equivalence_35a(ir_t, c2, n, structured=structured)
+            out["qasm_round_trip_Q1L"] = qn.local_equivalence_35a(ir_t, cq_, n, structured=structured)
             out["qasm_vs_frozen_Q1L"] = qn.local_equivalence(ir, cq_, n, tol=Q3_RT)
             out["qasm_counts_equal"] = qn.native_counts(cq_)["ops"] == out["counts"]["ops"]
     out["seconds"] = time.time() - t0
@@ -1702,7 +1727,7 @@ def stage_verify_L(args):
         raise SystemExit("the frozen index does not list the 28 circuits of gate_S2D.circuit_set(2)")
     todo = list(args.only) if args.only else list(idx["circuits"])
     prev = lfrag(lat, "verify") or {}
-    per = dict(prev.get("per_circuit", {})) if args.only else {}
+    per = _suffix_keys(dict(prev.get("per_circuit", {})), mans) if args.only else {}
     print(f"verify 2x{lat}: {len(todo)} circuits ({time.time() - t0:.0f} s)", flush=True)
     with mp.get_context("fork").Pool(args.workers) as pool:
         for rec in pool.imap_unordered(verify_one_L, todo):
@@ -1713,6 +1738,15 @@ def stage_verify_L(args):
                   f"[{time.time() - t0:.0f} s]", flush=True)
             if lat == 4:                                      # resumable: save after every circuit
                 lsave(lat, "verify", dict(prev, per_circuit=per))
+                mp_ = os.path.join(L_circ(lat), rec["id"] + ".manifest.json")
+                man = load_json(mp_)                          # the manifest carries the recomputed (authoritative) Q1L
+                if man.get("Q1L") != rec["Q1L"]:
+                    man.setdefault("Q1L_at_build", man.get("Q1L"))
+                    man["Q1L"] = rec["Q1L"]
+                    man["Q1L_rule"] = "prompts/35b R2, recomputed from the frozen files by gate_Q0P_2x3.py --stage verify"
+                    man["STOP_Q1L"] = not bool(rec["Q1L"]["ok"])
+                    with open(mp_, "w") as fh:
+                        json.dump(man, fh, indent=1)
     cal = {}
     for cid, m in cals.items():
         txt = frozen_text(lat, m["files"]["qasm"])
@@ -1982,7 +2016,9 @@ def assemble_L(lat):
             "frozen": {"dir": os.path.relpath(L_circ(lat), ROOT), "index_summary": idx["summary"],
                        "versions": idx["versions"], "selection_rule": idx["selection_rule"],
                        "built_k": idx.get("built_k", [1, 2, 3, 4]), "n_built": len(mans), "n_planned": L_N[lat]}}
-    per = (V or {}).get("per_circuit", {})
+    per = _suffix_keys((V or {}).get("per_circuit", {}), mans)
+    if V:
+        V = dict(V, per_circuit=per)
     nbuilt = len(mans)
     # ---- Q1 (2x2) / Q1L + Q1S (2x4)
     if lat == 2:
@@ -2027,65 +2063,66 @@ def assemble_L(lat):
             nround = max(v["rounding"]["n_rounded_gates"] for v in q1l.values())
             raw = max(v["segment_residual_raw"] or 0.0 for v in q1l.values())
             q1 = (len(per) == nbuilt and not fails and okmap and cal_ok and nbuilt > 0)
-            R.add("Q1L (prompts/35a R2) on every built circuit, recomputed from the frozen files: (i) per-qubit two-qubit "
-                  "skeleton identical, two-qubit angles within 1e-11 half-turns; (ii) one-qubit segment products to 1e-12 "
-                  "against the IR with pytket's stored angles; (iii) rounding bound B < 1e-10; q[k]->c[k], identity "
-                  "permutation, native op set",
+            R.add("Q1L (prompts/35b R2: the conversion proof) on every built circuit of both sources, recomputed from the "
+                  "frozen files: (i) per-qubit two-qubit skeleton identical, two-qubit angles within 1e-11 half-turns; (ii) "
+                  "one-qubit frames equal to 1e-12 against the source with pytket's stored angles; q[k]->c[k], identity "
+                  "permutation, native op set; the rounding bound B is recorded (GPU consistency criterion, not a Q1L bar)",
                   f"{len(per)} of {nbuilt} built ({L_N[lat]} planned); failures {fails or 'none'}; (i) max 2q delta "
-                  f"{max2q:.1e} half-turns; (ii) max segment residual {seg:.2e}; (iii) max B {Bmax:.2e} (at most {nround} "
-                  f"rounded gates per circuit); raw prompts/35 residual {raw:.2e} (information); maps/op set "
+                  f"{max2q:.1e} half-turns; (ii) max frame residual {seg:.2e}; B recorded, max {Bmax:.2e} (at most {nround} "
+                  f"rounded gates per circuit); raw residual against the unrounded source {raw:.2e} (information); maps/op set "
                   f"{'ok' if okmap else 'NOT ok'}; calibration {'ok' if cal_ok else 'NOT ok'}",
-                  "all built; <= 1e-11; < 1e-12; < 1e-10; identity", q1)
+                  "all built; <= 1e-11; < 1e-12; identity; B recorded", q1)
             data["Q1L"] = {"per_circuit": {c: {"ok": v["ok"], "i_max_abs_delta_2q_half_turns": v["i_skeleton"]["max_abs_delta_2q_half_turns"],
                                                "ii_segments_max_residual": v["ii_segments_vs_readback"]["segments_max_residual"],
                                                "rounding": v["rounding"], "segment_residual_raw": v["segment_residual_raw"],
                                                "n_rzz_ir": v["n_rzz_ir"], "n_rzz_native": v["n_rzz_native"]}
                                            for c, v in q1l.items()},
                            "max_2q_delta_half_turns": max2q, "max_segment_residual_vs_readback": seg, "max_state_bound_B": Bmax,
-                           "max_segment_residual_raw": raw, "failures": fails, "rule": "prompts/35a R2",
+                           "max_segment_residual_raw": raw, "failures": fails, "rule": "prompts/35b R2 ((i) + (ii))",
+                           "by_source": {s_: {"circuits": sum(1 for c in q1l if mans[c].get("source") == s_),
+                                              "ok": sum(1 for c, v in q1l.items() if mans[c].get("source") == s_ and v["ok"]),
+                                              "max_B": max([v["rounding"]["state_bound_B"] or 0.0 for c, v in q1l.items()
+                                                            if mans[c].get("source") == s_] or [0.0]),
+                                              "max_rounded_gates": max([v["rounding"]["n_rounded_gates"] for c, v in q1l.items()
+                                                                        if mans[c].get("source") == s_] or [0])}
+                                         for s_ in sorted({m.get("source") for m in mans.values()})},
                            "compile_modes": sorted({m.get("compile_mode", "level0") for m in mans.values()}),
                            "what_it_proves": ("native circuit == the IR after the prototype transpile (qiskit opt 3, seed 7) up "
                                               "to pytket's angle canonicalisation, whose effect on the state is bounded by B; "
                                               "the transpile itself is verified by statevector at 2x2 (Q0P_2x2 Q1) and 2x3 "
-                                              "(Q0P_2x3 Q1) and at 2x4 only through Q1S / QV_2x4_K1..K4")}
+                                              "(Q0P_2x3 Q1) and at 2x4 only through the GPU slot QV_2x4_01 (prompts/35b)")}
         else:
             R.add("Q1L local equivalence", "verify stage not run", "run --stage verify", False)
         sp = (S or {}).get("per_circuit", {})
         verified = sorted(c for c, v in sp.items() if v.get("state_verified"))
-        bad = sorted(c for c, v in sp.items() if v.get("state_verified") and not v.get("ok"))
-        deferred = sorted(c for c in mans if c not in verified)
-        cons = {c: {"max_abs_dpsi": sp[c]["max_abs_dpsi"], "B": per[c]["Q1L"]["rounding"]["state_bound_B"],
-                    "consistent": sp[c]["max_abs_dpsi"] <= (per[c]["Q1L"]["rounding"]["state_bound_B"] or 0.0) + 1e-12}
-                for c in verified if c in per}
-        q1s = bool(S) and not bad
-        dmax = max((sp[c]["max_abs_dpsi"] for c in verified), default=None)
-        lmax = max((sp[c]["leakage"] for c in verified), default=None)
-        R.add("Q1S recorded per circuit: the sparse statevector of the native circuit vs the exact coarse state "
-              "(state_verified_ids / deferred_ids; a verified circuit must meet max abs(dpsi) < 1e-10, leakage < 1e-9; "
-              "consistency max abs(dpsi) <= B + 1e-12 recorded, prompts/35a R2)",
-              f"verified {len(verified)} of {nbuilt}" + (f" (max abs(dpsi) {dmax:.2e}, leakage {lmax:.2e}; consistent with B "
-                                                         f"{sum(v['consistent'] for v in cons.values())} of {len(cons)})"
-                                                         if verified else "")
-              + f"; deferred {len(deferred)} (QV_2x4_K1..K4 on the GPU); failing {bad or 'none'}",
-              "recorded; verified ones < 1e-10 / < 1e-9", q1s)
-        data["Q1S"] = {"state_verified_ids": verified, "deferred_ids": deferred, "failing_ids": bad, "consistency_with_B": cons,
-                       "per_circuit": sp, "cap_s": (S or {}).get("cap_s"), "deferred_to": "QV_2x4_K1..K4 (prompts/35a R1)"}
+        R.add("Q1 (prompts/35b R1, R3) the native circuit's state against krylov.coarse_states: max abs(dpsi) < 1e-10 "
+              "after global-phase removal, leakage < 1e-9 -- measured, not bounded",
+              f"not measured on the laptop ({len(verified)} of {nbuilt} by the sparse path); deferred to the GPU slot "
+              "QV_2x4_01 (prompts/35b section 4), which also chooses the frozen source",
+              "< 1e-10; < 1e-9 (measured)", False)
+        data["Q1"] = {"status": "not measured on the laptop; deferred to QV_2x4_01 (GPU)", "laptop_sparse_q1s": sp,
+                      "q1s_note": "the laptop sparse Q1S stays paused (prompts/35b: the GPU job measures the bar)",
+                      "consistency_criterion_of_the_gpu_job": "native-vs-own-source distance <= B + 1e-12 (prompts/35b R2)",
+                      "B_per_circuit": {c: v["Q1L"]["rounding"]["state_bound_B"] for c, v in per.items()}}
     # ---- Q2
     rzz_b = {c: int(m["counts"]["rzz_before"]) for c, m in mans.items()}
     rzz_v = {c: v["rzz_before_compilation"] for c, v in per.items()}
     frozen_zz = {c: m["counts"]["n_zz"] for c, m in mans.items()}
-    k1 = {(m["twoB"], m["reference"]): rzz_b[c] for c, m in mans.items() if int(m["k"]) == 1}
-    same_as_k1 = {c: (rzz_b[c] == k1.get((m["twoB"], m["reference"]))) for c, m in mans.items()}
-    family_k1 = sorted(set(k1.values()))
+    src_of = {c: m.get("source", "ir") for c, m in mans.items()}
+    k1 = {(src_of[c], m["twoB"], m["reference"]): rzz_b[c] for c, m in mans.items() if int(m["k"]) == 1}
+    same_as_k1 = {c: (rzz_b[c] == k1.get((src_of[c], m["twoB"], m["reference"]))) for c, m in mans.items()}
+    family_k1 = {s_: sorted({v for (ss, _b, _r), v in k1.items() if ss == s_}) for s_ in sorted(set(src_of.values()))}
     levels = {c: {L: v["counts"]["n_zz"] for L, v in m["levels"].items() if "counts" in v} for c, m in mans.items()}
-    q2 = (len(rzz_b) == nbuilt and all(same_as_k1.values()) and len(family_k1) == 1 and len(set(rzz_b.values())) == 1
+    q2 = (len(rzz_b) == nbuilt and all(same_as_k1.values()) and all(len(v) == 1 for v in family_k1.values())
+          and all(len({rzz_b[c] for c in mans if src_of[c] == s_}) == 1 for s_ in family_k1)
           and all(rzz_v.get(c) == rzz_b[c] for c in rzz_b)
           and all(frozen_zz[c] <= rzz_b[c] for c in rzz_b) and bool(V) and all(levels[c] for c in levels))
-    R.add("Q2 rzz_before recorded on every circuit (build and re-transpiled) and equal to the family's k = 1 value on "
-          "every circuit, per reference and across references (prompts/35a R1); frozen ZZ <= rzz_before; ZZ per level recorded",
-          f"rzz_before {sorted(set(rzz_b.values()))} (verify {sorted(set(rzz_v.values())) or 'n/a'}); equal to the k = 1 "
-          f"value of its reference: {sum(same_as_k1.values())} of {len(same_as_k1)}; family k = 1 values {family_k1}; frozen ZZ {sorted(set(frozen_zz.values()))}; ZZ by level "
-          f"{ {L: sorted({v[L] for v in levels.values() if L in v}) for L in sorted({L for v in levels.values() for L in v})} }",
+    R.add("Q2 rzz_before recorded on every circuit (build and re-derived) and equal to the family's k = 1 value on "
+          "every circuit, per reference and across references, per source (prompts/35a R1, 35b R4); frozen ZZ <= "
+          "rzz_before; ZZ per level recorded",
+          f"rzz_before by source {family_k1} (verify {sorted(set(rzz_v.values())) or 'n/a'}); equal to the k = 1 value of "
+          f"its reference: {sum(same_as_k1.values())} of {len(same_as_k1)}; frozen ZZ "
+          f"{ {s_: sorted({frozen_zz[c] for c in mans if src_of[c] == s_}) for s_ in family_k1} }",
           "recorded; = the k = 1 value; <= rzz_before", q2)
     data["Q2"] = {"rzz_before_build": rzz_b, "rzz_before_verify": rzz_v, "frozen_zz": frozen_zz, "zz_by_level": levels,
                   "equal_to_k1": same_as_k1, "family_k1_values": family_k1, "note": Q2_NOTE}
@@ -2176,12 +2213,25 @@ def assemble_L(lat):
         data["token_indices_unchanged"] = tk["ok"]
     else:
         R.add("Q7 tests, pins, Q0P_2x3 reproduction, token indices", "not run (--stage verify --checks-only)", "all pass", False)
-    n_ver = len((data.get("Q1S") or {}).get("state_verified_ids", []))
-    data["what_pass_means"] = L_WHAT_2 if lat == 2 else L_WHAT_4.format(n=n_ver, N=nbuilt)
+    data["what_pass_means"] = L_WHAT_2 if lat == 2 else L_WHAT_4_35B
+    if lat == 4:
+        n_l = sum(1 for v in per.values() if v["Q1L"]["ok"])
+        data["status_reason"] = (f"Q1 (state vs coarse_states) not measured on the laptop; deferred to QV_2x4_01 (GPU); "
+                                 f"Q1L conversion proof PASS {n_l}/{len(per)}")
+        data["structured_source_check_2x3"] = lfrag(4, "structured_check_2x3")
+        data["index"] = {"built_k": idx.get("built_k"), "sources": {s_: {k: v[k] for k in ("built_k", "complete_k", "paused_by",
+                                                                                          "summary", "source_text")}
+                                                                    for s_, v in (idx.get("sources") or {}).items()},
+                         "frozen_source": idx.get("frozen_source"), "frozen_source_rule": idx.get("frozen_source_rule")}
     data["verify"] = V
     R.data = data
     R.runtime_s = sum((x or {}).get("runtime_s", 0.0) for x in (V, P)) + time.time() - t0
     path = R.save()
+    if lat == 4:                               # prompts/35b R3: the status carries its reason at the top level
+        rec = load_json(path)
+        rec["status_reason"] = data["status_reason"]
+        with open(path, "w") as fh:
+            json.dump(rec, fh, indent=1)
     write_report(f"{gate}.md", report_text_L(R, data, lat))
     print(f"{gate}: {'PASS' if R.passed else 'FAIL'} -> {os.path.relpath(path, ROOT)}")
     for c in R.criteria:
@@ -2232,7 +2282,7 @@ def report_text_L(R, D, lat):
                        [[c, v.get("state_verified"), fmt(v.get("max_abs_dpsi")), fmt(v.get("leakage")), fmt(v.get("wall_s")),
                          v.get("sparse_capped_at_s") or v.get("error") or v.get("memory_capped_at_bytes") or ""]
                         for c, v in q["per_circuit"].items()]), "",
-              f"Deferred to QV_2x4_K1..K4: {len(q['deferred_ids'])} circuits.", ""]
+              f"Deferred to the GPU slots QV_2x4_01..08: {len(q['deferred_ids'])} circuits.", ""]
     return "\n".join(L)
 
 
@@ -2259,10 +2309,62 @@ def stage_prereg_md_L(args):
     return 0
 
 
+def stage_structured_check_2x3(args):
+    """prompts/35b R5: the structured 2x3 IR of B0_ref25_k1 (no qiskit opt-3) through the extended ir_to_pytket ->
+    compile_native level 0; dense statevector against krylov.coarse_states (embedded) and against the frozen opt-3
+    native circuit of data/quantinuum/circuits_2x3; ZZ count, rounding block, Q1L (structured).  The 2x3 frozen
+    family is NOT changed: this is a cross-check -> q0p_stages_2x4/structured_check_2x3.json."""
+    from gate_S2D import circuit_set
+    from quantinuum_build_circuits import circuit_id
+
+    from skqd import circuits_qiskit as cq
+    from skqd.exact import mass_default
+    from skqd.krylov import apply_groups, basis_vector, term_groups
+    from skqd.reference_sim import CodewordEmbedding
+    t0 = time.time()
+    cid = "B0_ref25_k1"
+    M, _F, cset = circuit_set(3)
+    twoB, r, k, gates = next(c for c in cset if circuit_id(*c[:3]) == cid)
+    emb = CodewordEmbedding(M)
+    n = int(emb.n)
+    counts_ir = qn.ir_counts(gates)
+    pc = qn.ir_to_pytket(gates, n, measure=True)
+    tc = time.time()
+    cc = qn.compile_native(pc, "H2-2", 0)
+    t_comp = time.time() - tc
+    q1l = qn.local_equivalence_35a(gates, cc, n, structured=True)
+    sv = cq.statevector_aer(qn.pytket_to_ir(cc)[0], n, threads=args.threads)
+    dt = float(M.reference(G2, twoB).dt)
+    psi = apply_groups(term_groups(M.terms, G2, mass_default(G2)), basis_vector(M.basis.dim, int(r)), int(k) * dt)
+    vs_exact = qn.global_phase_residual(sv[emb.ints], psi)
+    leak = float(emb.leakage(sv))
+    man = load_json(os.path.join(CIRC, cid + ".manifest.json"))
+    fro = qn.from_json(json.loads(open(os.path.join(CIRC, man["files"]["json"])).read()))
+    sv_f = cq.statevector_aer(qn.pytket_to_ir(fro)[0], n, threads=args.threads)
+    vs_frozen = qn.global_phase_residual(sv, sv_f)
+    frozen_vs_exact = qn.global_phase_residual(sv_f[emb.ints], psi)
+    out = {"id": cid, "source": "structured", "lattice": "2x3", "ir_counts": counts_ir,
+           "compile": {"level": 0, "seconds": t_comp, "counts": qn.native_counts(cc)},
+           "zz_structured": qn.native_counts(cc)["n_zz"], "zz_frozen_opt3": man["counts"]["n_zz"],
+           "Q1L": q1l, "rounding": q1l["rounding"],
+           "max_abs_dpsi_vs_coarse_states": vs_exact["max_abs_dpsi"], "leakage": leak,
+           "max_abs_dpsi_vs_frozen_opt3_native": vs_frozen["max_abs_dpsi"],
+           "frozen_opt3_native_vs_coarse_states": frozen_vs_exact["max_abs_dpsi"],
+           "stop_rule": "prompts/35b section 6: max abs(dpsi) > 1e-10 for the structured path is a STOP before any 2x4 build",
+           "stop": bool(vs_exact["max_abs_dpsi"] > Q1_DPSI or leak > Q1_LEAK),
+           "frozen_2x3_family_changed": False, "engine": "circuits_qiskit.statevector_aer (double)",
+           "versions": qn.versions(), "runtime_s": time.time() - t0}
+    lsave(4, "structured_check_2x3", out)
+    print(f"structured 2x3 {cid}: vs exact {out['max_abs_dpsi_vs_coarse_states']:.2e}, leak {leak:.1e}, vs frozen "
+          f"{out['max_abs_dpsi_vs_frozen_opt3_native']:.2e}, ZZ {out['zz_structured']} (opt3 {out['zz_frozen_opt3']}), "
+          f"Q1L {q1l['ok']}, B {q1l['rounding']['state_bound_B']:.2e} ({time.time() - t0:.0f} s)", flush=True)
+    return 0 if not out["stop"] else 3
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--stage", required=True, choices=("verify", "predict", "prereg-md", "assemble-emulator", "assemble",
-                                                       "plan28", "q1s"))
+                                                       "plan28", "q1s", "structured-check-2x3"))
     ap.add_argument("--lattice", type=int, choices=(2, 3, 4), default=3,
                     help="prompts/35 R5: 2 -> validation/Q0P_2x2.json, 4 -> validation/Q0P_2x4.json; 3 (default) = the "
                          "prompts/26 gate, unchanged")
@@ -2285,6 +2387,8 @@ def main():
             return stage_prereg_md_L(args)
         if args.stage == "q1s" and args.lattice == 4:
             return stage_q1s(args)
+        if args.stage == "structured-check-2x3" and args.lattice == 4:
+            return stage_structured_check_2x3(args)
         if args.stage == "assemble":
             return assemble_L(args.lattice)
         raise SystemExit(f"--stage {args.stage} is not defined for --lattice {args.lattice}")
