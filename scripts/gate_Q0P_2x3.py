@@ -1581,6 +1581,13 @@ def lfrag(lat, name):
     return load_json(p) if os.path.exists(p) else None
 
 
+def _q1l_ok(q):
+    """prompts/35b R2 applied to a recorded Q1L block: (i) and (ii) and the maps (records written under 35a carry the
+    35a `ok`, which also required B < 1e-10; the components are recorded, so the 35b reading is re-derived here)."""
+    return bool(q["i_skeleton"]["ok"] and q["ii_segments_vs_readback"]["ok"] and q["measure_map_identity"]
+                and q["implicit_permutation_identity"])
+
+
 def _suffix_keys(per: dict, mans: dict) -> dict:
     """prompts/35b R4: verify records keyed by a bare 2x4 id (built before the source suffix) belong to <id>.opt3."""
     out = {}
@@ -2052,7 +2059,7 @@ def assemble_L(lat):
             q1l = {c: v["Q1L"] for c, v in per.items()}
             okmap = all(v["native"] and v["Q1L"]["measure_map_identity"] and v["Q1L"]["implicit_permutation_identity"]
                         for v in per.values())
-            fails = sorted(c for c, v in q1l.items() if not v["ok"])
+            fails = sorted(c for c, v in q1l.items() if not _q1l_ok(v))
             cal_ok = all(v["ok"] for v in V["calibration"].values()) and len(V["calibration"]) == 2
             max2q = max(v["i_skeleton"]["max_abs_delta_2q_half_turns"] for v in q1l.values())
             seg = max((v["ii_segments_vs_readback"]["segments_max_residual"]
@@ -2072,7 +2079,7 @@ def assemble_L(lat):
                   f"rounded gates per circuit); raw residual against the unrounded source {raw:.2e} (information); maps/op set "
                   f"{'ok' if okmap else 'NOT ok'}; calibration {'ok' if cal_ok else 'NOT ok'}",
                   "all built; <= 1e-11; < 1e-12; identity; B recorded", q1)
-            data["Q1L"] = {"per_circuit": {c: {"ok": v["ok"], "i_max_abs_delta_2q_half_turns": v["i_skeleton"]["max_abs_delta_2q_half_turns"],
+            data["Q1L"] = {"per_circuit": {c: {"ok": _q1l_ok(v), "i_max_abs_delta_2q_half_turns": v["i_skeleton"]["max_abs_delta_2q_half_turns"],
                                                "ii_segments_max_residual": v["ii_segments_vs_readback"]["segments_max_residual"],
                                                "rounding": v["rounding"], "segment_residual_raw": v["segment_residual_raw"],
                                                "n_rzz_ir": v["n_rzz_ir"], "n_rzz_native": v["n_rzz_native"]}
@@ -2080,7 +2087,7 @@ def assemble_L(lat):
                            "max_2q_delta_half_turns": max2q, "max_segment_residual_vs_readback": seg, "max_state_bound_B": Bmax,
                            "max_segment_residual_raw": raw, "failures": fails, "rule": "prompts/35b R2 ((i) + (ii))",
                            "by_source": {s_: {"circuits": sum(1 for c in q1l if mans[c].get("source") == s_),
-                                              "ok": sum(1 for c, v in q1l.items() if mans[c].get("source") == s_ and v["ok"]),
+                                              "ok": sum(1 for c, v in q1l.items() if mans[c].get("source") == s_ and _q1l_ok(v)),
                                               "max_B": max([v["rounding"]["state_bound_B"] or 0.0 for c, v in q1l.items()
                                                             if mans[c].get("source") == s_] or [0.0]),
                                               "max_rounded_gates": max([v["rounding"]["n_rounded_gates"] for c, v in q1l.items()
@@ -2145,7 +2152,7 @@ def assemble_L(lat):
             data["Q3"] = {"json_round_trip": rt_json, "qasm_round_trip": rt_qasm, "sha_ok": sha_ok, "endianness": en}
         else:
             k1v = {c: v for c, v in per.items() if v.get("round_trips_checked")}
-            rt_ok = all(v["json_round_trip_Q1L"]["ok"] and v["qasm_round_trip_Q1L"]["ok"] and v["qasm_counts_equal"]
+            rt_ok = all(_q1l_ok(v["json_round_trip_Q1L"]) and _q1l_ok(v["qasm_round_trip_Q1L"]) and v["qasm_counts_equal"]
                         for v in k1v.values())
             rt_max = max([max(v["json_round_trip_Q1L"]["ii_segments_vs_readback"]["segments_max_residual"] or 0.0,
                               v["qasm_round_trip_Q1L"]["ii_segments_vs_readback"]["segments_max_residual"] or 0.0)
@@ -2215,7 +2222,7 @@ def assemble_L(lat):
         R.add("Q7 tests, pins, Q0P_2x3 reproduction, token indices", "not run (--stage verify --checks-only)", "all pass", False)
     data["what_pass_means"] = L_WHAT_2 if lat == 2 else L_WHAT_4_35B
     if lat == 4:
-        n_l = sum(1 for v in per.values() if v["Q1L"]["ok"])
+        n_l = sum(1 for v in per.values() if _q1l_ok(v["Q1L"]))
         data["status_reason"] = (f"Q1 (state vs coarse_states) not measured on the laptop; deferred to QV_2x4_01 (GPU); "
                                  f"Q1L conversion proof PASS {n_l}/{len(per)}")
         data["structured_source_check_2x3"] = lfrag(4, "structured_check_2x3")

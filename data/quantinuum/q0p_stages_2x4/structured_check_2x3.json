@@ -1,0 +1,112 @@
+{
+ "id": "B0_ref25_k1",
+ "source": "structured",
+ "lattice": "2x3",
+ "ir_counts": {
+  "x": 3,
+  "cx": 2588,
+  "p": 29,
+  "cp": 2,
+  "unitary": 144,
+  "ry": 2164
+ },
+ "compile": {
+  "level": 0,
+  "seconds": 11.05660343170166,
+  "counts": {
+   "n_phasedx": 6911,
+   "n_rz": 5211,
+   "n_zz": 2590,
+   "n_zzphase": 2590,
+   "n_zzmax": 0,
+   "n_meas": 20,
+   "n_qubits": 20,
+   "depth": 10516,
+   "depth_2q": 2302,
+   "ops": {
+    "Measure": 20,
+    "PhasedX": 6911,
+    "Rz": 5211,
+    "ZZPhase": 2590
+   }
+  }
+ },
+ "zz_structured": 2590,
+ "zz_frozen_opt3": 2158,
+ "Q1L": {
+  "ok": true,
+  "rule": "prompts/35b R2: (i) + (ii) + maps",
+  "source": "structured",
+  "ok_35a": true,
+  "i_skeleton": {
+   "ok": true,
+   "max_abs_delta_2q_half_turns": 0.0,
+   "tol_half_turns": 1e-11,
+   "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+   "first_difference": null
+  },
+  "ii_segments_vs_readback": {
+   "ok": true,
+   "segments_max_residual": 8.237856713040257e-14,
+   "segments_compared": 5200,
+   "tol": 1e-12,
+   "skeleton_identical": true
+  },
+  "iii_rounding": {
+   "structure_identical": true,
+   "n_gates_compared": 2195,
+   "n_unitaries_compared": 144,
+   "n_rounded_gates": 412,
+   "max_abs_delta": 8.881784197001252e-16,
+   "sum_abs_delta": 2.469136006766348e-13,
+   "unit": "half-turns",
+   "max_unitary_opnorm_delta": 0.0,
+   "state_bound_B": 3.8785097697856076e-13,
+   "incoherent_estimate_not_a_bound": 2.026568656674077e-14,
+   "bound": "B = sum_g c_g |Delta a_g| + sum_u ||Delta U||_op >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2, 35b R4)",
+   "bar": 1e-10,
+   "ok": true,
+   "status": "recorded (prompts/35b R2: GPU consistency criterion, not a Q1L criterion)"
+  },
+  "rounding": {
+   "n_rounded_gates": 412,
+   "max_abs_delta": 8.881784197001252e-16,
+   "sum_abs_delta": 2.469136006766348e-13,
+   "state_bound_B": 3.8785097697856076e-13,
+   "incoherent_estimate_not_a_bound": 2.026568656674077e-14,
+   "max_unitary_opnorm_delta": 0.0
+  },
+  "segment_residual_raw": 7.327474065220854e-14,
+  "raw_check_of_prompts_35": true,
+  "measure_map_identity": true,
+  "implicit_permutation_identity": true,
+  "n_rzz_ir": 2590,
+  "n_rzz_native": 2590
+ },
+ "rounding": {
+  "n_rounded_gates": 412,
+  "max_abs_delta": 8.881784197001252e-16,
+  "sum_abs_delta": 2.469136006766348e-13,
+  "state_bound_B": 3.8785097697856076e-13,
+  "incoherent_estimate_not_a_bound": 2.026568656674077e-14,
+  "max_unitary_opnorm_delta": 0.0
+ },
+ "max_abs_dpsi_vs_coarse_states": 3.0626865985836016e-14,
+ "leakage": -6.439293542825908e-14,
+ "max_abs_dpsi_vs_frozen_opt3_native": 1.9267041531123252e-13,
+ "frozen_opt3_native_vs_coarse_states": 2.0361786326423976e-13,
+ "stop_rule": "prompts/35b section 6: max abs(dpsi) > 1e-10 for the structured path is a STOP before any 2x4 build",
+ "stop": false,
+ "frozen_2x3_family_changed": false,
+ "engine": "circuits_qiskit.statevector_aer (double)",
+ "versions": {
+  "pytket": "2.18.4",
+  "pytket-quantinuum": "0.59.3",
+  "pytket-qiskit": "0.78.0",
+  "qnexus": "0.51.0",
+  "quantinuum-schemas": "7.8.2"
+ },
+ "runtime_s": 236.1720736026764,
+ "stage": "structured_check_2x3",
+ "created": "2026-10-13 20:39:20 UTC"
+}
