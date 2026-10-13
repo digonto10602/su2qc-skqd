@@ -1967,14 +1967,27 @@ def stage_predict_L(args):
     hqc_by_id = {c: m["hqc_per_shot"] for c, m in mans.items()}
     recomputed = {c: qn.hqc_per_shot(m["counts"]) for c, m in mans.items()}
     nm = {c: int(m["counts"]["n_qubits"]) + int(m["counts"]["n_meas"]) for c, m in mans.items()}
+    if idx.get("sources"):                     # prompts/35b: one index summary per source
+        mv = max(abs(float(np.mean([recomputed[c] for c in v["circuits"]])) - v["summary"]["hqc_per_shot"]["mean"])
+                 for v in idx["sources"].values())
+    else:
+        mv = abs(float(np.mean(list(recomputed.values()))) - idx["summary"]["hqc_per_shot"]["mean"])
     hqc = {"recomputed_vs_manifest_max_abs": max(abs(recomputed[c] - m["hqc_per_shot"]) for c, m in mans.items()),
-           "mean_vs_index_abs": abs(float(np.mean(list(recomputed.values()))) - idx["summary"]["hqc_per_shot"]["mean"]),
+           "mean_vs_index_abs": mv,
            "N_m": sorted(set(nm.values())), "N_m_expected": L_NM[lat],
            "per_shot": {"mean": float(np.mean(list(recomputed.values()))), "min": min(recomputed.values()),
                         "max": max(recomputed.values())},
            "per_circuit": recomputed}
     devices, table = device_rows_L(lat, mans)
-    frag = {"device_table": os.path.relpath(DEVICES, ROOT), "hqc": hqc, "devices": devices,
+    if lat == 4 and idx.get("sources"):        # prompts/35b: the device rows per source as well
+        by_src = {}
+        for c, m in mans.items():
+            by_src.setdefault(m.get("source", "opt3"), {})[c] = m
+        devices_by_source = {s_: device_rows_L(lat, ms)[0] for s_, ms in by_src.items()}
+        hqc["per_shot_by_source"] = {s_: {"mean": float(np.mean([recomputed[c] for c in ms]))} for s_, ms in by_src.items()}
+    else:
+        devices_by_source = None
+    frag = {"device_table": os.path.relpath(DEVICES, ROOT), "hqc": hqc, "devices": devices, "devices_by_source": devices_by_source,
             "billing": table["billing"], "n_circuits": len(mans)}
     if lat == 2:
         from skqd.exact import Model
@@ -2197,7 +2210,11 @@ def assemble_L(lat):
                   f"per shot {h['per_shot']['mean']:.4f} mean ({h['per_shot']['min']:.4f}-{h['per_shot']['max']:.4f}); "
                   f"manifest abs diff {h['recomputed_vs_manifest_max_abs']:.1e}, index abs diff {h['mean_vs_index_abs']:.1e}; "
                   f"N_m {h['N_m']}; gate-only f mean " + ", ".join(f"{v['device']} {v['f_gate_only_mean']:.2e}" for v in devs.values())
-                  + "; eps2 for mean f 0.1 " + ", ".join(f"{v['device']} {v['eps2_for_mean_f_0.1']:.2e}" for v in devs.values()),
+                  + "; eps2 for mean f 0.1 " + ", ".join(f"{v['device']} {fmt(v['eps2_for_mean_f_0.1'])}" for v in devs.values())
+                  + ("; by source " + "; ".join(f"{s_}: f mean " + ", ".join(f"{v['device']} {v['f_gate_only_mean']:.2e}"
+                                                                         for v in dv.values())
+                                                for s_, dv in P["devices_by_source"].items()) if P.get("devices_by_source") else "")
+                  + " (n/a = no eps2 reaches the bar: that device's one-qubit and readout terms alone are below it)",
                   f"<= {Q45_TOL:g}; N_m = 56; table complete", q5)
         data["Q5"] = P
     else:

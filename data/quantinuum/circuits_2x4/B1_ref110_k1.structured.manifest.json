@@ -159,8 +159,8 @@
    },
    "frame_info": {
     "step_max_residual": 8.041228680433387e-13,
-    "final_drift_max": 5.775602219121813e-12,
-    "final_drift_per_segment_max": 2.1916321909946085e-16,
+    "final_drift_max": 5.789591028964961e-12,
+    "final_drift_per_segment_max": 2.216146027312576e-16,
     "n_sign_flips": 71544,
     "rule": "per-segment residual = max(frame off the rzz commutant at any rzz, final drift / n_segments of the qubit); the final drift is the triangle-inequality sum of the per-segment differences"
    }
@@ -196,7 +196,7 @@
   "n_rzz_ir": 71548,
   "n_rzz_native": 71548
  },
- "Q1L_rule": "prompts/35b R2 (i)+(ii), structured=True",
+ "Q1L_rule": "prompts/35b R2, recomputed from the frozen files by gate_Q0P_2x3.py --stage verify",
  "STOP_Q1L": false,
  "device_name_compiled_for": "H2-2",
  "counts": {
@@ -269,5 +269,67 @@
  },
  "git_commit": "92b6f6c",
  "built": "2026-10-13 22:10:33 UTC",
- "build_s": 805.9872782230377
+ "build_s": 805.9872782230377,
+ "Q1L_at_build": {
+  "ok": true,
+  "rule": "prompts/35b R2: (i) + (ii) + maps",
+  "source": "structured",
+  "ok_35a": true,
+  "i_skeleton": {
+   "ok": true,
+   "max_abs_delta_2q_half_turns": 0.0,
+   "tol_half_turns": 1e-11,
+   "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+   "first_difference": null
+  },
+  "ii_segments_vs_readback": {
+   "ok": true,
+   "segments_max_residual": 8.041228680433387e-13,
+   "segments_compared": 143124,
+   "tol": 1e-12,
+   "skeleton_identical": true,
+   "worst": {
+    "qubit": 6,
+    "segment": 8432,
+    "kind": "frame at an rzz not diagonal / anti-diagonal (A)"
+   },
+   "frame_info": {
+    "step_max_residual": 8.041228680433387e-13,
+    "final_drift_max": 5.775602219121813e-12,
+    "final_drift_per_segment_max": 2.1916321909946085e-16,
+    "n_sign_flips": 71544,
+    "rule": "per-segment residual = max(frame off the rzz commutant at any rzz, final drift / n_segments of the qubit); the final drift is the triangle-inequality sum of the per-segment differences"
+   }
+  },
+  "iii_rounding": {
+   "structure_identical": true,
+   "n_gates_compared": 70352,
+   "n_unitaries_compared": 388,
+   "n_rounded_gates": 7132,
+   "max_abs_delta": 8.881784197001252e-16,
+   "sum_abs_delta": 3.988365193663412e-12,
+   "unit": "half-turns",
+   "max_unitary_opnorm_delta": 0.0,
+   "state_bound_B": 6.264909396122858e-12,
+   "incoherent_estimate_not_a_bound": 7.854754198943342e-14,
+   "bound": "B = sum_g c_g |Delta a_g| + sum_u ||Delta U||_op >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2, 35b R4)",
+   "bar": 1e-10,
+   "ok": true,
+   "status": "recorded (prompts/35b R2: GPU consistency criterion, not a Q1L criterion)"
+  },
+  "rounding": {
+   "n_rounded_gates": 7132,
+   "max_abs_delta": 8.881784197001252e-16,
+   "sum_abs_delta": 3.988365193663412e-12,
+   "state_bound_B": 6.264909396122858e-12,
+   "incoherent_estimate_not_a_bound": 7.854754198943342e-14,
+   "max_unitary_opnorm_delta": 0.0
+  },
+  "segment_residual_raw": 8.041228680433387e-13,
+  "raw_check_of_prompts_35": true,
+  "measure_map_identity": true,
+  "implicit_permutation_identity": true,
+  "n_rzz_ir": 71548,
+  "n_rzz_native": 71548
+ }
 }
