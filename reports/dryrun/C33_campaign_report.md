@@ -1,6 +1,6 @@
 # DRY RUN skeleton: 2x3 four-class campaign: matrix, S3-quota merges and the comparison with every earlier 2x3 result
 
-**Status: PASS** — `python scripts/campaign33.py --stage assemble --dry-run`; prompt prompts/33 (A7, section 6).
+**Status: FAIL** — `python scripts/campaign33.py --stage assemble --dry-run`; prompt prompts/33 (A7, section 6).
 
 > **DRY RUN SKELETON** — assembled from the laptop dry-run JSONs (validation/dryrun/), every number is a reduced-size path check, not a campaign result.
 
@@ -13,8 +13,8 @@
 | C2_GATE | PASS | I-GATE | IBM-U | None | None | None | None | None | 72.56 | None |
 | C2_ECHO | PASS | I-ECHO | IBM-T0 | None | None | None | None | None | 107.8 | None |
 | C2_STAR | PASS | I-STAR | IBM-T0 | None | None | None | None | None | 81.46 | None |
-| C2_XY4 | PASS | I-XY4 | IBM-T3 | None | None | None | None | None | 95.52 | None |
-| C2_XY4 | PASS | I-XY4 | IBM-T3 | None | None | None | None | None | 95.52 | None |
+| C2_XY4 | PASS | I-XY4 | IBM-T3 | None | None | None | None | None | 125.7 | None |
+| C2_XY4 | PASS | I-XY4 | IBM-T3 | None | None | None | None | None | 125.7 | None |
 | C2_COH | PASS | I-COH | IBM-T0 | None | None | None | None | None | 97.68 | None |
 | C3_AER | PASS | None | None | None | None | None | None | None | 0.3738 | None |
 | C3_LE | PASS | None | None | None | None | None | None | None | 55.22 | None |
@@ -80,8 +80,8 @@
 
 | check | value | criterion | result |
 |---|---|---|---|
-| every token JSON present | 33 of 33 | 33 of 33 | PASS |
-| every present token PASS (tokens dropped by data/campaign33/engines.json excluded) | {'C3_SEL': 'DROPPED'} | no FAIL | PASS |
+| every token JSON present | 34 of 34 | 34 of 34 | PASS |
+| every present token PASS (tokens dropped by data/campaign33/engines.json excluded) | {'C3_SEL': 'DROPPED', 'C2_KCHK': 'FAIL'} | no FAIL | FAIL |
 | comparison table generated (section 6 rows) | 19 | >= 10 rows | PASS |
 
 Every number above is read from validation/*.json and data/*.json by `src/skqd/campaign33/assemble.py` and stored in `validation/dryrun/C33_campaign.json`.

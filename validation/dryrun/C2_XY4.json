@@ -1,8 +1,20 @@
 {
  "gate": "dryrun/C2_XY4",
  "title": "DRY RUN (laptop path check, reduced size): Campaign 33 token C2_XY4 (class 2): I-XY4 on IBM-T3, echo and star halves (information)",
- "status": "FAIL",
+ "status": "PASS",
  "criteria": [
+  {
+   "name": "S0 representation decided (prompts/33d: C2_KCHK decision.production_representation = rm; never a silent default)",
+   "value": {
+    "file": "data/campaign33/dryrun/C2_KCHK_stub.json",
+    "status": "STUB",
+    "production_representation": "rm",
+    "validated_kraus_gpu_path": "kraus_gpu_native",
+    "stub": true
+   },
+   "threshold": "C2_KCHK.json present with production_representation rm",
+   "passed": true
+  },
   {
    "name": "S1 the run happened on the requested device",
    "value": "CPU (available ['CPU'])",
@@ -11,9 +23,9 @@
   },
   {
    "name": "S2 wall time inside the walltime budget",
-   "value": "1464 s",
+   "value": "532 s",
    "threshold": "<= min(walltime 3600 s, 3600 s) and <= 1.1 x budget + 120 s",
-   "passed": false
+   "passed": true
   },
   {
    "name": "S3 telemetry and run block present",
@@ -52,7 +64,7 @@
   "prompt": "prompts/33_2x3_four_class_perlmutter_campaign.md",
   "content": "I-XY4 on IBM-T3, echo and star halves (information)",
   "dry_run": true,
-  "created": "2026-10-13 19:05:15 UTC",
+  "created": "2026-10-13 20:50:11 UTC",
   "seeds": {
    "s0": 33500000,
    "rule": "aer seed of chunk i of circuit c = s0 * 1e4 + c * 1e6 + i * stride, stride = chunk size, s0 = 33 000 000 + 1e5 x token index (prompts/33 2.3 s0; the circuit/chunk offsets are widened from 1e3 c so that circuits, chunks, tokens and the a/b halves are disjoint for <= 1e6 shots per circuit: the literal s0 + 1e3 c + i stride overlaps above 1000 shots per circuit).  prompts/33b R4: every part of a split class-4 run (part 1 on the F token, parts >= 2 on any C4_PART slot) uses s0 of the run's OWN F token, i = the chunk's index in the UNSPLIT chunk plan and stride = the sizing's chunk, so the parts concatenate to the unsplit run seed for seed and a slot can be re-used; the run's CV3 equal-shots sample uses the same s0 with circuit offsets 100 (k <= 4) / 200 (k = 5); an f-cell slot uses the slot's own s0 with circuit offset 4 x the cell's global index"
@@ -83,6 +95,7 @@
     "skqd.campaign33.assemble",
     "skqd.campaign33.cf_gpu",
     "skqd.campaign33.engines",
+    "skqd.campaign33.kchk_cpu",
     "gate_CV"
    ],
    "env": "skqd",
@@ -94,25 +107,37 @@
     "threadpoolctl": "3.7.0",
     "python": "3.12.14"
    },
-   "seconds": 0.9706168174743652
+   "seconds": 0.6967129707336426
+  },
+  "representation_decision": {
+   "path": "data/campaign33/dryrun/C2_KCHK_stub.json",
+   "status": "STUB",
+   "production_representation": "rm",
+   "validated_kraus_gpu_path": "kraus_gpu_native",
+   "validated_path_gpu_mode": "native",
+   "seconds_per_shot": {},
+   "production_seconds_per_shot": null,
+   "validated_path_seconds_per_shot": null,
+   "bug_confirmed": null,
+   "stub": true
   },
   "gpu_mode_used": "cpu",
-  "seconds_per_shot": 246.2163589000702,
+  "seconds_per_shot": 125.68285822868347,
   "cell": "I-XY4",
   "family": "IBM-T3",
   "conventions": [
    "echo"
   ],
-  "representation_used": "kraus",
-  "representation_source": "validation/dryrun/C2_CAL.json is the run-1 record (no P4a): kraus; the run-1 mode decision is superseded by prompts/33a R1 (cuStateVec)",
+  "representation_used": "rm",
+  "representation_source": "data/campaign33/dryrun/C2_KCHK_stub.json decision: rm, validated Kraus GPU path kraus_gpu_native (stub)",
   "arms": {
-   "rm_arm": {
+   "kraus_reference": {
     "representation": "pta",
-    "planned_representation": "rm",
+    "planned_representation": "kraus",
     "mode": "cpu",
     "target_shots_per_run": 1,
     "chunk": 128,
-    "rule": "deadline-stopped at 20% of the sampling window, equal shots per run at round boundaries, chunk 128 (128, halved while one round at the C2_CAL rm rate None s/shot would not fit 0.9 of the arm's budget); >= 1 round always",
+    "rule": "deadline-stopped at 20% of the sampling window, equal shots per run at round boundaries, chunk 128 (128, halved while one round at the C2_KCHK kraus rate None s/shot would not fit 0.9 of the arm's budget); >= 1 round always",
     "shots_per_circuit": {
      "B0_ref117_k1|echo": 1,
      "B1_ref29_k1|echo": 1
@@ -217,7 +242,7 @@
         "shots": 1,
         "index": 0,
         "seed": 335050000000,
-        "seconds": 348.1929466724396
+        "seconds": 65.18389534950256
        }
       ],
       "circuit": "B0_ref117_k1",
@@ -346,7 +371,7 @@
        "method": "statevector",
        "precision": "double",
        "noise_model": "attached",
-       "max_parallel_threads": 2
+       "max_parallel_threads": 5
       },
       "noise": {
        "id": "I-XY4",
@@ -483,7 +508,7 @@
         "shots": 1,
         "index": 0,
         "seed": 335051000000,
-        "seconds": 332.2523226737976
+        "seconds": 108.9159460067749
        }
       ],
       "circuit": "B1_ref29_k1",
@@ -612,7 +637,7 @@
        "method": "statevector",
        "precision": "double",
        "noise_model": "attached",
-       "max_parallel_threads": 2
+       "max_parallel_threads": 5
       },
       "noise": {
        "id": "I-XY4",
@@ -655,12 +680,12 @@
     "calls": 2,
     "stopped": null,
     "warmup": null,
-    "seconds": 697.9927067756653,
-    "seconds_per_shot": 340.2226527929306
+    "seconds": 181.04800271987915,
+    "seconds_per_shot": 87.0499358177185
    },
    "production": {
     "representation": "pta",
-    "planned_representation": "kraus",
+    "planned_representation": "rm",
     "mode": "cpu",
     "target_shots_per_run": 1,
     "chunk": 1,
@@ -769,7 +794,7 @@
         "shots": 1,
         "index": 0,
         "seed": 335000000000,
-        "seconds": 341.73528838157654
+        "seconds": 124.68017983436584
        }
       ],
       "circuit": "B0_ref117_k1",
@@ -898,7 +923,7 @@
        "method": "statevector",
        "precision": "double",
        "noise_model": "attached",
-       "max_parallel_threads": 2
+       "max_parallel_threads": 5
       },
       "noise": {
        "id": "I-XY4",
@@ -1035,7 +1060,7 @@
         "shots": 1,
         "index": 0,
         "seed": 335001000000,
-        "seconds": 150.6974015235901
+        "seconds": 126.68551087379456
        }
       ],
       "circuit": "B1_ref29_k1",
@@ -1164,7 +1189,7 @@
        "method": "statevector",
        "precision": "double",
        "noise_model": "attached",
-       "max_parallel_threads": 2
+       "max_parallel_threads": 5
       },
       "noise": {
        "id": "I-XY4",
@@ -1207,14 +1232,16 @@
     "calls": 2,
     "stopped": null,
     "warmup": null,
-    "seconds": 501.1385705471039,
-    "seconds_per_shot": 246.2163589000702
+    "seconds": 257.69408774375916,
+    "seconds_per_shot": 125.68285822868347
    }
   },
   "reference_arm": {
-   "name": "rm_arm",
-   "representation": "rm",
-   "rule": "prompts/33c R3: production rm -> kraus_reference; production kraus -> rm_arm (a Kraus reference would duplicate production)"
+   "name": "kraus_reference",
+   "representation": "kraus",
+   "gpu_mode": "cpu",
+   "validated_kraus_gpu_path": "kraus_gpu_native",
+   "rule": "prompts/33d R3: a Kraus reference arm on C2_KCHK's validated Kraus GPU path; none (production RM at 100 %) when no path was validated"
   },
   "per_run": {
    "B0_ref117_k1|echo": {
@@ -1315,7 +1342,7 @@
       "shots": 1,
       "index": 0,
       "seed": 335000000000,
-      "seconds": 341.73528838157654
+      "seconds": 124.68017983436584
      }
     ],
     "circuit": "B0_ref117_k1",
@@ -1444,7 +1471,7 @@
      "method": "statevector",
      "precision": "double",
      "noise_model": "attached",
-     "max_parallel_threads": 2
+     "max_parallel_threads": 5
     },
     "noise": {
      "id": "I-XY4",
@@ -1581,7 +1608,7 @@
       "shots": 1,
       "index": 0,
       "seed": 335001000000,
-      "seconds": 150.6974015235901
+      "seconds": 126.68551087379456
      }
     ],
     "circuit": "B1_ref29_k1",
@@ -1710,7 +1737,7 @@
      "method": "statevector",
      "precision": "double",
      "noise_model": "attached",
-     "max_parallel_threads": 2
+     "max_parallel_threads": 5
     },
     "noise": {
      "id": "I-XY4",
@@ -1754,7 +1781,7 @@
    "B0_ref117_k1|echo": 1,
    "B1_ref29_k1|echo": 1
   },
-  "minimum_shots_per_circuit": 256,
+  "minimum_shots_per_circuit": 1000,
   "rm_vs_kraus_in_cell": {
    "B0_ref117_k1|echo": {
     "evaluated": true,
@@ -1817,10 +1844,10 @@
      1
     ],
     "mean_hamming_weight": [
-     12.0,
-     10.0
+     10.0,
+     12.0
     ],
-    "delta_mean_hamming_weight": 2.0,
+    "delta_mean_hamming_weight": -2.0,
     "z_mean_hamming_weight": Infinity,
     "z_marginals_by_clbit": [
      0.0,
@@ -1866,12 +1893,12 @@
    }
   },
   "rm_vs_kraus_in_cell_arms": {
-   "rm": "rm_arm",
-   "kraus": "production"
+   "rm": "production",
+   "kraus": "kraus_reference"
   },
   "rm_vs_kraus_in_cell_pass": false,
-  "representation_decision_for_later_cells": "kraus",
-  "representation_decision_rule": "rm iff the in-cell P4a statistic (RM arm vs Kraus arm, |z| <= 3 on the weight and every marginal) passes on every run, else kraus (prompts/33a rule, prompts/33c R2/R3)",
+  "representation_decision_for_later_cells": "rm",
+  "representation_decision_rule": "C2_KCHK decision.production_representation (prompts/33d R1/R3); the in-cell RM-vs-Kraus statistic is information",
   "K1_device_structure": {
    "B0_ref117_k1": {
     "shots": 100000,
@@ -2062,15 +2089,15 @@
    "gpus": null,
    "tasks": null,
    "rank": null,
-   "wall_seconds": 1464.3235359191895,
+   "wall_seconds": 532.4005818367004,
    "gpu_node_hours": null,
    "node_hours_charged_shared_qos": null,
    "parallel_efficiency_Ep": null,
    "parallel_efficiency_note": "one task: E(p) needs T_1 and T_p from two task counts (not measured)",
    "phases_s": {
-    "preflight_s": 0.9706168174743652,
-    "noise_model_build_s": 260.9768497943878,
-    "sampling_and_decoding_s": 1199.1330273151398
+    "preflight_s": 0.6967129707336426,
+    "noise_model_build_s": 91.21077394485474,
+    "sampling_and_decoding_s": 438.74219727516174
    },
    "gpu_telemetry": {
     "source": "gpu_telemetry.csv",
@@ -2087,7 +2114,7 @@
     "threadpoolctl": "3.7.0",
     "python": "3.12.14"
    },
-   "seconds_per_shot": 246.2163589000702,
+   "seconds_per_shot": 125.68285822868347,
    "budget_minutes": 8.0,
    "shots_scale": 0.01,
    "max_shots_per_run": 16,
@@ -2097,8 +2124,8 @@
    {
     "name": "P6 decoder round trip on every accepted string (both arms)",
     "value": {
-     "rm_arm:B0_ref117_k1|echo": 0,
-     "rm_arm:B1_ref29_k1|echo": 0,
+     "kraus_reference:B0_ref117_k1|echo": 0,
+     "kraus_reference:B1_ref29_k1|echo": 0,
      "production:B0_ref117_k1|echo": 0,
      "production:B1_ref29_k1|echo": 0
     },
@@ -2107,7 +2134,7 @@
     "gating": false
    },
    {
-    "name": "P7' K1 comparison per run: Poisson probabilities of the measured 58 / 45 accepted and 0 / 0 hits, the z table of the mean Hamming weight and every marginal, comparison_power; the rm_arm arm present",
+    "name": "P7' K1 comparison per run: Poisson probabilities of the measured 58 / 45 accepted and 0 / 0 hits, the z table of the mean Hamming weight and every marginal, comparison_power; the kraus_reference arm present",
     "value": {
      "B0_ref117_k1|echo": "underpowered/like_for_like",
      "B1_ref29_k1|echo": "underpowered/like_for_like"
@@ -2117,7 +2144,7 @@
     "gating": false
    },
    {
-    "name": "P4a' in-cell RM vs Kraus (|z| <= 3 on the mean Hamming weight and every marginal, per run): evaluated on every run; its outcome decides the representation of the later class-2 cells (prompts/33c R3)",
+    "name": "P4a' in-cell RM vs Kraus (|z| <= 3 on the mean Hamming weight and every marginal, per run; information beside C2_KCHK, prompts/33d R1): evaluated on every run",
     "value": {
      "pass_by_run": {
       "B0_ref117_k1|echo": false,
@@ -2127,25 +2154,25 @@
       "B0_ref117_k1|echo": 0.0,
       "B1_ref29_k1|echo": Infinity
      },
-     "representation_decision_for_later_cells": "kraus"
+     "kraus_gpu_path": "kraus_gpu_native"
     },
-    "threshold": "evaluated (PASS or FAIL are both a decision)",
+    "threshold": "evaluated",
     "passed": true,
     "gating": false
    }
   ],
   "notes": [
-   "dry run: PTA stands in for both arms (rm rm_arm, kraus production), 1 shot per run -- a path check, not the CI's channels"
+   "dry run: PTA stands in for every arm (kraus reference, rm production), 1 shot per run -- a path check, not the CI's channels"
   ]
  },
- "runtime_s": 1464.3235359191895,
+ "runtime_s": 532.4005818367004,
  "environment": {
   "python": "3.12.14",
   "numpy": "2.5.2",
   "scipy": "1.18.0",
   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
   "cpu_count": 12,
-  "git_commit": "60ccd40",
-  "timestamp": "2026-10-13 13:29:39 MDT"
+  "git_commit": "a6e4c14",
+  "timestamp": "2026-10-13 14:59:04 MDT"
  }
 }
