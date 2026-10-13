@@ -239,7 +239,8 @@ def test_kraus_audit_file_lists_every_builder():
     assert b["CF"]["kraus_total"] == 0
     for c in ("I-GATE", "I-ECHO", "I-STAR", "I-XY4", "I-COH"):
         assert b[f"{c}|rm"]["kraus_total"] == 0 and b[f"{c}|pta"]["kraus_total"] == 0, c
-        assert b[f"{c}|kraus"]["kraus_to_dict"] > 0, c
+    # Kraus exists only in the kraus representation, and not under T2* (0.174 T2_echo <= T1 on every qubit)
+    assert set(d["summary"]["builders_with_kraus"]) == {"I-GATE|kraus", "I-ECHO|kraus", "I-XY4|kraus", "I-COH|kraus"}
 
 
 def test_rm_and_kraus_delay_errors_identical_on_qubit_53(record):

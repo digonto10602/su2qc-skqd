@@ -597,7 +597,12 @@ KCHK_GPU_ARMS = (("kraus_gpu_cusv", "kraus", "custatevec", 256, 256, False, 64),
                  ("kraus_gpu_native", "kraus", "native", 256, 64, True, 32),
                  ("kraus_gpu_cusv_nofusion", "kraus", "custatevec_nofusion", 128, 32, True, 32))
 KCHK_CPU_ARMS = (("kraus_cpu", "kraus"), ("rm_cpu", "rm"))
-KCHK_CPU_MIN, KCHK_CPU_CHUNK = 16, 4
+# CPU chunk: prompts/33d R3 says chunks of 4; the executor measured the CPU Kraus call to be dominated by a per-call
+# cost (laptop, twin stack: 4 shots in 979.7 s, 3 shots in 951.7 s, 12 shots in 1373.1 s;
+# data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu*.json), so four 4-shot calls would cost about four
+# times one 16-shot call and could not reach the minimum inside the window: one 16-shot call reaches it, later calls
+# (window permitting) are 16 shots too.  Flagged to the planner (LOG row 33d).
+KCHK_CPU_MIN, KCHK_CPU_CHUNK = 16, 16
 KCHK_SEED_OFFSET = 600              # GPU arm i: 600 + i; CPU arms 610 / 611 (C2_KCHK's own s0 anyway)
 KCHK_WINDOW_SHARE = 0.75            # prompts/33d R3: 0.75 of the remaining budget for both processes
 KCHK_NATIVE_SHARE = 0.55            # kraus_gpu_native may use 55 % of what is left when it starts; nofusion the rest

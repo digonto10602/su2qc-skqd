@@ -1,0 +1,30 @@
+{
+ "title": "prompts/33d R4: qiskit-aer release notes 0.16.x and 0.17.x read for a cuStateVec Kraus / non-unitary noise fix",
+ "read": "2026-10-13 (UTC-6 afternoon), by the executor on branch c33c",
+ "sources": [
+  {"url": "https://api.github.com/repos/Qiskit/qiskit-aer/releases?per_page=30",
+   "what": "the GitHub release bodies of 0.15, 0.15.1, 0.16, 0.16.0.1, 0.16.1, 0.16.2, 0.16.3, 0.16.4, 0.17, 0.17.1, 0.17.2"},
+  {"url": "https://qiskit.github.io/qiskit-aer/release_notes.html",
+   "what": "the reno release notes page (Aer documentation), searched for 'kraus' and 'custatevec'"},
+  {"url": "https://api.github.com/search/issues?q=repo:Qiskit/qiskit-aer+kraus+custatevec",
+   "what": "issue / PR search: 0 results; 'custatevec noise': 3 results (#2423 cuda arch thrust compat, #2213 GPU build without a GPU, #2194 qiskit-aer-gpu install problem), none about Kraus or noise sampling"}
+ ],
+ "latest_release": {"tag": "0.17.2", "published": "2025-09-17"},
+ "versions": {
+  "0.16 (2025-01-09)": "support for Qiskit 1.3; PRs: open_pulse entry, test fixes, Revert NoiseModel.from_dict, save_expval truncation, MPS size estimator, conditional with empty body, MPS save, controlled-gate compilation; nothing on cuStateVec, Kraus or noise sampling",
+  "0.16.0.1 (2025-01-15)": "wheel upload fix",
+  "0.16.1 (2025-02-06)": "Python 3.13, QubitVector::check_dimension, QuantumError.to_dict without Instruction.condition",
+  "0.16.2 (2025-03-03)": "unused code removed, backend deprecations",
+  "0.16.3 (2025-03-04)": "removal of deprecated Qiskit-2.0 code, Rust temporarily removed from the build",
+  "0.16.4 (2025-03-04)": "Rust fix",
+  "0.17 (2025-03-13)": "compatibility release with Qiskit 2.0: noise-model update for Qiskit 1.4.x / 2.x (PR 2329), BaseEstimator import",
+  "0.17.1 (2025-06-04)": "python-dateutil requirement, URL updates",
+  "0.17.2 (2025-09-17)": "GPU builds and tests for Qiskit >= 2.1 (PR 2368), typo and Windows build fixes"
+ },
+ "cuStateVec_or_Kraus_mentions_in_the_notes": [
+  "0.15.0: 'The option cuStateVec_enable=True was not set correctly. This fix set this option to statevector, unitary and density_matrix simulator states classes before allocating their memory' (PR 2146) -- already contained in 0.15.1, the version the CI runs",
+  "0.15.0: 'Fix noise sampling on shot-branching' (PR 2098) -- shot branching is off in every campaign-33 simulator",
+  "0.12.0 / 0.11.0: Kraus support in AerState / AerStatevector, cuStateVec introduction and API fixes (older than 0.15)"
+ ],
+ "finding": "No release note of 0.16.x or 0.17.x names a fix to Kraus channels, non-unitary noise sampling or the cuStateVec execution path; 0.16-0.17.2 are compatibility and build releases. A newer qiskit-aer-gpu is therefore not expected to change the C2_CAL GPU Kraus result, and nothing upstream documents the defect: if C2_KCHK confirms it (K1), it is a new report for Qiskit/qiskit-aer (prompts/33d R4)."
+}

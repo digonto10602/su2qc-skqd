@@ -99,7 +99,7 @@ PREFLIGHT_MODULES = {
              "skqd.campaign33.tokens", "skqd.campaign33.stats", "skqd.campaign33.sampling",
              "skqd.campaign33.circuits", "skqd.campaign33.noise", "skqd.campaign33.analysis",
              "skqd.campaign33.tokens_run", "skqd.campaign33.assemble", "skqd.campaign33.cf_gpu",
-             "skqd.campaign33.engines", "gate_CV"),
+             "skqd.campaign33.engines", "skqd.campaign33.kchk_cpu", "gate_CV"),
     "engine": ("numpy", "skqd.report", "skqd.campaign33.tokens", "skqd.campaign33.stats", "skqd.campaign33.engines"),
 }
 PREFLIGHT_EXIT = 3
