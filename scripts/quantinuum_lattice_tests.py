@@ -460,19 +460,33 @@ def tier_noise(args):
                 break
             s_i = SCENARIOS.index(sid)
             spec = spec_of(sid, P.n, mans, lat)
-            cells, wall = {}, time.time()
+            # resumable across <= 30-min commands: finished cells are kept in fcpartial_<sid> until all 28 exist
+            part_ = frag("QN_2x2", f"fcpartial_{sid}") or {"cells": {}, "wall_s": 0.0}
+            cells, wall = dict(part_["cells"]), time.time()
             for c_i, cid in enumerate(ids):
+                if cid in cells:
+                    continue
+                if args.budget_s and time.time() - t0 > float(args.budget_s):
+                    break
                 m = mans[cid]
                 qc, _ = load_native_qiskit(lat, cid)
                 seed = SEED_FC + 1000 * s_i + c_i
                 cnt, dt = run_noisy(spec, qc, N_FCELL, seed, args.threads)
                 cells[cid] = fcell(P, m, cnt, N_FCELL, spec, qc, seed, dt)
+                save_frag("QN_2x2", f"fcpartial_{sid}", {"cells": cells, "wall_s": float(part_["wall_s"]) + time.time() - wall})
+            if len(cells) < len(ids):
+                print(f"  f-cells {sid}: {len(cells)} of {len(ids)} circuits (budget), resumable", flush=True)
+                break
+            wall_total = float(part_["wall_s"]) + time.time() - wall
             save_frag("QN_2x2", f"fcells_{sid}", {"scenario": sid, "description": N.describe(spec) if hasattr(N, "describe") else spec.description,
-                                                 "cells": cells, "wall_s": time.time() - wall, "shots_per_cell": N_FCELL,
+                                                 "cells": cells, "wall_s": wall_total, "shots_per_cell": N_FCELL,
                                                  "seed_rule": SEED_RULES["T3_fcells"], "threads": args.threads,
                                                  "aer_settings": NOISY_SIM_KW(args.threads),
                                                  "environment": env_record()})
-            print(f"  f-cells {sid}: {len(cells)} circuits in {time.time() - wall:.0f} s", flush=True)
+            pp = os.path.join(FRAG, "QN_2x2", f"fcpartial_{sid}.json")
+            if os.path.exists(pp):
+                os.remove(pp)
+            print(f"  f-cells {sid}: {len(cells)} circuits in {wall_total:.0f} s", flush=True)
         return assemble_QN_2x2()
     if part == "por":
         sids = args.scenarios or list(POR_RUN)
@@ -566,8 +580,11 @@ def tier_noise_4(args):
                         "n_2q": f0.get("n_2q"), "n_1q_noisy": f0.get("n_1q_noisy")}
         table[cid] = row
         print(f"  {cid}: E1 f0 {row['E1']['f0']:.3e} [{time.time() - t0:.0f} s]", flush=True)
-    q0p = load_json(os.path.join(ROOT, "validation", "Q0P_2x4.json"))["data"].get("Q5") or {}
-    save_frag("QN_2x4", "analytic", {"f0": table, "scenarios": list(SCENARIOS), "devices": q0p.get("devices"),
+    import gate_Q0P_2x3 as GQ                 # the device rows of Q0P_2x4's predict stage, computed here from the same
+    devices, _tab = GQ.device_rows_L(4, mans)  # frozen counts (Q0P_2x4 itself is held by the prompts/35a STOP)
+    save_frag("QN_2x4", "analytic", {"f0": table, "scenarios": list(SCENARIOS), "devices": devices,
+                                     "devices_source": "gate_Q0P_2x3.device_rows_L(4, manifests) (the device table's formula)",
+                                     "circuits_built": sorted(mans), "built_k": idx.get("built_k"),
                                      "sampled_shots": 0, "wall_s": time.time() - t0, "environment": env_record(),
                                      "e7_counts": mean_counts(mans)})
     return assemble_QN_2x4()
@@ -760,7 +777,7 @@ def assemble_QN_2x4():
                          fmt(max(r[s]["log10_f0"] for r in A["f0"].values() if r[s]["log10_f0"] is not None))]
                         for s in SCENARIOS]), ""]
         if A.get("devices"):
-            L += ["## Gate-only f per device (validation/Q0P_2x4.json data.Q5)", "",
+            L += ["## Gate-only f per device (data.analytic.devices: the device table formula on the frozen counts)", "",
                   md_table(["device", "f mean", "eps2 for mean f 0.1", "eps2 for worst f 0.05"],
                            [[v["device"], fmt(v["f_gate_only_mean"]), fmt(v["eps2_for_mean_f_0.1"]),
                              fmt(v["eps2_for_worst_f_0.05"])] for v in A["devices"].values()]), ""]

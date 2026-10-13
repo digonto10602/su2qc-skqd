@@ -396,3 +396,75 @@ def test_pytket_json_reader_equals_pytket_to_ir():
         assert a[1] == b[1] and a[2] == b[2] and len(a[0]) == len(b[0])
         for (n1, q1, p1), (n2, q2, p2) in zip(a[0], b[0]):
             assert n1 == n2 and list(q1) == list(q2) and (p1 is None and p2 is None or p1 == p2)
+
+
+# --------------------------------------------------------------------------- prompts/35b R4: the structured source
+def _haar_1q(rng):
+    A = rng.normal(size=(2, 2)) + 1j * rng.normal(size=(2, 2))
+    Q, R = np.linalg.qr(A)
+    return Q * (np.diag(R) / np.abs(np.diag(R)))
+
+
+@needs_pytket
+@pytest.mark.parametrize("case", ["cx01", "cx10", "p", "cp01", "cp10", "unitary"])
+def test_structured_writer_rules_against_get_unitary_and_qiskit(case):
+    """cx -> CX, p -> U1, cp -> CU1 (control = qs[0]), one-qubit unitary -> Unitary1qBox: pytket's own
+    Circuit.get_unitary() equals the IR's unitary (qiskit Operator) EXACTLY, global phase included, to 1e-12, on
+    1-2 qubits -- the half-turn factor and the control/target order of CU1 are fixed here; and the reader gives
+    the gate back."""
+    rng = np.random.default_rng(355)
+    lam = 0.7391
+    g = {"cx01": [("cx", [0, 1], None)], "cx10": [("cx", [1, 0], None)], "p": [("p", [1], lam)],
+         "cp01": [("ry", [0], 0.4), ("cp", [0, 1], lam)], "cp10": [("ry", [1], 0.4), ("cp", [1, 0], lam)],
+         "unitary": [("unitary", [1], _haar_1q(rng))]}[case]
+    c = qn.ir_to_pytket(g, 2, measure=False)
+    assert np.max(np.abs(c.get_unitary() - ir_unitary_be(g, 2))) < 1e-12
+    back, n, _ = qn.pytket_to_ir(c)
+    assert [x[0] for x in back] == [x[0] for x in g] and [list(x[1]) for x in back] == [list(x[1]) for x in g]
+    sv = cq.statevector(qn.pytket_to_ir(c)[0], 2)
+    assert np.max(np.abs(sv - cq.statevector(g, 2))) < 1e-12
+
+
+def test_structured_to_rzz_is_exact_up_to_global_phase():
+    """The rewrite of cx / cp / p into {one-qubit gates, rzz} (prompts/35b R4) is the same unitary up to a global
+    phase, on random 3-qubit structured circuits (qiskit Operator)."""
+    from qiskit.quantum_info import Operator
+    rng = np.random.default_rng(356)
+    for _ in range(5):
+        g = []
+        for _ in range(30):
+            kind = rng.integers(0, 6)
+            a, b = (int(x) for x in rng.choice(3, 2, replace=False))
+            th = float(rng.uniform(-2 * np.pi, 2 * np.pi))
+            g.append([("cx", [a, b], None), ("cp", [a, b], th), ("p", [a], th), ("ry", [a], th),
+                      ("unitary", [a], _haar_1q(rng)), ("x", [a], None)][kind])
+        U = Operator(cq.ir_to_qiskit(g, 3, measure=False)).data
+        V = Operator(cq.ir_to_qiskit(qn.structured_to_rzz(g), 3, measure=False)).data
+        ph = np.vdot(V.ravel(), U.ravel())
+        assert np.max(np.abs(U - ph / abs(ph) * V)) < 1e-12
+
+
+@needs_pytket
+def test_q1l_35b_on_a_compiled_structured_circuit():
+    """Q1L (35b R2) with structured=True on a random 4-qubit structured circuit compiled at level 0: (i) and (ii) pass,
+    the state agrees with the source; a swapped pair of non-commuting gates fails (ii)."""
+    rng = np.random.default_rng(357)
+    n = 4
+    g = []
+    for _ in range(40):
+        kind = rng.integers(0, 5)
+        a, b = (int(x) for x in rng.choice(n, 2, replace=False))
+        th = float(rng.uniform(-np.pi, np.pi))
+        g.append([("cx", [a, b], None), ("cp", [a, b], th), ("p", [a], th), ("ry", [a], th),
+                  ("unitary", [a], _haar_1q(rng))][kind])
+    cc = qn.compile_native(qn.ir_to_pytket(g, n, measure=True), "H2-2", 0)
+    r = qn.local_equivalence_35a(g, cc, n, structured=True)
+    assert r["ok"], {k: r[k] for k in ("i_skeleton", "ii_segments_vs_readback")}
+    assert r["ii_segments_vs_readback"]["segments_max_residual"] < 1e-12
+    sv = cq.statevector(qn.pytket_to_ir(cc)[0], n)
+    assert qn.global_phase_residual(sv, cq.statevector(g, n))["max_abs_dpsi"] < 1e-12
+    bad = g + [("cx", [0, 1], None), ("ry", [1], 0.3)]
+    good = g + [("ry", [1], 0.3), ("cx", [0, 1], None)]
+    rb = qn.local_equivalence_35a(bad, qn.compile_native(qn.ir_to_pytket(good, n, measure=True), "H2-2", 0), n,
+                                  structured=True)
+    assert not rb["ok"]

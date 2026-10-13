@@ -144,7 +144,7 @@ def ir_to_pytket(gates: list, n: int, measure: bool = True):
     """Direct IR -> pytket.Circuit writer (no pytket-qiskit).  Gates rz, rx, ry, x, h, rzz,
     gphase; with `measure`, Measure q[k] -> c[k] for every k."""
     _pytket()
-    from pytket import Circuit
+    from pytket import Circuit, OpType
 
     c = Circuit(n, n if measure else 0)
     for name, qs, par in gates:
@@ -162,6 +162,17 @@ def ir_to_pytket(gates: list, n: int, measure: bool = True):
             c.H(int(qs[0]))
         elif name == "gphase":
             c.add_phase(float(par) / math.pi)
+        elif name == "cx":                     # prompts/35b R4: the structured IR source
+            c.CX(int(qs[0]), int(qs[1]))
+        elif name == "p":                      # p(l) = diag(1, e^{il}) = U1(l/pi)
+            c.add_gate(OpType.U1, [float(par) / math.pi], [int(qs[0])])
+        elif name == "cp":                     # cp(l) = diag(1, 1, 1, e^{il}) = CU1(l/pi), control qs[0]
+            c.add_gate(OpType.CU1, [float(par) / math.pi], [int(qs[0]), int(qs[1])])
+        elif name == "unitary":
+            if len(qs) != 1:
+                raise ValueError(f"ir_to_pytket: only one-qubit 'unitary' gates are supported, got {len(qs)} qubits")
+            from pytket.circuit import Unitary1qBox
+            c.add_unitary1qbox(Unitary1qBox(np.asarray(par, dtype=complex)), int(qs[0]))
         else:
             raise ValueError(f"ir_to_pytket: unsupported IR gate {name}")
     if measure:
@@ -262,7 +273,7 @@ def pytket_to_ir(circ):
     for cmd in circ.get_commands():
         t = cmd.op.type
         qs = [_qubit_index(q) for q in cmd.qubits]
-        ps = [_param(p) for p in cmd.op.params]
+        ps = [] if t in (OpType.Unitary1qBox, OpType.Measure, OpType.Barrier) else [_param(p) for p in cmd.op.params]
         if t == OpType.Rz:
             gates.append(("rz", qs, math.pi * ps[0]))
         elif t == OpType.Rx:
@@ -282,6 +293,14 @@ def pytket_to_ir(circ):
             gates.append(("x", qs, None))
         elif t == OpType.H:
             gates.append(("h", qs, None))
+        elif t == OpType.CX:                   # prompts/35b R4 (the structured source written by ir_to_pytket)
+            gates.append(("cx", qs, None))
+        elif t == OpType.U1:
+            gates.append(("p", qs, math.pi * ps[0]))
+        elif t == OpType.CU1:
+            gates.append(("cp", qs, math.pi * ps[0]))
+        elif t == OpType.Unitary1qBox:
+            gates.append(("unitary", qs, np.asarray(cmd.op.get_matrix(), dtype=complex)))
         elif t == OpType.Measure:
             qmap[qs[0]] = _bit_index(cmd.bits[0])
         elif t == OpType.Barrier:
@@ -293,7 +312,7 @@ def pytket_to_ir(circ):
 
 
 # --------------------------------------------------------------------------- local equivalence (prompts/35 Q1L)
-_ONE_Q = ("rz", "rx", "ry", "x", "h")
+_ONE_Q = ("rz", "rx", "ry", "x", "h", "unitary")
 
 
 def _one_q_matrix(name, par):
@@ -310,6 +329,8 @@ def _one_q_matrix(name, par):
     if name == "h":
         r = 1.0 / math.sqrt(2.0)
         return np.array([[r, r], [r, -r]], dtype=complex)
+    if name == "unitary":
+        return np.asarray(par, dtype=complex)
     raise ValueError(f"local_equivalence: unsupported one-qubit gate {name}")
 
 
@@ -333,10 +354,62 @@ def _skeleton(gates: list, n: int):
                 seg[q].append(I2.copy())
         elif name in _ONE_Q:
             q = int(qs[0])
-            seg[q][-1] = _one_q_matrix(name, float(par)) @ seg[q][-1]
+            seg[q][-1] = _one_q_matrix(name, par if name == "unitary" else (None if par is None else float(par))) @ seg[q][-1]
         else:
             raise ValueError(f"local_equivalence: unsupported gate {name}")
     return seq, seg, glob
+
+
+def _frame_equivalence(g_ir: dict, g_nat: dict, glob: list, n: int) -> dict:
+    """prompts/35b R4: equivalence of two circuits with an identical per-qubit rzz skeleton whose one-qubit frames may
+    differ by local unitaries that pass through rzz(t) exactly.  The frame C_q (native-so-far = (x_q C_q) .
+    source-so-far) starts at I.  The source's rzz gates are visited in its time order `glob`; before each, the two
+    qubits' frames absorb their segments, C <- N_j C R_j^dag, and must be diagonal ('D') or anti-diagonal ('A') (the
+    other two entries are the residual):
+      D x D, A x A pass through unchanged (diagonals and X x X commute with Z x Z);
+      D x A, A x D flip the sign of the angle, rzz(-t) = rzz(t) rzz(-2t), local only for t = pi/2 mod pi, where
+               rzz(-+pi) = phase . Z x Z: both frames are then multiplied by Z (any other angle fails).
+    After the last segment C_q must be proportional to I (residual max|C - e^{i phi} I|).  Every step is an exact
+    identity, so the check proves equal unitaries up to a global phase."""
+    Z = np.diag([1.0, -1.0]).astype(complex)
+    C = {q: np.eye(2, dtype=complex) for q in range(n)}
+    jq = {q: 0 for q in range(n)}
+    worst, wpos, flips = 0.0, None, 0
+
+    def absorb(q):
+        nonlocal worst, wpos
+        j = jq[q]
+        M = g_nat[q][j] @ C[q] @ g_ir[q][j].conj().T
+        off, dia = max(abs(M[0, 1]), abs(M[1, 0])), max(abs(M[0, 0]), abs(M[1, 1]))
+        if off <= dia:
+            t, r, M = "D", off, np.diag(np.diag(M))
+        else:
+            t, r, M = "A", dia, np.array([[0.0, M[0, 1]], [M[1, 0], 0.0]], dtype=complex)
+        if r > worst:
+            worst, wpos = r, {"qubit": q, "segment": j, "kind": f"frame at an rzz not diagonal / anti-diagonal ({t})"}
+        C[q] = M
+        jq[q] = j + 1
+        return t
+
+    for (_lo, _hi, ang, (a, b)) in glob:
+        ta, tb = absorb(a), absorb(b)
+        if ta != tb:
+            if abs(abs(math.remainder(2.0 * ang, 2.0 * math.pi)) - math.pi) > 1e-12:
+                worst = max(worst, 1.0)
+                wpos = wpos if (wpos and wpos.get("kind", "").startswith("D x A")) else {
+                    "pair": [a, b], "angle": ang, "kind": "D x A frames at an rzz whose angle is not pi/2 mod pi"}
+                continue
+            C[a], C[b] = Z @ C[a], Z @ C[b]
+            flips += 1
+    nseg = 0
+    for q in range(n):
+        j = jq[q]
+        M = g_nat[q][j] @ C[q] @ g_ir[q][j].conj().T
+        r = _phase_free_residual(M, np.eye(2, dtype=complex))
+        nseg += j + 1
+        if r > worst:
+            worst, wpos = r, {"qubit": q, "segment": j, "kind": "final frame not proportional to I"}
+    return {"max_residual": float(worst), "segments": nseg, "worst": wpos, "n_sign_flips": flips}
 
 
 def _angle_diff(a: float, b: float) -> float:
@@ -352,7 +425,7 @@ def _phase_free_residual(A, B) -> float:
     return float(np.max(np.abs(A - ph * B)))
 
 
-def local_equivalence(ir_gates: list, native_circ, n: int, tol: float = 1e-12) -> dict:
+def local_equivalence(ir_gates: list, native_circ, n: int, tol: float = 1e-12, canonical: bool = False) -> dict:
     """Q1L of prompts/35 3.3: an exact (not statistical) equivalence proof of an IR gate list in
     {rz, rx, ry, rzz, x, h, gphase} (the circuit after the prototype transpile) and a compiled native
     pytket circuit, read back with `pytket_to_ir`.
@@ -391,12 +464,16 @@ def local_equivalence(ir_gates: list, native_circ, n: int, tol: float = 1e-12) -
     n_seg = 0
     worst_seg = None
     if skel_ok:
-        for q in range(n):
-            for j, (A, B) in enumerate(zip(g_ir[q], g_nat[q])):
-                r = _phase_free_residual(A, B)
-                n_seg += 1
-                if r > max_seg:
-                    max_seg, worst_seg = r, {"qubit": q, "segment": j}
+        if canonical:                          # prompts/35b R4: frame tracking through the commutant of rzz (exact)
+            fr = _frame_equivalence(g_ir, g_nat, gl_ir, n)
+            max_seg, n_seg, worst_seg = fr["max_residual"], fr["segments"], fr["worst"]
+        else:
+            for q in range(n):
+                for j, (A, B) in enumerate(zip(g_ir[q], g_nat[q])):
+                    r = _phase_free_residual(A, B)
+                    n_seg += 1
+                    if r > max_seg:
+                        max_seg, worst_seg = r, {"qubit": q, "segment": j}
     glob_same = (len(gl_ir) == len(gl_nat)
                  and all(x[:2] == y[:2] and _angle_diff(x[2], y[2]) < tol for x, y in zip(gl_ir, gl_nat)))
     orient_same = len(gl_ir) == len(gl_nat) and all(x[3] == y[3] for x, y in zip(gl_ir, gl_nat))
@@ -409,11 +486,12 @@ def local_equivalence(ir_gates: list, native_circ, n: int, tol: float = 1e-12) -
             "segments_compared": n_seg, "segments_max_residual": max_seg if skel_ok else None,
             "worst_segment": worst_seg, "first_difference": first_diff,
             "measure_map_identity": meas_ok, "implicit_permutation_identity": bool(perm_ok),
-            "tol": tol, "ok": bool(seg_ok and meas_ok and perm_ok)}
+            "tol": tol, "canonical_rz_frames": bool(canonical), "ok": bool(seg_ok and meas_ok and perm_ok)}
 
 
 CANON_TOL_HALF_TURNS = 1e-11      # pytket stores an angle within < 1e-11 half-turns of a multiple of 1/4 as that multiple
-STATE_BAR = 1e-10                 # the Q1 state bar (prompts/26 Q1, unchanged by prompts/35a)
+STATE_BAR = 1e-10                 # the Q1 state bar (prompts/26 Q1, unchanged by prompts/35a / 35b)
+_HALF_PI = 0.5 * math.pi
 
 
 def _wrap_half_turns(d: float) -> float:
@@ -422,69 +500,120 @@ def _wrap_half_turns(d: float) -> float:
     return 1.0 if d == -1.0 else d
 
 
+def structured_to_rzz(gates: list) -> list:
+    """prompts/35b R4: the structured IR (cx, p, cp, one-qubit unitary, ry, rz, rx, x, h, rzz) rewritten EXACTLY (up to a
+    global phase) in {one-qubit gates, rzz}, in pytket's two-qubit convention (CX -> ZZPhase(+1/2), CU1(l) ->
+    ZZPhase(+l/2), checked by tests/test_quantinuum_native.py against Circuit.get_unitary()):
+        cx(c, t)  = h_t . rzz(pi/2)_{ct} . rz(-pi/2)_c rz(-pi/2)_t . h_t      (CZ = rzz(pi/2) rz(-pi/2) x rz(-pi/2))
+        cp(l)(a, b) = x_a rzz(l/2) x_a . rz(l/2)_a rz(l/2)_b  for l in [0, pi]   (x_a rzz(t) x_a = rzz(-t)),
+                    = rzz(-l/2) . rz(l/2)_a rz(l/2)_b            for l in (-pi, 0)  (l wrapped mod 2 pi first)
+        p(l)      = rz(l)
+    Every constant is an exact binary fraction of pi; nothing else is changed."""
+    out = []
+    for name, qs, par in gates:
+        if name == "cx":
+            c, t = int(qs[0]), int(qs[1])
+            out += [("h", [t], None), ("rzz", [c, t], _HALF_PI), ("rz", [c], -_HALF_PI), ("rz", [t], -_HALF_PI),
+                    ("h", [t], None)]
+        elif name == "cp":
+            a, b = int(qs[0]), int(qs[1])
+            lam = math.remainder(float(par), 2.0 * math.pi)       # cp(l) = cp(l - 2 pi m): the same matrix
+            if lam >= 0.0:                                         # pytket's choice: ZZPhase(|l| / 2) in [0, 1/2]
+                out += [("x", [a], None), ("rzz", [a, b], 0.5 * lam), ("x", [a], None)]
+            else:
+                out.append(("rzz", [a, b], -0.5 * lam))
+            out += [("rz", [a], 0.5 * lam), ("rz", [b], 0.5 * lam)]
+        elif name == "p":
+            out.append(("rz", qs, float(par)))
+        else:
+            out.append((name, qs, par))
+    return out
+
+
 def _param_sequences(gates: list, n: int):
-    """Per qubit, in order: (name, angle in rad or None, partner or None) of every non-gphase gate."""
+    """Per qubit, in order: (name, parameter (angle in rad, matrix or None), partner or None) of every non-gphase gate;
+    a two-qubit gate (rzz, cx, cp) appears on both of its qubits."""
     seq = {q: [] for q in range(n)}
     for name, qs, par in gates:
         if name == "gphase":
             continue
-        if name == "rzz":
+        if name in ("rzz", "cx", "cp"):
             a, b = int(qs[0]), int(qs[1])
-            seq[a].append(("rzz", float(par), b))
-            seq[b].append(("rzz", float(par), a))
+            p = None if par is None else float(par)
+            seq[a].append((name, p, b))
+            seq[b].append((name, p, a))
+        elif name == "unitary":
+            seq[int(qs[0])].append((name, np.asarray(par, dtype=complex), None))
         else:
             seq[int(qs[0])].append((name, None if par is None else float(par), None))
     return seq
 
 
+# operator-norm change per half-turn of angle change: rotations exp(-i t P / 2) and rzz move by <= (pi/2)|Delta a|,
+# phase gates diag(1, e^{il}) and cp by <= pi |Delta a| (prompts/35a R2, extended by 35b R4 to the structured gates)
+_ROUND_FACTOR = {"rz": _HALF_PI, "rx": _HALF_PI, "ry": _HALF_PI, "rzz": _HALF_PI, "p": math.pi, "cp": math.pi}
+
+
 def rounding_bound(ir_gates: list, n: int) -> dict:
-    """prompts/35a R2 (iii): the angles pytket stores for the IR (the IR written by `ir_to_pytket` and read back by
-    `pytket_to_ir`; pytket canonicalises at construction) against the IR angles, gate by gate along every qubit.
-    B = (pi/2) sum_g |Delta a_g| (half-turns) bounds ||U_pytket - U_IR||_op, hence max|Delta psi| (every gate written
-    here is Rz / Rx / Ry / ZZPhase, so the PhasedX term 2|Delta b| does not occur).  Returns the record and the
-    read-back IR (the IR with the stored angles substituted)."""
+    """The angles (and one-qubit matrices) pytket stores for the IR -- written by `ir_to_pytket`, read back by
+    `pytket_to_ir` -- against the IR's, gate by gate along every qubit.  B = sum_g c_g |Delta a_g| + sum_u ||U - U'||_op
+    (c_g = pi/2 for rotations and rzz, pi for p / cp; Delta a in half-turns) bounds ||U_pytket - U_IR||_op, hence
+    max|Delta psi|.  Also the incoherent ESTIMATE (pi/2) sqrt(sum Delta a^2) of prompts/35b R1 (not a bound).
+    Returns the record and the read-back IR."""
     pc = ir_to_pytket(ir_gates, n, measure=False)
     back, nn, _ = pytket_to_ir(pc)
     a, b = _param_sequences(ir_gates, n), _param_sequences(back, n)
     same = nn == n and all(len(a[q]) == len(b[q]) for q in range(n))
-    deltas = []
+    deltas, weighted, unorm = [], 0.0, []
     if same:
         for q in range(n):
             for (na, ta, pa), (nb, tb, pb) in zip(a[q], b[q]):
                 if na != nb or pa != pb:
                     same = False
                     break
-                if ta is None or (na == "rzz" and q > pa):   # each rzz counted once (on its lower qubit)
+                if na == "unitary":
+                    unorm.append(float(np.linalg.norm(ta - tb, 2)))
                     continue
-                deltas.append(abs(_wrap_half_turns((ta - tb) / math.pi)))
+                if ta is None or (pa is not None and q > pa):      # each two-qubit gate counted once
+                    continue
+                d = abs(_wrap_half_turns((ta - tb) / math.pi))
+                deltas.append(d)
+                weighted += _ROUND_FACTOR.get(na, _HALF_PI) * d
     d = np.asarray(deltas, float) if deltas else np.zeros(0)
-    rec = {"structure_identical": bool(same), "n_gates_compared": int(d.size),
+    u = np.asarray(unorm, float) if unorm else np.zeros(0)
+    rec = {"structure_identical": bool(same), "n_gates_compared": int(d.size), "n_unitaries_compared": int(u.size),
            "n_rounded_gates": int(np.count_nonzero(d)), "max_abs_delta": float(d.max()) if d.size else 0.0,
            "sum_abs_delta": float(d.sum()), "unit": "half-turns",
-           "state_bound_B": float(math.pi / 2.0 * d.sum()) if same else None,
-           "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)"}
+           "max_unitary_opnorm_delta": float(u.max()) if u.size else 0.0,
+           "state_bound_B": float(weighted + u.sum()) if same else None,
+           "incoherent_estimate_not_a_bound": float(_HALF_PI * math.sqrt(float((d ** 2).sum()))) if same else None,
+           "bound": ("B = sum_g c_g |Delta a_g| + sum_u ||Delta U||_op >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| "
+                     "(prompts/35a R2, 35b R4)")}
     return rec, back
 
 
-def local_equivalence_35a(ir_gates: list, native_circ, n: int) -> dict:
-    """Q1L as restated by prompts/35a R2 (binding):
-    (i)   the two-qubit skeleton per qubit (partners, order) of the native circuit equals the IR's, every two-qubit
-          angle within CANON_TOL_HALF_TURNS of the IR's;
-    (ii)  per-qubit one-qubit segment products equal to 1e-12 against the IR with pytket's stored angles substituted
-          (`rounding_bound` read-back): this isolates the conversion (PhasedX order, half-turn factor, ZZ sign, order);
-    (iii) the rounding bound B < STATE_BAR;
-    plus q[k] -> c[k] and the identity permutation.  The raw residual of prompts/35 (against the unrounded IR) is
-    `segment_residual_raw`, information."""
+def local_equivalence_35a(ir_gates: list, native_circ, n: int, structured: bool = False) -> dict:
+    """Q1L.  prompts/35b R2 (binding): the conversion proof is
+    (i)  the two-qubit skeleton per qubit (partners, order) of the native circuit equals the source's, every two-qubit
+         angle within CANON_TOL_HALF_TURNS of the source's;
+    (ii) per-qubit one-qubit segment products equal to 1e-12 against the source with pytket's stored angles substituted
+         (`rounding_bound` read-back);
+    plus q[k] -> c[k] and the identity permutation -> `ok`.  35a's (iii) B < STATE_BAR is RECORDED (`iii_rounding`,
+    `ok_35a`) and becomes the GPU consistency criterion native-vs-source <= B + 1e-12 (35b R2).
+    structured=True (35b R4): the source is the structured IR (cx, p, cp, unitary, ...); it is compared through the
+    exact rewrite `structured_to_rzz`.  The raw residual against the unrounded source is `segment_residual_raw`."""
     rnd, back = rounding_bound(ir_gates, n)
+    ref = structured_to_rzz(ir_gates) if structured else ir_gates
+    ref_back = structured_to_rzz(back) if structured else back
     ir_n, nn, qmap = pytket_to_ir(native_circ)
-    sa, sn = _param_sequences(ir_gates, n), _param_sequences(ir_n, n)
+    sa, sn = _param_sequences(ref, n), _param_sequences(ir_n, n)
     skel_ok, max2q, first = True, 0.0, None
     for q in range(n):
         A = [(t, p) for nm, t, p in sa[q] if nm == "rzz"]
         Bq = [(t, p) for nm, t, p in sn[q] if nm == "rzz"]
         if len(A) != len(Bq):
             skel_ok = False
-            first = first or {"qubit": q, "reason": f"{len(A)} rzz in the IR, {len(Bq)} native"}
+            first = first or {"qubit": q, "reason": f"{len(A)} rzz in the source, {len(Bq)} native"}
             continue
         for j, ((ta, pa), (tb, pb)) in enumerate(zip(A, Bq)):
             d = abs(_wrap_half_turns((ta - tb) / math.pi))
@@ -492,21 +621,24 @@ def local_equivalence_35a(ir_gates: list, native_circ, n: int) -> dict:
                 skel_ok = False
                 first = first or {"qubit": q, "position": j, "ir": [pa, ta], "native": [pb, tb], "delta_half_turns": d}
             max2q = max(max2q, d)
-    seg = local_equivalence(back, native_circ, n, tol=1e-12)
-    raw = local_equivalence(ir_gates, native_circ, n, tol=1e-12)
+    seg = local_equivalence(ref_back, native_circ, n, tol=1e-12, canonical=structured)
+    raw = local_equivalence(ref, native_circ, n, tol=1e-12, canonical=structured)
     B = rnd["state_bound_B"]
-    ok = bool(skel_ok and seg["ok"] and B is not None and B < STATE_BAR and rnd["structure_identical"]
-              and qmap == {q: q for q in range(n)})
-    return {"ok": ok,
+    maps = qmap == {q: q for q in range(n)}
+    ok = bool(skel_ok and seg["ok"] and rnd["structure_identical"] and maps)
+    return {"ok": ok, "rule": "prompts/35b R2: (i) + (ii) + maps", "source": "structured" if structured else "ir",
+            "ok_35a": bool(ok and B is not None and B < STATE_BAR),
             "i_skeleton": {"ok": bool(skel_ok), "max_abs_delta_2q_half_turns": max2q, "tol_half_turns": CANON_TOL_HALF_TURNS,
                            "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)", "first_difference": first},
             "ii_segments_vs_readback": {"ok": bool(seg["ok"]), "segments_max_residual": seg["segments_max_residual"],
                                         "segments_compared": seg["segments_compared"], "tol": 1e-12,
                                         "skeleton_identical": seg["skeleton_per_qubit_identical"]},
-            "iii_rounding": dict(rnd, bar=STATE_BAR, ok=bool(B is not None and B < STATE_BAR)),
-            "rounding": {k: rnd[k] for k in ("n_rounded_gates", "max_abs_delta", "sum_abs_delta", "state_bound_B")},
+            "iii_rounding": dict(rnd, bar=STATE_BAR, ok=bool(B is not None and B < STATE_BAR),
+                                 status="recorded (prompts/35b R2: GPU consistency criterion, not a Q1L criterion)"),
+            "rounding": {k: rnd[k] for k in ("n_rounded_gates", "max_abs_delta", "sum_abs_delta", "state_bound_B",
+                                             "incoherent_estimate_not_a_bound", "max_unitary_opnorm_delta")},
             "segment_residual_raw": raw["segments_max_residual"], "raw_check_of_prompts_35": raw["ok"],
-            "measure_map_identity": qmap == {q: q for q in range(n)},
+            "measure_map_identity": maps,
             "implicit_permutation_identity": bool(seg["implicit_permutation_identity"]),
             "n_rzz_ir": raw["n_rzz_ir"], "n_rzz_native": raw["n_rzz_native"]}
 
