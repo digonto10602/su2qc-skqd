@@ -73,6 +73,39 @@ def calibration_note(d: dict) -> str:
     return ""
 
 
+Q_TIERS = (("T1 native + exact", {"2x2": "Q0P_2x2", "2x3": "Q0P_2x3", "2x4": "Q0P_2x4"}),
+           ("T2 noiseless", {"2x2": "QN_2x2", "2x3": "C3_AER", "2x4": "QV_2x4_01"}),
+           ("T3 noise models", {"2x2": "QN_2x2", "2x3": "C4_FCELLS_A", "2x4": "QN_2x4"}),
+           ("T4 pecos emulator", {"2x2": "QEMU_2x2", "2x3": "QEMU_2x3_laptop_smoke", "2x4": "QEMU_2x4"}),
+           ("T5 syntax checker", {"2x2": "QSC_prepared", "2x3": "QSC_prepared", "2x4": "QSC_prepared"}),
+           ("T6 Helios HUGR", {"2x2": "QH_2x2", "2x3": "QH_2x3", "2x4": "QH_2x4"}))
+
+
+def quantinuum_tier_table() -> str:
+    """prompts/35 3.9: the tier table of prompts/35 section 0, filled from the gate JSONs (status and, where present,
+    the status_reason); a missing JSON reads 'not run'."""
+    rows = []
+    for lat in ("2x2", "2x3", "2x4"):
+        cells = []
+        for _tier, gates in Q_TIERS:
+            g = gates[lat]
+            pth = os.path.join(ROOT, "validation", f"{g}.json")
+            if not os.path.exists(pth):
+                cells.append(f"{g}: not run")
+                continue
+            d = json.load(open(pth))
+            nf = sum(1 for c in d.get("criteria", []) if not c["passed"])
+            reason = d.get("status_reason") or (d.get("data") or {}).get("status_reason")
+            cells.append(f"{g}: **{d['status']}**" + (f" ({len(d['criteria'])} criteria, {nf} failing)" if d.get("criteria") else "")
+                         + (f" -- {reason}" if reason else ""))
+        rows.append(f"| {lat} | " + " | ".join(cells) + " |")
+    head = "| lattice | " + " | ".join(t for t, _g in Q_TIERS) + " |\n|---|" + "---|" * len(Q_TIERS)
+    return ("## Quantinuum tests of every SKQD circuit (prompts/35, 35a, 35b)\n\nEvery cell is read from "
+            "`validation/<gate>.json` by `scripts/update_status.py`; no number is typed.  0 QPU s and 0 HQC were spent.  "
+            "T2/T3 at 2x3 are the campaign-33 gates; T2 at 2x4 is the GPU slot QV_2x4_01 (deferred); T5 is prepared "
+            "only (the owner's Nexus login).\n\n" + head + "\n" + "\n".join(rows) + "\n")
+
+
 def main():
     rows = []
     for g, desc, where in GATES:
@@ -92,6 +125,7 @@ def main():
 
 {table}
 
+{quantinuum_tier_table()}
 ## Reports
 
 | report | content |
