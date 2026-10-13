@@ -1,0 +1,261 @@
+{
+ "id": "B0_ref474_k1.opt3",
+ "kind": "signed_2x4_coarse_step",
+ "lattice": "2x4",
+ "sector": "B=0",
+ "twoB": 0,
+ "reference": 474,
+ "k": 1,
+ "repetitions": 1,
+ "dt": 0.11469820342078263,
+ "dt_source": "gate_S2_2x4.dt_of(4, twoB): validation/E3.json, equal to Model(4).reference(4.0, twoB).dt to <= 4e-16 and fixed so that the build is bit-reproducible (the sparse eigensolver is not)",
+ "g2": 4.0,
+ "n_qubits": 28,
+ "family": "gate_S2D.circuit_set(4): CircuitFactory(Model(4), 4.0) default (angle_mode exact, structured hopping), coarse_step(r, k, dt); the term IR from gate_S2_2x4.preload_factory (data/S2_2x4/cache, the same gate lists structured_term_gates returns)",
+ "original_ir_counts": {
+  "x": 5,
+  "cx": 71544,
+  "p": 40,
+  "cp": 4,
+  "unitary": 388,
+  "ry": 70308
+ },
+ "transpile": {
+  "basis_gates": [
+   "rz",
+   "rx",
+   "ry",
+   "rzz"
+  ],
+  "coupling_map": null,
+  "optimization_level": 3,
+  "seed_transpiler": 7,
+  "seconds": 20.915919065475464,
+  "ops": {
+   "rz": 139268,
+   "rzz": 69676,
+   "rx": 62693,
+   "ry": 27829
+  },
+  "rzz": 69676,
+  "global_phase": 2.281356128832129,
+  "state_vs_original_ir": "not computed at 2x4 (R2: no dense statevector); Q1S / QV_2x4"
+ },
+ "levels": {
+  "0": {
+   "level": 0,
+   "compile_s": 46.39682078361511,
+   "counts": {
+    "n_phasedx": 90522,
+    "n_rz": 139268,
+    "n_zz": 69676,
+    "n_zzphase": 69676,
+    "n_zzmax": 0,
+    "n_meas": 28,
+    "n_qubits": 28,
+    "depth": 205139,
+    "depth_2q": 68648,
+    "ops": {
+     "Measure": 28,
+     "PhasedX": 90522,
+     "Rz": 139268,
+     "ZZPhase": 69676
+    }
+   },
+   "Q1L": {
+    "n_rzz_ir": 69676,
+    "n_rzz_native": 69676,
+    "skeleton_per_qubit_identical": true,
+    "skeleton_max_angle_diff": 1.7763568394002505e-15,
+    "skeleton_global_order_identical": false,
+    "pair_orientation_identical": false,
+    "segments_compared": 139380,
+    "segments_max_residual": 8.313639568730589e-13,
+    "worst_segment": {
+     "qubit": 7,
+     "segment": 905
+    },
+    "first_difference": null,
+    "measure_map_identity": true,
+    "implicit_permutation_identity": true,
+    "tol": 1e-12,
+    "ok": true
+   },
+   "Q1L_s": 53.89749503135681,
+   "passes_Q1L": true
+  }
+ },
+ "frozen_level": 0,
+ "compile_mode": "level0",
+ "selection_rule": "fewest ZZ gates among the levels that pass Q1L (local equivalence to the transpiled IR, quantinuum_native.local_equivalence_35a: prompts/35a R2 (i)-(iii), q[k] -> c[k], identity permutation); ties: fewer PhasedX, then the lower level; if no level passes, the pure rebase AutoRebase({Rz, PhasedX, ZZPhase}) (compile_mode 'pure_rebase'); level 2 not attempted at 2x4 (prompts/35a R4)",
+ "Q1L": {
+  "n_rzz_ir": 69676,
+  "n_rzz_native": 69676,
+  "skeleton_per_qubit_identical": true,
+  "skeleton_max_angle_diff": 1.7763568394002505e-15,
+  "skeleton_global_order_identical": false,
+  "pair_orientation_identical": false,
+  "segments_compared": 139380,
+  "segments_max_residual": 8.313639568730589e-13,
+  "worst_segment": {
+   "qubit": 7,
+   "segment": 905
+  },
+  "first_difference": null,
+  "measure_map_identity": true,
+  "implicit_permutation_identity": true,
+  "tol": 1e-12,
+  "ok": true
+ },
+ "Q1L_parts": {
+  "ir_vs_pytket_input": {
+   "n_rzz_ir": 69676,
+   "n_rzz_native": 69676,
+   "skeleton_per_qubit_identical": true,
+   "skeleton_max_angle_diff": 1.7763568394002505e-15,
+   "skeleton_global_order_identical": false,
+   "pair_orientation_identical": false,
+   "segments_compared": 139380,
+   "segments_max_residual": 8.313639568730589e-13,
+   "worst_segment": {
+    "qubit": 7,
+    "segment": 905
+   },
+   "first_difference": null,
+   "measure_map_identity": true,
+   "implicit_permutation_identity": true,
+   "tol": 1e-12,
+   "ok": true
+  },
+  "pytket_input_vs_native": {
+   "n_rzz_ir": 69676,
+   "n_rzz_native": 69676,
+   "skeleton_per_qubit_identical": true,
+   "skeleton_max_angle_diff": 0.0,
+   "skeleton_global_order_identical": true,
+   "pair_orientation_identical": true,
+   "segments_compared": 139380,
+   "segments_max_residual": 3.1401849173675503e-16,
+   "worst_segment": {
+    "qubit": 13,
+    "segment": 3097
+   },
+   "first_difference": null,
+   "measure_map_identity": true,
+   "implicit_permutation_identity": true,
+   "tol": 1e-12,
+   "ok": true
+  }
+ },
+ "STOP_Q1L": false,
+ "device_name_compiled_for": "H2-2",
+ "compile_route": "QuantinuumBackend(device, api_handler=QuantinuumAPIOffline(), compilation_config=QuantinuumBackendCompilationConfig(allow_implicit_swaps=False, target_2qb_gate=ZZPhase, preserve_qubit_names=True)).get_compiled_circuit(circ, optimisation_level)",
+ "counts": {
+  "n_phasedx": 90522,
+  "n_rz": 139268,
+  "n_zz": 69676,
+  "n_zzphase": 69676,
+  "n_zzmax": 0,
+  "n_meas": 28,
+  "n_qubits": 28,
+  "depth": 205139,
+  "depth_2q": 68648,
+  "ops": {
+   "Measure": 28,
+   "PhasedX": 90522,
+   "Rz": 139268,
+   "ZZPhase": 69676
+  },
+  "rzz_before": 69676
+ },
+ "hqc_per_shot": 157.5124,
+ "files": {
+  "qasm": "B0_ref474_k1.opt3.qasm.gz",
+  "json": "B0_ref474_k1.opt3.json.gz"
+ },
+ "sha256_of": "the uncompressed text",
+ "qasm_sha256": "69b94e05cc3205a9d46a278e5a1f118d939e427eb737bd203b4663463acaa61f",
+ "json_sha256": "57f2e57277623bc80399bdfb2bf39698831869368a719b21309c110bce5885c3",
+ "other_devices": {
+  "H1-1": {
+   "compiled": false,
+   "device_qubits": 20,
+   "error": "the offline machine list gives H1-1 20 qubits < 28",
+   "kept": "the H2-2 circuit (same native gate set)"
+  },
+  "Helios-1": {
+   "compiled": false,
+   "error": "DeviceNotAvailable: Helios-1",
+   "kept": "the H2-2 circuit (same native gate set)"
+  }
+ },
+ "reference_bits": [
+  0,
+  0,
+  0,
+  0,
+  0,
+  1,
+  0,
+  0,
+  0,
+  1,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  1,
+  0,
+  0,
+  1,
+  0,
+  0,
+  0,
+  0,
+  1,
+  0,
+  0,
+  0
+ ],
+ "reference_int": 17367584,
+ "p_reference": 0.9413048474446687,
+ "p_reference_source": "exact coarse state (krylov.apply_groups), basis index r",
+ "most_probable_basis_index": 474,
+ "p_most_probable": 0.9413048474446687,
+ "versions": {
+  "pytket": "2.18.4",
+  "pytket-quantinuum": "0.59.3",
+  "pytket-qiskit": "0.78.0",
+  "qnexus": "0.51.0",
+  "quantinuum-schemas": "7.8.2"
+ },
+ "git_commit": "e5503b8",
+ "built": "2026-10-13 18:38:02 UTC",
+ "build_s": 530.0181539058685,
+ "levels_attempted": {
+  "0": {
+   "n_phasedx": 90522,
+   "n_rz": 139268,
+   "n_zz": 69676,
+   "n_zzphase": 69676,
+   "n_zzmax": 0,
+   "n_meas": 28,
+   "n_qubits": 28,
+   "depth": 205139,
+   "depth_2q": 68648,
+   "ops": {
+    "Measure": 28,
+    "PhasedX": 90522,
+    "Rz": 139268,
+    "ZZPhase": 69676
+   }
+  },
+  "2": "capped at 1800 s on B0_ref102_k1 (prompts/35a R4; attempt wall 1800 s)"
+ },
+ "Q1L_rule": "prompts/35 raw form at build (before prompts/35a); the restated Q1L (35a R2) is recomputed from the frozen files by gate_Q0P_2x3.py --lattice 4 --stage verify",
+ "base_id": "B0_ref474_k1",
+ "source": "opt3",
+ "source_text": "the prototype transpile of the structured IR (qiskit opt 3, basis rz/rx/ry/rzz, seed 7), then pytket level 0 (prompts/35 3.1(a))"
+}
