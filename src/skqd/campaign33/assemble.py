@@ -430,13 +430,21 @@ def comparisons(dry, merged):
     cf = load("validation/CF_traj.json")["data"]
     rnc = load("data/cf_trajectories/r_nc.json")
     new = tj("C4_CF")
+    new_iv = _g(new, "data", "pooled", "r_d1e-03", "ci95")
+    from .cf_gpu import owner_item_r_nc
+    oi = owner_item_r_nc(new_iv, rnc["r_nc"], rnc["pooled_r_ci95"]) if new_iv else None
     rows.append({"old": f"CF_traj pooled r(1e-3) {rnc['pooled_r_point']:.4f} {rnc['pooled_r_ci95']}, r_nc {rnc['r_nc']:.4f}",
                  "redo": "C4_CF (K = 2000 per arm)", "status": "done" if new else "pending",
-                 "pooled_r": ST.compare(_g(new, "data", "pooled", "r_d1e-03", "value"),
-                                        _g(new, "data", "pooled", "r_d1e-03", "ci95"),
+                 "pooled_r": ST.compare(_g(new, "data", "pooled", "r_d1e-03", "value"), new_iv,
                                         rnc["pooled_r_point"], rnc["pooled_r_ci95"]),
                  "r_nc_new": _g(new, "data", "r_nc_new"),
-                 "owner_item": _g(new, "data", "owner_item_r_nc_outside_old_interval")})
+                 # prompts/33c R4 (b): evaluated here from the stored intervals; the harvested JSON is not rewritten
+                 "owner_item": oi["fires"] if oi else None, "owner_item_rules": oi,
+                 "owner_item_field_as_harvested": _g(new, "data", "owner_item_r_nc_outside_old_interval"),
+                 "r_nc_in_use": rnc["r_nc"], "r_nc_in_use_source": "data/cf_trajectories/r_nc.json (owner item: "
+                 "replacement is the owner's decision, prompts/33c section 5)",
+                 "k4_note": oi["k4_note"] if oi else None,
+                 "k4_r": _g(new, "data", "arms", "B0_ref25_k4", "r")})
     # CV_2x3_plan / Q0P_2x3_plan P3 -> C4_F5
     cvp = load("validation/CV_2x3_plan.json")["data"]["criteria_by_seed"]["f=0.10"]
     q3 = load("validation/Q0P_2x3_plan.json")["data"]["emulated_check"]["per_seed"]

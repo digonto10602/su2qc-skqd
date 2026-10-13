@@ -250,10 +250,13 @@ def test_scenario_rates_ratio_rule_on_a_synthetic_fcells_a():
     assert RS.parts_for(shots, n1) == 1 and RS.parts_for(shots, n3) == 3
     plan = {f"c{i}": shots // 40 for i in range(40)}
     assert RS.split_run(plan, 476, n1)["parts"] == 1 and RS.split_run(plan, 476, n3)["parts"] == 3
-    # E8 measured by C4_FCELLS_B's s3_redo replaces the upper bound
-    fb = {"data": {"s3_redo": {"seconds": 63.6, "shots": 3200, "chunk": 476}, "run": {"ci": {"SLURM_JOB_ID": "2"}}}}
-    r2 = RS.scenario_rates([("a", fa, "1"), ("validation/C4_FCELLS_B.json", fb, "2")], fit, 1428)["scenario_rates"]
-    assert abs(r2["E8"]["s_per_shot"] - 63.6 / 3200) < 1e-15 and "s3_redo" in r2["E8"]["source"]
+    # prompts/33c R5: C4_FCELLS_B's s3_redo is recorded, rho_E8 stays rho_E1 (upper bound from S3 and the redo)
+    fb = {"data": {"s3_redo": {"seconds": 141.0, "shots": 3200, "chunk": 14}, "run": {"ci": {"SLURM_JOB_ID": "2"}}}}
+    r2 = RS.scenario_rates([("a", fa, "1"), ("validation/C4_FCELLS_B.json", fb, "2")], fit, 1428,
+                           {"s_per_shot": 0.0199, "source": "validation/S3.json"})["scenario_rates"]
+    assert r2["E8"]["rho"] == r2["E1"]["rho"] and r2["E8"]["s_per_shot"] == r2["E1"]["s_per_shot"]
+    assert r2["E8"]["label"].startswith("upper bound (S3 and FCELLS_B s3_redo)")
+    assert abs(r2["E8"]["s3_redo_s_per_shot"] - 141.0 / 3200) < 1e-15 and "s3_redo" in r2["E8"]["s3_redo_source"]
 
 
 @pytest.fixture(scope="module")

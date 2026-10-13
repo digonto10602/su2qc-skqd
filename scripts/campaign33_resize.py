@@ -13,7 +13,7 @@ f-cell tokens -- never by hand -- and lay the parts out on the 20 re-usable C4_P
 Inputs (every number is named with its JSON path in the output): `data.ladder.points` of C4_FCELLS_A (one run()
 call per point at chunks 476 / 952 / 1428 per GPU mode); `data.cells.<cell>.chunks[*].{shots, seconds}` and
 `data.cells.<cell>.seconds` of every f-cell JSON present (C4_FCELLS_A, C4_FCELLS_B); `data.cells_dropped` of both;
-`data.s3_redo.{seconds, shots}` of C4_FCELLS_B (the E8 rate, once harvested); validation/S3.json
+`data.s3_redo.{seconds, shots}` of C4_FCELLS_B (recorded in the E8 label, prompts/33c R5); validation/S3.json
 `data.cost.seconds_per_shot_best_ladder` (the E8 upper-bound label); the plan of record (validation/CV_2x3_plan.json
 via tokens_run.cv_plan at the tier tokens_run.plan_tier reads from the f-cell JSONs) and the S3 quota (2e5 per
 sector).
@@ -24,8 +24,9 @@ Rules.
   successful; r_ladder = b + c / chunk.
 * Scenario rates (prompts/33b R2): r_s = r_ladder x rho_s, rho_s = max over the measured families of
   b_{s,fam} / b_{E1,NAT-O0} (per-cell least-squares slopes over the recorded chunks), rho_E1 >= 1.  No cell:
-  E6a/b/c and E7(f) take rho_E1 labelled `assumed: E1 (...)`; E8 takes rho_E1 labelled `upper bound: ...` until
-  C4_FCELLS_B's s3_redo gives its measured seconds / shots.
+  E6a/b/c and E7(f) take rho_E1 labelled `assumed: E1 (...)`; E8 takes rho_E1 labelled `upper bound: ...`, and
+  once C4_FCELLS_B's s3_redo exists `upper bound (S3 and FCELLS_B s3_redo)` with the redo's seconds / shots
+  recorded (prompts/33c R5: its 14-shot calls are per-call dominated, so rho_E8 stays rho_E1).
 * N_max(kind, s) = share x (budget - setup) / (1.25 r_s), share 0.6 (plan runs) or 0.75 (quota / f-cells / cv3);
   parts n = ceil(N / N_max), raised while a part exceeds N_max after rounding; the per-circuit part boundaries are
   the first chunk starts >= i N_c / n of the unsplit chunk plan (skqd.campaign33.sampling.split_ranges).
@@ -304,19 +305,25 @@ def scenario_rates(fcells_jsons: list, ladder_fit: dict, chunk: int, s3_rate: di
         if ref is None:
             label = e1_label + "; " + label
         rates[s] = {"s_per_shot": r_lad * rho_e1, "rho": rho_e1, "source": "rho_E1", "fit": None, "label": label}
-    # E8 measured by C4_FCELLS_B's s3_redo (its recorded seconds and shots)
+    # E8 and C4_FCELLS_B's s3_redo (prompts/33c R5): the redo's 14-shot calls are overhead-dominated (3 200 shots in
+    # 141 s), gate S3 measured 0.0199 s/shot at 476-shot calls; both lie below the E1 ladder rate, so rho_E8 stays
+    # rho_E1 and the label names both measurements (an upper bound, never the redo's per-call-dominated rate)
     for path, js, job in fcells_jsons:
         s3r = ((js or {}).get("data") or {}).get("s3_redo")
         if s3r and s3r.get("seconds") and s3r.get("shots") and "E8" in rates:
             r = float(s3r["seconds"]) / float(s3r["shots"])
-            rates["E8"] = {"s_per_shot": r, "rho": r / r_lad, "source": f"{path} (job {job}) data.s3_redo.seconds / "
-                           "data.s3_redo.shots", "fit": None,
-                           "label": (f"measured: the faithful S3 redo, {s3r['shots']} shots in {s3r['seconds']:.1f} s "
-                                     f"(chunk {s3r.get('chunk')}, per-call set-up included)")}
+            rates["E8"] = dict(rates["E8"], s3_redo_s_per_shot=r,
+                               s3_redo_source=f"{path} (job {job}) data.s3_redo.seconds / data.s3_redo.shots",
+                               label=("upper bound (S3 and FCELLS_B s3_redo): rho_E1; gate S3 "
+                                      + (f"{s3_rate['s_per_shot']:.4g} s/shot at 476-shot calls ({s3_rate['source']})"
+                                         if s3_rate else "(validation/S3.json absent)")
+                                      + f"; C4_FCELLS_B s3_redo {s3r['shots']} shots in {float(s3r['seconds']):.1f} s "
+                                        f"= {r:.4g} s/shot at {s3r.get('chunk')}-shot calls (per-call set-up "
+                                        "dominated); prompts/33c R5"))
     rule = ("r_s = r_ladder x rho_s, r_ladder = b + c / chunk (E1 ladder of C4_FCELLS_A), rho_s = max over the "
             f"measured families of b_(s,fam) / b_({REF_CELL}) from least-squares t = c + b n over the recorded "
             "chunks of every f-cell present, rho_E1 >= 1; no cell: E6/E7 rho_E1 (assumed), E8 rho_E1 (upper bound) "
-            "until C4_FCELLS_B's s3_redo (prompts/33b R2)")
+            "(prompts/33b R2), kept after C4_FCELLS_B's s3_redo, which is recorded in the label (prompts/33c R5)")
     return {"scenario_rates": rates, "rate_rule": rule, "cell_fits": fits, "r_ladder": r_lad}
 
 

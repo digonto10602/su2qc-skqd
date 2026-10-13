@@ -590,9 +590,16 @@ def run_c2_cal(ctx):
 
 
 C2_CELLS = {"C2_GATE": ("I-GATE", "IBM-U", ("echo",)), "C2_ECHO": ("I-ECHO", "IBM-T0", ("echo",)),
-            "C2_STAR": ("I-STAR", "IBM-T0", ("star",)), "C2_XY4": ("I-XY4", "IBM-T3", ("echo", "star")),
+            "C2_STAR": ("I-STAR", "IBM-T0", ("star",)), "C2_XY4": ("I-XY4", "IBM-T3", ("echo",)),
             "C2_COH": ("I-COH", "IBM-T0", ("echo",))}
-C2_KRAUS_REF_SHARE = 0.2            # prompts/33a step C: the in-cell Kraus reference arm takes 20 % of the window
+# prompts/33c R3: C2_XY4 runs the echo half only (the star half is dropped from this token) and is the primary
+# class-2 cell (the like-for-like circuit: the device flew IBM-T3)
+C2_PRIMARY_CELL = "C2_XY4"
+C2_KRAUS_REF_SHARE = 0.2            # prompts/33a step C: the in-cell reference arm takes 20 % of the window
+# prompts/33c R3: the 20 % arm.  Production RM -> a Kraus reference arm ("kraus_reference", 33a step C); production
+# Kraus -> an RM arm ("rm_arm": a Kraus reference would duplicate production), whose in-cell P4a statistic against
+# the production arm decides the representation of the later cells (rm iff it passes, 33a's rule)
+C2_REF_ARM = {"rm": ("kraus_reference", "kraus"), "kraus": ("rm_arm", "rm")}
 C2_REF_CHUNK = 128
 C2_MIN_SHOTS = {"rm": 1000, "kraus": 256}     # S6 of a C2 cell: production shots per circuit (prompts/33a step C3)
 C2_UNDERPOWERED_BELOW = 5.0         # expected accepted strings at the device's rate below which counts are underpowered
@@ -663,10 +670,12 @@ def _c2_run_record(P, r0, man, clb, cid, device, meas, scale_shots, like_for_lik
 
 
 def run_c2_cell(ctx):
-    """A class-2 production cell (prompts/33a step C): the Kraus reference arm first (20 % of the sampling
-    window, both K1 circuits, equal shots, chunk 128; information: the in-cell RM-vs-Kraus check), then the
-    production arm (C2_CAL run 2's representation: RM, or Kraus if P4a failed) for the rest, equal shots per
-    run.  Observables: garbage structure, accepted / hits, round trip, and P7' against the K1 strings."""
+    """A class-2 production cell (prompts/33a step C, prompts/33c R3): the reference arm first (20 % of the sampling
+    window, both K1 circuits, equal shots, chunk 128), then the production arm (C2_CAL's representation: RM, or Kraus
+    if P4a failed) for the rest, equal shots per run.  The reference arm is the other representation
+    (C2_REF_ARM): a Kraus reference when production is RM, the RM arm when production is Kraus; their in-cell P4a
+    statistic decides the representation of the later cells.  Observables: garbage structure, accepted / hits,
+    round trip, and P7' against the K1 strings."""
     from campaign33 import add_table
     cell, family, convs = C2_CELLS[ctx.token]
     P = A.Physics(with_sectors=False)
@@ -674,12 +683,12 @@ def run_c2_cell(ctx):
     prod, mode, rates, dec_src = c2_cal_decision(ctx)
     if ctx.args.gpu_mode not in ("auto", "policy") and ctx.device == "GPU":
         mode = ctx.args.gpu_mode
-    ref_rep = "kraus"
+    ref_arm, ref_rep = C2_REF_ARM[prod]
     if ctx.dry:
         # a 21-qubit noisy shot costs minutes on the laptop CPU (Kraus more than PTA): the dry run checks the path
         # with the Pauli-twirled representation standing in for both arms, 1 shot per run (labelled)
-        ctx.notes.append(f"dry run: PTA stands in for both arms (kraus reference, {prod} production), 1 shot per run "
-                         "-- a path check, not the CI's channels")
+        ctx.notes.append(f"dry run: PTA stands in for both arms ({ref_rep} {ref_arm}, {prod} production), 1 shot per "
+                         "run -- a path check, not the CI's channels")
     ctx.data["gpu_mode_used"] = mode
     ratio = N.t2_star_ratio()
     eps = None
@@ -688,10 +697,7 @@ def run_c2_cell(ctx):
         qubits = sorted({q for cid in K1_IDS for q in circs[cid][1]["physical_qubits"]})
         eps, eps_info = N.coherent_eps_for(qubits)
         ctx.data["coherent_eps"] = {"per_qubit": eps, **eps_info}
-    runs = [(cid, conv) for conv in convs for cid in K1_IDS]
-    if ctx.dry:
-        runs = [(K1_IDS[0], conv) for conv in convs]
-        ctx.notes.append("dry run: one circuit (B0_ref117_k1) per T2 convention (the CI runs both K1 circuits)")
+    runs = [(cid, conv) for conv in convs for cid in K1_IDS]       # the dry run too: both K1 circuits (33c step 2)
     like = cell == "I-XY4"
     t_b = time.time()
     specs = {}
@@ -707,14 +713,13 @@ def run_c2_cell(ctx):
     rem = ctx.remaining()
     window = None if rem is None else 0.75 * max(0.0, rem)
     t_w = time.time()
-    rk = _rate_of(rates, "kraus", mode)
     arms = {}
-    for arm, rep in (("kraus_reference", ref_rep), ("production", prod)):
+    for arm, rep in ((ref_arm, ref_rep), ("production", prod)):
         t_a = time.time()
-        if arm == "kraus_reference":
+        if arm == ref_arm:
             deadline = None if window is None else t_w + C2_KRAUS_REF_SHARE * window
             budget = None if window is None else C2_KRAUS_REF_SHARE * window
-            rate = rk
+            rate = _rate_of(rates, ref_rep, mode)
             chunk = C2_REF_CHUNK
             if budget is not None and rate:
                 while chunk > 8 and chunk * rate * len(runs) > 0.9 * budget:
@@ -722,12 +727,12 @@ def run_c2_cell(ctx):
             n = 1 if ctx.dry else ctx.scaled(C2_TARGET_PER_CIRCUIT)
             phis, min_rounds = (1.0,), 1
             rule = (f"deadline-stopped at {C2_KRAUS_REF_SHARE:.0%} of the sampling window, equal shots per run at round "
-                    f"boundaries, chunk {chunk} (128, halved while one round at the C2_CAL Kraus rate {rate} s/shot "
+                    f"boundaries, chunk {chunk} (128, halved while one round at the C2_CAL {ref_rep} rate {rate} s/shot "
                     "would not fit 0.9 of the arm's budget); >= 1 round always")
         else:
             deadline = None if window is None else t_w + window
             left = None if deadline is None else max(0.0, deadline - time.time())
-            rate = _rate_of(rates, prod, mode) or (arms["kraus_reference"]["seconds_per_shot"] if prod == "kraus" else None)
+            rate = _rate_of(rates, prod, mode)
             if ctx.dry:
                 n = 1
             elif left is not None and rate:
@@ -747,7 +752,7 @@ def run_c2_cell(ctx):
             sims.append(sim)
             kws.append(kw)
         labels = [f"{cid}|{conv}" for cid, conv in runs]
-        off = 50 if arm == "kraus_reference" else 0
+        off = 50 if arm == ref_arm else 0          # seed offsets unchanged: the 20 % arm keeps 50 whatever it runs
         s = SM.Sampler(sims, ctx.s0, chunk, deadline, log=ctx.log, rate_hint=rate,
                        min_rounds=(1 if ctx.dry else 0) if min_rounds is None else min_rounds, phis=phis)
         res, info = s.run(cts, [n] * len(runs), labels, off)
@@ -755,7 +760,7 @@ def run_c2_cell(ctx):
         per = {}
         for (cid, conv), r0, kw in zip(runs, res, kws):
             spec = specs[(rep, conv)]
-            f0 = N.f0_ibm(circs[cid][0], specs[(ref_rep, conv)], circs[cid][1]["logical_to_physical"],
+            f0 = N.f0_ibm(circs[cid][0], specs[("kraus", conv)], circs[cid][1]["logical_to_physical"],
                           circs[cid][1]["reference_bits"])
             rr = _c2_run_record(P, r0, circs[cid][1], clb[cid], cid, device[cid], meas[cid], 1e5, like, f0, spec, family)
             rr.update({"simulator_options": kw, "noise": spec.description,
@@ -771,40 +776,56 @@ def run_c2_cell(ctx):
         ctx.log(f"{arm} ({rep}): shots per run {done}, {info['seconds_per_shot']} s/shot")
     ctx.phases["sampling_and_decoding_s"] = time.time() - t_w
     pr = arms["production"]
-    # ---- the in-cell RM-vs-Kraus check (information)
-    incell = {}
-    for lab in pr["per_run"]:
-        if prod == "kraus":
-            incell[lab] = {"evaluated": False, "reason": "production is Kraus (P4a failed or no run-2 decision)"}
-        else:
-            incell[lab] = ST.structure_compare(pr["per_run"][lab]["structure"],
-                                               arms["kraus_reference"]["per_run"][lab]["structure"])
+    # ---- the in-cell RM-vs-Kraus statistic (prompts/33a P4a, computed in the cell; prompts/33c R3)
+    rm_arm = "production" if prod == "rm" else ref_arm
+    kr_arm = ref_arm if prod == "rm" else "production"
+    incell = {lab: ST.structure_compare(arms[rm_arm]["per_run"][lab]["structure"],
+                                        arms[kr_arm]["per_run"][lab]["structure"]) for lab in pr["per_run"]}
+    evaluated = bool(incell) and all(v.get("evaluated") for v in incell.values())
+    incell_pass = evaluated and all(v.get("pass") for v in incell.values())
+    later = "rm" if incell_pass else "kraus"
     # ---- criteria
     allruns = [v for a in arms.values() for v in a["per_run"].values()]
     ctx.physics("P6 decoder round trip on every accepted string (both arms)",
                 {f"{a}:{k}": v["roundtrip"]["mismatches"] for a, d in arms.items() for k, v in d["per_run"].items()},
                 "0 mismatches", all(v["roundtrip"]["ok"] for v in allruns))
     have = all(("comparison_power" in v and v["z_vs_K1"].get("evaluated") and "accepted" in v["scaled_to_1e5"])
-               for v in pr["per_run"].values()) and bool(arms["kraus_reference"]["per_run"])
+               for v in pr["per_run"].values()) and bool(arms[ref_arm]["per_run"])
     ctx.physics("P7' K1 comparison per run: Poisson probabilities of the measured 58 / 45 accepted and 0 / 0 hits, the z "
-                "table of the mean Hamming weight and every marginal, comparison_power; Kraus reference arm present",
+                f"table of the mean Hamming weight and every marginal, comparison_power; the {ref_arm} arm present",
                 {k: v["comparison_power"]["counts"] + "/" + v["comparison_power"]["circuit"] for k, v in pr["per_run"].items()},
                 "fields present (no threshold)", have)
+    ctx.physics("P4a' in-cell RM vs Kraus (|z| <= 3 on the mean Hamming weight and every marginal, per run): evaluated "
+                "on every run; its outcome decides the representation of the later class-2 cells (prompts/33c R3)",
+                {"pass_by_run": {k: v.get("pass") for k, v in incell.items()},
+                 "z_w_by_run": {k: v.get("z_mean_hamming_weight") for k, v in incell.items()},
+                 "representation_decision_for_later_cells": later},
+                "evaluated (PASS or FAIL are both a decision)", evaluated)
     minimum = C2_MIN_SHOTS["rm" if prod == "rm" else "kraus"]
     pmin = min(pr["shots_per_circuit"].values()) if pr["shots_per_circuit"] else 0
     ctx.min_shots_ok = (pmin >= minimum) if not ctx.dry else True
     ctx.no_shots = any(v["shots"] == 0 for v in allruns)
     if pmin < pr["target_shots_per_run"] or not ctx.min_shots_ok:
         ctx.shots_reduced_to = {"production": pr["shots_per_circuit"],
-                                "minimum_per_circuit": minimum, "kraus_reference": arms["kraus_reference"]["shots_per_circuit"]}
+                                "minimum_per_circuit": minimum, ref_arm: arms[ref_arm]["shots_per_circuit"]}
     tot = sum(v["shots"] for v in allruns)
     ctx.data["seconds_per_shot"] = pr["seconds_per_shot"]
     ctx.data.update({"cell": cell, "family": family, "conventions": list(convs),
                      "representation_used": prod, "representation_source": dec_src, "arms": arms,
+                     "reference_arm": {"name": ref_arm, "representation": ref_rep,
+                                       "rule": "prompts/33c R3: production rm -> kraus_reference; production kraus -> "
+                                               "rm_arm (a Kraus reference would duplicate production)"},
                      "per_run": pr["per_run"], "shots_per_circuit": pr["shots_per_circuit"],
                      "minimum_shots_per_circuit": minimum, "rm_vs_kraus_in_cell": incell,
+                     "rm_vs_kraus_in_cell_arms": {"rm": rm_arm, "kraus": kr_arm},
+                     "rm_vs_kraus_in_cell_pass": incell_pass if evaluated else None,
+                     "representation_decision_for_later_cells": later,
+                     "representation_decision_rule": ("rm iff the in-cell P4a statistic (RM arm vs Kraus arm, |z| <= 3 "
+                                                      "on the weight and every marginal) passes on every run, else "
+                                                      "kraus (prompts/33a rule, prompts/33c R2/R3)"),
                      "K1_device_structure": device, "shots_total": tot,
-                     "information_only": cell == "I-XY4", "f_point_estimate_claimed": False,
+                     "information_only": False, "primary_class2_cell": ctx.token == C2_PRIMARY_CELL,
+                     "f_point_estimate_claimed": False,
                      "class2_channels": "depolarizing + T1/T2 relaxation (gates; delays in idle-aware cells) + readout"
                                         + (" + coherent Rx(eps) after x" if cell == "I-COH" else ""),
                      "note": ("prompts/33a R3: the 1e5-per-circuit target is withdrawn; the cell reports the simulated "
@@ -822,7 +843,8 @@ def run_c2_cell(ctx):
     add_table(ctx, f"{cell} on {family}: arms vs the K1 strings",
               ["arm", "run", "representation", "shots", "mean weight", "K1 mean weight", "z weight", "max |z| marginal",
                "accepted", "hits", "P(K1 accepted | model)", "counts power", "roundtrip mismatches"], rows)
-    add_table(ctx, "In-cell RM vs Kraus (information)", ["run", "z mean weight", "max |z| marginal", "pass"],
+    add_table(ctx, f"In-cell RM ({rm_arm}) vs Kraus ({kr_arm}); later cells: {later}",
+              ["run", "z mean weight", "max |z| marginal", "pass"],
               [[k, v.get("z_mean_hamming_weight"), v.get("max_abs_z_marginal"), v.get("pass")] for k, v in incell.items()])
 
 

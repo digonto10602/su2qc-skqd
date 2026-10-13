@@ -673,7 +673,8 @@ def ibm_spec(record: dict, cell: str, representation: str = "kraus", t2_conventi
             "coherent_eps_rad": ({str(k): v for k, v in sorted(coherent_eps.items())} if coherent_eps else None),
             "coherent_eps_source": COH_SOURCE if coherent_eps else None,
             "not_modelled": ["ZZ crosstalk", "measurement crosstalk", "leakage", "non-Markovian dephasing"]
-            + (["a dynamical-decoupling gain: Aer's relaxation on a delay is Markovian (information cell)"]
+            + (["a dynamical-decoupling gain beyond the XY4 pulses present as gates: Aer's relaxation on a delay "
+                "is Markovian (the pulses' effect on the populations is modelled, prompts/33c R1)"]
                if cell == "I-XY4" else []),
             "source": SOURCES["I"],
             "pta_rule": ("p_X = p_Y = (1 - e^{-t/T1})/4, p_Z = (1 - e^{-t/T2})/2 - (1 - e^{-t/T1})/4 on delays; "

@@ -163,13 +163,14 @@ def run(ctx):
                 {k: v["floor_min_feff_over_fideal_S99"]["value"] for k, v in per_arm.items()}, f">= {G.FLOOR_MIN}",
                 floor_ok)
     old_iv = [float(x) for x in old["pooled_r_ci95"]]
-    owner_item = bool(not (old_iv[0] <= new_rnc <= old_iv[1]))
+    oi = owner_item_r_nc(pooled[f"r_{tb}"]["ci95"], float(old["r_nc"]), old_iv)
+    owner_item = oi["fires"]
     if owner_item:
-        ctx.notes.append(f"owner item (prompts/33 section 8): the new r_nc {new_rnc:.4f} lies outside the old pooled "
-                         f"interval {old_iv}; no criterion or verdict is changed by this token")
+        ctx.notes.append(f"owner item (prompts/33 sections 6 and 8, prompts/33c R4): {oi['why']}; no criterion or "
+                         "verdict is changed by this token")
     ctx.data.update({"arms": per_arm, "trajectory_runs": infos, "pooled": pooled, "r_nc_new": new_rnc,
                      "r_nc_old": float(old["r_nc"]), "r_nc_old_pooled_ci95": old_iv,
-                     "owner_item_r_nc_outside_old_interval": owner_item,
+                     "owner_item_r_nc_outside_old_interval": owner_item, "owner_item_r_nc": oi,
                      "comparison": {k: ST.compare(per_arm[k]["r"]["value"], per_arm[k]["r"]["ci95"],
                                                   None, None) for k in per_arm},
                      "engine": "Aer statevector per trajectory (" + ctx.device + "), checkpoints in memory",
@@ -186,6 +187,32 @@ def run(ctx):
                 v["floor_min_feff_over_fideal_S99"]["value"]] for k, v in per_arm.items()])
     add_table(ctx, "Pooled k = 1 r(1e-3) and r_nc", ["pooled r", "95 %", "new r_nc", "old r_nc", "old pooled 95 %"],
               [[pooled[f"r_{tb}"]["value"], pooled[f"r_{tb}"]["ci95"], new_rnc, float(old["r_nc"]), old_iv]])
+
+
+def owner_item_r_nc(new_pooled_ci95, old_r_nc: float, old_pooled_ci95) -> dict:
+    """The r_nc owner item (prompts/33c R4 step 3).  prompts/33 section 6: the item fires when the NEW pooled 95 %
+    interval of r(1e-3) excludes the old r_nc (1.115, the upper end of CF_traj's pooled interval: "excludes 1.115's
+    derivation"); section 8: when the new r_nc (the new interval's upper end) lies outside the OLD pooled interval.
+    Job 59736866 evaluated only the section-8 comparison under the field name
+    `owner_item_r_nc_outside_old_interval`; the field now carries the union of both rules, each recorded.  Reads
+    only stored intervals, so the assembly applies it to a harvested JSON without rewriting that JSON."""
+    lo, hi = float(new_pooled_ci95[0]), float(new_pooled_ci95[1])
+    olo, ohi = float(old_pooled_ci95[0]), float(old_pooled_ci95[1])
+    s6 = bool(not (lo <= float(old_r_nc) <= hi))
+    s8 = bool(not (olo <= hi <= ohi))
+    why = []
+    if s6:
+        why.append(f"the new pooled interval [{lo:.4f}, {hi:.4f}] excludes the old r_nc {float(old_r_nc):.4f} (section 6)")
+    if s8:
+        why.append(f"the new r_nc {hi:.4f} lies outside the old pooled interval [{olo:.4f}, {ohi:.4f}] (section 8)")
+    return {"fires": bool(s6 or s8), "section6_new_interval_excludes_old_r_nc": s6,
+            "section8_new_r_nc_outside_old_interval": s8, "new_pooled_ci95": [lo, hi], "old_r_nc": float(old_r_nc),
+            "old_pooled_ci95": [olo, ohi], "why": "; ".join(why) or "neither rule fires",
+            "rule": ("fires iff (prompts/33 section 6) old r_nc is outside the new pooled 95 % interval of r(1e-3) OR "
+                     "(section 8) the new r_nc = that interval's upper end is outside the old pooled interval; no "
+                     "criterion, verdict or r_nc value changes (the replacement is the owner's decision)"),
+            "k4_note": ("r_nc bounds the k = 1 excess only (the campaign's pooled statistic is the k = 1 pool); the "
+                        "k = 4 arm's r(1e-3) interval is not covered by r_nc (prompts/33c R4 (c))")}
 
 
 def ctx_root():
