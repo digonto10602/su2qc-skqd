@@ -1,0 +1,25 @@
+conda env: skqd
+preflight: 16 modules imported in 11.15 s (env skqd; threadpoolctl 3.7.0)
+[    0.0 s] C4_PART_02: device GPU (available ['CPU', 'GPU']), budget 50.0 min, shots x 1.0, chunk <= 476, s0 36400000
+/global/homes/d/digonto/.conda/envs/skqd/lib/python3.12/site-packages/qiskit/qpy/interface.py:346: UserWarning: The qiskit version used to generate the provided QPY file, 2.5.2, is newer than the current qiskit version 1.4.3. This may result in an error if the QPY file uses instructions not present in this current qiskit version
+  warnings.warn(
+[   16.7 s] C4_PART_02: rate probe 1: 255 shots in 6.84 s (the 1-shot bound 40142.5 s for round 0 exceeded the 2242.4 s left)
+[ 1202.9 s] C4_PART_02: deadline stop before round 1: predicted 1186.2 s > 1049.3 s left (basis own chunks); 45696 shots done
+| check | value | criterion | result |
+|---|---|---|---|
+| P0 slot content written for this slot (prompts/33b R4: seed_token_index = the index of the run's own F token, or the slot's own for f-cells; slot = this token) | {'seed_token_index': 18, 'expected': 18, 'rule': "the run's own F token", 'slot': 'C4_PART_02', 'this_token': 'C4_PART_02', 'content': 'frun', 'token_matches_run': True} | equal | PASS |
+| P13 (part 2 of 2) E_R >= E0 - 1e-9 on this part's shots (CV0 and the certificate are read at assembly on the merged parts) | {'variational': True, 'E0_inside_information': True} | variational | PASS |
+| S1 the run happened on the requested device (GPU under the CI) | GPU (available ['CPU', 'GPU']) | GPU | PASS |
+| S2 wall time inside the walltime budget | 1257 s | <= min(walltime 3600 s, 3600 s) and <= 1.1 x budget + 120 s | PASS |
+| S3 telemetry and run block present (policy fields non-null on the CI) | {'engine': True, 'device': True, 'wall_seconds': True, 'seconds_per_shot': True, 'gpus': True} | every policy field non-null on the CI; present on the laptop | PASS |
+| S4 every seed and every chunk recorded | True | true | PASS |
+| S5 no out-of-memory retry left unrecorded | 0 recorded | each OOM split recorded | PASS |
+| S6 shots >= the token's minimum | {'B0_ref117_k1': 1428, 'B0_ref117_k2': 1428, 'B0_ref117_k3': 1428, 'B0_ref117_k4': 1428, 'B0_ref169_k1': 1428, 'B0_ref169_k2': 1428, 'B0_ref169_k3': 1428, 'B0_ref169_k4': 1428, 'B0_ref25_k1': 1428, 'B0_ref25_k2': 1428, 'B0_ref25_k3': 1428, 'B0_ref25_k4': 1428, 'B0_ref333_k1': 1428, 'B0_ref333_k2': 1428, 'B0_ref333_k3': 1428, 'B0_ref333_k4': 1428, 'B0_ref525_k1': 1428, 'B0_ref525_k2': 1428, 'B0_ref525_k3': 1428, 'B0_ref525_k4': 1428, 'B0_ref70_k1': 1428, 'B0_ref70_k2': 1428, 'B0_ref70_k3': 1428, 'B0_ref70_k4': 1428, 'B0_ref795_k1': 1428, 'B0_ref795_k2': 1428, 'B0_ref795_k3': 1428, 'B0_ref795_k4': 1428, 'B0_ref86_k1': 1428, 'B0_ref86_k2': 1428, 'B0_ref86_k3': 1428, 'B0_ref86_k4': 1428} | no reduction below the minimum | FAIL |
+C4_PART_02: FAIL (1257 s)
+C4_PART_02: content-named copy validation/C33_F4_B0a_part2of2.json
+gate C4_PART_02: status FAIL, exit code 1, 1270 s
+srun: error: nid001344: task 0: Exited with exit code 1
+srun: Terminating StepId=59745007.0
+/var/spool/slurmd/job59745007/slurm_script: line 56: 1362720 Terminated              ( while true; do
+    nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader,nounits | sed "s/^/$(date +%s),/"; sleep 10;
+done ) > "$SKQD_GPU_TELEMETRY" 2> /dev/null
