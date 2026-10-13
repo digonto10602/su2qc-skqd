@@ -1,0 +1,31 @@
+# Campaign 33 token C4_F4_B1b (class 4): E7(0.10) x O0, S3-quota half b, B=1 (1e5)
+
+**Status: PASS** — `python scripts/campaign33.py --token C4_F4_B1b`.  Environment: Python 3.12.14, numpy 2.5.3, scipy 1.18.1, Linux-6.4.0-150600.23.125_15.0.29-cray_shasta_c-x86_64-with-glibc2.38, 128 CPUs, commit n/a, 2026-10-13 13:46:50 PDT.  Runtime 1360 s.  Prompt prompts/33_2x3_four_class_perlmutter_campaign.md.
+
+## Engine and resources
+
+Engine Qiskit Aer statevector (double precision); device GPU (requested GPU, available ['CPU', 'GPU']); GPU mode custatevec; GPUs 1; tasks 1; wall 1360 s; GPU node-hours (shared QOS, G/4 x t) 0.09445; E(p) None (one task: E(p) needs T_1 and T_p from two task counts (not measured)); seconds per shot 0.02613; peak GPU memory 1783 MiB; mean GPU utilisation 58.2 %; versions {'qiskit': '1.4.3', 'qiskit_aer': '0.15.1', 'numpy': '2.5.3', 'scipy': '1.18.1', 'threadpoolctl': '3.7.0', 'python': '3.12.14'}.  Phases (s): preflight_s 16.1, sampling_s 1313.6, bootstrap_and_readout_s 39.0, analysis_s 39.0.
+
+## C4_F4_B1b: E7_0.10 x NAT-O0, B=1, s3quota half b, part 1 of 2
+
+| shots | |B_all| | E_R - E0 | certificate | width | E0 inside | recall S999 | W | f_hit (k=1) | f_hat_ideal 95 % |
+|---|---|---|---|---|---|---|---|---|---|
+| 50004 | 288 | 0.001053 | weinstein | 0.08923 | True | 0.9895 | 0.9999 | 0.1771 | [0.152, 0.1659] |
+
+## Notes
+
+- part 1 of 2 per data/campaign33/sizing_33a.json (written from validation/C4_FCELLS_A.json job 59570315; validation/C4_FCELLS_B.json (absent: not yet harvested))
+
+## Criteria
+
+| check | value | criterion | result |
+|---|---|---|---|
+| P13 (part 1 of 2) E_R >= E0 - 1e-9 on this part's shots (CV0 and the certificate are read at assembly on the merged parts) | {'variational': True, 'E0_inside_information': True} | variational | PASS |
+| S1 the run happened on the requested device (GPU under the CI) | GPU (available ['CPU', 'GPU']) | GPU | PASS |
+| S2 wall time inside the walltime budget | 1360 s | <= min(walltime 3600 s, 3600 s) and <= 1.1 x budget + 120 s | PASS |
+| S3 telemetry and run block present (policy fields non-null on the CI) | {'engine': True, 'device': True, 'wall_seconds': True, 'seconds_per_shot': True, 'gpus': True} | every policy field non-null on the CI; present on the laptop | PASS |
+| S4 every seed and every chunk recorded | True | true | PASS |
+| S5 no out-of-memory retry left unrecorded | 0 recorded | each OOM split recorded | PASS |
+| S6 shots >= the token's minimum (C4_F*: the plan of record in full) | full | no reduction below the minimum | PASS |
+
+Every number above is computed by `scripts/campaign33.py` and stored in `validation/C4_F4_B1b.json`.
