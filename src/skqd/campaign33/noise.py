@@ -587,6 +587,50 @@ def kraus_instructions(noise_model, circuit=None) -> dict:
     return out
 
 
+def instruction_classes(spec: "NoiseSpec", circuit=None) -> dict:
+    """prompts/33d R2 (the Kraus audit): every instruction class a spec makes Aer execute -- the error circuits of
+    `noise_model.to_dict()` (gate and readout errors), and, when a circuit is given, the QuantumErrors the spec's
+    run-time transform (`spec.apply`) and the model's custom passes (RelaxationNoisePass on delays) insert into it.
+    Returns {"to_dict": {name: count}, "inserted": {name: count}, "kraus_total": n, ...}."""
+    from collections import Counter
+
+    from qiskit_aer.noise import QuantumError
+
+    def names(err_dict):
+        return [i["name"] for circ in err_dict.get("instructions", []) for i in circ]
+
+    nm = spec.noise_model
+    td = Counter()
+    n_err, types = 0, Counter()
+    if nm is not None:
+        for e in nm.to_dict(serializable=True).get("errors", []):
+            n_err += 1
+            types[e.get("type")] += 1
+            if e.get("type") == "qerror":
+                td.update(names(e))
+            else:
+                td[e.get("type")] += 1
+    ins, n_ins = Counter(), 0
+    passes = []
+    if circuit is not None:
+        qc = spec.apply(circuit)
+        pm = nm._pass_manager() if nm is not None else None
+        if pm is not None:
+            passes = [type(p).__name__ for p in nm._custom_noise_passes]
+            qc = pm.run(qc)
+        for inst in qc.data:
+            op = inst.operation
+            err = op if isinstance(op, QuantumError) else getattr(op, "_quantum_error", None)
+            if err is not None:
+                n_ins += 1
+                ins.update(names(err.to_dict()))
+    return {"to_dict": dict(td), "error_types": dict(types), "n_errors_to_dict": n_err,
+            "inserted": dict(ins), "n_inserted_errors": n_ins, "custom_passes": passes,
+            "kraus_to_dict": int(td.get("kraus", 0)), "kraus_inserted": int(ins.get("kraus", 0)),
+            "kraus_total": int(td.get("kraus", 0) + ins.get("kraus", 0)),
+            "circuit_checked": circuit is not None}
+
+
 def delay_seconds(inst, dt: float) -> float:
     op = inst.operation
     unit = getattr(op, "unit", "dt")

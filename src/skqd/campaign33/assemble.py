@@ -592,7 +592,7 @@ def main(dry=False):
     gate = ("dryrun/" if dry else "") + GATE
     R = GateResult(gate, ("DRY RUN skeleton: " if dry else "") +
                    "2x3 four-class campaign: matrix, S3-quota merges and the comparison with every earlier 2x3 result")
-    R.add("every token JSON present", f"{sum(present.values())} of {len(tokens)}", "33 of 33", all(present.values()))
+    R.add("every token JSON present", f"{sum(present.values())} of {len(tokens)}", f"{len(tokens)} of {len(tokens)}", all(present.values()))
     R.add("every present token PASS (tokens dropped by data/campaign33/engines.json excluded)",
           {t: s for t, s in statuses.items() if s and s != "PASS"} or "all PASS",
           "no FAIL", all(s in ("PASS", "DROPPED") for s in statuses.values() if s))

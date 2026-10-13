@@ -29,7 +29,7 @@ SLOTS = [f"C4_PART_{i:02d}" for i in range(1, 21)]
 # --------------------------------------------------------------------------- the slots
 def test_twenty_slots_in_the_table():
     tok = TK.load_tokens()
-    assert list(TK.slot_tokens()) == SLOTS and list(tok)[-20:] == SLOTS
+    assert list(TK.slot_tokens()) == SLOTS and list(tok)[33:53] == SLOTS       # C2_KCHK after them (33d)
     for t in SLOTS:
         v = tok[t]
         assert (v["class"], v["walltime"], v["gpus"], v["env"]) == (4, "01:00:00", 1, "skqd")
@@ -40,13 +40,15 @@ def test_allowlist_33a_is_generated_from_the_table():
     txt = open(TK.ALLOWLIST_FILE_33A).read()
     assert txt == TK.allowlist_text(TK.slot_tokens())
     assert txt.splitlines() == [f"{t}  01:00:00 1" for t in SLOTS]
-    assert len(open(TK.ALLOWLIST_FILE).read().splitlines()) == 33, "the prompts/33 allowlist is unchanged"
+    lines = open(TK.ALLOWLIST_FILE).read().splitlines()
+    assert len(lines) == 34 and lines[-1] == "C2_KCHK      01:00:00 1", "the prompts/33 allowlist + C2_KCHK (33d)"
 
 
 def test_slot_seeds_are_disjoint_from_the_33():
-    s33 = [TK.base_seed(t) for t in TK.campaign_tokens()]
+    s33 = [TK.base_seed(t) for t in list(TK.campaign_tokens())[:33]]
     ss = [TK.base_seed(t) for t in SLOTS]
     assert max(s33) < min(ss) and len(set(ss)) == 20
+    assert TK.base_seed("C2_KCHK") > max(ss), "prompts/33d: C2_KCHK appended after the slots, its own seed range"
     assert TK.base_seed("C4_CF") == TK.BASE_SEED + 32 * TK.SEED_PER_TOKEN, "the 33 indices are unchanged"
 
 

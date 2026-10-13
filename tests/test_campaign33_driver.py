@@ -171,7 +171,7 @@ def test_dry_run_assembly_skeleton():
     if not os.path.exists(p):
         pytest.skip("the dry-run assembly has not been run")
     d = json.load(open(p))
-    assert d["data"]["dry_run"] is True and len(d["data"]["tokens"]) == 33
+    assert d["data"]["dry_run"] is True and d["data"]["tokens"] == list(TK.campaign_tokens())
     assert len(d["data"]["comparison"]) >= 10 and d["data"]["matrix"]
     assert set(d["data"]["merged_s3_quota"]) == {"F4|B=0", "F4|B=1", "F8|B=0", "F8|B=1"}
     txt = open(os.path.join(ROOT, "reports", "dryrun", "C33_campaign_report.md")).read()

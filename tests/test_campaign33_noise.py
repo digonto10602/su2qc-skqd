@@ -213,3 +213,43 @@ def test_rm_representation_has_no_kraus_and_equals_kraus_where_t2_le_t1(record):
     assert r.description["representation"] == "rm" and r.description["rm_rule"]
     # RM keeps the non-unital reset on the changed qubits (PTA would not)
     assert "reset" in json.dumps(r.local_errors[("x", (59,))].to_dict(), default=str)
+
+
+def test_no_kraus_instruction_in_any_quantinuum_scenario():
+    """prompts/33d R2: E0-E8 (every class-4 noise model) are unitary mixtures + readout -- 0 Kraus instructions in
+    their to_dict AND in the errors their run-time transforms insert into a frozen circuit of the family."""
+    from skqd.campaign33 import circuits as C
+    circs = {fam: C.load_circuit(fam, "B0_ref117_k1") for fam in ("NAT-O0", "IR-L3-RZZ")}
+    for sid in N.QUANTINUUM_SCENARIOS:
+        ic = N.instruction_classes(N.quantinuum_spec(sid), circs["IR-L3-RZZ" if sid == "E8" else "NAT-O0"])
+        assert ic["kraus_total"] == 0 and "kraus" not in ic["to_dict"] and "kraus" not in ic["inserted"], sid
+        assert ic["circuit_checked"]
+
+
+def test_kraus_audit_file_lists_every_builder():
+    p = os.path.join(ROOT, "data", "campaign33", "kraus_audit.json")
+    if not os.path.exists(p):
+        pytest.skip("run scripts/campaign33_kraus_audit.py")
+    d = json.load(open(p))
+    b = d["builders"]
+    want = set(N.QUANTINUUM_SCENARIOS) | {f"{c}|{r}" for c in ("I-GATE", "I-ECHO", "I-STAR", "I-XY4", "I-COH")
+                                          for r in ("kraus", "rm", "pta")} | {"CF"}
+    assert want <= set(b)
+    assert all(b[s]["kraus_total"] == 0 for s in N.QUANTINUUM_SCENARIOS) and d["summary"]["e_scenarios_kraus_free"]
+    assert b["CF"]["kraus_total"] == 0
+    for c in ("I-GATE", "I-ECHO", "I-STAR", "I-XY4", "I-COH"):
+        assert b[f"{c}|rm"]["kraus_total"] == 0 and b[f"{c}|pta"]["kraus_total"] == 0, c
+        assert b[f"{c}|kraus"]["kraus_to_dict"] > 0, c
+
+
+def test_rm_and_kraus_delay_errors_identical_on_qubit_53(record):
+    """Regression (prompts/33c diagnostics, kept by prompts/33d): at every delay of physical qubit 53 of IBM-T0
+    B0_ref117_k1 the RM and Kraus relaxation passes attach the same error (SuperOp max |diff| <= 1e-12, equal
+    durations in seconds); 55 sites, 407.3 us in total (data/campaign33/c33c_diag/delays_q53_*.json)."""
+    import c33c_diag_delays as D
+    from skqd.campaign33 import circuits as C
+    res = D.compare(record, C.load_circuit("IBM-T0", "B0_ref117_k1"), 53)
+    assert res["n_delay_errors"] == {"kraus": 55, "rm": 55}
+    assert res["max_superop_diff"] <= 1e-12, f"site {res['max_at_site']}"
+    assert res["durations_identical"]
+    assert abs(res["total_delay_s"]["kraus"] - 407.304e-6) < 1e-12

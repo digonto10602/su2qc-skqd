@@ -589,6 +589,304 @@ def run_c2_cal(ctx):
                   p4c[rep]["vs_K1"].get("pass")] for rep in arms])
 
 
+# =========================================================================== prompts/33d R3: C2_KCHK
+KCHK_CIRCUIT = "B0_ref117_k1"
+# (arm, representation, GPU mode, target shots, minimum shots, deadline-stopped, chunk)
+KCHK_GPU_ARMS = (("kraus_gpu_cusv", "kraus", "custatevec", 256, 256, False, 64),
+                 ("rm_gpu_cusv", "rm", "custatevec", 512, 512, False, 128),
+                 ("kraus_gpu_native", "kraus", "native", 256, 64, True, 32),
+                 ("kraus_gpu_cusv_nofusion", "kraus", "custatevec_nofusion", 128, 32, True, 32))
+KCHK_CPU_ARMS = (("kraus_cpu", "kraus"), ("rm_cpu", "rm"))
+KCHK_CPU_MIN, KCHK_CPU_CHUNK = 16, 4
+KCHK_SEED_OFFSET = 600              # GPU arm i: 600 + i; CPU arms 610 / 611 (C2_KCHK's own s0 anyway)
+KCHK_WINDOW_SHARE = 0.75            # prompts/33d R3: 0.75 of the remaining budget for both processes
+KCHK_NATIVE_SHARE = 0.55            # kraus_gpu_native may use 55 % of what is left when it starts; nofusion the rest
+KCHK_CPU_GRACE_S = 60.0             # after the window: the CPU process may finish its current chunk (+ its slowest)
+KCHK_DRY = {"shots": 2, "chunk": 2, "cpu_min": 2, "cpu_chunk": 2}
+KCHK_SIGMA = 3.0                    # 33a's P4a constant, reused (prompts/33d R3)
+KCHK_K3_ORDER = ("kraus_gpu_native", "kraus_gpu_cusv_nofusion")
+KCHK_SUPERSEDES = {"token": "C2_CAL", "job": "59736871", "field": "decision.production_representation",
+                   "why": ("prompts/33d R5: C2_CAL run 3's P4a compared RM with the Kraus arm on the cuStateVec path, the "
+                           "execution under test; the C2_CAL JSON is not rewritten")}
+
+
+def kchk_power(a: dict, b: dict, n_sigma: float = KCHK_SIGMA) -> dict:
+    """What a two-sample comparison of two structures can see: the smallest marginal difference visible at n_sigma
+    in the worst case p = 1/2, and the smallest mean-weight difference from the two per-shot spreads."""
+    na, nb = a.get("shots") or 0, b.get("shots") or 0
+    if not na or not nb:
+        return {"evaluated": False}
+    dm = n_sigma * math.sqrt(0.25 / na + 0.25 / nb)
+    dw = n_sigma * math.sqrt((a.get("sd_hamming_weight") or 0.0) ** 2 / na + (b.get("sd_hamming_weight") or 0.0) ** 2 / nb)
+    return {"evaluated": True, "min_visible_marginal_diff": dm, "min_visible_weight_diff": dw,
+            "note": (f"at N = {na} / {nb} shots a marginal difference below {dm:.3f} (p = 1/2, {n_sigma:g} sigma) and a "
+                     f"mean-weight difference below {dw:.3f} bits are invisible to this comparison")}
+
+
+def kchk_pooled_marginal_z(a: dict, b: dict) -> list:
+    """Information beside the P4a statistic: the two-proportion z with the POOLED p per clbit (finite when one
+    arm's marginal is 0 or 1, where the P4a standard error of that arm vanishes)."""
+    na, nb = a.get("shots") or 0, b.get("shots") or 0
+    out = []
+    if not na or not nb:
+        return out
+    for pa, pb in zip(a["marginals_by_clbit"], b["marginals_by_clbit"]):
+        p = (pa * na + pb * nb) / (na + nb)
+        s = math.sqrt(p * (1 - p) * (1 / na + 1 / nb))
+        out.append((pa - pb) / s if s > 0 else 0.0)
+    return out
+
+
+def kchk_compare(st: dict, x: str, y: str) -> dict:
+    a, b = st.get(x) or {}, st.get(y) or {}
+    c = ST.structure_compare(a, b, KCHK_SIGMA)
+    c.update({"arms": [x, y], "power": kchk_power(a, b),
+              "z_marginals_pooled_information": kchk_pooled_marginal_z(a, b),
+              "weight_ok": c.get("weight_ok"), "marginals_ok": c.get("marginals_ok")})
+    return c
+
+
+def kchk_decide(cmp: dict, st: dict) -> dict:
+    """K1 / K2 / K3 of prompts/33d R3 from the pairwise comparisons."""
+    k1 = cmp.get("kraus_gpu_cusv~kraus_cpu", {})
+    bug = (abs(k1["z_mean_hamming_weight"]) > KCHK_SIGMA) if k1.get("evaluated") else None
+    a, b = cmp.get("rm_gpu_cusv~rm_cpu", {}), cmp.get("rm_gpu_cusv~kraus_cpu", {})
+    k2_eval = bool(a.get("evaluated") and b.get("evaluated"))
+    k2_ok = k2_eval and all(abs(c["z_mean_hamming_weight"]) <= KCHK_SIGMA and not c["clbits_outside"] for c in (a, b))
+    path = "none"
+    for arm in KCHK_K3_ORDER:
+        c = cmp.get(f"{arm}~kraus_cpu", {})
+        if c.get("evaluated") and abs(c["z_mean_hamming_weight"]) <= KCHK_SIGMA:
+            path = arm
+            break
+    return {"bug_confirmed": bug, "k1_evaluated": bug is not None,
+            "production_representation": "rm" if k2_ok else "blocked", "k2_evaluated": k2_eval,
+            "validated_kraus_gpu_path": path,
+            "c2_cal_decision_reinstated": (bug is False),
+            "rules": {"K1": f"bug_confirmed iff |z_w(kraus_gpu_cusv, kraus_cpu)| > {KCHK_SIGMA:g}",
+                      "K2": (f"rm iff rm_gpu_cusv agrees with rm_cpu AND kraus_cpu: |z_w| <= {KCHK_SIGMA:g} and no "
+                             f"marginal beyond {KCHK_SIGMA:g} sigma (Bonferroni expectation 20 x 0.0027 = 0.054 < 1), "
+                             "else blocked"),
+                      "K3": (f"the first of {list(KCHK_K3_ORDER)} with |z_w| <= {KCHK_SIGMA:g} against kraus_cpu, "
+                             "else none")}}
+
+
+def c2_kchk_rows_raw(r0) -> dict:
+    """Raw counts of every chunk ({int with bit k = clbit k: count}) and their total."""
+    chunks = [{"index": ch.get("index"), "seed": ch["seed"], "shots": ch["shots"],
+               "counts": {str(k): int(v) for k, v in sorted(ch["counts"].items())}} for ch in r0["chunks"]]
+    return {"chunks": chunks, "total": {str(k): int(v) for k, v in sorted(totals(r0).items())},
+            "sum_counts": int(sum(totals(r0).values()))}
+
+
+def _save_kchk_npz(ctx, arm, r0):
+    rows = [(int(k), int(v), int(ch.get("index", j))) for j, ch in enumerate(r0["chunks"]) for k, v in ch["counts"].items()]
+    np.savez_compressed(os.path.join(ctx.results_dir, arm + ".npz"),
+                        keys=np.array([r[0] for r in rows], dtype=np.int64),
+                        counts=np.array([r[1] for r in rows], dtype=np.int64),
+                        chunk_index=np.array([r[2] for r in rows], dtype=np.int64),
+                        seeds=np.array([ch["seed"] for ch in r0["chunks"]], dtype=np.int64))
+
+
+def run_c2_kchk(ctx):
+    """C2_KCHK (prompts/33d R3): is the GPU Kraus result of C2_CAL a defect of the cuStateVec execution?  The CPU
+    process (kraus_cpu, rm_cpu; kchk_cpu.py) is started first; the GPU arms run in this process in the order of
+    KCHK_GPU_ARMS, each deadline-stopped at a chunk boundary; raw counts of every chunk are stored."""
+    import subprocess
+    import sys
+
+    from campaign33 import add_table
+    P = A.Physics(with_sectors=False)
+    rec = load_record()
+    cid = KCHK_CIRCUIT
+    man = C.load_manifest("IBM-T0", cid)
+    if rec["fingerprint"] != man["record_fingerprint"]:
+        raise SystemExit("the record is not the one the IBM circuits were built on")
+    circ = C.load_circuit("IBM-T0", cid)
+    clb = clbit_physical(circ)
+    dry = ctx.dry
+    stand_in = "pta" if dry else None
+    if dry:
+        ctx.notes.append("dry run: CPU only, the Pauli-twirled representation stands in for every arm (Kraus on this "
+                         f"CPU costs minutes per call), {KCHK_DRY['shots']} shots per arm -- a path check of the arms, "
+                         "the CPU subprocess, the raw counts and the decision block, not a measurement")
+    # ---- the window and the CPU process (started first)
+    rem = ctx.remaining()
+    t_w = time.time()
+    window_end = None if rem is None else t_w + KCHK_WINDOW_SHARE * max(0.0, rem)
+    cpu_json = os.path.join(ctx.results_dir, "cpu_arms.json")
+    from .kchk_cpu import cpu_threads
+    threads = cpu_threads(ctx.args.threads if dry or ctx.args.threads else 0)
+    cmd = [sys.executable, "-m", "skqd.campaign33.kchk_cpu", "--out", cpu_json,
+           "--deadline", str(window_end if window_end is not None else t_w + 3600.0), "--s0", str(ctx.s0),
+           "--offsets", f"{KCHK_SEED_OFFSET + 10},{KCHK_SEED_OFFSET + 11}",
+           "--chunk", str(KCHK_DRY["cpu_chunk"] if dry else KCHK_CPU_CHUNK),
+           "--min-shots", str(KCHK_DRY["cpu_min"] if dry else KCHK_CPU_MIN), "--threads", str(threads)]
+    if dry:
+        cmd += ["--max-shots", str(KCHK_DRY["cpu_min"]), "--stand-in", stand_in]
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.pathsep.join([os.path.join(ROOT, "src"), os.path.join(ROOT, "scripts")]
+                                        + ([env["PYTHONPATH"]] if env.get("PYTHONPATH") else []))
+    t_cpu = time.time()
+    proc = subprocess.Popen(cmd, env=env, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    ctx.log(f"CPU process {proc.pid} started ({threads} threads), deadline {None if window_end is None else window_end - t_w:.0f} s")
+    # ---- the GPU arms
+    mode0 = "cpu" if ctx.device != "GPU" else None
+    rates = (load_json(validation_path(ctx, "C2_CAL")) if os.path.exists(validation_path(ctx, "C2_CAL")) else {}) \
+        .get("data", {}).get("decision", {}).get("seconds_per_shot", {})
+    specs = {rep: N.ibm_spec(rec, "I-ECHO", stand_in or rep, "echo") for rep in ("kraus", "rm")}
+    arms, results = {}, {}
+    for i, (arm, rep, mode, target, minimum, stopped, chunk) in enumerate(KCHK_GPU_ARMS):
+        spec = specs[rep]
+        m = mode0 or mode
+        sim, kw = SM.make_simulator("GPU" if ctx.device == "GPU" else "CPU", m if ctx.device == "GPU" else "policy",
+                                    spec.noise_model, threads=ctx.args.threads)
+        n = KCHK_DRY["shots"] if dry else target
+        ck = KCHK_DRY["chunk"] if dry else chunk
+        now = time.time()
+        if window_end is None:
+            deadline = None
+        elif arm == "kraus_gpu_native":
+            deadline = now + KCHK_NATIVE_SHARE * max(0.0, window_end - now)
+        else:
+            deadline = window_end
+        hint = None if stopped else ((rates.get(rep) or {}).get("custatevec") if ctx.device == "GPU" else None)
+        t_a = time.time()
+        res, info = sample(ctx, sim, [spec.apply(circ)], [n], [f"{cid}|{arm}"], circuit_offset=KCHK_SEED_OFFSET + i,
+                           deadline=deadline, rate_hint=hint, max_chunk=ck, phis=(1.0,),
+                           min_rounds=10 ** 6 if dry else (int(math.ceil(minimum / ck)) if not stopped else 0))
+        r0 = res[0]
+        results[arm] = r0
+        _save_kchk_npz(ctx, arm, r0)
+        obs = arm_observables(P, r0, man, clb, 0)
+        arms[arm] = {"representation": spec.description["representation"], "planned_representation": rep,
+                     "engine": f"GPU {mode}" if ctx.device == "GPU" else f"CPU stand-in for GPU {mode}",
+                     "gpu_mode": mode, "simulator_options": kw, "target_shots": n,
+                     "minimum_shots": KCHK_DRY["shots"] if dry else minimum, "deadline_stopped": stopped,
+                     "chunk": ck, "shots_done": r0["shots_done"], "seconds": time.time() - t_a,
+                     "seconds_per_shot": info["seconds_per_shot"], "calls": info["calls"], "stopped": info["stopped"],
+                     "warmup": info["warmup"], "seed_circuit_offset": KCHK_SEED_OFFSET + i,
+                     "raw_counts": c2_kchk_rows_raw(r0), **obs}
+        ctx.log(f"{arm} ({rep}, {m}): {r0['shots_done']}/{n} shots, {info['seconds_per_shot']} s/shot, "
+                f"w {obs['structure'].get('mean_hamming_weight')}")
+    ctx.phases["gpu_arms_s"] = time.time() - t_w
+    # ---- the CPU process: wait to the window's end (+ grace), then stop it and read its JSON
+    grace = KCHK_CPU_GRACE_S
+    killed = False
+    try:
+        wait = None if window_end is None else max(1.0, window_end - time.time()) + grace
+        if window_end is not None and os.path.exists(cpu_json):
+            try:
+                slow = max([c["seconds"] for a in load_json(cpu_json).get("arms", {}).values() for c in a["chunks"]] or [0])
+                wait += slow
+            except (ValueError, OSError):
+                pass
+        out, _ = proc.communicate(timeout=wait)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        out, _ = proc.communicate()
+        killed = True
+    cpu = load_json(cpu_json) if os.path.exists(cpu_json) else {"arms": {}}
+    ctx.phases["cpu_process_s"] = time.time() - t_cpu
+    for arm, rep in KCHK_CPU_ARMS:
+        o = cpu.get("arms", {}).get(arm) or {"chunks": [], "shots_done": 0, "planned_representation": rep,
+                                             "engine": "CPU statevector (separate process): no output"}
+        r0 = {"chunks": [dict(ch, counts={int(k): int(v) for k, v in ch["counts"].items()}) for ch in o["chunks"]],
+              "shots_done": int(o["shots_done"])}
+        results[arm] = r0
+        _save_kchk_npz(ctx, arm, r0)
+        obs = arm_observables(P, r0, man, clb, 0)
+        secs = sum(ch["seconds"] for ch in o["chunks"])
+        arms[arm] = {**{k: v for k, v in o.items() if k != "chunks"}, "minimum_shots": KCHK_DRY["cpu_min"] if dry
+                     else KCHK_CPU_MIN, "seconds_per_shot": secs / r0["shots_done"] if r0["shots_done"] else None,
+                     "raw_counts": c2_kchk_rows_raw(r0), **obs}
+        ctx.log(f"{arm}: {r0['shots_done']} shots, w {obs['structure'].get('mean_hamming_weight')}")
+    cpu_info = {k: cpu.get(k) for k in ("pid", "threads", "deadline", "min_shots", "chunk", "stand_in", "build_s",
+                                        "status", "wall_s", "rule")}
+    cpu_info.update({"returncode": proc.returncode, "killed_after_grace": killed, "grace_s": grace,
+                     "log_tail": (out or "")[-2000:], "command": " ".join(os.path.relpath(c, ROOT) if c.startswith(ROOT)
+                                                                         else c for c in cmd)})
+    # ---- comparisons and the decision
+    st = {a: arms[a]["structure"] for a in arms}
+    pairs = [("kraus_gpu_cusv", "kraus_cpu"), ("rm_gpu_cusv", "rm_cpu"), ("rm_gpu_cusv", "kraus_cpu"),
+             ("kraus_gpu_native", "kraus_cpu"), ("kraus_gpu_cusv_nofusion", "kraus_cpu"), ("rm_cpu", "kraus_cpu"),
+             ("kraus_gpu_cusv", "rm_gpu_cusv")]
+    cmp = {f"{x}~{y}": kchk_compare(st, x, y) for x, y in pairs}
+    dec = kchk_decide(cmp, st)
+    dec["seconds_per_shot"] = {a: arms[a]["seconds_per_shot"] for a in arms}
+    dec["production_seconds_per_shot"] = arms["rm_gpu_cusv"]["seconds_per_shot"]
+    dec["validated_path_seconds_per_shot"] = (arms[dec["validated_kraus_gpu_path"]]["seconds_per_shot"]
+                                              if dec["validated_kraus_gpu_path"] != "none" else None)
+    dec["validated_path_gpu_mode"] = dict((a, m) for a, _r, m, *_ in KCHK_GPU_ARMS).get(dec["validated_kraus_gpu_path"])
+    # ---- criteria
+    k1 = cmp["kraus_gpu_cusv~kraus_cpu"]
+    ctx.physics(f"K1 kraus_gpu_cusv vs kraus_cpu: bug_confirmed iff |z_w| > {KCHK_SIGMA:g} (both outcomes PASS; the "
+                "field is the decision)", {"z_w": k1.get("z_mean_hamming_weight"), "w": k1.get("mean_hamming_weight"),
+                                          "bug_confirmed": dec["bug_confirmed"]},
+                "decided (both arms sampled)", dec["k1_evaluated"])
+    ctx.physics("K2 production representation: rm iff rm_gpu_cusv agrees with rm_cpu and kraus_cpu (|z_w| <= 3, no "
+                "marginal beyond 3 sigma), else blocked", {"production_representation": dec["production_representation"],
+                                                           "z_w": {k: cmp[k].get("z_mean_hamming_weight") for k in
+                                                                   ("rm_gpu_cusv~rm_cpu", "rm_gpu_cusv~kraus_cpu")},
+                                                           "clbits_outside": {k: cmp[k].get("clbits_outside") for k in
+                                                                              ("rm_gpu_cusv~rm_cpu", "rm_gpu_cusv~kraus_cpu")}},
+                "decided (all three arms sampled)", dec["k2_evaluated"])
+    ctx.physics("K3 validated Kraus GPU path (reference arm of the cells): first of native / cuStateVec-no-fusion with "
+                "|z_w| <= 3 against kraus_cpu, else none", {"validated_kraus_gpu_path": dec["validated_kraus_gpu_path"],
+                                                            "z_w": {a: cmp[f"{a}~kraus_cpu"].get("z_mean_hamming_weight")
+                                                                    for a in KCHK_K3_ORDER}},
+                "recorded", True)
+    raw_ok = all(arms[a]["raw_counts"]["sum_counts"] == arms[a]["shots_done"] for a in arms)
+    ctx.R.add("P0 raw counts of every arm stored (sum of counts = shots_done)",
+              {a: [arms[a]["raw_counts"]["sum_counts"], arms[a]["shots_done"]] for a in arms}, "equal", raw_ok)
+    mins = {a: [arms[a]["shots_done"], arms[a]["minimum_shots"]] for a in arms}
+    ctx.min_shots_ok = all(d >= m for d, m in mins.values())
+    ctx.no_shots = any(d == 0 for d, _m in mins.values())
+    if not ctx.min_shots_ok:
+        ctx.shots_reduced_to = mins
+    ctx.data["seconds_per_shot"] = arms["rm_gpu_cusv"]["seconds_per_shot"]
+    ctx.data["gpu_mode_used"] = "per arm (custatevec, native, custatevec_nofusion)" if ctx.device == "GPU" else "cpu"
+    ctx.data.update({"circuit": f"IBM-T0 {cid}", "model": "I-ECHO (record T2 echo)", "arms": arms, "comparisons": cmp,
+                     "bug_confirmed": dec["bug_confirmed"], "decision": dec, "cpu_process": cpu_info,
+                     "minimum_shots": mins, "supersedes_decision_of": KCHK_SUPERSEDES,
+                     "design": {"gpu_arms": [list(a) for a in KCHK_GPU_ARMS], "cpu_arms": [list(a) for a in KCHK_CPU_ARMS],
+                                "cpu_minimum": KCHK_CPU_MIN, "cpu_chunk": KCHK_CPU_CHUNK, "window_share": KCHK_WINDOW_SHARE,
+                                "native_share": KCHK_NATIVE_SHARE, "sigma": KCHK_SIGMA, "dry": KCHK_DRY if dry else None,
+                                "source": "prompts/33d R3"},
+                     "record": {"path": os.path.relpath(RECORD, ROOT), "fingerprint": rec["fingerprint"]},
+                     "raw_counts_npz": {a: os.path.relpath(os.path.join(ctx.results_dir, a + ".npz"), ROOT) for a in arms},
+                     "counts_convention": "keys: int with bit k = clbit k (skqd.reference_sim); physical_by_clbit in "
+                                          "each structure"})
+    add_table(ctx, "C2_KCHK arms (I-ECHO on IBM-T0 B0_ref117_k1)",
+              ["arm", "engine", "representation", "shots", "minimum", "s/shot", "mean weight", "se"],
+              [[a, v["engine"], v["planned_representation"], v["shots_done"], v["minimum_shots"], v["seconds_per_shot"],
+                v["structure"].get("mean_hamming_weight"), v["structure"].get("se_mean_hamming_weight")]
+               for a, v in arms.items()])
+    add_table(ctx, "Pairwise comparisons (P4a statistic, 3 sigma)", ["pair", "z mean weight", "max |z| marginal",
+                                                                    "clbits outside", "min visible marginal diff"],
+              [[k, v.get("z_mean_hamming_weight"), v.get("max_abs_z_marginal"), v.get("clbits_outside"),
+                (v.get("power") or {}).get("min_visible_marginal_diff")] for k, v in cmp.items()])
+
+
+def c2_kchk_decision(ctx) -> dict:
+    """The class-2 representation of record (prompts/33d R1/R3): validation/[dryrun/]C2_KCHK.json, or the file given
+    by --c2kchk-file (the dry run's stub).  None when absent -- the cell then FAILs `S0 representation decided`."""
+    p = getattr(ctx.args, "c2kchk_file", None) or validation_path(ctx, "C2_KCHK")
+    p = p if os.path.isabs(p) else os.path.join(ROOT, p)
+    if not os.path.exists(p):
+        return None
+    d = load_json(p)
+    dec = (d.get("data") or {}).get("decision") or {}
+    return {"path": os.path.relpath(p, ROOT), "status": d.get("status"),
+            "production_representation": dec.get("production_representation"),
+            "validated_kraus_gpu_path": dec.get("validated_kraus_gpu_path"),
+            "validated_path_gpu_mode": dec.get("validated_path_gpu_mode"),
+            "seconds_per_shot": dec.get("seconds_per_shot") or {},
+            "production_seconds_per_shot": dec.get("production_seconds_per_shot"),
+            "validated_path_seconds_per_shot": dec.get("validated_path_seconds_per_shot"),
+            "bug_confirmed": (d.get("data") or {}).get("bug_confirmed"), "stub": bool((d.get("data") or {}).get("stub"))}
+
+
 C2_CELLS = {"C2_GATE": ("I-GATE", "IBM-U", ("echo",)), "C2_ECHO": ("I-ECHO", "IBM-T0", ("echo",)),
             "C2_STAR": ("I-STAR", "IBM-T0", ("star",)), "C2_XY4": ("I-XY4", "IBM-T3", ("echo",)),
             "C2_COH": ("I-COH", "IBM-T0", ("echo",))}
@@ -596,10 +894,11 @@ C2_CELLS = {"C2_GATE": ("I-GATE", "IBM-U", ("echo",)), "C2_ECHO": ("I-ECHO", "IB
 # class-2 cell (the like-for-like circuit: the device flew IBM-T3)
 C2_PRIMARY_CELL = "C2_XY4"
 C2_KRAUS_REF_SHARE = 0.2            # prompts/33a step C: the in-cell reference arm takes 20 % of the window
-# prompts/33c R3: the 20 % arm.  Production RM -> a Kraus reference arm ("kraus_reference", 33a step C); production
-# Kraus -> an RM arm ("rm_arm": a Kraus reference would duplicate production), whose in-cell P4a statistic against
-# the production arm decides the representation of the later cells (rm iff it passes, 33a's rule)
-C2_REF_ARM = {"rm": ("kraus_reference", "kraus"), "kraus": ("rm_arm", "rm")}
+# prompts/33d R1/R3 (replacing 33c R3): production is the C2_KCHK decision (rm, or blocked -> the cell refuses); the
+# 20 % arm is a Kraus reference arm on C2_KCHK's validated Kraus GPU path (Aer native kernels, or cuStateVec with
+# fusion off), and is dropped -- production RM at 100 % of the window -- when no path was validated
+C2_REF_ARM_NAME = "kraus_reference"
+C2_VALIDATED_PATH_MODE = {"kraus_gpu_native": "native", "kraus_gpu_cusv_nofusion": "custatevec_nofusion"}
 C2_REF_CHUNK = 128
 C2_MIN_SHOTS = {"rm": 1000, "kraus": 256}     # S6 of a C2 cell: production shots per circuit (prompts/33a step C3)
 C2_UNDERPOWERED_BELOW = 5.0         # expected accepted strings at the device's rate below which counts are underpowered
@@ -670,25 +969,48 @@ def _c2_run_record(P, r0, man, clb, cid, device, meas, scale_shots, like_for_lik
 
 
 def run_c2_cell(ctx):
-    """A class-2 production cell (prompts/33a step C, prompts/33c R3): the reference arm first (20 % of the sampling
-    window, both K1 circuits, equal shots, chunk 128), then the production arm (C2_CAL's representation: RM, or Kraus
-    if P4a failed) for the rest, equal shots per run.  The reference arm is the other representation
-    (C2_REF_ARM): a Kraus reference when production is RM, the RM arm when production is Kraus; their in-cell P4a
-    statistic decides the representation of the later cells.  Observables: garbage structure, accepted / hits,
-    round trip, and P7' against the K1 strings."""
+    """A class-2 production cell (prompts/33a step C, prompts/33d R1/R3): the representation is C2_KCHK's decision
+    (`S0 representation decided`: the cell refuses to sample without it, or when it says blocked).  Production RM;
+    the 20 % reference arm is Kraus on C2_KCHK's validated Kraus GPU path when one exists (both K1 circuits, equal
+    shots, chunk 128; the in-cell P4a statistic against production, information), else no reference arm and
+    production takes the whole window.  Observables: garbage structure, accepted / hits, round trip, and P7' against
+    the K1 strings."""
     from campaign33 import add_table
     cell, family, convs = C2_CELLS[ctx.token]
+    dk = c2_kchk_decision(ctx)
+    decided = bool(dk and dk["production_representation"] == "rm")
+    ctx.R.add("S0 representation decided (prompts/33d: C2_KCHK decision.production_representation = rm; never a "
+              "silent default)", {"file": (dk or {}).get("path"), "status": (dk or {}).get("status"),
+                                  "production_representation": (dk or {}).get("production_representation"),
+                                  "validated_kraus_gpu_path": (dk or {}).get("validated_kraus_gpu_path"),
+                                  "stub": (dk or {}).get("stub")},
+              "C2_KCHK.json present with production_representation rm", decided)
+    ctx.data["representation_decision"] = dk
+    if not decided:
+        ctx.notes.append("the cell did not sample: " + ("validation/C2_KCHK.json is absent" if dk is None else
+                                                        f"C2_KCHK says {dk['production_representation']}"))
+        ctx.min_shots_ok = False
+        ctx.seeds_recorded = True
+        return
     P = A.Physics(with_sectors=False)
     rec = load_record()
-    prod, mode, rates, dec_src = c2_cal_decision(ctx)
+    prod = "rm"
+    mode = "custatevec" if ctx.device == "GPU" else "cpu"
     if ctx.args.gpu_mode not in ("auto", "policy") and ctx.device == "GPU":
         mode = ctx.args.gpu_mode
-    ref_arm, ref_rep = C2_REF_ARM[prod]
+    vpath_name = dk.get("validated_kraus_gpu_path") or "none"
+    ref_mode = C2_VALIDATED_PATH_MODE.get(vpath_name)
+    ref_arm, ref_rep = (C2_REF_ARM_NAME, "kraus") if ref_mode else (None, None)
+    if ctx.device != "GPU":
+        ref_mode = "cpu" if ref_mode else None
+    rates = {"rm": {mode: dk.get("production_seconds_per_shot")},
+             "kraus": {ref_mode: dk.get("validated_path_seconds_per_shot")} if ref_mode else {}}
+    dec_src = f"{dk['path']} decision: rm, validated Kraus GPU path {vpath_name}" + (" (stub)" if dk.get("stub") else "")
     if ctx.dry:
         # a 21-qubit noisy shot costs minutes on the laptop CPU (Kraus more than PTA): the dry run checks the path
         # with the Pauli-twirled representation standing in for both arms, 1 shot per run (labelled)
-        ctx.notes.append(f"dry run: PTA stands in for both arms ({ref_rep} {ref_arm}, {prod} production), 1 shot per "
-                         "run -- a path check, not the CI's channels")
+        ctx.notes.append(f"dry run: PTA stands in for every arm ({'kraus reference, ' if ref_arm else ''}rm production), "
+                         "1 shot per run -- a path check, not the CI's channels")
     ctx.data["gpu_mode_used"] = mode
     ratio = N.t2_star_ratio()
     eps = None
@@ -702,7 +1024,7 @@ def run_c2_cell(ctx):
     t_b = time.time()
     specs = {}
     for conv in convs:
-        for rep in sorted({ref_rep, prod}):
+        for rep in ("kraus", "rm"):        # kraus always: f0_ibm reads the Kraus model's identity weights
             specs[(rep, conv)] = N.ibm_spec(rec, cell, "pta" if ctx.dry else rep, conv, ratio, eps)
     ctx.phases["noise_model_build_s"] = time.time() - t_b
     clb = {cid: clbit_physical(circs[cid][0]) for cid in K1_IDS}
@@ -714,12 +1036,14 @@ def run_c2_cell(ctx):
     window = None if rem is None else 0.75 * max(0.0, rem)
     t_w = time.time()
     arms = {}
-    for arm, rep in ((ref_arm, ref_rep), ("production", prod)):
+    plan = ([(ref_arm, ref_rep)] if ref_arm else []) + [("production", prod)]
+    for arm, rep in plan:
         t_a = time.time()
+        arm_mode = ref_mode if arm == ref_arm else mode
         if arm == ref_arm:
             deadline = None if window is None else t_w + C2_KRAUS_REF_SHARE * window
             budget = None if window is None else C2_KRAUS_REF_SHARE * window
-            rate = _rate_of(rates, ref_rep, mode)
+            rate = _rate_of(rates, ref_rep, ref_mode)
             chunk = C2_REF_CHUNK
             if budget is not None and rate:
                 while chunk > 8 and chunk * rate * len(runs) > 0.9 * budget:
@@ -727,7 +1051,7 @@ def run_c2_cell(ctx):
             n = 1 if ctx.dry else ctx.scaled(C2_TARGET_PER_CIRCUIT)
             phis, min_rounds = (1.0,), 1
             rule = (f"deadline-stopped at {C2_KRAUS_REF_SHARE:.0%} of the sampling window, equal shots per run at round "
-                    f"boundaries, chunk {chunk} (128, halved while one round at the C2_CAL {ref_rep} rate {rate} s/shot "
+                    f"boundaries, chunk {chunk} (128, halved while one round at the C2_KCHK {ref_rep} rate {rate} s/shot "
                     "would not fit 0.9 of the arm's budget); >= 1 round always")
         else:
             deadline = None if window is None else t_w + window
@@ -748,7 +1072,7 @@ def run_c2_cell(ctx):
         for cid, conv in runs:
             spec = specs[(rep, conv)]
             cts.append(spec.apply(circs[cid][0]))
-            sim, kw = simulator(ctx, spec.noise_model, mode)
+            sim, kw = simulator(ctx, spec.noise_model, arm_mode)
             sims.append(sim)
             kws.append(kw)
         labels = [f"{cid}|{conv}" for cid, conv in runs]
@@ -768,7 +1092,7 @@ def run_c2_cell(ctx):
             per[f"{cid}|{conv}"] = rr
         done = [r["shots_done"] for r in res]
         arms[arm] = {"representation": spec.description["representation"], "planned_representation": rep,
-                     "mode": mode, "target_shots_per_run": n, "chunk": chunk, "rule": rule,
+                     "mode": arm_mode, "target_shots_per_run": n, "chunk": chunk, "rule": rule,
                      "shots_per_circuit": {lab: d for lab, d in zip(labels, done)},
                      "equal_shots": len(set(done)) <= 1, "per_run": per, "calls": info["calls"],
                      "stopped": info["stopped"], "warmup": info["warmup"], "seconds": time.time() - t_a,
@@ -776,53 +1100,55 @@ def run_c2_cell(ctx):
         ctx.log(f"{arm} ({rep}): shots per run {done}, {info['seconds_per_shot']} s/shot")
     ctx.phases["sampling_and_decoding_s"] = time.time() - t_w
     pr = arms["production"]
-    # ---- the in-cell RM-vs-Kraus statistic (prompts/33a P4a, computed in the cell; prompts/33c R3)
-    rm_arm = "production" if prod == "rm" else ref_arm
-    kr_arm = ref_arm if prod == "rm" else "production"
-    incell = {lab: ST.structure_compare(arms[rm_arm]["per_run"][lab]["structure"],
-                                        arms[kr_arm]["per_run"][lab]["structure"]) for lab in pr["per_run"]}
+    # ---- the in-cell RM-vs-Kraus statistic (prompts/33a P4a, information; only with a validated Kraus GPU path)
+    rm_arm, kr_arm = "production", ref_arm
+    incell = ({lab: ST.structure_compare(arms[rm_arm]["per_run"][lab]["structure"],
+                                         arms[kr_arm]["per_run"][lab]["structure"]) for lab in pr["per_run"]}
+              if ref_arm else {})
     evaluated = bool(incell) and all(v.get("evaluated") for v in incell.values())
     incell_pass = evaluated and all(v.get("pass") for v in incell.values())
-    later = "rm" if incell_pass else "kraus"
+    later = "rm"          # prompts/33d R1: C2_KCHK is the decision of record; the in-cell statistic is information
     # ---- criteria
     allruns = [v for a in arms.values() for v in a["per_run"].values()]
     ctx.physics("P6 decoder round trip on every accepted string (both arms)",
                 {f"{a}:{k}": v["roundtrip"]["mismatches"] for a, d in arms.items() for k, v in d["per_run"].items()},
                 "0 mismatches", all(v["roundtrip"]["ok"] for v in allruns))
     have = all(("comparison_power" in v and v["z_vs_K1"].get("evaluated") and "accepted" in v["scaled_to_1e5"])
-               for v in pr["per_run"].values()) and bool(arms[ref_arm]["per_run"])
+               for v in pr["per_run"].values()) and (not ref_arm or bool(arms[ref_arm]["per_run"]))
     ctx.physics("P7' K1 comparison per run: Poisson probabilities of the measured 58 / 45 accepted and 0 / 0 hits, the z "
-                f"table of the mean Hamming weight and every marginal, comparison_power; the {ref_arm} arm present",
+                "table of the mean Hamming weight and every marginal, comparison_power"
+                + (f"; the {ref_arm} arm present" if ref_arm else "; no reference arm (no validated Kraus GPU path)"),
                 {k: v["comparison_power"]["counts"] + "/" + v["comparison_power"]["circuit"] for k, v in pr["per_run"].items()},
                 "fields present (no threshold)", have)
-    ctx.physics("P4a' in-cell RM vs Kraus (|z| <= 3 on the mean Hamming weight and every marginal, per run): evaluated "
-                "on every run; its outcome decides the representation of the later class-2 cells (prompts/33c R3)",
-                {"pass_by_run": {k: v.get("pass") for k, v in incell.items()},
-                 "z_w_by_run": {k: v.get("z_mean_hamming_weight") for k, v in incell.items()},
-                 "representation_decision_for_later_cells": later},
-                "evaluated (PASS or FAIL are both a decision)", evaluated)
-    minimum = C2_MIN_SHOTS["rm" if prod == "rm" else "kraus"]
+    if ref_arm:
+        ctx.physics("P4a' in-cell RM vs Kraus (|z| <= 3 on the mean Hamming weight and every marginal, per run; "
+                    "information beside C2_KCHK, prompts/33d R1): evaluated on every run",
+                    {"pass_by_run": {k: v.get("pass") for k, v in incell.items()},
+                     "z_w_by_run": {k: v.get("z_mean_hamming_weight") for k, v in incell.items()},
+                     "kraus_gpu_path": vpath_name}, "evaluated", evaluated)
+    minimum = C2_MIN_SHOTS["rm"]                 # prompts/33d step 2: 1 000 production shots per circuit (RM)
     pmin = min(pr["shots_per_circuit"].values()) if pr["shots_per_circuit"] else 0
     ctx.min_shots_ok = (pmin >= minimum) if not ctx.dry else True
     ctx.no_shots = any(v["shots"] == 0 for v in allruns)
     if pmin < pr["target_shots_per_run"] or not ctx.min_shots_ok:
         ctx.shots_reduced_to = {"production": pr["shots_per_circuit"],
-                                "minimum_per_circuit": minimum, ref_arm: arms[ref_arm]["shots_per_circuit"]}
+                                "minimum_per_circuit": minimum,
+                                **({ref_arm: arms[ref_arm]["shots_per_circuit"]} if ref_arm else {})}
     tot = sum(v["shots"] for v in allruns)
     ctx.data["seconds_per_shot"] = pr["seconds_per_shot"]
     ctx.data.update({"cell": cell, "family": family, "conventions": list(convs),
                      "representation_used": prod, "representation_source": dec_src, "arms": arms,
-                     "reference_arm": {"name": ref_arm, "representation": ref_rep,
-                                       "rule": "prompts/33c R3: production rm -> kraus_reference; production kraus -> "
-                                               "rm_arm (a Kraus reference would duplicate production)"},
+                     "reference_arm": {"name": ref_arm, "representation": ref_rep, "gpu_mode": ref_mode,
+                                       "validated_kraus_gpu_path": vpath_name,
+                                       "rule": "prompts/33d R3: a Kraus reference arm on C2_KCHK's validated Kraus GPU "
+                                               "path; none (production RM at 100 %) when no path was validated"},
                      "per_run": pr["per_run"], "shots_per_circuit": pr["shots_per_circuit"],
                      "minimum_shots_per_circuit": minimum, "rm_vs_kraus_in_cell": incell,
                      "rm_vs_kraus_in_cell_arms": {"rm": rm_arm, "kraus": kr_arm},
                      "rm_vs_kraus_in_cell_pass": incell_pass if evaluated else None,
                      "representation_decision_for_later_cells": later,
-                     "representation_decision_rule": ("rm iff the in-cell P4a statistic (RM arm vs Kraus arm, |z| <= 3 "
-                                                      "on the weight and every marginal) passes on every run, else "
-                                                      "kraus (prompts/33a rule, prompts/33c R2/R3)"),
+                     "representation_decision_rule": ("C2_KCHK decision.production_representation (prompts/33d R1/R3); "
+                                                      "the in-cell RM-vs-Kraus statistic is information"),
                      "K1_device_structure": device, "shots_total": tot,
                      "information_only": False, "primary_class2_cell": ctx.token == C2_PRIMARY_CELL,
                      "f_point_estimate_claimed": False,
@@ -843,7 +1169,7 @@ def run_c2_cell(ctx):
     add_table(ctx, f"{cell} on {family}: arms vs the K1 strings",
               ["arm", "run", "representation", "shots", "mean weight", "K1 mean weight", "z weight", "max |z| marginal",
                "accepted", "hits", "P(K1 accepted | model)", "counts power", "roundtrip mismatches"], rows)
-    add_table(ctx, f"In-cell RM ({rm_arm}) vs Kraus ({kr_arm}); later cells: {later}",
+    add_table(ctx, f"In-cell RM ({rm_arm}) vs Kraus ({kr_arm or 'no reference arm'}) (information)",
               ["run", "z mean weight", "max |z| marginal", "pass"],
               [[k, v.get("z_mean_hamming_weight"), v.get("max_abs_z_marginal"), v.get("pass")] for k, v in incell.items()])
 
