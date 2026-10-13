@@ -1,0 +1,138 @@
+{
+ "title": "prompts/33c R2 diagnostic: IBM-T0 B0_ref117_k1 under I-ECHO (rm) on the CPU",
+ "prompt": "prompts/33c R2 (coordinator's resume order 2026-10-13: Kraus and RM on one CPU engine)",
+ "git_commit": "60ccd40",
+ "command": "python scripts/c33c_diag_full.py --rep rm --shots-per-call 8 --max-shots 8 --max-seconds 1700 --threads 6 --seed 33133000 --out data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_rm_cpu_seg2.json",
+ "versions": {
+  "python": "3.12.14",
+  "qiskit": "1.4.3",
+  "qiskit_aer": "0.15.1",
+  "numpy": "2.5.3"
+ },
+ "machine": {
+  "host": "pichkaCommander",
+  "processor": "x86_64",
+  "cpu_count": 12
+ },
+ "created": "2026-10-13 18:52:12 UTC",
+ "representation": "rm",
+ "family": "IBM-T0",
+ "circuit": "B0_ref117_k1",
+ "model": "I-ECHO (echo T2)",
+ "record": {
+  "path": "data/hardware/K0_prep/ibm_kingston_full_20261006T0652Z.json",
+  "fingerprint": "b948ddc86b1c4696121e377bd2c751b889705006bd1abb685eeee303398a44d9"
+ },
+ "simulator_options": {
+  "method": "statevector",
+  "precision": "double",
+  "noise_model": "attached",
+  "max_parallel_threads": 6
+ },
+ "noise_model_build_s": 12.932276487350464,
+ "plan": {
+  "shots_per_call": 8,
+  "max_shots": 8,
+  "max_seconds": 1700.0,
+  "seed0": 33133000,
+  "seed_rule": "seed0 + 1000 x call index"
+ },
+ "calls": [
+  {
+   "index": 0,
+   "seed": 33133000,
+   "shots": 8,
+   "seconds": 744.7823696136475
+  }
+ ],
+ "counts": {
+  "64": 1,
+  "103192": 1,
+  "148560": 1,
+  "266240": 1,
+  "343537": 1,
+  "566848": 1,
+  "799088": 1,
+  "824328": 1
+ },
+ "status": "done",
+ "structure": {
+  "shots": 8,
+  "n_bits": 20,
+  "mean_hamming_weight": 5.875,
+  "sd_hamming_weight": 3.440826312717007,
+  "se_mean_hamming_weight": 1.2165158093036499,
+  "unital_limit": 10.0,
+  "deficit_vs_unital": 4.125,
+  "marginals_by_clbit": [
+   0.125,
+   0.0,
+   0.0,
+   0.25,
+   0.5,
+   0.25,
+   0.625,
+   0.125,
+   0.375,
+   0.25,
+   0.5,
+   0.125,
+   0.625,
+   0.375,
+   0.125,
+   0.375,
+   0.25,
+   0.125,
+   0.5,
+   0.375
+  ],
+  "se_marginals_by_clbit": [
+   0.11692679333668567,
+   0.0,
+   0.0,
+   0.15309310892394862,
+   0.1767766952966369,
+   0.15309310892394862,
+   0.1711632992203644,
+   0.11692679333668567,
+   0.1711632992203644,
+   0.15309310892394862,
+   0.1767766952966369,
+   0.11692679333668567,
+   0.1711632992203644,
+   0.1711632992203644,
+   0.11692679333668567,
+   0.1711632992203644,
+   0.15309310892394862,
+   0.11692679333668567,
+   0.1767766952966369,
+   0.1711632992203644
+  ],
+  "physical_by_clbit": [
+   92,
+   69,
+   54,
+   52,
+   53,
+   68,
+   73,
+   94,
+   50,
+   72,
+   71,
+   79,
+   51,
+   74,
+   70,
+   93,
+   75,
+   58,
+   95,
+   59
+  ],
+  "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
+ },
+ "wall_s": 744.7826883792877,
+ "stop": "max_shots reached",
+ "seconds_per_shot": 93.09779620170593
+}
