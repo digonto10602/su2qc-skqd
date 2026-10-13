@@ -47,6 +47,18 @@ GATES = [  # gate, description (manual Step 10), where it runs
     ("H0_ddrep", "one-job replication of the XY4 gain (T0 vs T3) and of the context-aware collapse (T1) with four mechanism cells (CA+/-, XX, X(-X), CA minus two qubits) and four pulse-train pubs on the two k = 1 circuits; preregistered classes and reading rule (measurement gate)", "QPU"),
     ("ENC_compare", "prompts/34: encoding comparison at fixed physics -- current vertex-local codec vs the dedup codec E2 (one bit per link) and the E5' codeword-assignment search; qubits, CZ a2a/routed, native ZZ, depth, kingston duration and f, H2-2 f, Gauss-law detection and saturation (measurement gate; dedup circuits UNSIGNED)", "laptop"),
     ("K1_2x3_fpilot", "prompts/27 stage 0b / prompts/32 B: the 2x3 clean-fraction pilot on ibm_kingston, the two signed k = 1 circuits routed as gate K0 with client XY4 (T3), one job of 4 pubs x 1e5; GO-B / GO-A / NO-GO on f_hat_ideal = f_hit / r_nc (measurement gate; no criterion on f)", "QPU"),
+    ("Q0P_2x2", "prompts/35 T1 (+35a): the signed 2x2 family (28 + 2 circuits) compiled to the Quantinuum native set, verified exactly (Q1 state bar 1e-10), Q2 k-independent rzz, round trips, HQC and gate-only f per device, D3' plans (0 HQC)", "laptop"),
+    ("QN_2x2", "prompts/35 T2 + T3 (+35a R3): noiseless per-state sampling of the 28 native circuits and the f = 1 SKQD reference; Quantinuum noise scenarios E1-E7 f-cells on all 28; plan-of-record SKQD under E1, E3, E4, E5b", "laptop"),
+    ("QEMU_2x2", "prompts/35 T4: the 28 native 2x2 circuits on pytket-quantinuum's local H2-1LE emulator (pecos, noiseless state vector); per-state test", "laptop"),
+    ("QH_2x2", "prompts/35 T6 (+35a R5): the 28 native 2x2 circuits as Helios Guppy/HUGR programs on Selene (Quest, IdealErrorModel), offline; per-state test", "laptop"),
+    ("QH_2x3", "prompts/35 T6, information: the two k = 1 f-cell 2x3 circuits as Guppy/HUGR programs on Selene", "laptop"),
+    ("Q0P_2x4", "prompts/35 T1 (+35a R2, R4): the signed 2x4 family compiled at level 0, Q1L local equivalence with the rigorous pytket rounding bound, Q1S sparse statevector where reached, HQC and gate-only f (0 HQC)", "laptop"),
+    ("QN_2x4", "prompts/35 T3 at 2x4, analytic (R3): fault-free fraction per circuit and Quantinuum scenario and gate-only f per device; nothing sampled", "laptop"),
+    ("QEMU_2x4", "prompts/35 T4 at 2x4: infeasible on the local emulator (rate and qubit count recorded)", "laptop"),
+    ("QH_2x4", "prompts/35 T6 at 2x4: not attempted (28-qubit statevector on the laptop)", "laptop"),
+    ("QEMU_2x3_laptop_smoke", "prompts/35 3.6: the C3_LE engine path (pytket-pecos H2-1LE) on the laptop pecos venv in dry mode; the token itself waits for the owner's skqd-pecos env", "laptop"),
+    ("QSC_prepared", "prompts/35 T5: the four syntax-check job sets (H2-2SC x 2x2/2x3/2x4 k=1, Helios-1SC x 2x2 HUGR) as local job records; needs the owner's Nexus login", "laptop"),
+    ("QV_2x4_K1", "prompts/35 section 4 + 35a R1: Aer GPU statevector and noiseless per-state sampling of the 15 native k = 1 2x4 circuits (deferred GPU token; K2-K4 likewise)", "Perlmutter GPU"),
 ]
 
 

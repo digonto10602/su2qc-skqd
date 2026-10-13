@@ -51,12 +51,15 @@ SEED_T2, SEED_T4, SEED_FC, SEED_POR, SEED_QV, SEED_T6 = (35_000_000, 35_100_000,
 SEED_RULES = {"T2": "35 000 000 + 1000 c + chunk (c = index in the sorted id list)",
               "T3_fcells": "35 200 000 + 1000 s + c (s = scenario index in SCENARIOS, c = index in the sorted ids)",
               "T3_plan_of_record": "35 300 000 + 1000 s + c", "T3_rate": "44 200 000 (one call per scenario)",
-              "T4": "35 100 000 + c", "T6": "35 500 000 + c", "QV_2x4": "35 400 000 + c"}
+              "T4": "35 100 000 + c", "T6": "35 500 000 + c", "QV_2x4": "35 400 000 + 1000 (k - 1) + c (token QV_2x4_K<k>)"}
 N_T2 = 20000
 N_FCELL = 2000
 N_SIGMA, P_MIN = 5.0, 1e-3
 SCENARIOS = ("E1", "E2", "E3", "E4", "E5a", "E5b", "E5c", "E6a", "E6b", "E6c", "E7_0.10_lat")
 POR_ORDER = ("E1", "E3", "E4", "E5b", "E7_0.10_lat", "E2", "E6a", "E6b", "E6c", "E5a", "E5c")
+POR_RUN = ("E1", "E3", "E4", "E5b")          # prompts/35a R3: the plan-of-record runs, in this order
+POR_DROPPED = tuple(x for x in POR_ORDER if x not in POR_RUN)
+CAP_T3_S_35A = 10 * 3600.0                   # prompts/35a R3
 RATE_CIRCUIT = "B0_ref06_k4"
 RATE_SHOTS = 500
 CAP_T3_S = 8 * 3600.0
@@ -440,7 +443,8 @@ def tier_noise(args):
         worst = max(v["s_per_shot"] for v in out.values())
         sizing = {"fcells_shots": N_FCELL * len(ids) * len(SCENARIOS), "por_shots_per_scenario": por,
                   "fcells_estimate_s": worst * N_FCELL * len(ids) * len(SCENARIOS),
-                  "por_estimate_s_per_scenario": worst * por, "cap_s": CAP_T3_S,
+                  "por_estimate_s_per_scenario": worst * por, "cap_s": CAP_T3_S_35A, "por_runs": list(POR_RUN),
+                  "predicted_total_s": worst * (N_FCELL * len(ids) * len(SCENARIOS) + len(POR_RUN) * por),
                   "rule": "estimates at the dearer of the two measured rates (E5b, the memory transform)"}
         save_frag("QN_2x2", "noise_rate", {"rates": out, "sizing": sizing, "threads": args.threads,
                                           "aer_settings": NOISY_SIM_KW(args.threads),
@@ -449,6 +453,11 @@ def tier_noise(args):
     if part == "fcells":
         sids = args.scenarios or list(SCENARIOS)
         for sid in sids:
+            if frag("QN_2x2", f"fcells_{sid}"):
+                continue
+            if args.budget_s and time.time() - t0 > float(args.budget_s):
+                print(f"  budget reached before f-cells {sid}", flush=True)
+                break
             s_i = SCENARIOS.index(sid)
             spec = spec_of(sid, P.n, mans, lat)
             cells, wall = {}, time.time()
@@ -461,35 +470,53 @@ def tier_noise(args):
             save_frag("QN_2x2", f"fcells_{sid}", {"scenario": sid, "description": N.describe(spec) if hasattr(N, "describe") else spec.description,
                                                  "cells": cells, "wall_s": time.time() - wall, "shots_per_cell": N_FCELL,
                                                  "seed_rule": SEED_RULES["T3_fcells"], "threads": args.threads,
+                                                 "aer_settings": NOISY_SIM_KW(args.threads),
                                                  "environment": env_record()})
             print(f"  f-cells {sid}: {len(cells)} circuits in {time.time() - wall:.0f} s", flush=True)
         return assemble_QN_2x2()
     if part == "por":
-        sids = args.scenarios or list(POR_ORDER)
+        sids = args.scenarios or list(POR_RUN)
+        bad = [x for x in sids if x not in POR_RUN]
+        if bad:
+            raise SystemExit(f"prompts/35a R3: the plan-of-record runs are {POR_RUN}; {bad} are dropped")
         plan = plan_of_record()
         for sid in sids:
-            if args.budget_s and time.time() - t0 > float(args.budget_s):
-                print(f"  budget reached before {sid}", flush=True)
-                break
+            if frag("QN_2x2", f"por_{sid}"):
+                continue
             s_i = SCENARIOS.index(sid)
             spec = spec_of(sid, P.n, mans, lat)
-            counts, wall, seeds = {}, time.time(), {}
+            # resumable across <= 30-min chunks: per-circuit counts are kept in porpartial_<sid> until all 28 exist
+            part_ = frag("QN_2x2", f"porpartial_{sid}") or {"counts": {}, "seeds": {}, "wall_s": 0.0}
+            wall = time.time()
+            stopped = False
             for c_i, cid in enumerate(ids):
+                if cid in part_["counts"]:
+                    continue
+                if args.budget_s and time.time() - t0 > float(args.budget_s):
+                    stopped = True
+                    break
                 qc, _ = load_native_qiskit(lat, cid)
                 seed = SEED_POR + 1000 * s_i + c_i
                 cnt, _dt = run_noisy(spec, qc, plan[cid], seed, args.threads)
-                counts[cid] = cnt
-                seeds[cid] = seed
+                part_["counts"][cid] = {str(k): int(v) for k, v in cnt.items()}
+                part_["seeds"][cid] = seed
+                part_["wall_s"] = float(part_["wall_s"]) + _dt
+                save_frag("QN_2x2", f"porpartial_{sid}", part_)
+            if stopped or len(part_["counts"]) < len(ids):
+                print(f"  plan of record {sid}: {len(part_['counts'])} of {len(ids)} circuits (budget), resumable", flush=True)
+                break
+            counts = {c: {int(k): v for k, v in part_["counts"][c].items()} for c in ids}
             rd = skqd_reading(P, counts, mans)
-            save_frag("QN_2x2", f"por_{sid}", {"scenario": sid, "reading": rd, "seeds": seeds,
+            save_frag("QN_2x2", f"por_{sid}", {"scenario": sid, "reading": rd, "seeds": part_["seeds"],
                                               "seed_rule": SEED_RULES["T3_plan_of_record"],
-                                              "shots_total": int(sum(plan.values())), "wall_s": time.time() - wall,
-                                              "seconds_per_shot": (time.time() - wall) / sum(plan.values()),
-                                              "threads": args.threads, "environment": env_record()})
+                                              "shots_total": int(sum(plan.values())), "wall_s": float(part_["wall_s"]),
+                                              "seconds_per_shot": float(part_["wall_s"]) / sum(plan.values()),
+                                              "threads": args.threads, "aer_settings": NOISY_SIM_KW(args.threads),
+                                              "environment": env_record()})
+            os.remove(os.path.join(FRAG, "QN_2x2", f"porpartial_{sid}.json"))
             print(f"  plan of record {sid}: " + "; ".join(f"{s} recall {v['recall_S999_B_all']:.3f} E_R-E0 "
                                                            f"{v['E_R_minus_E0_B_all']:.2e} acc {v['accepted_fraction']:.3f}"
-                                                           for s, v in rd.items()) + f" [{time.time() - wall:.0f} s]",
-                  flush=True)
+                                                           for s, v in rd.items()), flush=True)
         return assemble_QN_2x2()
     raise SystemExit(f"--part {part}?")
 
@@ -641,11 +668,26 @@ def assemble_QN_2x2():
                          "accepted": round(v["accepted_fraction"], 4), "E0_inside": v["certificate"]["E0_inside"]}
                      for s, v in p["reading"].items()} for sid, p in PR.items()},
               "fields present; variational", fields_ok and all(var.values()))
-        data["plan_of_record"] = PR
+        data["plan_of_record"] = dict(PR)
         data["scenarios_run"] = [s for s in POR_ORDER if s in PR]
         data["stop_variational"] = [s for s, ok in var.items() if not ok]
     else:
         R.add("N4 plan-of-record runs", "not run (--tier noise --part por)", "fields; variational", False)
+    # prompts/35a R3: the dropped plan-of-record runs with their predicted cost (measured rates of noise_rate)
+    rates_ = (RT or {}).get("rates") or {}
+    por_shots = int(sum(plan_of_record().values()))
+    pod = data.setdefault("plan_of_record", {})
+    for sid in POR_DROPPED + tuple(x for x in POR_RUN if x not in PR):
+        r_ = rates_.get("E5b" if sid.startswith("E5") else "E1", {}).get("s_per_shot")
+        h = (por_shots * r_ / 3600.0) if r_ else None
+        why = "dropped by prompts/35a" if sid in POR_DROPPED else "not run (yet): no completed plan-of-record fragment"
+        pod[sid] = {"status": f"{why}: {h:.2f} h predicted" if h is not None else f"{why}: rate not measured",
+                    "predicted_h": h, "shots": por_shots,
+                    "rate_used": ("E5b" if sid.startswith("E5") else "E1") + " of data.rates"}
+    walls = {"fcells_s": sum(float(v.get("wall_s", 0.0)) for v in FC.values()),
+             "plan_of_record_s": sum(float(v.get("wall_s", 0.0)) for v in PR.values())}
+    data["t3_cap"] = dict(walls, total_h=(walls["fcells_s"] + walls["plan_of_record_s"]) / 3600.0, cap_h=CAP_T3_S_35A / 3600.0,
+                          rule="prompts/35a R3: f-cells 28 x 11, plan of record E1, E3, E4, E5b, 10 h")
     # N5
     seeds_ok = bool(NL) and all("seed" in v for v in (NL or {}).get("per_circuit", {}).values()) and \
         all(all("seed" in c for c in v["cells"].values()) for v in FC.values()) and all("seeds" in p for p in PR.values())
@@ -1067,18 +1109,30 @@ def tier_hugr(args):
     out_dir = os.path.join(ROOT, "data", "quantinuum", f"circuits_2x{lat}_helios")
     part = args.part or "all"
     if part == "rate":
+        la = os.getloadavg()
         rec = hugr_one(lat, ids[0], out_dir, 100 if lat == 2 else 3, SEED_T6 + 999)
+        rec["load_average_before"] = list(la)
         save_frag(G, "rate", rec)
         print(f"  rate: {rec.get('seconds_per_shot')} s/shot, compile {rec.get('compile_s')} s", flush=True)
         return assemble_QH(lat)
     todo = list(args.only or (["CAL_x0"] + ids))
+    plan = frag(G, "run_plan")
+    if plan is None or args.force:
+        # prompts/35a R5: size on the rate measured IMMEDIATELY before the run (2x2), the planned rule at 2x3
+        la = os.getloadavg()
+        rt = hugr_one(lat, ids[0], out_dir, 100 if lat == 2 else 3, SEED_T6 + 999)
+        rt["load_average_before"] = list(la)
+        save_frag(G, "rate", rt)
+        n = hugr_shots(rt, lat)
+        plan = {"shots_per_circuit": n, "rate_s_per_shot": rt["seconds_per_shot"], "load_average_before": list(la),
+                "rule": (HUGR_RULE_R5 if lat == 2 else hugr_shots.__doc__.strip()), "measured_on": ids[0]}
+        save_frag(G, "run_plan", plan)
+        print(f"  run plan: {n} shots per circuit at {rt['seconds_per_shot']:.4f} s/shot (load {la})", flush=True)
     for cid in todo:
         if frag(G, f"circuit_{cid}") and not args.force:
             continue
         c_i = ids.index(cid) if cid in ids else 900
-        n = int(args.shots or hugr_shots(frag(G, "rate"), lat))
-        if cid == "CAL_x0":
-            n = 10
+        n = 10 if cid == "CAL_x0" else int(plan["shots_per_circuit"])
         rec = hugr_one(lat, cid, out_dir, n, SEED_T6 + c_i)
         if rec.get("ok") and cid in mans:
             P = _PHYS.setdefault(lat, Phys(lat))
@@ -1094,22 +1148,48 @@ def tier_hugr(args):
 
 
 _PHYS = {}
+HUGR_RULE_R5 = ("prompts/35a R5: shots per circuit = min(2000, floor(3600 / (28 s_shot))), floor 500, s_shot measured on 100 "
+                "shots immediately before the run")
 HUGR_PLAN = {2: {"circuits": 28, "cap_s": 3600.0, "planned_shots": 2000},     # prompts/35 3.7 and the caps of section 2
              3: {"circuits": 2, "cap_s": 1800.0, "planned_shots": 100}}
 
 
 def hugr_shots(rt, lat):
-    """Shots per circuit inside the tier's cap from the measured rate: floor((cap - (circuits + 1) x per-circuit
-    overhead) / (circuits x s_shot)), at most the planned shots, rounded down to 100 when >= 100, floor 20."""
+    """2x2: prompts/35a R5, min(2000, floor(3600 / (28 s_shot))), floor 500.  2x3 (information): floor((1800 s - 3 x
+    per-circuit overhead) / (2 s_shot)), at most 100, floor 20."""
     if not rt or not rt.get("seconds_per_shot"):
-        raise SystemExit("run --part rate first (prompts/35 3.7: measure the rate first)")
+        raise SystemExit("measure the rate first (prompts/35 3.7)")
+    s = float(rt["seconds_per_shot"])
+    if lat == 2:
+        return max(500, min(2000, int(math.floor(3600.0 / (28.0 * s)))))
     p = HUGR_PLAN[lat]
     over = float(rt.get("compile_s", 0.0)) + float(rt.get("selene_build_s", 0.0))
-    n = int(math.floor((p["cap_s"] - (p["circuits"] + 1) * over) / (p["circuits"] * float(rt["seconds_per_shot"]))))
-    n = min(p["planned_shots"], n)
-    if n >= 100:
-        n = (n // 100) * 100
-    return max(20, n)
+    n = int(math.floor((p["cap_s"] - (p["circuits"] + 1) * over) / (p["circuits"] * s)))
+    return max(20, min(p["planned_shots"], n))
+
+
+def hugr_stack_block():
+    """prompts/35a R5: the HUGR packaging fix as a stack-check block -- the pecos venv's pip freeze (nothing is installed
+    by prompts/35 / 35a: the fix embeds an extension definition that the installed tket-exts already ships), the
+    extension added to every package and the error it fixed.  Only in the pecos venv; nothing in `coding` or the
+    quantinuum venv."""
+    r = subprocess.run([sys.executable, "-m", "pip", "freeze"], capture_output=True, text=True)
+    fr = sorted(line for line in r.stdout.splitlines() if line.strip())
+    out = {"venv": sys.prefix, "pip_freeze_sha256": sha256_text("\n".join(fr)), "pip_freeze_n": len(fr),
+           "pip_freeze": fr, "packages_installed_by_prompts_35_35a": [],
+           "pip_freeze_before_equals_after": "yes by construction: no pip command was run in this venv under prompts/35/35a",
+           "fix": HUGR_EXT_NOTE,
+           "error_fixed": ("selene_hugr_qis_compiler.HugrReadError: Error loading HUGR package. OpaqueOp:"
+                           "tket.qsystem.helios.ZZPhase requires extension tket.qsystem.helios, but it could not be found "
+                           "in the extension list used during resolution (selene_sim.build of the raw main.compile())"),
+           "scope": "the pecos venv (~/.local/share/su2qc-pecos/venv) only"}
+    try:
+        import tket_exts
+        e = tket_exts.qsystem_helios()
+        out["extension_added"] = {"name": e.name, "version": str(e.version), "from": f"tket-exts {versions(('tket-exts',))['tket-exts']}"}
+    except Exception as exc:
+        out["extension_added"] = f"not importable here ({type(exc).__name__})"
+    return out
 
 
 def write_helios_index(lat, out_dir, G):
@@ -1166,8 +1246,11 @@ def assemble_QH(lat):
     R.add("H4 hqc == 0", 0, "0", True)
     data = {"prompt": PROMPT, "qpu_seconds": 0, "hqc": 0, "ehqc": 0, "per_circuit": per, "CAL_x0": cal,
             "rate": frag(G, "rate"), "seed_rule": SEED_RULES["T6"], "extension_note": HUGR_EXT_NOTE,
-            "shot_plan": dict(HUGR_PLAN[lat], shots_per_circuit=(hugr_shots(frag(G, "rate"), lat) if frag(G, "rate") else None),
-                              rule=hugr_shots.__doc__.strip(), shots_used=sorted({r.get("shots") for r in per.values()})),
+            "run_plan": frag(G, "run_plan"),
+            "shot_plan": dict(HUGR_PLAN[lat], rule=(HUGR_RULE_R5 if lat == 2 else hugr_shots.__doc__.strip()),
+                              shots_used=sorted({r.get("shots") for r in per.values()}),
+                              wall_s_total=sum(float(r.get("wall_s") or 0.0) for r in per.values())),
+            "stack": hugr_stack_block(),
             "route": ("frozen pytket JSON -> guppy.load_pytket inside a @guppy main that allocates the qubits, calls it, "
                       "records result('c', bits) and discards the qubits -> main.compile() (HUGR package) -> "
                       "selene_sim.build -> run_shots(Quest, IdealErrorModel)"),
@@ -1187,16 +1270,52 @@ def assemble_QH(lat):
 
 
 # --------------------------------------------------------------------------- tier: gpu-verify (token QV_2x4)
+def native_qiskit_any(lat, cid, man):
+    """The native circuit as a qiskit circuit: the QPY v13 bundle when it exists (k = 1, prompts/35 3.1(g)), else the
+    frozen pytket JSON through the pytket-free reader (prompts/35a R1: QV_2x4_K2..K4 on the CI's skqd env)."""
+    from skqd import circuits_qiskit as cq
+    from skqd import quantinuum_native as qn
+    ip = os.path.join(qpy_dir(lat), "index.json")
+    if os.path.exists(ip) and cid in load_json(ip)["circuits"]:
+        qc, e = load_native_qiskit(lat, cid)
+        return qc, {"route": "QPY v13 bundle", "gz_sha256": e["gz_sha256"]}
+    text = read_frozen(lat, man["files"]["json"])
+    if sha256_text(text) != man["json_sha256"]:
+        raise SystemExit(f"{cid}: frozen JSON sha256 mismatch")
+    ir, n, qmap = qn.pytket_json_to_ir(json.loads(text))
+    if qmap != {q: q for q in range(n)}:
+        raise SystemExit(f"{cid}: measurement map is not q[k] -> c[k]")
+    return cq.ir_to_qiskit(ir, n, measure=True), {"route": "frozen pytket JSON -> quantinuum_native.pytket_json_to_ir",
+                                                   "json_sha256": man["json_sha256"]}
+
+
+def gpu_estimate(lat, k):
+    """prompts/35a R1: predicted GPU seconds of one QV_2x4_K<k> job = sum over its circuits of the instruction count of
+    the pytket_to_ir -> ir_to_qiskit circuit (rz + 3 PhasedX + ZZPhase + measures + 1 barrier, from the manifests) x
+    the measured 2.32e-4 s per instruction (validation/S2_2x4.json data.gpu_validation.telemetry_summary)."""
+    s4 = load_json(os.path.join(ROOT, "validation", "S2_2x4.json"))["data"]["gpu_validation"]["telemetry_summary"]
+    spi = float(s4["s_per_instruction"])
+    idx, mans, _ = family(lat)
+    ids = [c for c in idx["circuits"] if int(mans[c]["k"]) == int(k)]
+    ninstr = {c: int(mans[c]["counts"]["n_rz"] + 3 * mans[c]["counts"]["n_phasedx"] + mans[c]["counts"]["n_zz"]
+                     + mans[c]["counts"]["n_meas"] + 1) for c in ids}
+    return {"circuits": len(ids), "instructions_per_circuit": ninstr, "s_per_instruction": spi,
+            "predicted_s": spi * sum(ninstr.values()), "source": "validation/S2_2x4.json data.gpu_validation.telemetry_summary.s_per_instruction",
+            "rule": gpu_estimate.__doc__.strip()}
+
+
 def tier_gpu_verify(args):
-    """QV_2x4: per k = 1 2x4 native circuit (QPY v13 bundle) the Aer statevector on the GPU (cuStateVec) projected on the
-    codewords against the exact coarse state (max abs(dpsi) up to phase, leakage), then noiseless measure sampling at 6250
-    shots and the per-state 5 sigma test (p_s >= 1e-3).  --dry-run: --lattice 2 on the CPU, same JSON structure."""
+    """QV_2x4_K<k>: per 2x4 native circuit of one k the Aer statevector on the GPU (cuStateVec) projected on the codewords
+    against the exact coarse state (max abs(dpsi) up to phase, leakage), then noiseless measurement sampling of 6250
+    shots drawn from that statevector (numpy, seeded: |psi|^2 is the exact noiseless measurement distribution, so no
+    second simulation) and the per-state 5 sigma test (p_s >= 1e-3).  --dry-run: --lattice 2 on the CPU, same JSON."""
     from qiskit_aer import AerSimulator
 
     from skqd.campaign33 import circuits as C
     from skqd.hpc import ci_context, gpu_count, gpu_telemetry, slurm_layout
     from skqd.report import GateResult
     lat = args.lattice
+    kk = int(args.k or 1)
     dry = bool(args.dry_run)
     t0 = time.time()
     phases = {}
@@ -1204,50 +1323,51 @@ def tier_gpu_verify(args):
     avail = list(AerSimulator().available_devices())
     device = "GPU" if ("GPU" in avail and not dry) else "CPU"
     idx, mans, _ = family(lat)
-    ids = sorted(c for c in idx["circuits"] if int(mans[c]["k"]) == 1)
+    ids = sorted(c for c in idx["circuits"] if int(mans[c]["k"]) == kk)
     if dry:
         ids = ids[:2] if lat == 2 else ids[:1]
     t = time.time()
     P = Phys(lat)
     phases["model_s"] = time.time() - t
-    if lat == 4:
-        import gate_S2_2x4 as S4   # noqa: F401  (the 2x4 dt is the manifest's, from validation/E3.json)
     from skqd.exact import mass_default
     from skqd.krylov import apply_groups, basis_vector, term_groups
     groups = term_groups(P.M.terms, G2, mass_default(G2))
     per, seeds = {}, {}
     t_ex, t_sa = 0.0, 0.0
     shots = QV_SHOTS if not dry else 200
-    sim = AerSimulator(method="statevector", precision="double", device=device,
-                       **({"cuStateVec_enable": True} if device == "GPU" else {"max_parallel_threads": int(args.threads)}))
     for c_i, cid in enumerate(ids):
         m = mans[cid]
-        qc, e = load_native_qiskit(lat, cid)
+        qc, src = native_qiskit_any(lat, cid, m)
         t = time.time()
         psi_q = C.statevector(qc, device=device, threads=int(args.threads))
         psi_ex = apply_groups(groups, basis_vector(P.M.basis.dim, int(m["reference"])), int(m["k"]) * float(m["dt"]))
         ex = C.exactness(psi_q, psi_ex, P.emb, C.measure_map(qc) == {i: i for i in range(P.n)})
-        del psi_q
         t_ex += time.time() - t
         t = time.time()
-        seed = SEED_QV + c_i
-        res = sim.run(qc, shots=int(shots), seed_simulator=seed).result()
-        from skqd.campaign33.sampling import counts_to_int
-        cnt = counts_to_int(res.get_counts(0))
+        seed = SEED_QV + 1000 * (kk - 1) + c_i
+        p = np.abs(psi_q) ** 2
+        del psi_q
+        rng = np.random.default_rng(seed)
+        draws = rng.choice(p.size, size=int(shots), p=p / p.sum())
+        del p
+        cnt = {}
+        for x in draws.tolist():
+            cnt[int(x)] = cnt.get(int(x), 0) + 1
         probs = {int(P.emb.ints[i]): float(abs(psi_ex[i]) ** 2) for i in P.sector[int(m["twoB"])]["indices"]}
         ps = per_state(cnt, probs, int(shots))
         t_sa += time.time() - t
-        per[cid] = {"exactness": ex, "per_state": ps, "seed": seed, "shots": int(shots), "qpy_gz_sha256": e["gz_sha256"]}
+        per[cid] = {"exactness": ex, "per_state": ps, "seed": seed, "shots": int(shots), "input": src}
         seeds[cid] = seed
         print(f"  {cid}: dpsi {ex['max_abs_dpsi_up_to_phase']:.2e} leak {ex['leakage']:.2e} max z {ps['max_z']:.2f} "
               f"[{time.time() - t0:.0f} s]", flush=True)
     phases.update({"exactness_s": t_ex, "sampling_s": t_sa})
     wall = time.time() - t0
     tel = gpu_telemetry() if device == "GPU" else None
-    gate = "QV_2x4" if not dry else "dryrun/QV_2x4"
+    token = f"QV_2x4_K{kk}"
+    gate = token if not dry else f"dryrun/{token}"
     R = GateResult(gate, ("DRY RUN (laptop CPU path check at 2x2): " if dry else "")
-                   + "the 15 native k = 1 2x4 circuits: Aer GPU statevector vs the exact coarse states and noiseless "
-                     "per-state sampling (prompts/35 token QV_2x4)")
+                   + f"the 15 native k = {kk} 2x4 circuits: Aer GPU statevector vs the exact coarse states and noiseless "
+                     "per-state sampling (prompts/35 section 4, prompts/35a R1)")
     dmax = max(v["exactness"]["max_abs_dpsi_up_to_phase"] for v in per.values())
     lmax = max(v["exactness"]["leakage"] for v in per.values())
     nf = sum(len(v["per_state"]["failures"]) for v in per.values())
@@ -1261,28 +1381,135 @@ def tier_gpu_verify(args):
     run = {"engine": f"AerSimulator statevector double, device {device}" + (", cuStateVec" if device == "GPU" else ""),
            "device": device, "available_devices": avail, "gpus": (gpu_count(slurm_layout()) if device == "GPU" else 0),
            "wall_s": wall, "phases": phases, "seconds_per_shot": t_sa / max(1, shots * len(per)),
+           "sampling_rule": "numpy Generator.choice over |psi|^2 of the statevector (one simulation per circuit)",
            "peak_gpu_memory_mib": (tel or {}).get("peak_memory_mib"), "mean_gpu_utilization": (tel or {}).get("mean_utilization_pct"),
            "gpu_telemetry": tel, "required_gpu_memory_mb": 4096 if lat == 4 else None, "E_p": None,
+           "prediction": gpu_estimate(4, kk) if lat == 4 else None,
            "ci": ci, "versions": versions(("qiskit", "qiskit-aer", "numpy", "scipy"))}
     R.add("V3 telemetry: wall, phases, s/shot, GPUs" + ("" if dry else ", peak GPU memory, utilisation (policy fields)"),
           {k: run[k] for k in ("wall_s", "seconds_per_shot", "gpus", "peak_gpu_memory_mib", "mean_gpu_utilization")},
           "present" + (" (GPU fields null on the CPU dry run)" if dry else ""),
           all(run[k] is not None for k in ("wall_s", "seconds_per_shot"))
           and (dry or (run["gpus"] == 1 and run["peak_gpu_memory_mib"] is not None and run["mean_gpu_utilization"] is not None)))
-    R.data = {"prompt": PROMPT, "token": "QV_2x4", "dry_run": dry, "lattice": f"2x{lat}", "qpu_seconds": 0, "hqc": 0,
-              "per_circuit": per, "seeds": seeds, "seed_rule": SEED_RULES["QV_2x4"], "run": run,
-              "inputs": rel(qpy_dir(lat)) + "/index.json"}
+    R.data = {"prompt": PROMPT + " + prompts/35a_quantinuum_tests_rulings.md R1", "token": token, "k": kk, "dry_run": dry,
+              "lattice": f"2x{lat}", "qpu_seconds": 0, "hqc": 0, "per_circuit": per, "seeds": seeds,
+              "seed_rule": SEED_RULES["QV_2x4"], "run": run}
     if dry:
         os.makedirs(os.path.join(ROOT, "validation", "dryrun"), exist_ok=True)
         os.makedirs(os.path.join(ROOT, "reports", "dryrun"), exist_ok=True)
     return write_gate(R, f"# {gate}\n\nStatus: **{'PASS' if R.passed else 'FAIL'}**.\n\n" + R.criteria_table() + "\n")
 
 
+def tier_qv_tokens(args):
+    """prompts/35a R1: the four tokens QV_2x4_K1..K4 in scripts/gate_tokens.json (QV_2x4 of prompts/35 renamed K1),
+    appended after the campaign-33 tokens, estimate_minutes from `gpu_estimate` (the k's own manifests when its 15 are
+    built; else K1's, the instruction count being k-independent), and ci/allowed_jobs.q35 with four lines."""
+    p = os.path.join(ROOT, "scripts", "gate_tokens.json")
+    t = open(p).read()
+    d = json.loads(t)
+    head = [k for k in d if not k.startswith("QV_2x4")]
+    out = {k: d[k] for k in head}
+    src = {}
+    for k in (1, 2, 3, 4):
+        est = gpu_estimate(4, k)
+        if est["circuits"] != 15:
+            est = gpu_estimate(4, 1)
+            src[k] = "K1 manifests (the k manifests are not all built; prompts/35a R1: k-independent count)"
+        else:
+            src[k] = f"the 15 k = {k} manifests"
+        out[f"QV_2x4_K{k}"] = {
+            "script": "scripts/quantinuum_lattice_tests.py", "args": ["--lattice", "4", "--tier", "gpu-verify", "--k", str(k)],
+            "class": 3, "walltime": "01:00:00", "gpus": 1, "env": "skqd",
+            "estimate_minutes": int(math.ceil(est["predicted_s"] / 60.0)),
+            "content": (f"prompts/35 section 4 + prompts/35a R1: Aer GPU statevector (cuStateVec) of the 15 native k = {k} 2x4 "
+                        f"circuits vs the exact coarse states, then noiseless per-state sampling at 6250 shots drawn from the "
+                        f"statevector; estimate = instruction count ({src[k]}) x 2.32e-4 s/instruction (validation/S2_2x4.json); "
+                        f"appended after the campaign-33 tokens (indices and seeds unchanged); allowlist ci/allowed_jobs.q35")}
+    s = json.dumps(out, indent=1)
+    if list(out)[:len(head)] != head:
+        raise SystemExit("token order changed")
+    with open(p, "w") as fh:
+        fh.write(s)
+    with open(os.path.join(ROOT, "ci", "allowed_jobs.q35"), "w") as fh:
+        fh.write("".join(f"QV_2x4_K{k}   01:00:00 1\n" for k in (1, 2, 3, 4)))
+    print({k: (v["estimate_minutes"], src.get(int(k[-1]))) for k, v in out.items() if k.startswith("QV")})
+    return 0
+
+
+# --------------------------------------------------------------------------- tier: qsc (T5 prepared, venv)
+QSC_SETS = (
+    {"name": "QSC_2x2_H2-2SC", "device": "H2-2SC", "lattice": 2, "circuits": "data/quantinuum/circuits_2x2",
+     "select": "all", "program": "pytket"},
+    {"name": "QSC_2x3_H2-2SC", "device": "H2-2SC", "lattice": 3, "circuits": "data/quantinuum/circuits_2x3",
+     "select": "all", "program": "pytket"},
+    {"name": "QSC_2x4_H2-2SC", "device": "H2-2SC", "lattice": 4, "circuits": "data/quantinuum/circuits_2x4",
+     "select": "k1", "program": "pytket"},
+    {"name": "QSC_2x2_Helios-1SC", "device": "Helios-1SC", "lattice": 2, "circuits": "data/quantinuum/circuits_2x2_helios",
+     "select": "all", "program": "hugr"},
+)
+QSC_CRITERION = ("every circuit compiles on the syntax checker; the checker's ZZ count equals the frozen count (else the "
+                 "no_opt=True resubmission rule of prompts/26 E1); 0 HQC (syntax checkers are free)")
+
+
+def tier_qsc(args):
+    """prompts/35 3.8: the four syntax-check job sets as LOCAL job records (quantinuum_submit.py --dry-run
+    --records-only; no login, no network) -> validation/QSC_prepared.json (prepared: no status PASS is claimed)."""
+    from skqd.report import environment, write_report
+    py = sys.executable
+    sets = []
+    for s in QSC_SETS:
+        out = os.path.join("data", "hardware", s["name"])
+        cmd = [py, os.path.join(ROOT, "scripts", "quantinuum_submit.py"), "--dry-run", "--records-only",
+               "--device", s["device"], "--circuits", s["circuits"], "--out", out, "--program", s["program"]]
+        idx = load_json(os.path.join(ROOT, s["circuits"], "index.json"))
+        if s["select"] == "k1":
+            cmd += ["--only"] + [c for c in idx["circuits"] if c.endswith("_k1")] + list(idx.get("calibration", []))
+        else:
+            cmd += ["--all"]
+        sess_p = os.path.join(ROOT, out, "session.json")
+        if not os.path.exists(sess_p):
+            r = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            if r.returncode != 0:
+                raise SystemExit(f"{s['name']}: {r.stderr[-800:]}")
+        sess = load_json(sess_p)
+        src_dir = s["circuits"] if s["program"] == "pytket" else f"data/quantinuum/circuits_2x{s['lattice']}"
+        zz = {}
+        for j in sess["jobs"]:
+            m = load_json(os.path.join(ROOT, src_dir, j["circuit_id"] + ".manifest.json"))
+            zz[j["circuit_id"]] = int(m["counts"]["n_zz"])
+        owner_cmd = " ".join(["$V scripts/quantinuum_submit.py --syntax-check", "--device", s["device"], "--circuits",
+                              s["circuits"]] + (["--program", "hugr"] if s["program"] == "hugr" else [])
+                             + (["--all"] if s["select"] == "all" else ["--only", "<the 15 k=1 ids + CAL_zeros CAL_x0>"])
+                             + ["--out", f"data/hardware/{s['name']}"])
+        sets.append({"name": s["name"], "device": s["device"], "program": s["program"], "circuits_dir": s["circuits"],
+                     "session": rel(sess_p), "n_jobs": len(sess["jobs"]), "n_circuits": len({j["circuit_id"] for j in sess["jobs"]}),
+                     "expected_zz_count_ours": zz, "hqc_estimate_if_it_were_a_device_run": sess["hqc_estimate_total"],
+                     "records_only": sess.get("records_only"), "owner_command": owner_cmd})
+    out = {"gate": "QSC_prepared", "title": "T5 syntax checks prepared (job records only; needs the owner's Nexus login)",
+           "status": "prepared", "criteria": [],
+           "data": {"prompt": PROMPT, "qpu_seconds": 0, "hqc": 0, "sets": sets, "criterion_for_the_owner_run": QSC_CRITERION,
+                    "login_first": "~/.local/share/su2qc-quantinuum/venv/bin/python scripts/quantinuum_account.py --login",
+                    "why_not_run": "no Nexus account (Q0P_2x3 data.stage_E.status 'not run'); syntax checkers are free but the "
+                                   "account is the owner's to create (prompts/35 section 6 item 3)"},
+           "runtime_s": 0.0, "environment": environment()}
+    with open(os.path.join(ROOT, "validation", "QSC_prepared.json"), "w") as fh:
+        json.dump(out, fh, indent=1)
+    from skqd.report import md_table
+    write_report("QSC_prepared.md", "\n".join([
+        "# QSC_prepared — T5 syntax checks prepared, not run", "",
+        "Status: **prepared** (no PASS claimed).  Generated from `validation/QSC_prepared.json`.", "",
+        f"Criterion for the owner's run: {QSC_CRITERION}.", "",
+        md_table(["set", "device", "program", "circuits", "jobs", "owner command"],
+                 [[x["name"], x["device"], x["program"], x["n_circuits"], x["n_jobs"], f"`{x['owner_command']}`"] for x in sets]), ""]))
+    print("QSC_prepared:", [(x["name"], x["n_circuits"]) for x in sets])
+    return 0
+
+
 # --------------------------------------------------------------------------- main
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--lattice", type=int, choices=(2, 3, 4), required=True)
-    ap.add_argument("--tier", required=True, choices=("export", "noiseless", "noise", "pecos", "hugr", "gpu-verify", "assemble"))
+    ap.add_argument("--tier", required=True, choices=("export", "noiseless", "noise", "pecos", "hugr", "gpu-verify", "qsc", "qv-tokens", "assemble"))
     ap.add_argument("--part", default=None)
     ap.add_argument("--only", nargs="*", default=None)
     ap.add_argument("--scenarios", nargs="*", default=None)
@@ -1291,6 +1518,8 @@ def main(argv=None):
     ap.add_argument("--budget-s", type=float, default=None)
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--k", type=int, choices=(1, 2, 3, 4), default=None, help="--tier gpu-verify: the k of token QV_2x4_K<k>")
+    ap.add_argument("--note", default=None, help="the reason recorded with an explicit --shots (hugr tier)")
     args = ap.parse_args(argv)
     if args.tier == "export":
         return tier_export(args)
@@ -1302,6 +1531,10 @@ def main(argv=None):
         return tier_pecos(args)
     if args.tier == "hugr":
         return tier_hugr(args)
+    if args.tier == "qsc":
+        return tier_qsc(args)
+    if args.tier == "qv-tokens":
+        return tier_qv_tokens(args)
     if args.tier == "gpu-verify":
         return tier_gpu_verify(args)
     if args.lattice == 2:

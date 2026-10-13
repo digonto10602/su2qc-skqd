@@ -350,3 +350,49 @@ def test_local_equivalence_fails_on_a_reordered_circuit():
         c.Measure(q, (q + 1) % n)
     r3 = qn.local_equivalence(g, c, n)
     assert not r3["ok"] and not r3["measure_map_identity"]
+
+
+@needs_pytket
+def test_q1l_35a_separates_pytket_rounding_from_the_conversion():
+    """prompts/35a R2: an IR angle 4e-12 half-turns off a Clifford value is stored by pytket as the Clifford value.
+    The raw prompts/35 segment check sees that rounding; the restated Q1L passes (ii) against the read-back angles and
+    bounds the state change by B = (pi/2) sum |Delta a| = (pi/2) 4e-12, below the 1e-10 bar; the statevector change
+    is below B.  A wrong conversion (a swapped gate) still fails (ii)."""
+    rng = np.random.default_rng(353)
+    n = 4
+    g = random_ir(n, 40, rng) + [("rz", [1], math.pi * (0.5 + 4e-12)), ("rzz", [0, 2], math.pi * (0.25 + 4e-12)),
+                                 ("rx", [2], 0.3)]
+    cc = qn.compile_native(qn.ir_to_pytket(g, n, measure=True), "H2-2", 0)
+    r = qn.local_equivalence_35a(g, cc, n)
+    assert r["ok"], r
+    rd = r["rounding"]
+    assert rd["n_rounded_gates"] >= 2 and abs(rd["sum_abs_delta"] - 8e-12) < 1e-13
+    assert abs(rd["state_bound_B"] - math.pi / 2 * rd["sum_abs_delta"]) < 1e-20
+    assert r["i_skeleton"]["max_abs_delta_2q_half_turns"] <= qn.CANON_TOL_HALF_TURNS
+    assert r["ii_segments_vs_readback"]["segments_max_residual"] < 1e-13
+    dpsi = qn.global_phase_residual(cq.statevector(qn.pytket_to_ir(cc)[0], n), cq.statevector(g, n))["max_abs_dpsi"]
+    assert dpsi <= rd["state_bound_B"] + 1e-13
+    bad = g[:-2] + [("rx", [2], 0.3), ("rzz", [0, 2], math.pi * (0.25 + 4e-12))]
+    rb = qn.local_equivalence_35a(g, qn.compile_native(qn.ir_to_pytket(bad, n, measure=True), "H2-2", 0), n)
+    assert not rb["ok"] and not rb["ii_segments_vs_readback"]["ok"]
+
+
+@needs_pytket
+def test_pytket_json_reader_equals_pytket_to_ir():
+    """prompts/35a R1: the pytket-free JSON reader (for the CI env of QV_2x4_K2..K4) gives exactly the IR, qubit count
+    and measurement map of pytket_to_ir, on a random compiled circuit and on two frozen 2x2 circuits if present."""
+    import json as _json
+    rng = np.random.default_rng(354)
+    circs = [qn.compile_native(qn.ir_to_pytket(random_ir(5, 50, rng), 5, measure=True), "H2-2", 0)]
+    d2 = os.path.join(os.path.dirname(__file__), "..", "data", "quantinuum", "circuits_2x2")
+    for cid in ("B0_ref06_k1", "CAL_x0"):
+        p = os.path.join(d2, cid + ".json")
+        if os.path.exists(p):
+            circs.append(qn.from_json(_json.load(open(p))))
+    for c in circs:
+        d = _json.loads(_json.dumps(qn.to_json(c)))
+        a = qn.pytket_to_ir(qn.from_json(d))            # the frozen files are read back from this text, as here
+        b = qn.pytket_json_to_ir(d)
+        assert a[1] == b[1] and a[2] == b[2] and len(a[0]) == len(b[0])
+        for (n1, q1, p1), (n2, q2, p2) in zip(a[0], b[0]):
+            assert n1 == n2 and list(q1) == list(q2) and (p1 is None and p2 is None or p1 == p2)

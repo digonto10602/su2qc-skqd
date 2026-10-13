@@ -1,0 +1,5306 @@
+{
+ "gate": "Q0P_2x2",
+ "title": "signed 2x2 circuits compiled to the Quantinuum native gate set, verified exactly and costed (prompts/35 T1)",
+ "status": "FAIL",
+ "criteria": [
+  {
+   "name": "Q1 28 + 2 frozen native circuits exact: max abs(dpsi) (global phase removed) vs the pre-conversion IR statevector, leakage, q[k]->c[k], identity permutation, native op set; the 2 calibration circuits give their expected key",
+   "value": "28 circuits; max abs(dpsi) 7.21e-14 (B0_ref06_k2; build 6.40e-15); leakage 2.43e-14; maps/permutations/op set all ok; calibration ok",
+   "threshold": "28; < 1e-10; < 1e-09; identity",
+   "passed": true
+  },
+  {
+   "name": "Q2 rzz_before recorded on every circuit (build and re-transpiled) and equal to the family's k = 1 value on every circuit, per reference and across references (prompts/35a R1); frozen ZZ <= rzz_before; ZZ per level recorded",
+   "value": "rzz_before [252] (verify [252]); equal to the k = 1 value of its reference: 28 of 28; family k = 1 values [252]; frozen ZZ [252]; ZZ by level {'0': [252], '2': [252]}",
+   "threshold": "recorded; = the k = 1 value; <= rzz_before",
+   "passed": true
+  },
+  {
+   "name": "Q3 JSON and QASM round trips identical; files match their sha256; endianness X on q0 -> key 1",
+   "value": "JSON 6.99e-14, QASM 6.98e-14 (QASM drops the global phase); sha256 ok; counts equal; keys 1/1/1",
+   "threshold": "< 1e-12; ok; key 1",
+   "passed": true
+  },
+  {
+   "name": "Q5 hqc_per_shot recomputed from the manifests = index value (N_m = 24); gate-only f per device per circuit and family mean from the frozen counts; the D3' plan at 0.7 f for each device with its HQC",
+   "value": "per shot 0.6109 mean (0.6090-0.6130); manifest abs diff 0.0e+00, index abs diff 0.0e+00; N_m [24]; f mean H2-2 0.7929, Helios-1 0.8046, H1-1 0.7560, H2-1 0.7429; D3' HQC H2-2 13990, Helios-1 13563, H1-1 14233, H2-1 14660; plan totals relative diff 0.0e+00",
+   "threshold": "<= 1e-12; N_m = 24; 4 devices",
+   "passed": true
+  },
+  {
+   "name": "Q7 tests, pins, Q0P_2x3 reproduction, token indices",
+   "value": "not run (--stage verify --checks-only)",
+   "threshold": "all pass",
+   "passed": false
+  }
+ ],
+ "data": {
+  "prompt": "prompts/35_quantinuum_all_circuits_test.md",
+  "lattice": "2x2",
+  "qpu_seconds": 0,
+  "hqc": 0,
+  "ehqc": 0,
+  "frozen": {
+   "dir": "data/quantinuum/circuits_2x2",
+   "index_summary": {
+    "n_circuits": 28,
+    "n_zz": {
+     "min": 252,
+     "max": 252,
+     "mean": 252.0
+    },
+    "n_phasedx": {
+     "min": 405,
+     "max": 425,
+     "mean": 414.57142857142856
+    },
+    "hqc_per_shot": {
+     "min": 0.609,
+     "max": 0.613,
+     "mean": 0.610914285714286
+    },
+    "frozen_levels": [
+     0
+    ],
+    "rzz_before": [
+     252
+    ]
+   },
+   "versions": {
+    "pytket": "2.18.4",
+    "pytket-quantinuum": "0.59.3",
+    "pytket-qiskit": "0.78.0",
+    "qnexus": "0.51.0",
+    "quantinuum-schemas": "7.8.2"
+   },
+   "selection_rule": "fewest ZZ gates among the levels that pass Q1 (max |dpsi| < 1e-10 after global-phase removal, leakage < 1e-9, q[k] -> c[k], identity permutation); ties: fewer PhasedX, then the lower level",
+   "built_k": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "n_built": 28,
+   "n_planned": 28
+  },
+  "Q1": {
+   "max_abs_dpsi": 7.212462839772042e-14,
+   "worst_id": "B0_ref06_k2",
+   "max_leakage": 2.4313884239290928e-14,
+   "build_max_abs_dpsi": 6.396399464372729e-15,
+   "maps_ok": true,
+   "calibration": {
+    "CAL_zeros": {
+     "qasm_sha256_ok": true,
+     "expected_int": 0,
+     "statevector_argmax_int": 0,
+     "ok": true
+    },
+    "CAL_x0": {
+     "qasm_sha256_ok": true,
+     "expected_int": 1,
+     "statevector_argmax_int": 1,
+     "ok": true
+    }
+   },
+   "Q1L_35a_information": {
+    "max_state_bound_B": 2.7414646394347846e-13,
+    "max_rounded_gates": 196,
+    "max_segment_residual_vs_readback": 8.013626399180835e-15,
+    "rounding_per_circuit": {
+     "B0_ref06_k2": {
+      "n_rounded_gates": 164,
+      "max_abs_delta": 5.662137425588298e-15,
+      "sum_abs_delta": 8.260059303211165e-14,
+      "state_bound_B": 1.297487081259211e-13
+     },
+     "B0_ref06_k1": {
+      "n_rounded_gates": 193,
+      "max_abs_delta": 8.881784197001252e-15,
+      "sum_abs_delta": 1.745270594710746e-13,
+      "state_bound_B": 2.7414646394347846e-13
+     },
+     "B0_ref06_k3": {
+      "n_rounded_gates": 166,
+      "max_abs_delta": 7.105427357601002e-15,
+      "sum_abs_delta": 8.038014698286133e-14,
+      "state_bound_B": 1.2626083962791247e-13
+     },
+     "B0_ref06_k4": {
+      "n_rounded_gates": 143,
+      "max_abs_delta": 1.3322676295501878e-15,
+      "sum_abs_delta": 4.907185768843192e-14,
+      "state_bound_B": 7.708189380599077e-14
+     },
+     "B0_ref43_k1": {
+      "n_rounded_gates": 191,
+      "max_abs_delta": 8.881784197001252e-15,
+      "sum_abs_delta": 1.6986412276764895e-13,
+      "state_bound_B": 2.668219400976603e-13
+     },
+     "B0_ref43_k2": {
+      "n_rounded_gates": 166,
+      "max_abs_delta": 5.662137425588298e-15,
+      "sum_abs_delta": 8.593126210598712e-14,
+      "state_bound_B": 1.3498051087293406e-13
+     },
+     "B0_ref43_k3": {
+      "n_rounded_gates": 164,
+      "max_abs_delta": 7.105427357601002e-15,
+      "sum_abs_delta": 7.926992395823618e-14,
+      "state_bound_B": 1.2451690537890815e-13
+     },
+     "B0_ref43_k4": {
+      "n_rounded_gates": 143,
+      "max_abs_delta": 1.3322676295501878e-15,
+      "sum_abs_delta": 5.040412531798211e-14,
+      "state_bound_B": 7.917461490479594e-14
+     },
+     "B0_ref30_k1": {
+      "n_rounded_gates": 195,
+      "max_abs_delta": 8.881784197001252e-15,
+      "sum_abs_delta": 1.73749903353837e-13,
+      "state_bound_B": 2.729257099691754e-13
+     },
+     "B0_ref30_k2": {
+      "n_rounded_gates": 169,
+      "max_abs_delta": 5.662137425588298e-15,
+      "sum_abs_delta": 8.482103908136196e-14,
+      "state_bound_B": 1.3323657662392974e-13
+     },
+     "B0_ref30_k3": {
+      "n_rounded_gates": 168,
+      "max_abs_delta": 7.105427357601002e-15,
+      "sum_abs_delta": 8.060219158778636e-14,
+      "state_bound_B": 1.2660962647771335e-13
+     },
+     "B0_ref30_k4": {
+      "n_rounded_gates": 144,
+      "max_abs_delta": 1.3322676295501878e-15,
+      "sum_abs_delta": 5.0182080713057076e-14,
+      "state_bound_B": 7.882582805499508e-14
+     },
+     "B0_ref21_k1": {
+      "n_rounded_gates": 196,
+      "max_abs_delta": 8.881784197001252e-15,
+      "sum_abs_delta": 1.7197354651443675e-13,
+      "state_bound_B": 2.701354151707685e-13
+     },
+     "B0_ref21_k2": {
+      "n_rounded_gates": 166,
+      "max_abs_delta": 5.662137425588298e-15,
+      "sum_abs_delta": 8.415490526658687e-14,
+      "state_bound_B": 1.3219021607452714e-13
+     },
+     "B0_ref21_k3": {
+      "n_rounded_gates": 165,
+      "max_abs_delta": 7.105427357601002e-15,
+      "sum_abs_delta": 7.960299086562372e-14,
+      "state_bound_B": 1.2504008565360945e-13
+     },
+     "B0_ref21_k4": {
+      "n_rounded_gates": 141,
+      "max_abs_delta": 1.3322676295501878e-15,
+      "sum_abs_delta": 4.8183679268731794e-14,
+      "state_bound_B": 7.56867464067873e-14
+     },
+     "B0_ref17_k1": {
+      "n_rounded_gates": 195,
+      "max_abs_delta": 8.881784197001252e-15,
+      "sum_abs_delta": 1.7219559111936178e-13,
+      "state_bound_B": 2.704842020205694e-13
+     },
+     "B0_ref17_k2": {
+      "n_rounded_gates": 166,
+      "max_abs_delta": 5.662137425588298e-15,
+      "sum_abs_delta": 8.415490526658687e-14,
+      "state_bound_B": 1.3219021607452714e-13
+     },
+     "B0_ref17_k3": {
+      "n_rounded_gates": 164,
+      "max_abs_delta": 7.105427357601002e-15,
+      "sum_abs_delta": 7.893685705084863e-14,
+      "state_bound_B": 1.2399372510420685e-13
+     },
+     "B1_ref14_k1": {
+      "n_rounded_gates": 179,
+      "max_abs_delta": 3.3306690738754696e-15,
+      "sum_abs_delta": 9.869882688917642e-14,
+      "state_bound_B": 1.5503575473648368e-13
+     },
+     "B0_ref17_k4": {
+      "n_rounded_gates": 142,
+      "max_abs_delta": 1.3322676295501878e-15,
+      "sum_abs_delta": 4.851674617611934e-14,
+      "state_bound_B": 7.62099266814886e-14
+     },
+     "B1_ref14_k2": {
+      "n_rounded_gates": 175,
+      "max_abs_delta": 2.6645352591003757e-15,
+      "sum_abs_delta": 7.671641100159832e-14,
+      "state_bound_B": 1.2050585660619823e-13
+     },
+     "B1_ref14_k3": {
+      "n_rounded_gates": 146,
+      "max_abs_delta": 2.220446049250313e-15,
+      "sum_abs_delta": 4.7628567756419216e-14,
+      "state_bound_B": 7.481477928228516e-14
+     },
+     "B1_ref14_k4": {
+      "n_rounded_gates": 154,
+      "max_abs_delta": 3.9968028886505635e-15,
+      "sum_abs_delta": 6.23945339839338e-14,
+      "state_bound_B": 9.800910479404255e-14
+     },
+     "B1_ref07_k1": {
+      "n_rounded_gates": 178,
+      "max_abs_delta": 3.3306690738754696e-15,
+      "sum_abs_delta": 9.880984919163893e-14,
+      "state_bound_B": 1.552101481613841e-13
+     },
+     "B1_ref07_k2": {
+      "n_rounded_gates": 175,
+      "max_abs_delta": 2.6645352591003757e-15,
+      "sum_abs_delta": 7.682743330406083e-14,
+      "state_bound_B": 1.2068025003109865e-13
+     },
+     "B1_ref07_k3": {
+      "n_rounded_gates": 148,
+      "max_abs_delta": 2.220446049250313e-15,
+      "sum_abs_delta": 4.8405723873656825e-14,
+      "state_bound_B": 7.603553325658817e-14
+     },
+     "B1_ref07_k4": {
+      "n_rounded_gates": 155,
+      "max_abs_delta": 3.9968028886505635e-15,
+      "sum_abs_delta": 6.250555628639631e-14,
+      "state_bound_B": 9.818349821894299e-14
+     }
+    }
+   },
+   "rounding_note": "prompts/35a R2: the rounding block is information at 2x2",
+   "Q1L_information_all_ok": true
+  },
+  "Q2": {
+   "rzz_before_build": {
+    "B0_ref06_k1": 252,
+    "B0_ref06_k2": 252,
+    "B0_ref06_k3": 252,
+    "B0_ref06_k4": 252,
+    "B0_ref43_k1": 252,
+    "B0_ref43_k2": 252,
+    "B0_ref43_k3": 252,
+    "B0_ref43_k4": 252,
+    "B0_ref30_k1": 252,
+    "B0_ref30_k2": 252,
+    "B0_ref30_k3": 252,
+    "B0_ref30_k4": 252,
+    "B0_ref21_k1": 252,
+    "B0_ref21_k2": 252,
+    "B0_ref21_k3": 252,
+    "B0_ref21_k4": 252,
+    "B0_ref17_k1": 252,
+    "B0_ref17_k2": 252,
+    "B0_ref17_k3": 252,
+    "B0_ref17_k4": 252,
+    "B1_ref14_k1": 252,
+    "B1_ref14_k2": 252,
+    "B1_ref14_k3": 252,
+    "B1_ref14_k4": 252,
+    "B1_ref07_k1": 252,
+    "B1_ref07_k2": 252,
+    "B1_ref07_k3": 252,
+    "B1_ref07_k4": 252
+   },
+   "rzz_before_verify": {
+    "B0_ref06_k2": 252,
+    "B0_ref06_k1": 252,
+    "B0_ref06_k3": 252,
+    "B0_ref06_k4": 252,
+    "B0_ref43_k1": 252,
+    "B0_ref43_k2": 252,
+    "B0_ref43_k3": 252,
+    "B0_ref43_k4": 252,
+    "B0_ref30_k1": 252,
+    "B0_ref30_k2": 252,
+    "B0_ref30_k3": 252,
+    "B0_ref30_k4": 252,
+    "B0_ref21_k1": 252,
+    "B0_ref21_k2": 252,
+    "B0_ref21_k3": 252,
+    "B0_ref21_k4": 252,
+    "B0_ref17_k1": 252,
+    "B0_ref17_k2": 252,
+    "B0_ref17_k3": 252,
+    "B1_ref14_k1": 252,
+    "B0_ref17_k4": 252,
+    "B1_ref14_k2": 252,
+    "B1_ref14_k3": 252,
+    "B1_ref14_k4": 252,
+    "B1_ref07_k1": 252,
+    "B1_ref07_k2": 252,
+    "B1_ref07_k3": 252,
+    "B1_ref07_k4": 252
+   },
+   "frozen_zz": {
+    "B0_ref06_k1": 252,
+    "B0_ref06_k2": 252,
+    "B0_ref06_k3": 252,
+    "B0_ref06_k4": 252,
+    "B0_ref43_k1": 252,
+    "B0_ref43_k2": 252,
+    "B0_ref43_k3": 252,
+    "B0_ref43_k4": 252,
+    "B0_ref30_k1": 252,
+    "B0_ref30_k2": 252,
+    "B0_ref30_k3": 252,
+    "B0_ref30_k4": 252,
+    "B0_ref21_k1": 252,
+    "B0_ref21_k2": 252,
+    "B0_ref21_k3": 252,
+    "B0_ref21_k4": 252,
+    "B0_ref17_k1": 252,
+    "B0_ref17_k2": 252,
+    "B0_ref17_k3": 252,
+    "B0_ref17_k4": 252,
+    "B1_ref14_k1": 252,
+    "B1_ref14_k2": 252,
+    "B1_ref14_k3": 252,
+    "B1_ref14_k4": 252,
+    "B1_ref07_k1": 252,
+    "B1_ref07_k2": 252,
+    "B1_ref07_k3": 252,
+    "B1_ref07_k4": 252
+   },
+   "zz_by_level": {
+    "B0_ref06_k1": {
+     "0": 252,
+     "2": 252
+    },
+    "B0_ref06_k2": {
+     "0": 252,
+     "2": 252
+    },
+    "B0_ref06_k3": {
+     "0": 252,
+     "2": 252
+    },
+    "B0_ref06_k4": {
+     "0": 252,
+     "2": 252
+    },
+    "B0_ref43_k1": {
+     "0": 252,
+     "2": 252
+    },
+    "B0_ref43_k2": {
+     "0": 252,
+     "2": 252
+    },
+    "B0_ref43_k3": {
+     "0": 252,
+     "2": 252
+    },
+    "B0_ref43_k4": {
+     "0": 252,
+     "2": 252
+    },
+    "B0_ref30_k1": {
+     "0": 252,
+     "2": 252
+    },
+    "B0_ref30_k2": {
+     "0": 252,
+     "2": 252
+    },
+    "B0_ref30_k3": {
+     "0": 252,
+     "2": 252
+    },
+    "B0_ref30_k4": {
+     "0": 252,
+     "2": 252
+    },
+    "B0_ref21_k1": {
+     "0": 252,
+     "2": 252
+    },
+    "B0_ref21_k2": {
+     "0": 252,
+     "2": 252
+    },
+    "B0_ref21_k3": {
+     "0": 252,
+     "2": 252
+    },
+    "B0_ref21_k4": {
+     "0": 252,
+     "2": 252
+    },
+    "B0_ref17_k1": {
+     "0": 252,
+     "2": 252
+    },
+    "B0_ref17_k2": {
+     "0": 252,
+     "2": 252
+    },
+    "B0_ref17_k3": {
+     "0": 252,
+     "2": 252
+    },
+    "B0_ref17_k4": {
+     "0": 252,
+     "2": 252
+    },
+    "B1_ref14_k1": {
+     "0": 252,
+     "2": 252
+    },
+    "B1_ref14_k2": {
+     "0": 252,
+     "2": 252
+    },
+    "B1_ref14_k3": {
+     "0": 252,
+     "2": 252
+    },
+    "B1_ref14_k4": {
+     "0": 252,
+     "2": 252
+    },
+    "B1_ref07_k1": {
+     "0": 252,
+     "2": 252
+    },
+    "B1_ref07_k2": {
+     "0": 252,
+     "2": 252
+    },
+    "B1_ref07_k3": {
+     "0": 252,
+     "2": 252
+    },
+    "B1_ref07_k4": {
+     "0": 252,
+     "2": 252
+    }
+   },
+   "equal_to_k1": {
+    "B0_ref06_k1": true,
+    "B0_ref06_k2": true,
+    "B0_ref06_k3": true,
+    "B0_ref06_k4": true,
+    "B0_ref43_k1": true,
+    "B0_ref43_k2": true,
+    "B0_ref43_k3": true,
+    "B0_ref43_k4": true,
+    "B0_ref30_k1": true,
+    "B0_ref30_k2": true,
+    "B0_ref30_k3": true,
+    "B0_ref30_k4": true,
+    "B0_ref21_k1": true,
+    "B0_ref21_k2": true,
+    "B0_ref21_k3": true,
+    "B0_ref21_k4": true,
+    "B0_ref17_k1": true,
+    "B0_ref17_k2": true,
+    "B0_ref17_k3": true,
+    "B0_ref17_k4": true,
+    "B1_ref14_k1": true,
+    "B1_ref14_k2": true,
+    "B1_ref14_k3": true,
+    "B1_ref14_k4": true,
+    "B1_ref07_k1": true,
+    "B1_ref07_k2": true,
+    "B1_ref07_k3": true,
+    "B1_ref07_k4": true
+   },
+   "family_k1_values": [
+    252
+   ],
+   "note": "prompts/35a R1: gate_S2D.circuit_set(L) = CircuitFactory.coarse_step(r, k, dt) (src/skqd/circuits_ir.py L898) is ONE coarse step at the angle k dt, the same skeleton for every k, so rzz_before is equal to the family's k = 1 value on every circuit (per reference and across references, as at 2x3: validation/Q0P_2x3.json Q2)"
+  },
+  "Q3": {
+   "json_round_trip": 6.993084096801844e-14,
+   "qasm_round_trip": 6.984282235485153e-14,
+   "sha_ok": true,
+   "endianness": {
+    "key_statevector": 1,
+    "key_backendresult": 1,
+    "key_qiskit_reader": 1,
+    "measure_map": {
+     "1": 1,
+     "2": 2,
+     "0": 0
+    },
+    "convention": "pytket BackendResult.get_counts(): 'Toggle between ILO (increasing lexicographic order of bit ids) and DLO (decreasing lexicographic order) for column ordering if cbits is None. Defaults to BasisOrder.ilo.' (pytket 2.18.4 docstring); tuple index k = c[k] = qubit k",
+    "ok": true
+   }
+  },
+  "Q5": {
+   "device_table": "data/quantinuum/devices_20261002.json",
+   "hqc": {
+    "recomputed_vs_manifest_max_abs": 0.0,
+    "mean_vs_index_abs": 0.0,
+    "N_m": [
+     24
+    ],
+    "N_m_expected": 24,
+    "per_shot": {
+     "mean": 0.610914285714286,
+     "min": 0.609,
+     "max": 0.613
+    },
+    "per_circuit": {
+     "B0_ref06_k1": 0.6116,
+     "B0_ref06_k2": 0.612,
+     "B0_ref06_k3": 0.611,
+     "B0_ref06_k4": 0.6094,
+     "B0_ref43_k1": 0.612,
+     "B0_ref43_k2": 0.6122,
+     "B0_ref43_k3": 0.6112,
+     "B0_ref43_k4": 0.6096,
+     "B0_ref30_k1": 0.6118,
+     "B0_ref30_k2": 0.6126,
+     "B0_ref30_k3": 0.6114,
+     "B0_ref30_k4": 0.6102,
+     "B0_ref21_k1": 0.612,
+     "B0_ref21_k2": 0.6128,
+     "B0_ref21_k3": 0.6108,
+     "B0_ref21_k4": 0.6102,
+     "B0_ref17_k1": 0.6126,
+     "B0_ref17_k2": 0.613,
+     "B0_ref17_k3": 0.6108,
+     "B0_ref17_k4": 0.6098,
+     "B1_ref14_k1": 0.6102,
+     "B1_ref14_k2": 0.6098,
+     "B1_ref14_k3": 0.6108,
+     "B1_ref14_k4": 0.609,
+     "B1_ref07_k1": 0.6094,
+     "B1_ref07_k2": 0.6096,
+     "B1_ref07_k3": 0.6106,
+     "B1_ref07_k4": 0.6092
+    },
+    "plan_totals_vs_formula_max_rel": 0.0
+   },
+   "devices": {
+    "quantinuum_h2_2": {
+     "device": "H2-2",
+     "eps2": 0.00083,
+     "eps1": 2.8e-05,
+     "eps_ro": 0.000935,
+     "qubits": 56,
+     "qubits_fit": true,
+     "f_gate_only_per_circuit": {
+      "B0_ref06_k1": 0.7928063694009052,
+      "B0_ref06_k2": 0.792761972865779,
+      "B0_ref06_k3": 0.7928729688654701,
+      "B0_ref06_k4": 0.7930505947906313,
+      "B0_ref43_k1": 0.792761972865779,
+      "B0_ref43_k2": 0.7927397755305386,
+      "B0_ref43_k3": 0.7928507684223418,
+      "B0_ref43_k4": 0.7930283893739772,
+      "B0_ref30_k1": 0.7927841708225619,
+      "B0_ref30_k2": 0.7926953827246169,
+      "B0_ref30_k3": 0.7928285686008261,
+      "B0_ref30_k4": 0.7929617768544552,
+      "B0_ref21_k1": 0.792761972865779,
+      "B0_ref21_k2": 0.7926731872539007,
+      "B0_ref21_k3": 0.7928951699302281,
+      "B0_ref21_k4": 0.7929617768544552,
+      "B0_ref17_k1": 0.7926953827246169,
+      "B0_ref17_k2": 0.7926509924046575,
+      "B0_ref17_k3": 0.7928951699302281,
+      "B0_ref17_k4": 0.7930061845790748,
+      "B1_ref14_k1": 0.7929617768544552,
+      "B1_ref14_k2": 0.7930061845790748,
+      "B1_ref14_k3": 0.7928951699302281,
+      "B1_ref14_k4": 0.7930950074892643,
+      "B1_ref07_k1": 0.7930505947906313,
+      "B1_ref07_k2": 0.7930283893739772,
+      "B1_ref07_k3": 0.7929173716166333,
+      "B1_ref07_k4": 0.7930728008290546
+     },
+     "f_gate_only_mean": 0.7928824943972907,
+     "f_gate_only_worst": 0.7926509924046575,
+     "f_gate_only_worst_id": "B0_ref17_k2",
+     "eps2_for_mean_f_0.1": 0.009005836041668259,
+     "eps2_for_worst_f_0.05": 0.011726758217647265,
+     "meets_mean_0.1_gate_only": true,
+     "meets_worst_0.05_gate_only": true,
+     "memory_ESTIMATE": {
+      "flag": "ESTIMATE",
+      "rate_per_qubit_per_s": 0.0016799999999999999,
+      "rounds": 201,
+      "rounds_gate_bound": 63,
+      "depth_2q": 201,
+      "scenarios": {
+       "low": {
+        "t_round_s": 0.0005,
+        "shot_time_s": 0.1005,
+        "S_idle_nats": 0.0020260799999999995,
+        "f_with_memory": 0.7912776773259094
+       },
+       "mid": {
+        "t_round_s": 0.0011,
+        "shot_time_s": 0.22110000000000002,
+        "S_idle_nats": 0.004457376,
+        "f_with_memory": 0.7893561838803295
+       },
+       "high": {
+        "t_round_s": 0.0044,
+        "shot_time_s": 0.8844000000000001,
+        "S_idle_nats": 0.017829504,
+        "f_with_memory": 0.7788710723185999
+       }
+      }
+     },
+     "formula": "device_req.clean_shot_fraction(n_zz, n_phasedx, n_meas, eps2, eps1, eps_ro) = (1-eps2)^n_zz (1-eps1)^n_phasedx (1-eps_ro)^n_meas (the device table's formula)"
+    },
+    "quantinuum_helios_1": {
+     "device": "Helios-1",
+     "eps2": 0.00079,
+     "eps1": 3e-05,
+     "eps_ro": 0.00048,
+     "qubits": 98,
+     "qubits_fit": true,
+     "f_gate_only_per_circuit": {
+      "B0_ref06_k1": 0.8045595863434611,
+      "B0_ref06_k2": 0.8045113134923841,
+      "B0_ref06_k3": 0.804632001051071,
+      "B0_ref06_k4": 0.8048251388040073,
+      "B0_ref43_k1": 0.8045113134923841,
+      "B0_ref43_k2": 0.8044871781529793,
+      "B0_ref43_k3": 0.8046078620910395,
+      "B0_ref43_k4": 0.8048009940498432,
+      "B0_ref30_k1": 0.8045354495558708,
+      "B0_ref30_k2": 0.8044389096463286,
+      "B0_ref30_k3": 0.8045837238551767,
+      "B0_ref30_k4": 0.8047285641333197,
+      "B0_ref21_k1": 0.8045113134923841,
+      "B0_ref21_k2": 0.8044147764790393,
+      "B0_ref21_k3": 0.8046561407352931,
+      "B0_ref21_k4": 0.8047285641333197,
+      "B0_ref17_k1": 0.8044389096463286,
+      "B0_ref17_k2": 0.8043906440357449,
+      "B0_ref17_k3": 0.8046561407352931,
+      "B0_ref17_k4": 0.8047768500200218,
+      "B1_ref14_k1": 0.8047285641333197,
+      "B1_ref14_k2": 0.8047768500200218,
+      "B1_ref14_k3": 0.8046561407352931,
+      "B1_ref14_k4": 0.8048734304854503,
+      "B1_ref07_k1": 0.8048251388040073,
+      "B1_ref07_k2": 0.8048009940498432,
+      "B1_ref07_k3": 0.8046802811437274,
+      "B1_ref07_k4": 0.8048492842825358
+     },
+     "f_gate_only_mean": 0.8046423591999817,
+     "f_gate_only_worst": 0.8043906440357449,
+     "f_gate_only_worst_id": "B0_ref17_k2",
+     "eps2_for_mean_f_0.1": 0.00902406191195312,
+     "eps2_for_worst_f_0.05": 0.011744852241407902,
+     "meets_mean_0.1_gate_only": true,
+     "meets_worst_0.05_gate_only": true,
+     "memory_ESTIMATE": {
+      "flag": "ESTIMATE",
+      "rate_per_qubit_per_s": 0.00909090909090909,
+      "rounds": 201,
+      "rounds_gate_bound": 63,
+      "depth_2q": 201,
+      "scenarios": {
+       "low": {
+        "t_round_s": 0.0005,
+        "shot_time_s": 0.1005,
+        "S_idle_nats": 0.010963636363636363,
+        "f_with_memory": 0.7958687362599349
+       },
+       "mid": {
+        "t_round_s": 0.0011,
+        "shot_time_s": 0.22110000000000002,
+        "S_idle_nats": 0.02412,
+        "f_with_memory": 0.7854665751082343
+       },
+       "high": {
+        "t_round_s": 0.0044,
+        "shot_time_s": 0.8844000000000001,
+        "S_idle_nats": 0.09648,
+        "f_with_memory": 0.7306378387922459
+       }
+      }
+     },
+     "formula": "device_req.clean_shot_fraction(n_zz, n_phasedx, n_meas, eps2, eps1, eps_ro) = (1-eps2)^n_zz (1-eps1)^n_phasedx (1-eps_ro)^n_meas (the device table's formula)"
+    },
+    "quantinuum_h1_1": {
+     "device": "H1-1",
+     "eps2": 0.00097,
+     "eps1": 1.8e-05,
+     "eps_ro": 0.0023,
+     "qubits": 20,
+     "qubits_fit": true,
+     "f_gate_only_per_circuit": {
+      "B0_ref06_k1": 0.7559995586574105,
+      "B0_ref06_k2": 0.7559723429182427,
+      "B0_ref06_k3": 0.7560403841032852,
+      "B0_ref06_k4": 0.7561492627375803,
+      "B0_ref43_k1": 0.7559723429182427,
+      "B0_ref43_k2": 0.7559587354160702,
+      "B0_ref43_k3": 0.7560267753763714,
+      "B0_ref43_k4": 0.756135652050851,
+      "B0_ref30_k1": 0.7559859506653547,
+      "B0_ref30_k2": 0.7559315211465258,
+      "B0_ref30_k3": 0.7560131668944147,
+      "B0_ref30_k4": 0.7560948214605997,
+      "B0_ref21_k1": 0.7559723429182427,
+      "B0_ref21_k2": 0.7559179143791452,
+      "B0_ref21_k3": 0.7560539930751606,
+      "B0_ref21_k4": 0.7560948214605997,
+      "B0_ref17_k1": 0.7559315211465258,
+      "B0_ref17_k2": 0.7559043078566864,
+      "B0_ref17_k3": 0.7560539930751606,
+      "B0_ref17_k4": 0.7561220416091141,
+      "B1_ref14_k1": 0.7560948214605997,
+      "B1_ref14_k2": 0.7561220416091141,
+      "B1_ref14_k3": 0.7560539930751606,
+      "B1_ref14_k4": 0.7561764848460336,
+      "B1_ref07_k1": 0.7561492627375803,
+      "B1_ref07_k2": 0.756135652050851,
+      "B1_ref07_k3": 0.7560676022920019,
+      "B1_ref07_k4": 0.7561628736693063
+     },
+     "f_gate_only_mean": 0.7560462207716512,
+     "f_gate_only_worst": 0.7559043078566864,
+     "f_gate_only_worst_id": "B0_ref17_k2",
+     "eps2_for_mean_f_0.1": 0.008957619311848141,
+     "eps2_for_worst_f_0.05": 0.011679082914091372,
+     "meets_mean_0.1_gate_only": true,
+     "meets_worst_0.05_gate_only": true,
+     "memory_ESTIMATE": {
+      "flag": "ESTIMATE",
+      "rate_per_qubit_per_s": 0.0030800000000000003,
+      "rounds": 201,
+      "rounds_gate_bound": 51,
+      "depth_2q": 201,
+      "scenarios": {
+       "low": {
+        "t_round_s": 0.0005,
+        "shot_time_s": 0.1005,
+        "S_idle_nats": 0.00371448,
+        "f_with_memory": 0.7532431114751877
+       },
+       "mid": {
+        "t_round_s": 0.0011,
+        "shot_time_s": 0.22110000000000002,
+        "S_idle_nats": 0.008171856,
+        "f_with_memory": 0.7498930953951345
+       },
+       "high": {
+        "t_round_s": 0.0044,
+        "shot_time_s": 0.8844000000000001,
+        "S_idle_nats": 0.032687424,
+        "f_with_memory": 0.7317325577213116
+       }
+      }
+     },
+     "formula": "device_req.clean_shot_fraction(n_zz, n_phasedx, n_meas, eps2, eps1, eps_ro) = (1-eps2)^n_zz (1-eps1)^n_phasedx (1-eps_ro)^n_meas (the device table's formula)"
+    },
+    "quantinuum_h2_1": {
+     "device": "H2-1",
+     "eps2": 0.0011,
+     "eps1": 1.9e-05,
+     "eps_ro": 0.001,
+     "qubits": 56,
+     "qubits_fit": true,
+     "f_gate_only_per_circuit": {
+      "B0_ref06_k1": 0.7428206487560178,
+      "B0_ref06_k2": 0.7427924218395233,
+      "B0_ref06_k3": 0.7428629911419974,
+      "B0_ref06_k4": 0.7429759159715099,
+      "B0_ref43_k1": 0.7427924218395233,
+      "B0_ref43_k2": 0.7427783087835084,
+      "B0_ref43_k3": 0.7428488767451656,
+      "B0_ref43_k4": 0.7429617994291063,
+      "B0_ref30_k1": 0.7428065351636914,
+      "B0_ref30_k2": 0.7427500834759175,
+      "B0_ref30_k3": 0.7428347626165075,
+      "B0_ref30_k4": 0.7429194514111614,
+      "B0_ref21_k1": 0.7427924218395233,
+      "B0_ref21_k2": 0.7427359712243315,
+      "B0_ref21_k3": 0.7428771058070077,
+      "B0_ref21_k4": 0.7429194514111614,
+      "B0_ref17_k1": 0.7427500834759175,
+      "B0_ref17_k2": 0.7427218592408783,
+      "B0_ref17_k3": 0.7428771058070077,
+      "B0_ref17_k4": 0.7429476831549172,
+      "B1_ref14_k1": 0.7429194514111614,
+      "B1_ref14_k2": 0.7429476831549172,
+      "B1_ref14_k3": 0.7428771058070077,
+      "B1_ref14_k4": 0.7430041498609801,
+      "B1_ref07_k1": 0.7429759159715099,
+      "B1_ref07_k2": 0.7429617994291063,
+      "B1_ref07_k3": 0.7428912207402018,
+      "B1_ref07_k4": 0.7429900327821327
+     },
+     "f_gate_only_mean": 0.7428690449389783,
+     "f_gate_only_worst": 0.7427218592408783,
+     "f_gate_only_worst_id": "B0_ref17_k2",
+     "eps2_for_mean_f_0.1": 0.009017438736986658,
+     "eps2_for_worst_f_0.05": 0.011738697170665901,
+     "meets_mean_0.1_gate_only": true,
+     "meets_worst_0.05_gate_only": true,
+     "memory_ESTIMATE": {
+      "flag": "ESTIMATE",
+      "rate_per_qubit_per_s": 0.0028,
+      "rounds": 201,
+      "rounds_gate_bound": 63,
+      "depth_2q": 201,
+      "scenarios": {
+       "low": {
+        "t_round_s": 0.0005,
+        "shot_time_s": 0.1005,
+        "S_idle_nats": 0.0033767999999999997,
+        "f_with_memory": 0.7403647553701908
+       },
+       "mid": {
+        "t_round_s": 0.0011,
+        "shot_time_s": 0.22110000000000002,
+        "S_idle_nats": 0.00742896,
+        "f_with_memory": 0.7373707491160588
+       },
+       "high": {
+        "t_round_s": 0.0044,
+        "shot_time_s": 0.8844000000000001,
+        "S_idle_nats": 0.02971584,
+        "f_with_memory": 0.7211188306881062
+       }
+      }
+     },
+     "formula": "device_req.clean_shot_fraction(n_zz, n_phasedx, n_meas, eps2, eps1, eps_ro) = (1-eps2)^n_zz (1-eps1)^n_phasedx (1-eps_ro)^n_meas (the device table's formula)"
+    }
+   },
+   "billing": {
+    "formula": "HQC = 5 + C (N_1q + 10 N_2q + 5 N_m) / 5000 per job",
+    "N_1q": "PhasedX count (Rz excluded: 'Rz operations excluded')",
+    "N_2q": "ZZPhase + ZZMax count",
+    "N_m": "initialisations + measurements (= 2 x n_qubits for one measurement per qubit)",
+    "C": "shots",
+    "job_base_hqc": 5.0,
+    "divisor": 5000.0,
+    "limits": {
+     "max_shots_per_job": 10000,
+     "max_hqc_per_job": 500000.0,
+     "max_hqc_per_shot_H2": 50
+    },
+    "source": [
+     "https://learn.microsoft.com/en-us/azure/quantum/provider-quantinuum",
+     "https://docs.quantinuum.com/systems/trainings/helios/getting_started/costing.html"
+    ],
+    "read_on": "2026-10-02",
+    "syntax_checkers": "Syntax Checkers usage is offered free-of-charge (Azure provider page)",
+    "azure_plans": {
+     "source": "https://learn.microsoft.com/en-us/azure/quantum/pricing",
+     "read_on": "2026-10-02",
+     "standard": "USD 125,000/month = 10k HQC + 100k eHQC",
+     "premium": "USD 175,000/month = 17k HQC",
+     "pay_as_you_go": "per HQC usage, rate by contact"
+    },
+    "usd_per_hqc_ESTIMATE": {
+     "value": 12.5,
+     "flag": "ESTIMATE",
+     "label": "Azure-Standard-equivalent (USD 125,000 / 10,000 HQC); the pay-as-you-go and research rates are not public"
+    }
+   },
+   "n_circuits": 28,
+   "d3prime_plans": {
+    "quantinuum_h2_2": {
+     "shots_by_circuit": {
+      "B0_ref06_k1": 267,
+      "B0_ref06_k2": 267,
+      "B0_ref06_k3": 267,
+      "B0_ref06_k4": 1700,
+      "B0_ref17_k1": 267,
+      "B0_ref17_k2": 267,
+      "B0_ref17_k3": 267,
+      "B0_ref17_k4": 1700,
+      "B0_ref21_k1": 267,
+      "B0_ref21_k2": 267,
+      "B0_ref21_k3": 267,
+      "B0_ref21_k4": 1700,
+      "B0_ref30_k1": 267,
+      "B0_ref30_k2": 267,
+      "B0_ref30_k3": 267,
+      "B0_ref30_k4": 1700,
+      "B0_ref43_k1": 267,
+      "B0_ref43_k2": 267,
+      "B0_ref43_k3": 267,
+      "B0_ref43_k4": 1700,
+      "B1_ref07_k1": 267,
+      "B1_ref07_k2": 267,
+      "B1_ref07_k3": 267,
+      "B1_ref07_k4": 4300,
+      "B1_ref14_k1": 267,
+      "B1_ref14_k2": 267,
+      "B1_ref14_k3": 267,
+      "B1_ref14_k4": 4300
+     },
+     "per_circuit": {
+      "B0_ref06_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.2972
+      },
+      "B0_ref06_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.404
+      },
+      "B0_ref06_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.137
+      },
+      "B0_ref06_k4": {
+       "shots": 1700,
+       "jobs": 1,
+       "hqc": 1040.98
+      },
+      "B0_ref17_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.5642
+      },
+      "B0_ref17_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.671
+      },
+      "B0_ref17_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.0836
+      },
+      "B0_ref17_k4": {
+       "shots": 1700,
+       "jobs": 1,
+       "hqc": 1041.66
+      },
+      "B0_ref21_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.404
+      },
+      "B0_ref21_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.6176
+      },
+      "B0_ref21_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.0836
+      },
+      "B0_ref21_k4": {
+       "shots": 1700,
+       "jobs": 1,
+       "hqc": 1042.34
+      },
+      "B0_ref30_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.35060000000001
+      },
+      "B0_ref30_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.5642
+      },
+      "B0_ref30_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.24380000000002
+      },
+      "B0_ref30_k4": {
+       "shots": 1700,
+       "jobs": 1,
+       "hqc": 1042.34
+      },
+      "B0_ref43_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.404
+      },
+      "B0_ref43_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.45739999999998
+      },
+      "B0_ref43_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.19039999999998
+      },
+      "B0_ref43_k4": {
+       "shots": 1700,
+       "jobs": 1,
+       "hqc": 1041.3200000000002
+      },
+      "B1_ref07_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 167.7098
+      },
+      "B1_ref07_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 167.7632
+      },
+      "B1_ref07_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.0302
+      },
+      "B1_ref07_k4": {
+       "shots": 4300,
+       "jobs": 1,
+       "hqc": 2624.56
+      },
+      "B1_ref14_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 167.9234
+      },
+      "B1_ref14_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 167.8166
+      },
+      "B1_ref14_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.0836
+      },
+      "B1_ref14_k4": {
+       "shots": 4300,
+       "jobs": 1,
+       "hqc": 2623.7
+      }
+     },
+     "by_sector": {
+      "B=0": {
+       "shots": 12505,
+       "jobs": 20,
+       "hqc": 7734.1126
+      },
+      "B=1": {
+       "shots": 10202,
+       "jobs": 8,
+       "hqc": 6255.5868
+      }
+     },
+     "shots_total": 22707,
+     "jobs": 28,
+     "hqc_total": 13989.699399999998,
+     "N4": {
+      "B=0": 1700,
+      "B=1": 4300
+     },
+     "f": 0.7928824943972907,
+     "margin": 0.7,
+     "floor": 267,
+     "round_to": 100,
+     "lambda_star": 6.295793621871989,
+     "readout_factor": 0.82,
+     "k4_reachability": {
+      "B=0": {
+       "states": 38,
+       "states_with_sum_k4_p_below_1e-6": 0,
+       "min_sum_k4_p": 0.007280502154735869
+      },
+      "B=1": {
+       "states": 20,
+       "states_with_sum_k4_p_below_1e-6": 0,
+       "min_sum_k4_p": 0.00306892096085015
+      }
+     },
+     "rule": "D3' (scripts/h0_support_plan.n4_of_sector): every sector state >= lambda* expected clean counts from the circuits at 0.82 x 0.7 x f",
+     "finite_campaign": true,
+     "device": "H2-2",
+     "f_source": "the device's gate-only mean f of the 28 frozen circuits (this JSON's devices.<d>)"
+    },
+    "quantinuum_helios_1": {
+     "shots_by_circuit": {
+      "B0_ref06_k1": 267,
+      "B0_ref06_k2": 267,
+      "B0_ref06_k3": 267,
+      "B0_ref06_k4": 1600,
+      "B0_ref17_k1": 267,
+      "B0_ref17_k2": 267,
+      "B0_ref17_k3": 267,
+      "B0_ref17_k4": 1600,
+      "B0_ref21_k1": 267,
+      "B0_ref21_k2": 267,
+      "B0_ref21_k3": 267,
+      "B0_ref21_k4": 1600,
+      "B0_ref30_k1": 267,
+      "B0_ref30_k2": 267,
+      "B0_ref30_k3": 267,
+      "B0_ref30_k4": 1600,
+      "B0_ref43_k1": 267,
+      "B0_ref43_k2": 267,
+      "B0_ref43_k3": 267,
+      "B0_ref43_k4": 1600,
+      "B1_ref07_k1": 267,
+      "B1_ref07_k2": 267,
+      "B1_ref07_k3": 267,
+      "B1_ref07_k4": 4200,
+      "B1_ref14_k1": 267,
+      "B1_ref14_k2": 267,
+      "B1_ref14_k3": 267,
+      "B1_ref14_k4": 4200
+     },
+     "per_circuit": {
+      "B0_ref06_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.2972
+      },
+      "B0_ref06_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.404
+      },
+      "B0_ref06_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.137
+      },
+      "B0_ref06_k4": {
+       "shots": 1600,
+       "jobs": 1,
+       "hqc": 980.0400000000001
+      },
+      "B0_ref17_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.5642
+      },
+      "B0_ref17_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.671
+      },
+      "B0_ref17_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.0836
+      },
+      "B0_ref17_k4": {
+       "shots": 1600,
+       "jobs": 1,
+       "hqc": 980.6800000000001
+      },
+      "B0_ref21_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.404
+      },
+      "B0_ref21_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.6176
+      },
+      "B0_ref21_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.0836
+      },
+      "B0_ref21_k4": {
+       "shots": 1600,
+       "jobs": 1,
+       "hqc": 981.3199999999999
+      },
+      "B0_ref30_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.35060000000001
+      },
+      "B0_ref30_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.5642
+      },
+      "B0_ref30_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.24380000000002
+      },
+      "B0_ref30_k4": {
+       "shots": 1600,
+       "jobs": 1,
+       "hqc": 981.3199999999999
+      },
+      "B0_ref43_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.404
+      },
+      "B0_ref43_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.45739999999998
+      },
+      "B0_ref43_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.19039999999998
+      },
+      "B0_ref43_k4": {
+       "shots": 1600,
+       "jobs": 1,
+       "hqc": 980.36
+      },
+      "B1_ref07_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 167.7098
+      },
+      "B1_ref07_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 167.7632
+      },
+      "B1_ref07_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.0302
+      },
+      "B1_ref07_k4": {
+       "shots": 4200,
+       "jobs": 1,
+       "hqc": 2563.64
+      },
+      "B1_ref14_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 167.9234
+      },
+      "B1_ref14_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 167.8166
+      },
+      "B1_ref14_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.0836
+      },
+      "B1_ref14_k4": {
+       "shots": 4200,
+       "jobs": 1,
+       "hqc": 2562.7999999999997
+      }
+     },
+     "by_sector": {
+      "B=0": {
+       "shots": 12005,
+       "jobs": 20,
+       "hqc": 7429.192599999999
+      },
+      "B=1": {
+       "shots": 10002,
+       "jobs": 8,
+       "hqc": 6133.766799999999
+      }
+     },
+     "shots_total": 22007,
+     "jobs": 28,
+     "hqc_total": 13562.959399999998,
+     "N4": {
+      "B=0": 1600,
+      "B=1": 4200
+     },
+     "f": 0.8046423591999817,
+     "margin": 0.7,
+     "floor": 267,
+     "round_to": 100,
+     "lambda_star": 6.295793621871989,
+     "readout_factor": 0.82,
+     "k4_reachability": {
+      "B=0": {
+       "states": 38,
+       "states_with_sum_k4_p_below_1e-6": 0,
+       "min_sum_k4_p": 0.007280502154735869
+      },
+      "B=1": {
+       "states": 20,
+       "states_with_sum_k4_p_below_1e-6": 0,
+       "min_sum_k4_p": 0.00306892096085015
+      }
+     },
+     "rule": "D3' (scripts/h0_support_plan.n4_of_sector): every sector state >= lambda* expected clean counts from the circuits at 0.82 x 0.7 x f",
+     "finite_campaign": true,
+     "device": "Helios-1",
+     "f_source": "the device's gate-only mean f of the 28 frozen circuits (this JSON's devices.<d>)"
+    },
+    "quantinuum_h1_1": {
+     "shots_by_circuit": {
+      "B0_ref06_k1": 267,
+      "B0_ref06_k2": 267,
+      "B0_ref06_k3": 267,
+      "B0_ref06_k4": 1700,
+      "B0_ref17_k1": 267,
+      "B0_ref17_k2": 267,
+      "B0_ref17_k3": 267,
+      "B0_ref17_k4": 1700,
+      "B0_ref21_k1": 267,
+      "B0_ref21_k2": 267,
+      "B0_ref21_k3": 267,
+      "B0_ref21_k4": 1700,
+      "B0_ref30_k1": 267,
+      "B0_ref30_k2": 267,
+      "B0_ref30_k3": 267,
+      "B0_ref30_k4": 1700,
+      "B0_ref43_k1": 267,
+      "B0_ref43_k2": 267,
+      "B0_ref43_k3": 267,
+      "B0_ref43_k4": 1700,
+      "B1_ref07_k1": 267,
+      "B1_ref07_k2": 267,
+      "B1_ref07_k3": 267,
+      "B1_ref07_k4": 4500,
+      "B1_ref14_k1": 267,
+      "B1_ref14_k2": 267,
+      "B1_ref14_k3": 267,
+      "B1_ref14_k4": 4500
+     },
+     "per_circuit": {
+      "B0_ref06_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.2972
+      },
+      "B0_ref06_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.404
+      },
+      "B0_ref06_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.137
+      },
+      "B0_ref06_k4": {
+       "shots": 1700,
+       "jobs": 1,
+       "hqc": 1040.98
+      },
+      "B0_ref17_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.5642
+      },
+      "B0_ref17_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.671
+      },
+      "B0_ref17_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.0836
+      },
+      "B0_ref17_k4": {
+       "shots": 1700,
+       "jobs": 1,
+       "hqc": 1041.66
+      },
+      "B0_ref21_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.404
+      },
+      "B0_ref21_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.6176
+      },
+      "B0_ref21_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.0836
+      },
+      "B0_ref21_k4": {
+       "shots": 1700,
+       "jobs": 1,
+       "hqc": 1042.34
+      },
+      "B0_ref30_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.35060000000001
+      },
+      "B0_ref30_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.5642
+      },
+      "B0_ref30_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.24380000000002
+      },
+      "B0_ref30_k4": {
+       "shots": 1700,
+       "jobs": 1,
+       "hqc": 1042.34
+      },
+      "B0_ref43_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.404
+      },
+      "B0_ref43_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.45739999999998
+      },
+      "B0_ref43_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.19039999999998
+      },
+      "B0_ref43_k4": {
+       "shots": 1700,
+       "jobs": 1,
+       "hqc": 1041.3200000000002
+      },
+      "B1_ref07_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 167.7098
+      },
+      "B1_ref07_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 167.7632
+      },
+      "B1_ref07_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.0302
+      },
+      "B1_ref07_k4": {
+       "shots": 4500,
+       "jobs": 1,
+       "hqc": 2746.3999999999996
+      },
+      "B1_ref14_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 167.9234
+      },
+      "B1_ref14_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 167.8166
+      },
+      "B1_ref14_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.0836
+      },
+      "B1_ref14_k4": {
+       "shots": 4500,
+       "jobs": 1,
+       "hqc": 2745.5
+      }
+     },
+     "by_sector": {
+      "B=0": {
+       "shots": 12505,
+       "jobs": 20,
+       "hqc": 7734.1126
+      },
+      "B=1": {
+       "shots": 10602,
+       "jobs": 8,
+       "hqc": 6499.2268
+      }
+     },
+     "shots_total": 23107,
+     "jobs": 28,
+     "hqc_total": 14233.339399999999,
+     "N4": {
+      "B=0": 1700,
+      "B=1": 4500
+     },
+     "f": 0.7560462207716512,
+     "margin": 0.7,
+     "floor": 267,
+     "round_to": 100,
+     "lambda_star": 6.295793621871989,
+     "readout_factor": 0.82,
+     "k4_reachability": {
+      "B=0": {
+       "states": 38,
+       "states_with_sum_k4_p_below_1e-6": 0,
+       "min_sum_k4_p": 0.007280502154735869
+      },
+      "B=1": {
+       "states": 20,
+       "states_with_sum_k4_p_below_1e-6": 0,
+       "min_sum_k4_p": 0.00306892096085015
+      }
+     },
+     "rule": "D3' (scripts/h0_support_plan.n4_of_sector): every sector state >= lambda* expected clean counts from the circuits at 0.82 x 0.7 x f",
+     "finite_campaign": true,
+     "device": "H1-1",
+     "f_source": "the device's gate-only mean f of the 28 frozen circuits (this JSON's devices.<d>)"
+    },
+    "quantinuum_h2_1": {
+     "shots_by_circuit": {
+      "B0_ref06_k1": 267,
+      "B0_ref06_k2": 267,
+      "B0_ref06_k3": 267,
+      "B0_ref06_k4": 1800,
+      "B0_ref17_k1": 267,
+      "B0_ref17_k2": 267,
+      "B0_ref17_k3": 267,
+      "B0_ref17_k4": 1800,
+      "B0_ref21_k1": 267,
+      "B0_ref21_k2": 267,
+      "B0_ref21_k3": 267,
+      "B0_ref21_k4": 1800,
+      "B0_ref30_k1": 267,
+      "B0_ref30_k2": 267,
+      "B0_ref30_k3": 267,
+      "B0_ref30_k4": 1800,
+      "B0_ref43_k1": 267,
+      "B0_ref43_k2": 267,
+      "B0_ref43_k3": 267,
+      "B0_ref43_k4": 1800,
+      "B1_ref07_k1": 267,
+      "B1_ref07_k2": 267,
+      "B1_ref07_k3": 267,
+      "B1_ref07_k4": 4600,
+      "B1_ref14_k1": 267,
+      "B1_ref14_k2": 267,
+      "B1_ref14_k3": 267,
+      "B1_ref14_k4": 4600
+     },
+     "per_circuit": {
+      "B0_ref06_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.2972
+      },
+      "B0_ref06_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.404
+      },
+      "B0_ref06_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.137
+      },
+      "B0_ref06_k4": {
+       "shots": 1800,
+       "jobs": 1,
+       "hqc": 1101.92
+      },
+      "B0_ref17_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.5642
+      },
+      "B0_ref17_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.671
+      },
+      "B0_ref17_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.0836
+      },
+      "B0_ref17_k4": {
+       "shots": 1800,
+       "jobs": 1,
+       "hqc": 1102.64
+      },
+      "B0_ref21_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.404
+      },
+      "B0_ref21_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.6176
+      },
+      "B0_ref21_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.0836
+      },
+      "B0_ref21_k4": {
+       "shots": 1800,
+       "jobs": 1,
+       "hqc": 1103.36
+      },
+      "B0_ref30_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.35060000000001
+      },
+      "B0_ref30_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.5642
+      },
+      "B0_ref30_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.24380000000002
+      },
+      "B0_ref30_k4": {
+       "shots": 1800,
+       "jobs": 1,
+       "hqc": 1103.36
+      },
+      "B0_ref43_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.404
+      },
+      "B0_ref43_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.45739999999998
+      },
+      "B0_ref43_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.19039999999998
+      },
+      "B0_ref43_k4": {
+       "shots": 1800,
+       "jobs": 1,
+       "hqc": 1102.28
+      },
+      "B1_ref07_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 167.7098
+      },
+      "B1_ref07_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 167.7632
+      },
+      "B1_ref07_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.0302
+      },
+      "B1_ref07_k4": {
+       "shots": 4600,
+       "jobs": 1,
+       "hqc": 2807.3199999999997
+      },
+      "B1_ref14_k1": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 167.9234
+      },
+      "B1_ref14_k2": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 167.8166
+      },
+      "B1_ref14_k3": {
+       "shots": 267,
+       "jobs": 1,
+       "hqc": 168.0836
+      },
+      "B1_ref14_k4": {
+       "shots": 4600,
+       "jobs": 1,
+       "hqc": 2806.4
+      }
+     },
+     "by_sector": {
+      "B=0": {
+       "shots": 13005,
+       "jobs": 20,
+       "hqc": 8039.0326
+      },
+      "B=1": {
+       "shots": 10802,
+       "jobs": 8,
+       "hqc": 6621.0468
+      }
+     },
+     "shots_total": 23807,
+     "jobs": 28,
+     "hqc_total": 14660.079399999997,
+     "N4": {
+      "B=0": 1800,
+      "B=1": 4600
+     },
+     "f": 0.7428690449389783,
+     "margin": 0.7,
+     "floor": 267,
+     "round_to": 100,
+     "lambda_star": 6.295793621871989,
+     "readout_factor": 0.82,
+     "k4_reachability": {
+      "B=0": {
+       "states": 38,
+       "states_with_sum_k4_p_below_1e-6": 0,
+       "min_sum_k4_p": 0.007280502154735869
+      },
+      "B=1": {
+       "states": 20,
+       "states_with_sum_k4_p_below_1e-6": 0,
+       "min_sum_k4_p": 0.00306892096085015
+      }
+     },
+     "rule": "D3' (scripts/h0_support_plan.n4_of_sector): every sector state >= lambda* expected clean counts from the circuits at 0.82 x 0.7 x f",
+     "finite_campaign": true,
+     "device": "H2-1",
+     "f_source": "the device's gate-only mean f of the 28 frozen circuits (this JSON's devices.<d>)"
+    }
+   },
+   "p_sector_statevector_vs_group_evolution_max_abs": {
+    "B0_ref06_k1": 4.218847493575595e-15,
+    "B0_ref06_k2": 6.772360450213455e-14,
+    "B0_ref06_k3": 8.604228440844963e-15,
+    "B0_ref06_k4": 1.3405943022348765e-14,
+    "B0_ref43_k1": 3.6637359812630166e-15,
+    "B0_ref43_k2": 4.6629367034256575e-14,
+    "B0_ref43_k3": 2.4702462297909733e-15,
+    "B0_ref43_k4": 1.3364309658925322e-14,
+    "B0_ref30_k1": 4.867634073590921e-15,
+    "B0_ref30_k2": 3.852473895449293e-14,
+    "B0_ref30_k3": 4.5102810375396984e-15,
+    "B0_ref30_k4": 8.43769498715119e-15,
+    "B0_ref21_k1": 8.104628079763643e-15,
+    "B0_ref21_k2": 4.6074255521943996e-14,
+    "B0_ref21_k3": 4.704570066849101e-15,
+    "B0_ref21_k4": 1.1379786002407855e-14,
+    "B0_ref17_k1": 2.220446049250313e-15,
+    "B0_ref17_k2": 3.452793606584237e-14,
+    "B0_ref17_k3": 5.190292640122607e-15,
+    "B0_ref17_k4": 1.0200174038743626e-14,
+    "B1_ref14_k1": 1.0880185641326534e-14,
+    "B1_ref14_k2": 1.0352829704629585e-14,
+    "B1_ref14_k3": 1.0658141036401503e-14,
+    "B1_ref14_k4": 1.1934897514720433e-14,
+    "B1_ref07_k1": 5.88418203051333e-15,
+    "B1_ref07_k2": 1.0019762797242038e-14,
+    "B1_ref07_k3": 1.1046719095020308e-14,
+    "B1_ref07_k4": 1.2101430968414206e-14
+   },
+   "sector_mass_min": 0.9999999999999757,
+   "runtime_s": 3.205003499984741,
+   "stage": "predict",
+   "created": "2026-10-13 15:46:45 UTC"
+  },
+  "what_pass_means": "compiled to the Quantinuum native set, verified exactly, costed; not a device statement",
+  "verify": {
+   "per_circuit": {
+    "B0_ref06_k2": {
+     "id": "B0_ref06_k2",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 420,
+      "n_rz": 470,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 589,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 420,
+       "Rz": 470,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.106508354109856e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1142,
+       "n_rounded_gates": 164,
+       "max_abs_delta": 5.662137425588298e-15,
+       "sum_abs_delta": 8.260059303211165e-14,
+       "unit": "half-turns",
+       "state_bound_B": 1.297487081259211e-13,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 164,
+       "max_abs_delta": 5.662137425588298e-15,
+       "sum_abs_delta": 8.260059303211165e-14,
+       "state_bound_B": 1.297487081259211e-13
+      },
+      "segment_residual_raw": 8.79251776862914e-15,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 7.212462839772042e-14,
+      "l2_dpsi": 9.842245012186735e-14,
+      "one_minus_overlap": 1.9095836023552692e-14,
+      "phase_rad": 4.3097470037168616e-14
+     },
+     "leakage": 1.9984014443252818e-14,
+     "original_ir_leakage": 1.8207657603852567e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 6.984282235485153e-14,
+      "l2_dpsi": 9.583156401956797e-14,
+      "one_minus_overlap": 2.142730437526552e-14,
+      "phase_rad": -0.10072464344637166
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.6064242087270137,
+     "p_sector": [
+      0.0026758059790239074,
+      0.0023701852234572288,
+      0.6064242087270137,
+      4.20015808778963e-05,
+      0.0026969318703507265,
+      0.00302083464470168,
+      0.07668546894046986,
+      0.0002987361080375122,
+      0.08147966682248227,
+      0.00036087583006514436,
+      0.0050939200281885704,
+      4.410706337416033e-05,
+      0.00031973280073000556,
+      0.08148093954273371,
+      0.010226759395009657,
+      0.005412459676188255,
+      2.0357764067274106e-05,
+      0.000339642187272419,
+      0.0003256320916451701,
+      0.00033964218727256955,
+      0.08657358685067328,
+      4.151183933782602e-05,
+      0.005412380108666291,
+      0.010864876266135134,
+      0.00033956730143928796,
+      0.0006448416290171788,
+      1.9159929648212023e-05,
+      0.0057508341175858905,
+      0.00030647216199696507,
+      0.0003608758300649858,
+      0.0002884395871566275,
+      0.0003606421018761286,
+      4.056295734340293e-05,
+      3.593000496625337e-05,
+      0.009192878520876097,
+      1.1746265184130642e-05,
+      5.199276471578858e-05,
+      4.579330033458051e-05
+     ],
+     "sector_mass": 0.9999999999999799,
+     "p_reference_matches_manifest": true,
+     "seconds": 6.757571697235107
+    },
+    "B0_ref06_k1": {
+     "id": "B0_ref06_k1",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 418,
+      "n_rz": 470,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 588,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 418,
+       "Rz": 470,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.104668375544083e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1140,
+       "n_rounded_gates": 193,
+       "max_abs_delta": 8.881784197001252e-15,
+       "sum_abs_delta": 1.745270594710746e-13,
+       "unit": "half-turns",
+       "state_bound_B": 2.7414646394347846e-13,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 193,
+       "max_abs_delta": 8.881784197001252e-15,
+       "sum_abs_delta": 1.745270594710746e-13,
+       "state_bound_B": 2.7414646394347846e-13
+      },
+      "segment_residual_raw": 1.3345785898812088e-14,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 1.3310661531812299e-14,
+      "l2_dpsi": 2.253915099049603e-14,
+      "one_minus_overlap": 1.687538997430238e-14,
+      "phase_rad": -2.1205259770340846e-14
+     },
+     "leakage": 1.9317880628477724e-14,
+     "original_ir_leakage": 1.4765966227514582e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 1.0362210634051469e-14,
+      "l2_dpsi": 2.0757909307537685e-14,
+      "one_minus_overlap": 1.9206858326015208e-14,
+      "phase_rad": -0.8357604851205891
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.8832760485718384,
+     "p_sector": [
+      0.00020917737421128867,
+      0.00020297681614559422,
+      0.8832760485718384,
+      1.9245936778099947e-07,
+      0.00020927370671349556,
+      0.0002155673476055559,
+      0.026854958046708507,
+      6.174492355034024e-06,
+      0.027262056515822874,
+      6.4622579715258415e-06,
+      0.0004132697378704486,
+      4.97601721845343e-07,
+      6.270789076530757e-06,
+      0.027262062484921766,
+      0.0008273181807009736,
+      0.00041953464833265254,
+      3.9376210959746155e-07,
+      6.365758453026316e-06,
+      2.597520191280511e-05,
+      6.365758453021515e-06,
+      0.027675326253690156,
+      4.901711415783233e-07,
+      0.00041953455784606995,
+      0.0008398536992388785,
+      6.365669317710906e-06,
+      3.194710912092106e-05,
+      3.8788214408855163e-07,
+      0.0004258944390564871,
+      2.5587319768708668e-05,
+      6.46225797152929e-06,
+      2.5205229785857612e-05,
+      6.461987883657472e-06,
+      7.867857665028391e-07,
+      7.634634026532262e-07,
+      0.0033222953750592045,
+      4.952085405568054e-08,
+      8.359450554040631e-07,
+      8.108205844839799e-07
+     ],
+     "sector_mass": 0.9999999999999807,
+     "p_reference_matches_manifest": true,
+     "seconds": 8.705848932266235
+    },
+    "B0_ref06_k3": {
+     "id": "B0_ref06_k3",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 415,
+      "n_rz": 469,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 587,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 415,
+       "Rz": 469,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-16,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.104668375544083e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1136,
+       "n_rounded_gates": 166,
+       "max_abs_delta": 7.105427357601002e-15,
+       "sum_abs_delta": 8.038014698286133e-14,
+       "unit": "half-turns",
+       "state_bound_B": 1.2626083962791247e-13,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 166,
+       "max_abs_delta": 7.105427357601002e-15,
+       "sum_abs_delta": 8.038014698286133e-14,
+       "state_bound_B": 1.2626083962791247e-13
+      },
+      "segment_residual_raw": 1.1304665702523182e-14,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 1.1961204045610456e-14,
+      "l2_dpsi": 2.944130514771038e-14,
+      "one_minus_overlap": 1.865174681370263e-14,
+      "phase_rad": -1.4449552665496682e-13
+     },
+     "leakage": 1.865174681370263e-14,
+     "original_ir_leakage": 1.8540724511240114e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 1.2683356639739399e-14,
+      "l2_dpsi": 2.8319446869937506e-14,
+      "one_minus_overlap": 2.098321516541546e-14,
+      "phase_rad": -2.5072814553617
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.3198979556534157,
+     "p_sector": [
+      0.009267476368349955,
+      0.007029127458911253,
+      0.3198979556534157,
+      0.0008226148359171437,
+      0.009687296594840229,
+      0.012218603054215646,
+      0.09728889779137241,
+      0.0020722936007779237,
+      0.11171032559266848,
+      0.0032637339882064485,
+      0.01655915969619378,
+      0.0006650670527884326,
+      0.0024785419761005844,
+      0.11173425320443843,
+      0.033409921251674315,
+      0.019017320922843892,
+      0.0001614188974773707,
+      0.0028423968931457293,
+      0.0010889536621929005,
+      0.002842396893145232,
+      0.1282694852888608,
+      0.0005792091302201586,
+      0.019013774060525564,
+      0.03833994457674405,
+      0.0028393079188385757,
+      0.0037668426835541554,
+      0.0001405802600158697,
+      0.02183631596635801,
+      0.0009483734021772269,
+      0.003263733988206828,
+      0.0008259415815231522,
+      0.003253619163388968,
+      0.00032012011065087547,
+      0.00024280235206323073,
+      0.011050016734921895,
+      0.00026195593820440107,
+      0.0005681625895903888,
+      0.0004220588654612399
+     ],
+     "sector_mass": 0.9999999999999811,
+     "p_reference_matches_manifest": true,
+     "seconds": 3.1537067890167236
+    },
+    "B0_ref06_k4": {
+     "id": "B0_ref06_k4",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 407,
+      "n_rz": 472,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 585,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 407,
+       "Rz": 472,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 5.2205574251235524e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1131,
+       "n_rounded_gates": 143,
+       "max_abs_delta": 1.3322676295501878e-15,
+       "sum_abs_delta": 4.907185768843192e-14,
+       "unit": "half-turns",
+       "state_bound_B": 7.708189380599077e-14,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 143,
+       "max_abs_delta": 1.3322676295501878e-15,
+       "sum_abs_delta": 4.907185768843192e-14,
+       "state_bound_B": 7.708189380599077e-14
+      },
+      "segment_residual_raw": 5.004708194564882e-15,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 1.778611091661874e-14,
+      "l2_dpsi": 3.575380456710386e-14,
+      "one_minus_overlap": 1.8762769116165146e-14,
+      "phase_rad": -1.5392201402342497e-13
+     },
+     "leakage": 2.142730437526552e-14,
+     "original_ir_leakage": 1.63202784619898e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 1.909867995143319e-14,
+      "l2_dpsi": 3.377896298345773e-14,
+      "one_minus_overlap": 2.3425705819590803e-14,
+      "phase_rad": 1.3693470399023784
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.12696806936656443,
+     "p_sector": [
+      0.016961343366945894,
+      0.010279403569706351,
+      0.12696806936656443,
+      0.00560307455964252,
+      0.019929193837613202,
+      0.0279867569028283,
+      0.07562462659250818,
+      0.005368082980096441,
+      0.09714252950772122,
+      0.01317374563743164,
+      0.027640513587574883,
+      0.004383800938770417,
+      0.008017857133670387,
+      0.09729567491053238,
+      0.05617887623891113,
+      0.035548800646447797,
+      0.0005382292106928349,
+      0.010255648063769326,
+      0.001891605480339218,
+      0.01025564806376868,
+      0.12478304309529469,
+      0.003412751456343856,
+      0.03550522531843505,
+      0.0720270736489882,
+      0.010221725044404656,
+      0.011575101314051086,
+      0.00041900682724747493,
+      0.045663702042050294,
+      0.0014725986530916186,
+      0.01317374563743207,
+      0.0011464054294760167,
+      0.0130554183880396,
+      0.0010603838976180205,
+      0.0006426444997084281,
+      0.007937749584760356,
+      0.0021073207816458815,
+      0.003002956573520639,
+      0.0017496672123354785
+     ],
+     "sector_mass": 0.9999999999999787,
+     "p_reference_matches_manifest": true,
+     "seconds": 4.009995460510254
+    },
+    "B0_ref43_k1": {
+     "id": "B0_ref43_k1",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 420,
+      "n_rz": 470,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 587,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 420,
+       "Rz": 470,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.104668375544083e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1142,
+       "n_rounded_gates": 191,
+       "max_abs_delta": 8.881784197001252e-15,
+       "sum_abs_delta": 1.6986412276764895e-13,
+       "unit": "half-turns",
+       "state_bound_B": 2.668219400976603e-13,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 191,
+       "max_abs_delta": 8.881784197001252e-15,
+       "sum_abs_delta": 1.6986412276764895e-13,
+       "state_bound_B": 2.668219400976603e-13
+      },
+      "segment_residual_raw": 1.3345785898812088e-14,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 1.4618714002367087e-14,
+      "l2_dpsi": 3.3272908384352243e-14,
+      "one_minus_overlap": 1.5432100042289676e-14,
+      "phase_rad": -1.6295531547403072e-14
+     },
+     "leakage": 1.687538997430238e-14,
+     "original_ir_leakage": 1.3766765505351941e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 1.4680476000518262e-14,
+      "l2_dpsi": 3.3065991460443425e-14,
+      "one_minus_overlap": 1.7319479184152442e-14,
+      "phase_rad": 0.7350358416743058
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.8853599388588034,
+     "p_sector": [
+      6.341904438391528e-06,
+      6.153913997907099e-06,
+      0.026779436896002352,
+      6.156957736628593e-06,
+      6.156957736628268e-06,
+      0.028440549475865905,
+      0.0008141969382272102,
+      9.65124202824161e-07,
+      0.000826539475740523,
+      0.0008519825463433349,
+      1.2529639951432436e-05,
+      2.5700177362829716e-05,
+      3.808959502256689e-07,
+      0.0008267304329377112,
+      3.137680729925734e-05,
+      1.2722473454147394e-05,
+      1.2596823397217943e-05,
+      3.837752612055691e-07,
+      0.000830971348505775,
+      0.00020345587505982802,
+      0.8853599388588034,
+      3.09615458548174e-06,
+      0.013421308463679811,
+      0.026861516566613813,
+      0.00020345587235731985,
+      0.00020423145837488005,
+      1.1759931017602399e-08,
+      0.013624776276940972,
+      7.757642881768202e-07,
+      0.00020733937289156055,
+      7.641799656981245e-07,
+      0.0002065406343629495,
+      2.3854014629744595e-08,
+      2.314691997684791e-08,
+      0.00010072638049014461,
+      1.5842190952717603e-06,
+      1.5842190952717844e-06,
+      0.00010697437810137444
+     ],
+     "sector_mass": 0.9999999999999829,
+     "p_reference_matches_manifest": true,
+     "seconds": 4.079625129699707
+    },
+    "B0_ref43_k2": {
+     "id": "B0_ref43_k2",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 421,
+      "n_rz": 471,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 588,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 421,
+       "Rz": 471,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.106508354109856e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1144,
+       "n_rounded_gates": 166,
+       "max_abs_delta": 5.662137425588298e-15,
+       "sum_abs_delta": 8.593126210598712e-14,
+       "unit": "half-turns",
+       "state_bound_B": 1.3498051087293406e-13,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 166,
+       "max_abs_delta": 5.662137425588298e-15,
+       "sum_abs_delta": 8.593126210598712e-14,
+       "state_bound_B": 1.3498051087293406e-13
+      },
+      "segment_residual_raw": 8.79251776862914e-15,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 3.347345789217748e-14,
+      "l2_dpsi": 7.505274937094648e-14,
+      "one_minus_overlap": 1.865174681370263e-14,
+      "phase_rad": -3.630559394785028e-15
+     },
+     "leakage": 1.8318679906315083e-14,
+     "original_ir_leakage": 1.9095836023552692e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 3.255609233042e-14,
+      "l2_dpsi": 7.340131577548466e-14,
+      "one_minus_overlap": 1.9872992140790302e-14,
+      "phase_rad": 1.4700716833485694
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.6085253943334221,
+     "p_sector": [
+      0.00033457038300845375,
+      0.00029635697962762973,
+      0.07582447358661207,
+      0.0002952289433316017,
+      0.0002952289433315971,
+      0.09663936575917316,
+      0.00958839576401394,
+      0.00017873782749952744,
+      0.010187840056379441,
+      0.011511004376710718,
+      0.0006369201609554625,
+      0.0008710876720053954,
+      4.8764718627433625e-05,
+      0.010196786001921702,
+      0.0013490471739526118,
+      0.0006772982138331905,
+      0.00014309464188139658,
+      5.125409608349052e-05,
+      0.0022888666645842323,
+      0.002378556759992723,
+      0.6085253943334221,
+      0.0001512373506361114,
+      0.03804359805017038,
+      0.07630296986975647,
+      0.0023785473966143797,
+      0.002416717484244442,
+      2.39566883812542e-06,
+      0.04042470025066813,
+      3.8319859296434704e-05,
+      0.0025703505037183373,
+      3.6065149680619395e-05,
+      0.0025277260752553936,
+      5.071804264107532e-06,
+      4.4925213626439305e-06,
+      0.001149434941019782,
+      8.256445081162054e-05,
+      8.256445081162079e-05,
+      0.0014649711158851643
+     ],
+     "sector_mass": 0.999999999999982,
+     "p_reference_matches_manifest": true,
+     "seconds": 2.8335788249969482
+    },
+    "B0_ref43_k3": {
+     "id": "B0_ref43_k3",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 416,
+      "n_rz": 471,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 586,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 416,
+       "Rz": 471,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-16,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.104668375544083e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1139,
+       "n_rounded_gates": 164,
+       "max_abs_delta": 7.105427357601002e-15,
+       "sum_abs_delta": 7.926992395823618e-14,
+       "unit": "half-turns",
+       "state_bound_B": 1.2451690537890815e-13,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 164,
+       "max_abs_delta": 7.105427357601002e-15,
+       "sum_abs_delta": 7.926992395823618e-14,
+       "state_bound_B": 1.2451690537890815e-13
+      },
+      "segment_residual_raw": 1.1304665702523182e-14,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 1.907732257038669e-14,
+      "l2_dpsi": 3.308767557662757e-14,
+      "one_minus_overlap": 1.7208456881689926e-14,
+      "phase_rad": -1.4574105811071797e-13
+     },
+     "leakage": 1.6653345369377348e-14,
+     "original_ir_leakage": 1.7763568394002505e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 1.997161696224021e-14,
+      "l2_dpsi": 3.2746811500836794e-14,
+      "one_minus_overlap": 2.042810365310288e-14,
+      "phase_rad": -0.9364851285668043
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.31389902914625584,
+     "p_sector": [
+      0.00274749214721232,
+      0.002083897679099391,
+      0.09483888451754614,
+      0.002013089845758739,
+      0.002013089845758772,
+      0.1648566896529033,
+      0.02884285560259045,
+      0.0034095569547059586,
+      0.03311831939238416,
+      0.04373172177656617,
+      0.004909228728664915,
+      0.006926096035872425,
+      0.0007862651022185675,
+      0.03317687466051413,
+      0.010078857624326119,
+      0.005645618387388467,
+      0.0003950217395033516,
+      0.0008941357336150719,
+      0.0026648699538930486,
+      0.006904406589893499,
+      0.31389902914625584,
+      0.001070264786882565,
+      0.046530203224597576,
+      0.0936734043110439,
+      0.006903490813871273,
+      0.0071784733852890345,
+      4.167727492305788e-05,
+      0.05348246503802799,
+      0.0002811605200317206,
+      0.008290415447094975,
+      0.00024486364130810444,
+      0.007948097327150579,
+      9.490474593296592e-05,
+      7.198265515913844e-05,
+      0.003275954855352704,
+      0.000641054374672841,
+      0.0006410543746728423,
+      0.0056945321073012594
+     ],
+     "sector_mass": 0.9999999999999836,
+     "p_reference_matches_manifest": true,
+     "seconds": 3.185070276260376
+    },
+    "B0_ref43_k4": {
+     "id": "B0_ref43_k4",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 408,
+      "n_rz": 473,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 584,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 408,
+       "Rz": 473,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 5.2205574251235524e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1133,
+       "n_rounded_gates": 143,
+       "max_abs_delta": 1.3322676295501878e-15,
+       "sum_abs_delta": 5.040412531798211e-14,
+       "unit": "half-turns",
+       "state_bound_B": 7.917461490479594e-14,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 143,
+       "max_abs_delta": 1.3322676295501878e-15,
+       "sum_abs_delta": 5.040412531798211e-14,
+       "state_bound_B": 7.917461490479594e-14
+      },
+      "segment_residual_raw": 5.004708194564882e-15,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 1.8930068782811278e-14,
+      "l2_dpsi": 4.1624203565813177e-14,
+      "one_minus_overlap": 1.6764367671839864e-14,
+      "phase_rad": -1.5487784665868791e-13
+     },
+     "leakage": 1.8207657603852567e-14,
+     "original_ir_leakage": 1.554312234475219e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 2.050205380839964e-14,
+      "l2_dpsi": 3.946158235610899e-14,
+      "one_minus_overlap": 2.020605904817785e-14,
+      "phase_rad": -0.2014492868925171
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.11224444677527595,
+     "p_sector": [
+      0.009652214002936952,
+      0.005849713724369088,
+      0.0722538864140982,
+      0.005040059839760212,
+      0.0050400598397604785,
+      0.19671880188801297,
+      0.043035805830427175,
+      0.023173131572465665,
+      0.05528102717514755,
+      0.09139240956604587,
+      0.015729423461721896,
+      0.026575952910645552,
+      0.004613338726740284,
+      0.05541878404169186,
+      0.03205904927173611,
+      0.020244202062633488,
+      0.00048414623088150046,
+      0.005886801357845262,
+      0.0017015309563784956,
+      0.009174521777107994,
+      0.11224444677527595,
+      0.0028919719302562597,
+      0.03193754755969362,
+      0.06472007476663846,
+      0.00915521715981188,
+      0.009925384775578642,
+      0.00023844476689068408,
+      0.04141836014242027,
+      0.0008380136544948932,
+      0.013055801472725764,
+      0.0006523864472312635,
+      0.012021654869818483,
+      0.0006034340608317313,
+      0.00036571055162318983,
+      0.004517145607885122,
+      0.0018955704993766035,
+      0.0018955704993766271,
+      0.012298403809645813
+     ],
+     "sector_mass": 0.9999999999999819,
+     "p_reference_matches_manifest": true,
+     "seconds": 3.268937349319458
+    },
+    "B0_ref30_k1": {
+     "id": "B0_ref30_k1",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 419,
+      "n_rz": 470,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 588,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 419,
+       "Rz": 470,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.104668375544083e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1141,
+       "n_rounded_gates": 195,
+       "max_abs_delta": 8.881784197001252e-15,
+       "sum_abs_delta": 1.73749903353837e-13,
+       "unit": "half-turns",
+       "state_bound_B": 2.729257099691754e-13,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 195,
+       "max_abs_delta": 8.881784197001252e-15,
+       "sum_abs_delta": 1.73749903353837e-13,
+       "state_bound_B": 2.729257099691754e-13
+      },
+      "segment_residual_raw": 1.3345785898812088e-14,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 2.0875246634170134e-14,
+      "l2_dpsi": 3.5155779438925674e-14,
+      "one_minus_overlap": 1.4099832412739488e-14,
+      "phase_rad": 5.281365622611463e-15
+     },
+     "leakage": 1.454392162258955e-14,
+     "original_ir_leakage": 1.3100631690576847e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 2.10586410371504e-14,
+      "l2_dpsi": 3.48510416415708e-14,
+      "one_minus_overlap": 1.6542323066914832e-14,
+      "phase_rad": -2.406556811915506
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.8853599389047336,
+     "p_sector": [
+      6.438042350193594e-06,
+      6.247202133500111e-06,
+      0.027185390528294266,
+      6.444188027615518e-06,
+      0.02801585896868336,
+      3.5927952919023686e-33,
+      0.0008265394757405218,
+      0.0008519915897952412,
+      0.0008390691156919737,
+      2.028953988774665e-07,
+      1.2719578704414712e-05,
+      1.3384347616403984e-05,
+      0.00020345574001589465,
+      0.8853599389047336,
+      0.026861512200520177,
+      0.01362476415846432,
+      3.0297936704045374e-09,
+      0.00020653995639989458,
+      1.9986560520715466e-07,
+      2.4278720269370864e-07,
+      0.00021294717359917844,
+      1.2788522411585088e-05,
+      3.2280991920949516e-06,
+      1.2760631598321007e-05,
+      2.3989245295947606e-07,
+      0.0008310202837615384,
+      1.1938201633621188e-08,
+      0.014260377579370072,
+      7.875242191942782e-07,
+      0.00021617527279127566,
+      7.75764288176775e-07,
+      0.00021697473521212912,
+      2.4215621332727503e-08,
+      2.3497807722451078e-08,
+      0.00010225330729545378,
+      1.6581250292062162e-06,
+      0.00010701086196161658,
+      1.3513699597233652e-35
+     ],
+     "sector_mass": 0.9999999999999852,
+     "p_reference_matches_manifest": true,
+     "seconds": 3.223276376724243
+    },
+    "B0_ref30_k2": {
+     "id": "B0_ref30_k2",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 423,
+      "n_rz": 470,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 589,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 423,
+       "Rz": 470,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.106508354109856e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1145,
+       "n_rounded_gates": 169,
+       "max_abs_delta": 5.662137425588298e-15,
+       "sum_abs_delta": 8.482103908136196e-14,
+       "unit": "half-turns",
+       "state_bound_B": 1.3323657662392974e-13,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 169,
+       "max_abs_delta": 5.662137425588298e-15,
+       "sum_abs_delta": 8.482103908136196e-14,
+       "state_bound_B": 1.3323657662392974e-13
+      },
+      "segment_residual_raw": 8.79251776862914e-15,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 3.223826181724188e-14,
+      "l2_dpsi": 6.579417484307006e-14,
+      "one_minus_overlap": 1.7430501486614958e-14,
+      "phase_rad": 3.127272746317243e-14
+     },
+     "leakage": 1.8207657603852567e-14,
+     "original_ir_leakage": 1.6764367671839864e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 3.125775584518058e-14,
+      "l2_dpsi": 6.324020168474468e-14,
+      "one_minus_overlap": 1.9539925233402755e-14,
+      "phase_rad": 1.470071683348537
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.6085254366043797,
+     "p_sector": [
+      0.00035548694834688124,
+      0.000314884531505173,
+      0.0805648440335262,
+      0.0003569183938769253,
+      0.09095461486364681,
+      2.1323876658560586e-33,
+      0.010187840056378622,
+      0.011512990537421637,
+      0.010824760217334922,
+      1.1491386046889077e-05,
+      0.0006767389340404931,
+      0.00018381017001595302,
+      0.0023784398958980506,
+      0.6085254366043797,
+      0.07630210930033035,
+      0.040421998317801695,
+      6.761438871288379e-07,
+      0.002527131806028907,
+      1.0815242159759451e-05,
+      2.0743514862403214e-05,
+      0.0028753747878427077,
+      0.00015274317925238564,
+      0.00017976177114532272,
+      0.0004321519138521088,
+      2.0184235069706053e-05,
+      0.0023001049541116355,
+      2.5454405044973864e-06,
+      0.04886835826750482,
+      4.071552813455977e-05,
+      0.0030551365589880806,
+      3.831985929643038e-05,
+      0.0030983975276271825,
+      5.3888817182444005e-06,
+      4.77338339164672e-06,
+      0.0012212949509522843,
+      9.981667394283362e-05,
+      0.0014732011891588365,
+      3.2325194953500476e-35
+     ],
+     "sector_mass": 0.9999999999999818,
+     "p_reference_matches_manifest": true,
+     "seconds": 3.3321690559387207
+    },
+    "B0_ref30_k3": {
+     "id": "B0_ref30_k3",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 417,
+      "n_rz": 469,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 588,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 417,
+       "Rz": 469,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-16,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.104668375544083e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1138,
+       "n_rounded_gates": 168,
+       "max_abs_delta": 7.105427357601002e-15,
+       "sum_abs_delta": 8.060219158778636e-14,
+       "unit": "half-turns",
+       "state_bound_B": 1.2660962647771335e-13,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 168,
+       "max_abs_delta": 7.105427357601002e-15,
+       "sum_abs_delta": 8.060219158778636e-14,
+       "state_bound_B": 1.2660962647771335e-13
+      },
+      "segment_residual_raw": 1.1304665702523182e-14,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 1.875445684922763e-14,
+      "l2_dpsi": 3.570975537515003e-14,
+      "one_minus_overlap": 1.8096635301390052e-14,
+      "phase_rad": -1.4426307370918583e-13
+     },
+     "leakage": 1.6764367671839864e-14,
+     "original_ir_leakage": 1.9317880628477724e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 2.050660579233857e-14,
+      "l2_dpsi": 3.5899288121726065e-14,
+      "one_minus_overlap": 1.9872992140790302e-14,
+      "phase_rad": 2.20510752502299
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.31390106545848384,
+     "p_sector": [
+      0.0031547612245186674,
+      0.0023928001397774934,
+      0.10889713943536806,
+      0.0031860427560926824,
+      0.14360552630056456,
+      2.787025856071729e-33,
+      0.033118319392383584,
+      0.043770897175467845,
+      0.038027548121048124,
+      0.0001064104916663912,
+      0.005636938562754102,
+      0.000717859534458196,
+      0.006899349177484285,
+      0.31390106545848384,
+      0.09365940476740808,
+      0.05342781793857923,
+      1.373723704344605e-05,
+      0.007921758740831395,
+      9.267325462292967e-05,
+      0.00030709536453523014,
+      0.010916121670952201,
+      0.000489132221745345,
+      0.0016181297570601262,
+      0.0034547791489919835,
+      0.00029841553990073367,
+      0.0029047302256643872,
+      4.785522353695286e-05,
+      0.08455775134564918,
+      0.0003228377949547711,
+      0.012534251428012056,
+      0.00028116052003171016,
+      0.012904944446503752,
+      0.00010897276368775007,
+      8.265286201613287e-05,
+      0.0037615595594791417,
+      0.0010145730211650232,
+      0.005864987397543842,
+      9.627033185424035e-35
+     ],
+     "sector_mass": 0.9999999999999831,
+     "p_reference_matches_manifest": true,
+     "seconds": 2.6544363498687744
+    },
+    "B0_ref30_k4": {
+     "id": "B0_ref30_k4",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 411,
+      "n_rz": 472,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 586,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 411,
+       "Rz": 472,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 5.2205574251235524e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1135,
+       "n_rounded_gates": 144,
+       "max_abs_delta": 1.3322676295501878e-15,
+       "sum_abs_delta": 5.0182080713057076e-14,
+       "unit": "half-turns",
+       "state_bound_B": 7.882582805499508e-14,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 144,
+       "max_abs_delta": 1.3322676295501878e-15,
+       "sum_abs_delta": 5.0182080713057076e-14,
+       "state_bound_B": 7.882582805499508e-14
+      },
+      "segment_residual_raw": 5.004708194564882e-15,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 1.516785704826894e-14,
+      "l2_dpsi": 3.2650136105036923e-14,
+      "one_minus_overlap": 1.7541523789077473e-14,
+      "phase_rad": -1.554416317883805e-13
+     },
+     "leakage": 1.6986412276764895e-14,
+     "original_ir_leakage": 1.7985612998927536e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 1.496136234921049e-14,
+      "l2_dpsi": 2.96269708433884e-14,
+      "one_minus_overlap": 2.0095036745715333e-14,
+      "phase_rad": -0.20144928689251443
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.1122724338065991,
+     "p_sector": [
+      0.012398613068828734,
+      0.007514165870110266,
+      0.09281269355351195,
+      0.012647534424909257,
+      0.1533928225072657,
+      1.3808452518307924e-33,
+      0.05528102717514881,
+      0.09165950363095135,
+      0.07101045063687005,
+      0.00044404767216187486,
+      0.020205005321919416,
+      0.0015606046522671252,
+      0.009115358152411438,
+      0.1122724338065991,
+      0.06464976911385244,
+      0.04103288198915954,
+      9.836036541077874e-05,
+      0.011701039277049022,
+      0.0003456873067511363,
+      0.002023166769891774,
+      0.02280386398969828,
+      0.0011472165751150144,
+      0.0064885124533055755,
+      0.01336736410472686,
+      0.0019839700291772646,
+      0.0035477441190125353,
+      0.0003062908056188031,
+      0.10294799819656626,
+      0.0010764584213855787,
+      0.029292376443003802,
+      0.0008380136544949243,
+      0.030675125670008137,
+      0.0007751325686032418,
+      0.0004697682441960104,
+      0.005802434607302045,
+      0.0047567477188620215,
+      0.013555817103836892,
+      8.632724651970617e-35
+     ],
+     "sector_mass": 0.999999999999983,
+     "p_reference_matches_manifest": true,
+     "seconds": 3.335581064224243
+    },
+    "B0_ref21_k1": {
+     "id": "B0_ref21_k1",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 420,
+      "n_rz": 469,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 588,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 420,
+       "Rz": 469,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.104668375544083e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1141,
+       "n_rounded_gates": 196,
+       "max_abs_delta": 8.881784197001252e-15,
+       "sum_abs_delta": 1.7197354651443675e-13,
+       "unit": "half-turns",
+       "state_bound_B": 2.701354151707685e-13,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 196,
+       "max_abs_delta": 8.881784197001252e-15,
+       "sum_abs_delta": 1.7197354651443675e-13,
+       "state_bound_B": 2.701354151707685e-13
+      },
+      "segment_residual_raw": 1.3345785898812088e-14,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 2.1052966961508316e-14,
+      "l2_dpsi": 3.5222485923723986e-14,
+      "one_minus_overlap": 1.765254609153999e-14,
+      "phase_rad": -1.5485564550162405e-14
+     },
+     "leakage": 2.0095036745715333e-14,
+     "original_ir_leakage": 1.4876988529977098e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 2.0510459571217793e-14,
+      "l2_dpsi": 3.373097159389416e-14,
+      "one_minus_overlap": 1.865174681370263e-14,
+      "phase_rad": 0.7350358416742994
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.8853599389047251,
+     "p_sector": [
+      0.028015852823007923,
+      6.253256038833779e-06,
+      0.027185396582201465,
+      6.253256038833259e-06,
+      7.489512243300718e-09,
+      6.438042350193462e-06,
+      0.0008267393413457863,
+      3.8980435818876806e-07,
+      0.8853599389047251,
+      0.00020345574001587392,
+      0.013421311493474967,
+      3.087246177517829e-06,
+      3.837752612054846e-07,
+      0.00021005465622974813,
+      1.2472663431760961e-05,
+      0.014047442343974237,
+      3.2400373937270697e-06,
+      0.0002137346978184272,
+      8.364594749104301e-07,
+      0.0008392689812971684,
+      0.0008390691616210716,
+      2.590406071561969e-05,
+      1.2722608498083467e-05,
+      0.0268615121329809,
+      0.0002034558750597313,
+      0.00020365266563840311,
+      1.582492258930445e-05,
+      3.230993941826788e-06,
+      0.000831020283761138,
+      2.398924529593827e-07,
+      0.0002137229378871858,
+      0.00021294735186962418,
+      0.00010537695255375026,
+      1.6330083952695904e-06,
+      0.00010386281788300759,
+      1.6330083952695616e-06,
+      1.609515987342767e-06,
+      2.4215621332727007e-08
+     ],
+     "sector_mass": 0.9999999999999799,
+     "p_reference_matches_manifest": true,
+     "seconds": 3.4437782764434814
+    },
+    "B0_ref21_k2": {
+     "id": "B0_ref21_k2",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 424,
+      "n_rz": 469,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 589,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 424,
+       "Rz": 469,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.106508354109856e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1145,
+       "n_rounded_gates": 166,
+       "max_abs_delta": 5.662137425588298e-15,
+       "sum_abs_delta": 8.415490526658687e-14,
+       "unit": "half-turns",
+       "state_bound_B": 1.3219021607452714e-13,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 166,
+       "max_abs_delta": 5.662137425588298e-15,
+       "sum_abs_delta": 8.415490526658687e-14,
+       "state_bound_B": 1.3219021607452714e-13
+      },
+      "segment_residual_raw": 8.79251776862914e-15,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 3.25924722171475e-14,
+      "l2_dpsi": 7.43622615777802e-14,
+      "one_minus_overlap": 1.709743457922741e-14,
+      "phase_rad": 3.285362975592788e-14
+     },
+     "leakage": 1.6209256159527285e-14,
+     "original_ir_leakage": 1.7763568394002505e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 3.1573598670868746e-14,
+      "l2_dpsi": 7.260507656233043e-14,
+      "one_minus_overlap": 1.8096635301390052e-14,
+      "phase_rad": -1.6715209702412637
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.6085254366043735,
+     "p_sector": [
+      0.09095318341811834,
+      0.00031623175193473674,
+      0.08056619125395753,
+      0.00031623175193478916,
+      2.577934264741314e-06,
+      0.00035548694834690596,
+      0.0101986552985386,
+      5.0634015244807055e-05,
+      0.6085254366043735,
+      0.0023784398958984054,
+      0.03804427419405824,
+      0.00014936805401874646,
+      5.125409608348726e-05,
+      0.0027363314150820137,
+      0.00036983695052537056,
+      0.045995528920164015,
+      0.00018230721164990614,
+      0.002916090315977194,
+      5.195381766187605e-05,
+      0.010835575459495064,
+      0.010824802488284845,
+      0.0008497338618966969,
+      0.000677415077927634,
+      0.0763020508134457,
+      0.0023785567599920554,
+      0.002388656229996947,
+      0.00032285641302674204,
+      0.00018032105093804398,
+      0.0023001049541116815,
+      2.0184235069706934e-05,
+      0.0029136946471395027,
+      0.002875524559509432,
+      0.0013787733969342734,
+      9.364512047831819e-05,
+      0.0013101666880389708,
+      9.36451204783185e-05,
+      8.889039366834594e-05,
+      5.388881718244778e-06
+     ],
+     "sector_mass": 0.9999999999999837,
+     "p_reference_matches_manifest": true,
+     "seconds": 3.1304142475128174
+    },
+    "B0_ref21_k3": {
+     "id": "B0_ref21_k3",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 414,
+      "n_rz": 470,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 588,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 414,
+       "Rz": 470,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-16,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.104668375544083e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1136,
+       "n_rounded_gates": 165,
+       "max_abs_delta": 7.105427357601002e-15,
+       "sum_abs_delta": 7.960299086562372e-14,
+       "unit": "half-turns",
+       "state_bound_B": 1.2504008565360945e-13,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 165,
+       "max_abs_delta": 7.105427357601002e-15,
+       "sum_abs_delta": 7.960299086562372e-14,
+       "state_bound_B": 1.2504008565360945e-13
+      },
+      "segment_residual_raw": 1.1304665702523182e-14,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 1.9450519886696346e-14,
+      "l2_dpsi": 3.5105691661277845e-14,
+      "one_minus_overlap": 1.8096635301390052e-14,
+      "phase_rad": -1.411802532519405e-13
+     },
+     "leakage": 1.687538997430238e-14,
+     "original_ir_leakage": 1.9206858326015208e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 2.0236283970366046e-14,
+      "l2_dpsi": 3.457871729546449e-14,
+      "one_minus_overlap": 1.942890293094024e-14,
+      "phase_rad": -0.9364851285668109
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.3139010654584796,
+     "p_sector": [
+      0.14357424476898914,
+      0.002420043330699422,
+      0.10892438262628935,
+      0.0024200433306995803,
+      7.98202607936233e-05,
+      0.0031547612245187108,
+      0.03321099264700628,
+      0.0008203830887120977,
+      0.3139010654584796,
+      0.006899349177484654,
+      0.04654394046164222,
+      0.0010361468003890334,
+      0.0008941357336150595,
+      0.00998782258984876,
+      0.0022557579872000792,
+      0.07368948489823551,
+      0.0016659849805968092,
+      0.011238959465907295,
+      0.0005626980667260179,
+      0.03812022137567158,
+      0.03802958443327658,
+      0.006262124842589364,
+      0.005650675799797407,
+      0.09365687071695615,
+      0.006904406589894255,
+      0.006981608143971031,
+      0.0020131514965633875,
+      0.0016268095816944735,
+      0.0029047302256648127,
+      0.00029841553990072635,
+      0.011197282190982608,
+      0.010922299619564837,
+      0.004959387140066467,
+      0.0008713431681459131,
+      0.00455024986560889,
+      0.0008713431681459189,
+      0.0007905064399677308,
+      0.00010897276368775156
+     ],
+     "sector_mass": 0.9999999999999833,
+     "p_reference_matches_manifest": true,
+     "seconds": 3.4737119674682617
+    },
+    "B0_ref21_k4": {
+     "id": "B0_ref21_k4",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 411,
+      "n_rz": 472,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 586,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 411,
+       "Rz": 472,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.9968028886505635e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 5.2205574251235524e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1135,
+       "n_rounded_gates": 141,
+       "max_abs_delta": 1.3322676295501878e-15,
+       "sum_abs_delta": 4.8183679268731794e-14,
+       "unit": "half-turns",
+       "state_bound_B": 7.56867464067873e-14,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 141,
+       "max_abs_delta": 1.3322676295501878e-15,
+       "sum_abs_delta": 4.8183679268731794e-14,
+       "state_bound_B": 7.56867464067873e-14
+      },
+      "segment_residual_raw": 5.004708194564882e-15,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 1.636442325275446e-14,
+      "l2_dpsi": 3.8169279100410546e-14,
+      "one_minus_overlap": 1.6431300764452317e-14,
+      "phase_rad": -1.4273825177380197e-13
+     },
+     "leakage": 1.7985612998927536e-14,
+     "original_ir_leakage": 1.509903313490213e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 1.7526766942785374e-14,
+      "l2_dpsi": 3.493882028817455e-14,
+      "one_minus_overlap": 2.0872192862952943e-14,
+      "phase_rad": 2.9401433666972614
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.112272433806602,
+     "p_sector": [
+      0.15314390115118637,
+      0.00770794901226103,
+      0.0930064766956627,
+      0.007707949012260824,
+      0.0008021340752155378,
+      0.012398613068828473,
+      0.055626714481899854,
+      0.0048212691669482395,
+      0.112272433806602,
+      0.009115358152411454,
+      0.03203590792510441,
+      0.0026840414900480523,
+      0.005886801357845168,
+      0.020881253209293966,
+      0.005473067277394003,
+      0.08045042501248532,
+      0.006794803258923915,
+      0.02388032241108387,
+      0.0029226715840198077,
+      0.07135613794362054,
+      0.0710384376681974,
+      0.02141992266743527,
+      0.02030336568732966,
+      0.06462007603445762,
+      0.009174521777107755,
+      0.009401824995504364,
+      0.006972658684186745,
+      0.006527709194019857,
+      0.0035477441190125444,
+      0.001983970029177202,
+      0.02364187764419245,
+      0.022871710028425606,
+      0.009574201953578183,
+      0.0035694215114032324,
+      0.008902087874509175,
+      0.003569421511403235,
+      0.0031376859583429465,
+      0.0007751325686032258
+     ],
+     "sector_mass": 0.999999999999982,
+     "p_reference_matches_manifest": true,
+     "seconds": 3.674715042114258
+    },
+    "B0_ref17_k1": {
+     "id": "B0_ref17_k1",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 423,
+      "n_rz": 469,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 588,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 423,
+       "Rz": 469,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.104668375544083e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1144,
+       "n_rounded_gates": 195,
+       "max_abs_delta": 8.881784197001252e-15,
+       "sum_abs_delta": 1.7219559111936178e-13,
+       "unit": "half-turns",
+       "state_bound_B": 2.704842020205694e-13,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 195,
+       "max_abs_delta": 8.881784197001252e-15,
+       "sum_abs_delta": 1.7219559111936178e-13,
+       "state_bound_B": 2.704842020205694e-13
+      },
+      "segment_residual_raw": 1.3345785898812088e-14,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 7.48020187778874e-15,
+      "l2_dpsi": 2.168925448432148e-14,
+      "one_minus_overlap": 1.6542323066914832e-14,
+      "phase_rad": -2.646884955952124e-14
+     },
+     "leakage": 1.9761969838327786e-14,
+     "original_ir_leakage": 1.3322676295501878e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 8.32050185526355e-15,
+      "l2_dpsi": 2.094973462552792e-14,
+      "one_minus_overlap": 1.8762769116165146e-14,
+      "phase_rad": 0.735035841674305
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.8853599388588025,
+     "p_sector": [
+      8.370790376686696e-34,
+      0.027597498074584295,
+      0.027597498074584257,
+      6.348096609846882e-06,
+      6.34190452599599e-06,
+      6.2388406979971345e-09,
+      0.8853599388588025,
+      0.0002034557057431017,
+      0.000212947173599207,
+      2.518306545931348e-07,
+      0.014047430405770998,
+      3.231174914875751e-06,
+      0.0008392735460600162,
+      0.0008390691185841568,
+      0.026861511069822607,
+      3.2280991920933063e-06,
+      1.6612446808503878e-05,
+      0.00021294717359904408,
+      0.00021315006899792332,
+      1.9986560520705577e-07,
+      0.0002163751383964822,
+      3.029793670377109e-09,
+      0.01426038060916371,
+      7.939559408696081e-06,
+      0.00021859823272987543,
+      7.9060572367107e-07,
+      1.3184482011197016e-05,
+      3.280064241481008e-06,
+      1.9986560520711273e-07,
+      0.00021617531872038465,
+      0.0008309713485053816,
+      2.0337646545312697e-07,
+      1.6115658323512664e-34,
+      0.0001038033810207404,
+      0.00010380338102074051,
+      1.6701244745952142e-06,
+      2.3877305448760114e-08,
+      1.6586780936953498e-06
+     ],
+     "sector_mass": 0.9999999999999803,
+     "p_reference_matches_manifest": true,
+     "seconds": 3.7339980602264404
+    },
+    "B0_ref17_k2": {
+     "id": "B0_ref17_k2",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 425,
+      "n_rz": 469,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 589,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 425,
+       "Rz": 469,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.106508354109856e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1146,
+       "n_rounded_gates": 166,
+       "max_abs_delta": 5.662137425588298e-15,
+       "sum_abs_delta": 8.415490526658687e-14,
+       "unit": "half-turns",
+       "state_bound_B": 1.3219021607452714e-13,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 166,
+       "max_abs_delta": 5.662137425588298e-15,
+       "sum_abs_delta": 8.415490526658687e-14,
+       "state_bound_B": 1.3219021607452714e-13
+      },
+      "segment_residual_raw": 8.79251776862914e-15,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 3.069800016695417e-14,
+      "l2_dpsi": 6.176279523814538e-14,
+      "one_minus_overlap": 1.6764367671839864e-14,
+      "phase_rad": 1.7601480169216218e-14
+     },
+     "leakage": 1.63202784619898e-14,
+     "original_ir_leakage": 1.7541523789077473e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 2.972601717391158e-14,
+      "l2_dpsi": 5.980053453831298e-14,
+      "one_minus_overlap": 1.84297022087776e-14,
+      "phase_rad": 1.4700716833485374
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.6085253943334352,
+     "p_sector": [
+      1.1747183827887791e-33,
+      0.08560157146006686,
+      0.08560157146006672,
+      0.00033604623471717853,
+      0.00033457072215912456,
+      1.520936188785153e-06,
+      0.6085253943334352,
+      0.00237840885335653,
+      0.0028753747878427203,
+      2.2729675574203915e-05,
+      0.045992983479660986,
+      0.00018048018598211204,
+      0.01083660808815921,
+      0.010824762939974827,
+      0.07630186079722694,
+      0.00017976177114535137,
+      0.0003635719411612978,
+      0.0028753747878431336,
+      0.0028868661738900357,
+      1.0815242159761133e-05,
+      0.0030659518011477956,
+      6.761438871288648e-07,
+      0.04886903441139117,
+      0.0001673838246493608,
+      0.0031906282675820906,
+      4.143937801141511e-05,
+      0.00017299492785618903,
+      0.00019167620455976534,
+      1.0815242159760213e-05,
+      0.0030551788299376698,
+      0.002288866664584346,
+      1.1931165881370012e-05,
+      2.5918586027473122e-34,
+      0.0012976474822474118,
+      0.0012976474822474083,
+      0.00010242892724150328,
+      5.094176928783254e-06,
+      0.00010033119905955375
+     ],
+     "sector_mass": 0.9999999999999836,
+     "p_reference_matches_manifest": true,
+     "seconds": 3.7333781719207764
+    },
+    "B0_ref17_k3": {
+     "id": "B0_ref17_k3",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 414,
+      "n_rz": 471,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 586,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 414,
+       "Rz": 471,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-16,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.104668375544083e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1137,
+       "n_rounded_gates": 164,
+       "max_abs_delta": 7.105427357601002e-15,
+       "sum_abs_delta": 7.893685705084863e-14,
+       "unit": "half-turns",
+       "state_bound_B": 1.2399372510420685e-13,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 164,
+       "max_abs_delta": 7.105427357601002e-15,
+       "sum_abs_delta": 7.893685705084863e-14,
+       "state_bound_B": 1.2399372510420685e-13
+      },
+      "segment_residual_raw": 1.1304665702523182e-14,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 1.933441947080143e-14,
+      "l2_dpsi": 3.766280811253714e-14,
+      "one_minus_overlap": 1.9095836023552692e-14,
+      "phase_rad": -1.6046734253872014e-13
+     },
+     "leakage": 1.8762769116165146e-14,
+     "original_ir_leakage": 1.9539925233402755e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 2.0426238033087887e-14,
+      "l2_dpsi": 3.832746371278615e-14,
+      "one_minus_overlap": 2.0095036745715333e-14,
+      "phase_rad": 2.2051075250229943
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.3138990291462566,
+     "p_sector": [
+      1.4499266196041071e-33,
+      0.125039292032285,
+      0.1250392920322849,
+      0.002781052114039173,
+      0.002747532190014706,
+      3.5918487684764985e-05,
+      0.3138990291462566,
+      0.006897897405495058,
+      0.01091612167095249,
+      0.00034627076343768186,
+      0.07364162967469791,
+      0.001633903306331204,
+      0.0381417091736132,
+      0.038027684334784206,
+      0.09365449749322828,
+      0.0016181297570599855,
+      0.0023359892915180104,
+      0.010916121670950822,
+      0.01102253216261731,
+      9.267325462291804e-05,
+      0.012626924682634943,
+      1.3737237043445125e-05,
+      0.08457148858269252,
+      0.0011328342240201072,
+      0.013770039417035456,
+      0.00033888261530217844,
+      0.0006251862798352612,
+      0.0018717272658748754,
+      9.267325462294878e-05,
+      0.01253628774024003,
+      0.00266486995389347,
+      0.0001274091396004023,
+      1.445544611058012e-34,
+      0.004319146918764574,
+      0.004319146918764571,
+      0.00106646569803647,
+      9.606398496062095e-05,
+      0.0010398401247851063
+     ],
+     "sector_mass": 0.9999999999999812,
+     "p_reference_matches_manifest": true,
+     "seconds": 3.4207193851470947
+    },
+    "B1_ref14_k1": {
+     "id": "B1_ref14_k1",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 411,
+      "n_rz": 470,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 584,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 411,
+       "Rz": 470,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 1.3322676295501878e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 5.330955115613788e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1133,
+       "n_rounded_gates": 179,
+       "max_abs_delta": 3.3306690738754696e-15,
+       "sum_abs_delta": 9.869882688917642e-14,
+       "unit": "half-turns",
+       "state_bound_B": 1.5503575473648368e-13,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 179,
+       "max_abs_delta": 3.3306690738754696e-15,
+       "sum_abs_delta": 9.869882688917642e-14,
+       "state_bound_B": 1.5503575473648368e-13
+      },
+      "segment_residual_raw": 5.94842725360157e-15,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 2.555231734269198e-14,
+      "l2_dpsi": 3.256028594952796e-14,
+      "one_minus_overlap": 2.1760371282653068e-14,
+      "phase_rad": -1.6237011735143268e-13
+     },
+     "leakage": 2.120525977034049e-14,
+     "original_ir_leakage": 2.2648549702353193e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 1.9346596581939375e-14,
+      "l2_dpsi": 2.6393545446446518e-14,
+      "one_minus_overlap": 2.1871393585115584e-14,
+      "phase_rad": -2.1457633300381365
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.8890601304523688,
+     "p_sector": [
+      1.2504561383675384e-59,
+      0.000739873531278964,
+      0.0007000357066214727,
+      0.8890601304523688,
+      0.0501535877595822,
+      0.05156091966870487,
+      0.001446822266459322,
+      3.177045789667644e-59,
+      1.6770037922622637e-58,
+      3.4020577685992037e-60,
+      6.483125466007189e-59,
+      3.704954795096289e-58,
+      8.26191073441943e-61,
+      2.4937975470360356e-06,
+      8.887235009687746e-05,
+      8.644661962245041e-05,
+      8.651335328741234e-62,
+      5.118726393462471e-06,
+      4.843113175917131e-06,
+      0.0061508560081275
+     ],
+     "sector_mass": 0.9999999999999787,
+     "p_reference_matches_manifest": true,
+     "seconds": 3.0927696228027344
+    },
+    "B0_ref17_k4": {
+     "id": "B0_ref17_k4",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 409,
+      "n_rz": 472,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 584,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 409,
+       "Rz": 472,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.9968028886505635e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 5.2205574251235524e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1133,
+       "n_rounded_gates": 142,
+       "max_abs_delta": 1.3322676295501878e-15,
+       "sum_abs_delta": 4.851674617611934e-14,
+       "unit": "half-turns",
+       "state_bound_B": 7.62099266814886e-14,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 142,
+       "max_abs_delta": 1.3322676295501878e-15,
+       "sum_abs_delta": 4.851674617611934e-14,
+       "state_bound_B": 7.62099266814886e-14
+      },
+      "segment_residual_raw": 5.004708194564882e-15,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 1.4662049805214416e-14,
+      "l2_dpsi": 3.404189503825396e-14,
+      "one_minus_overlap": 1.8096635301390052e-14,
+      "phase_rad": -1.6543732529739364e-13
+     },
+     "leakage": 1.84297022087776e-14,
+     "original_ir_leakage": 1.7541523789077473e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 1.6550709318792615e-14,
+      "l2_dpsi": 3.1582089035069675e-14,
+      "one_minus_overlap": 2.0539125955565396e-14,
+      "phase_rad": -0.20144928689251515
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.11224444677527272,
+     "p_sector": [
+      4.34337899353671e-34,
+      0.11922121441729261,
+      0.1192212144172923,
+      0.009935441874959209,
+      0.009653320987961143,
+      0.0003197483580109663,
+      0.11224444677527272,
+      0.009096358706011862,
+      0.02280386398969784,
+      0.002290260834796055,
+      0.08014413420686495,
+      0.006614859850044159,
+      0.07151569727076004,
+      0.07101242537351335,
+      0.06461625677702544,
+      0.0064885124533054055,
+      0.008049117105572436,
+      0.022803863989697196,
+      0.023247911661859313,
+      0.00034568730675112045,
+      0.029638063749754112,
+      9.836036541077552e-05,
+      0.10304635856197418,
+      0.004457667310462366,
+      0.03440593073767325,
+      0.0012067253560707084,
+      0.0012149173455159627,
+      0.008433085981350398,
+      0.0003456873067510998,
+      0.029320363474331167,
+      0.0017015309563783267,
+      0.0007306385266242084,
+      1.0959851709305705e-35,
+      0.007453434158342016,
+      0.007453434158342006,
+      0.005133798204651767,
+      0.0006211408113143907,
+      0.005114526638346588
+     ],
+     "sector_mass": 0.9999999999999813,
+     "p_reference_matches_manifest": true,
+     "seconds": 4.3667473793029785
+    },
+    "B1_ref14_k2": {
+     "id": "B1_ref14_k2",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 409,
+      "n_rz": 472,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 584,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 409,
+       "Rz": 472,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 1.7763568394002505e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 6.417242744580076e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1133,
+       "n_rounded_gates": 175,
+       "max_abs_delta": 2.6645352591003757e-15,
+       "sum_abs_delta": 7.671641100159832e-14,
+       "unit": "half-turns",
+       "state_bound_B": 1.2050585660619823e-13,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 175,
+       "max_abs_delta": 2.6645352591003757e-15,
+       "sum_abs_delta": 7.671641100159832e-14,
+       "state_bound_B": 1.2050585660619823e-13
+      },
+      "segment_residual_raw": 6.406669881832587e-15,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 3.8848043098649106e-14,
+      "l2_dpsi": 4.405186380488959e-14,
+      "one_minus_overlap": 2.0650148258027912e-14,
+      "phase_rad": -8.38773495104323e-14
+     },
+     "leakage": 2.2093438190040615e-14,
+     "original_ir_leakage": 1.9206858326015208e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 3.7888973512760225e-14,
+      "l2_dpsi": 4.331846581679427e-14,
+      "one_minus_overlap": 2.220446049250313e-14,
+      "phase_rad": 1.9916586471030746
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.6207921537366321,
+     "p_sector": [
+      1.713230837221147e-60,
+      0.010970231555446295,
+      0.008763916453168534,
+      0.6207921537366321,
+      0.1506179042128968,
+      0.16851376550934927,
+      0.02002218122643602,
+      1.6411903236993462e-58,
+      2.4186384938012763e-58,
+      2.863583409609147e-59,
+      2.725076013949129e-60,
+      1.9893062498282846e-58,
+      4.736246794930507e-60,
+      0.00013852106227036916,
+      0.0011658422996748605,
+      0.0010420319271189095,
+      4.753394047182812e-62,
+      0.000307829561315104,
+      0.00024591938133172286,
+      0.017419703074337906
+     ],
+     "sector_mass": 0.999999999999978,
+     "p_reference_matches_manifest": true,
+     "seconds": 2.7093656063079834
+    },
+    "B1_ref14_k3": {
+     "id": "B1_ref14_k3",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 414,
+      "n_rz": 471,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 587,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 414,
+       "Rz": 471,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 2.6645352591003757e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 8.013626399180835e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1137,
+       "n_rounded_gates": 146,
+       "max_abs_delta": 2.220446049250313e-15,
+       "sum_abs_delta": 4.7628567756419216e-14,
+       "unit": "half-turns",
+       "state_bound_B": 7.481477928228516e-14,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 146,
+       "max_abs_delta": 2.220446049250313e-15,
+       "sum_abs_delta": 4.7628567756419216e-14,
+       "state_bound_B": 7.481477928228516e-14
+      },
+      "segment_residual_raw": 8.456420207547877e-15,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 1.9054235825789563e-14,
+      "l2_dpsi": 2.6837596000119925e-14,
+      "one_minus_overlap": 2.0095036745715333e-14,
+      "phase_rad": -1.7525217388403645e-13
+     },
+     "leakage": 1.9872992140790302e-14,
+     "original_ir_leakage": 2.0539125955565396e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 1.853417918950573e-14,
+      "l2_dpsi": 2.556741126429156e-14,
+      "one_minus_overlap": 2.2093438190040615e-14,
+      "phase_rad": 2.987487970654655
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.3334662978491886,
+     "p_sector": [
+      2.710477913854238e-60,
+      0.04886938210874719,
+      0.029118092702648327,
+      0.3334662978491886,
+      0.20658121140509428,
+      0.267625678670281,
+      0.07908302439409551,
+      2.2370957065931297e-59,
+      6.542166057580003e-60,
+      2.945109683645811e-60,
+      4.8369116456335373e-60,
+      1.641308884854581e-59,
+      8.788280714567745e-61,
+      0.0012381568135448402,
+      0.004190059245507447,
+      0.0032343216058219127,
+      1.8669391531596666e-61,
+      0.0031586084478118282,
+      0.001882009749787499,
+      0.021553157007451786
+     ],
+     "sector_mass": 0.9999999999999801,
+     "p_reference_matches_manifest": true,
+     "seconds": 2.826154947280884
+    },
+    "B1_ref14_k4": {
+     "id": "B1_ref14_k4",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 405,
+      "n_rz": 473,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 585,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 405,
+       "Rz": 473,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.9968028886505635e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.88971460488597e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1130,
+       "n_rounded_gates": 154,
+       "max_abs_delta": 3.9968028886505635e-15,
+       "sum_abs_delta": 6.23945339839338e-14,
+       "unit": "half-turns",
+       "state_bound_B": 9.800910479404255e-14,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 154,
+       "max_abs_delta": 3.9968028886505635e-15,
+       "sum_abs_delta": 6.23945339839338e-14,
+       "state_bound_B": 9.800910479404255e-14
+      },
+      "segment_residual_raw": 7.666281417735415e-15,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 1.1472021059592558e-14,
+      "l2_dpsi": 2.6169162512417115e-14,
+      "one_minus_overlap": 2.375877272697835e-14,
+      "phase_rad": -2.2204460492503658e-13
+     },
+     "leakage": 2.398081733190338e-14,
+     "original_ir_leakage": 2.3092638912203256e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 1.0929672032159184e-14,
+      "l2_dpsi": 2.6157965582969755e-14,
+      "one_minus_overlap": 2.4313884239290928e-14,
+      "phase_rad": 0.8417246406164001
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.13234349968009979,
+     "p_sector": [
+      2.366136431483599e-60,
+      0.12884811745489222,
+      0.04958025733596197,
+      0.13234349968009979,
+      0.17630954520677017,
+      0.2842238223515,
+      0.1739656710044267,
+      2.922199153940018e-59,
+      1.365852197507029e-59,
+      8.910971225796958e-60,
+      7.923180065495877e-60,
+      3.216414671385725e-59,
+      3.384088542745018e-59,
+      0.004881553859510845,
+      0.007975446471445439,
+      0.004947324008831657,
+      2.650880614948682e-61,
+      0.015309255897102619,
+      0.005890942467717216,
+      0.015724564261717415
+     ],
+     "sector_mass": 0.9999999999999761,
+     "p_reference_matches_manifest": true,
+     "seconds": 3.2303500175476074
+    },
+    "B1_ref07_k1": {
+     "id": "B1_ref07_k1",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 407,
+      "n_rz": 471,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 583,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 407,
+       "Rz": 471,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 1.3322676295501878e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 5.330955115613788e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1130,
+       "n_rounded_gates": 178,
+       "max_abs_delta": 3.3306690738754696e-15,
+       "sum_abs_delta": 9.880984919163893e-14,
+       "unit": "half-turns",
+       "state_bound_B": 1.552101481613841e-13,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 178,
+       "max_abs_delta": 3.3306690738754696e-15,
+       "sum_abs_delta": 9.880984919163893e-14,
+       "state_bound_B": 1.552101481613841e-13
+      },
+      "segment_residual_raw": 5.94842725360157e-15,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 2.591065212209333e-14,
+      "l2_dpsi": 3.461323509836868e-14,
+      "one_minus_overlap": 2.353672812205332e-14,
+      "phase_rad": -1.6942003355780288e-13
+     },
+     "leakage": 2.375877272697835e-14,
+     "original_ir_leakage": 2.3092638912203256e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 1.970941591295672e-14,
+      "l2_dpsi": 2.807093766699756e-14,
+      "one_minus_overlap": 2.220446049250313e-14,
+      "phase_rad": -2.1457633300381285
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.8890601304523617,
+     "p_sector": [
+      0.8890601304523617,
+      0.0006623429137922874,
+      0.0007010828468400902,
+      2.0913920844084165e-06,
+      3.7487499715075894e-05,
+      3.641040941649236e-05,
+      3.3793556333229767e-06,
+      0.04878466833641609,
+      0.0013339811190680834,
+      0.00012381065419786254,
+      0.050153652161647806,
+      0.001409627028320304,
+      8.408709836076759e-05,
+      0.001368921180994229,
+      3.847513018892795e-05,
+      3.847698670247465e-05,
+      0.006150856008127447,
+      4.582340104113154e-06,
+      5.386487324657445e-06,
+      5.505986801781479e-07
+     ],
+     "sector_mass": 0.9999999999999764,
+     "p_reference_matches_manifest": true,
+     "seconds": 4.327744245529175
+    },
+    "B1_ref07_k2": {
+     "id": "B1_ref07_k2",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 408,
+      "n_rz": 472,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 584,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 408,
+       "Rz": 472,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 1.7763568394002505e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 6.417242744580076e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1132,
+       "n_rounded_gates": 175,
+       "max_abs_delta": 2.6645352591003757e-15,
+       "sum_abs_delta": 7.682743330406083e-14,
+       "unit": "half-turns",
+       "state_bound_B": 1.2068025003109865e-13,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 175,
+       "max_abs_delta": 2.6645352591003757e-15,
+       "sum_abs_delta": 7.682743330406083e-14,
+       "state_bound_B": 1.2068025003109865e-13
+      },
+      "segment_residual_raw": 6.406669881832587e-15,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 3.832086441083001e-14,
+      "l2_dpsi": 4.302898263095585e-14,
+      "one_minus_overlap": 1.9095836023552692e-14,
+      "phase_rad": -8.848477506262667e-14
+     },
+     "leakage": 2.142730437526552e-14,
+     "original_ir_leakage": 1.709743457922741e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 3.727707103959172e-14,
+      "l2_dpsi": 4.2912360765242e-14,
+      "one_minus_overlap": 2.19824158875781e-14,
+      "phase_rad": -1.1499340064867158
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.6207921537366377,
+     "p_sector": [
+      0.6207921537366377,
+      0.007001331850647127,
+      0.008965814177397476,
+      0.0004034673912903888,
+      0.0017549649293249023,
+      0.0015314298038009379,
+      0.0002910584977464456,
+      0.13462255146288263,
+      0.014420485193578164,
+      0.002740709856110175,
+      0.1506296563126626,
+      0.017994771128531536,
+      0.0009313699952712567,
+      0.015996600802044094,
+      0.001911012594158514,
+      0.0019125590951462317,
+      0.017419703074338044,
+      0.00019646047590820377,
+      0.00036208143480311494,
+      0.00012181818769903048
+     ],
+     "sector_mass": 0.9999999999999785,
+     "p_reference_matches_manifest": true,
+     "seconds": 3.3087058067321777
+    },
+    "B1_ref07_k3": {
+     "id": "B1_ref07_k3",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 413,
+      "n_rz": 471,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 587,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 413,
+       "Rz": 471,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 2.6645352591003757e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 8.013626399180835e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1136,
+       "n_rounded_gates": 148,
+       "max_abs_delta": 2.220446049250313e-15,
+       "sum_abs_delta": 4.8405723873656825e-14,
+       "unit": "half-turns",
+       "state_bound_B": 7.603553325658817e-14,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 148,
+       "max_abs_delta": 2.220446049250313e-15,
+       "sum_abs_delta": 4.8405723873656825e-14,
+       "state_bound_B": 7.603553325658817e-14
+      },
+      "segment_residual_raw": 8.456420207547877e-15,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 1.898438708908197e-14,
+      "l2_dpsi": 2.634510508998346e-14,
+      "one_minus_overlap": 2.0650148258027912e-14,
+      "phase_rad": -1.8201672807860823e-13
+     },
+     "leakage": 1.942890293094024e-14,
+     "original_ir_leakage": 2.1760371282653068e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 1.9222614783898032e-14,
+      "l2_dpsi": 2.490565501647755e-14,
+      "one_minus_overlap": 2.353672812205332e-14,
+      "phase_rad": 2.987487970654662
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.33346629784918835,
+     "p_sector": [
+      0.33346629784918835,
+      0.017349581395428627,
+      0.0323536760964852,
+      0.006602002892927687,
+      0.01246371267805097,
+      0.008514423820538223,
+      0.003189319135294296,
+      0.15946077042245854,
+      0.03732817330617439,
+      0.013982326921968853,
+      0.2067494866590597,
+      0.061613929288049436,
+      0.002496584328993053,
+      0.04715882397070782,
+      0.014053918548442618,
+      0.014115750261949802,
+      0.021553157007451768,
+      0.0011213674492477567,
+      0.004045561803099185,
+      0.0023811361644642415
+     ],
+     "sector_mass": 0.9999999999999805,
+     "p_reference_matches_manifest": true,
+     "seconds": 3.1284639835357666
+    },
+    "B1_ref07_k4": {
+     "id": "B1_ref07_k4",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 252,
+     "native": true,
+     "counts": {
+      "n_phasedx": 406,
+      "n_rz": 471,
+      "n_zz": 252,
+      "n_zzphase": 252,
+      "n_zzmax": 0,
+      "n_meas": 12,
+      "n_qubits": 12,
+      "depth": 585,
+      "depth_2q": 201,
+      "ops": {
+       "Measure": 12,
+       "PhasedX": 406,
+       "Rz": 471,
+       "ZZPhase": 252
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": true,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.9968028886505635e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.88971460488597e-15,
+       "segments_compared": 516,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 1129,
+       "n_rounded_gates": 155,
+       "max_abs_delta": 3.9968028886505635e-15,
+       "sum_abs_delta": 6.250555628639631e-14,
+       "unit": "half-turns",
+       "state_bound_B": 9.818349821894299e-14,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": true
+      },
+      "rounding": {
+       "n_rounded_gates": 155,
+       "max_abs_delta": 3.9968028886505635e-15,
+       "sum_abs_delta": 6.250555628639631e-14,
+       "state_bound_B": 9.818349821894299e-14
+      },
+      "segment_residual_raw": 7.666281417735415e-15,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 252,
+      "n_rzz_native": 252
+     },
+     "state_vs_original_ir": {
+      "max_abs_dpsi": 1.5322385011892584e-14,
+      "l2_dpsi": 3.03832489400806e-14,
+      "one_minus_overlap": 2.2315482794965646e-14,
+      "phase_rad": -2.167155344068354e-13
+     },
+     "leakage": 2.4313884239290928e-14,
+     "original_ir_leakage": 2.0095036745715333e-14,
+     "json_round_trip_max_abs_dpsi_raw": 0.0,
+     "qasm_vs_json": {
+      "max_abs_dpsi": 1.5671064435979332e-14,
+      "l2_dpsi": 3.062721916991853e-14,
+      "one_minus_overlap": 2.4202861936828413e-14,
+      "phase_rad": 0.8417246406163951
+     },
+     "qasm_counts_equal": true,
+     "p_reference": 0.13234349968010092,
+     "p_sector": [
+      0.13234349968010092,
+      0.019078291294094128,
+      0.06627433023335473,
+      0.03698841083594933,
+      0.03975178585967702,
+      0.016915955853258707,
+      0.011528487543248651,
+      0.109368227736285,
+      0.044553118999203244,
+      0.0303636449427259,
+      0.1770227384409909,
+      0.10907948695849164,
+      0.0030689209608500754,
+      0.06721210311997719,
+      0.041415367259004805,
+      0.04205615077370042,
+      0.015724564261717547,
+      0.0022668118810738763,
+      0.019233873898209103,
+      0.015754229468062462
+     ],
+     "sector_mass": 0.9999999999999757,
+     "p_reference_matches_manifest": true,
+     "seconds": 3.943922519683838
+    }
+   },
+   "calibration": {
+    "CAL_zeros": {
+     "qasm_sha256_ok": true,
+     "expected_int": 0,
+     "statevector_argmax_int": 0,
+     "ok": true
+    },
+    "CAL_x0": {
+     "qasm_sha256_ok": true,
+     "expected_int": 1,
+     "statevector_argmax_int": 1,
+     "ok": true
+    }
+   },
+   "endianness": {
+    "key_statevector": 1,
+    "key_backendresult": 1,
+    "key_qiskit_reader": 1,
+    "measure_map": {
+     "1": 1,
+     "2": 2,
+     "0": 0
+    },
+    "convention": "pytket BackendResult.get_counts(): 'Toggle between ILO (increasing lexicographic order of bit ids) and DLO (decreasing lexicographic order) for column ordering if cbits is None. Defaults to BasisOrder.ilo.' (pytket 2.18.4 docstring); tuple index k = c[k] = qubit k",
+    "ok": true
+   },
+   "index_sha256": "4aa46e823fef92bbb8ef69cd46ba311022c485b92e683b1c8d7de8a37653cadd",
+   "versions": {
+    "pytket": "2.18.4",
+    "pytket-quantinuum": "0.59.3",
+    "pytket-qiskit": "0.78.0",
+    "qnexus": "0.51.0",
+    "quantinuum-schemas": "7.8.2"
+   },
+   "python": "/home/digimonk/.local/share/su2qc-quantinuum/venv/bin/python",
+   "runtime_s": 64.28933191299438,
+   "statevector_engine": "circuits_qiskit.statevector (qiskit.quantum_info, exact)",
+   "stage": "verify",
+   "created": "2026-10-13 18:44:38 UTC"
+  }
+ },
+ "runtime_s": 67.50704383850098,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.2",
+  "scipy": "1.18.0",
+  "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+  "cpu_count": 12,
+  "git_commit": "e3997bc",
+  "timestamp": "2026-10-13 12:44:38 MDT"
+ }
+}

@@ -19,7 +19,7 @@ EXPECTED = ["C1_IDEAL", "C2_CAL", "C2_GATE", "C2_ECHO", "C2_STAR", "C2_XY4", "C2
 
 
 SLOTS = [f"C4_PART_{i:02d}" for i in range(1, 21)]      # prompts/33a step D1: appended after the 33
-LATER = ["QV_2x4"]                                       # prompts/35 3.1(g): appended after the 53
+LATER = [f"QV_2x4_K{k}" for k in (1, 2, 3, 4)]           # prompts/35 3.1(g) + 35a R1: appended after the 53
 
 
 def test_table_is_complete_and_in_the_order_of_section_1_5():
@@ -96,17 +96,20 @@ def test_seed_rule_is_disjoint():
 
 
 def test_qv_2x4_appended_without_moving_any_campaign_token():
-    """prompts/35 3.9: the QV_2x4 append keeps every campaign-33 token index (hence base seed) unchanged."""
+    """prompts/35 3.9 + 35a R1: the QV_2x4_K1..K4 append keeps every campaign-33 token index (hence base seed)."""
     tok = T.load_tokens()
     for i, t in enumerate(EXPECTED + SLOTS):
         assert T.token_index(t, tok) == i and T.base_seed(t, tok) == T.BASE_SEED + T.SEED_PER_TOKEN * i
-    assert T.token_index("C4_PART_20", tok) == 52 and T.token_index("QV_2x4", tok) == 53
-    v = tok["QV_2x4"]
-    assert v["script"] == "scripts/quantinuum_lattice_tests.py" and v["args"] == ["--lattice", "4", "--tier", "gpu-verify"]
-    assert (v["class"], v["walltime"], v["gpus"], v["env"]) == (3, "01:00:00", 1, "skqd")
-    assert v["estimate_minutes"] * 60 < T.walltime_seconds(v["walltime"])
-    assert "QV_2x4" not in T.campaign_tokens() and "QV_2x4" not in T.slot_tokens()
-    assert open(os.path.join(ROOT, "ci", "allowed_jobs.q35")).read() == "QV_2x4      01:00:00 1\n"
+    assert T.token_index("C4_PART_20", tok) == 52
+    for j, t in enumerate(LATER):
+        assert T.token_index(t, tok) == 53 + j
+        v = tok[t]
+        assert v["script"] == "scripts/quantinuum_lattice_tests.py"
+        assert v["args"] == ["--lattice", "4", "--tier", "gpu-verify", "--k", str(j + 1)]
+        assert (v["class"], v["walltime"], v["gpus"], v["env"]) == (3, "01:00:00", 1, "skqd")
+        assert 0 < v["estimate_minutes"] * 60 < T.walltime_seconds(v["walltime"])
+        assert t not in T.campaign_tokens() and t not in T.slot_tokens()
+    assert open(os.path.join(ROOT, "ci", "allowed_jobs.q35")).read() == "".join(f"{t}   01:00:00 1\n" for t in LATER)
     import run_gate
-    assert run_gate.resolve("QV_2x4") == (os.path.join(ROOT, "scripts", "quantinuum_lattice_tests.py"),
-                                          ["--lattice", "4", "--tier", "gpu-verify"])
+    assert run_gate.resolve("QV_2x4_K3") == (os.path.join(ROOT, "scripts", "quantinuum_lattice_tests.py"),
+                                             ["--lattice", "4", "--tier", "gpu-verify", "--k", "3"])

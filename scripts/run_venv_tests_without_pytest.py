@@ -23,7 +23,9 @@ class _Mark:
     @staticmethod
     def skipif(cond, reason=""):
         def deco(f):
-            f.__skip__ = (bool(cond), reason)
+            prev = getattr(f, "__skip__", (False, ""))
+            if not prev[0]:                       # stacked skipifs: any true condition skips
+                f.__skip__ = (bool(cond), reason)
             return f
         return deco
 

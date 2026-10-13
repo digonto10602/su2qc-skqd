@@ -1540,19 +1540,15 @@ L_TITLE = {2: "signed 2x2 circuits compiled to the Quantinuum native gate set, v
               "equivalence and costed (prompts/35 T1)"}
 L_WHAT_2 = "compiled to the Quantinuum native set, verified exactly, costed; not a device statement"
 L_WHAT_4 = ("every built 2x4 circuit is proven equal to its IR by local equivalence (Q1L); the statevector check "
-            "(Q1S) was reached on {n} of {N} circuits on the laptop and is the deferred GPU token QV_2x4 for the "
+            "(Q1S) was reached on {n} of {N} circuits on the laptop and is the deferred GPU tokens QV_2x4_K1..K4 for the "
             "rest; not a device statement; no Quantinuum device can run these circuits at the signed clean-shot "
             "fraction (Q5)")
 Q1S_CAP_S = 1800.0                           # prompts/35 3.3: 30 min per circuit
 Q1S_MEM_BYTES = 24 * 2 ** 30                 # address-space cap of one sparse child (62 GiB machine)
 F_MEAN_SIGNED, F_WORST_SIGNED = 0.10, 0.05   # the signed bars (quantinuum_device_table F_MEAN_MIN / F_WORST_MIN)
-Q2_NOTE = ("prompts/35 Q2 as written asks rzz_before(k) = k x rzz_before(k = 1) 'the coarse step is repeated, "
-           "h0_build_circuits.repeated_coarse_step'.  The signed family is gate_S2D.circuit_set(L) = "
-           "CircuitFactory.coarse_step(r, k, dt) (src/skqd/circuits_ir.py L898): ONE coarse step at the angle "
-           "theta = k dt, the same gate skeleton for every k (krylov.ideal_sector_distribution, repetitions = 1; the "
-           "2x3 family has rzz 2158 on all 44, validation/Q0P_2x3.json Q2).  The executor evaluates Q2 on the "
-           "family's construction -- rzz_before(k) = rzz_before(k = 1) for every reference -- and records the "
-           "as-written relation separately (it is false by construction); planner to ratify")
+Q2_NOTE = ("prompts/35a R1: gate_S2D.circuit_set(L) = CircuitFactory.coarse_step(r, k, dt) (src/skqd/circuits_ir.py "
+           "L898) is ONE coarse step at the angle k dt, the same skeleton for every k, so rzz_before is equal to the family's "
+           "k = 1 value on every circuit (per reference and across references, as at 2x3: validation/Q0P_2x3.json Q2)")
 
 
 def L_circ(lat):
@@ -1636,8 +1632,7 @@ def verify_one_L(cid):
     ir, nn, qmap = qn.pytket_to_ir(c)
     out["measure_map_identity"] = qmap == {q: q for q in range(n)}
     out["implicit_permutation_identity"] = all(a == b for a, b in c.implicit_qubit_permutation().items())
-    out["Q1L"] = qn.local_equivalence(ir_t, c, n, tol=Q3_RT)
-    out["Q1L_parts"] = {"ir_vs_pytket_input": qn.local_equivalence(ir_t, qn.ir_to_pytket(ir_t, n, True), n, tol=Q3_RT)}
+    out["Q1L"] = qn.local_equivalence_35a(ir_t, c, n)        # prompts/35a R2 (2x2: information next to Q1)
     if lat == 2:
         emb = _G["emb"]
         ref = cq.statevector(gates, n)                       # exact (qiskit.quantum_info), 12 qubits
@@ -1663,8 +1658,8 @@ def verify_one_L(cid):
         if int(k) == 1:                                       # Q3 at 2x4: gz -> text -> circuit -> Q1L again
             c2 = qn.from_json(json.loads(json.dumps(qn.to_json(c))))
             cq_ = qn.from_qasm(qasm)
-            out["json_round_trip_Q1L"] = qn.local_equivalence(ir_t, c2, n, tol=Q3_RT)
-            out["qasm_round_trip_Q1L"] = qn.local_equivalence(ir_t, cq_, n, tol=Q3_RT)
+            out["json_round_trip_Q1L"] = qn.local_equivalence_35a(ir_t, c2, n)
+            out["qasm_round_trip_Q1L"] = qn.local_equivalence_35a(ir_t, cq_, n)
             out["qasm_vs_frozen_Q1L"] = qn.local_equivalence(ir, cq_, n, tol=Q3_RT)
             out["qasm_counts_equal"] = qn.native_counts(cq_)["ops"] == out["counts"]["ops"]
     out["seconds"] = time.time() - t0
@@ -1713,7 +1708,8 @@ def stage_verify_L(args):
         for rec in pool.imap_unordered(verify_one_L, todo):
             per[rec["id"]] = rec
             msg = (f"dpsi {rec['state_vs_original_ir']['max_abs_dpsi']:.1e}, " if lat == 2 else "")
-            print(f"  {rec['id']}: {msg}Q1L {rec['Q1L']['ok']} (segments {rec['Q1L']['segments_max_residual']}) "
+            print(f"  {rec['id']}: {msg}Q1L {rec['Q1L']['ok']} (B {rec['Q1L']['rounding']['state_bound_B']}, segments "
+                  f"{rec['Q1L']['ii_segments_vs_readback']['segments_max_residual']}) "
                   f"[{time.time() - t0:.0f} s]", flush=True)
             if lat == 4:                                      # resumable: save after every circuit
                 lsave(lat, "verify", dict(prev, per_circuit=per))
@@ -1728,7 +1724,7 @@ def stage_verify_L(args):
             "versions": qn.versions(), "python": sys.executable,
             "runtime_s": (prev.get("runtime_s", 0.0) if args.only else 0.0) + time.time() - t0,
             "statevector_engine": ("circuits_qiskit.statevector (qiskit.quantum_info, exact)" if lat == 2 else
-                                   "none (R2): Q1L = quantinuum_native.local_equivalence; Q1S in --stage q1s")}
+                                   "none (R2): Q1L = quantinuum_native.local_equivalence_35a; Q1S in --stage q1s")}
     lsave(lat, "verify", frag)
     return assemble_L(lat)
 
@@ -1997,7 +1993,11 @@ def assemble_L(lat):
             worst = max(per, key=lambda c: per[c]["state_vs_original_ir"]["max_abs_dpsi"])
             build_dpsi = max(m["levels"][str(m["frozen_level"])]["state_vs_original_ir"]["max_abs_dpsi"] for m in mans.values())
             cal_ok = all(v["ok"] for v in V["calibration"].values()) and len(V["calibration"]) == 2
-            q1l_info = max(v["Q1L"]["segments_max_residual"] or 0.0 for v in per.values())
+            q1l_info = {"max_state_bound_B": max(v["Q1L"]["rounding"]["state_bound_B"] or 0.0 for v in per.values()),
+                        "max_rounded_gates": max(v["Q1L"]["rounding"]["n_rounded_gates"] for v in per.values()),
+                        "max_segment_residual_vs_readback": max(v["Q1L"]["ii_segments_vs_readback"]["segments_max_residual"] or 0.0
+                                                                for v in per.values()),
+                        "rounding_per_circuit": {c: v["Q1L"]["rounding"] for c, v in per.items()}}
             q1 = (len(per) == L_N[lat] and dpsi < Q1_DPSI and leak < Q1_LEAK and okmap and build_dpsi < Q1_DPSI and cal_ok)
             R.add("Q1 28 + 2 frozen native circuits exact: max abs(dpsi) (global phase removed) vs the pre-conversion IR "
                   "statevector, leakage, q[k]->c[k], identity permutation, native op set; the 2 calibration circuits give "
@@ -2007,76 +2007,88 @@ def assemble_L(lat):
                   f"28; < {Q1_DPSI:g}; < {Q1_LEAK:g}; identity", q1)
             data["Q1"] = {"max_abs_dpsi": dpsi, "worst_id": worst, "max_leakage": leak, "build_max_abs_dpsi": build_dpsi,
                           "maps_ok": okmap, "calibration": V["calibration"],
-                          "Q1L_information_segments_max": q1l_info,
+                          "Q1L_35a_information": q1l_info, "rounding_note": "prompts/35a R2: the rounding block is information at 2x2",
                           "Q1L_information_all_ok": all(v["Q1L"]["ok"] for v in per.values())}
         else:
             R.add("Q1 frozen circuits exact", "verify stage not run", "run --stage verify", False)
     else:
         if V:
             q1l = {c: v["Q1L"] for c, v in per.items()}
-            seg = max((v["segments_max_residual"] if v["segments_max_residual"] is not None else float("inf"))
-                      for v in q1l.values()) if q1l else None
-            build_ok = all(m["Q1L"]["ok"] for m in mans.values())
             okmap = all(v["native"] and v["Q1L"]["measure_map_identity"] and v["Q1L"]["implicit_permutation_identity"]
                         for v in per.values())
             fails = sorted(c for c, v in q1l.items() if not v["ok"])
             cal_ok = all(v["ok"] for v in V["calibration"].values()) and len(V["calibration"]) == 2
-            q1 = (len(per) == nbuilt and not fails and build_ok and okmap and cal_ok and nbuilt > 0)
-            writer = max(v["Q1L_parts"]["ir_vs_pytket_input"]["segments_max_residual"] or 0.0 for v in per.values())
-            R.add("Q1L every built circuit proven equal to its transpiled IR by local equivalence (per-qubit rzz skeleton, "
-                  "one-qubit segment products to 1e-12 up to phase, q[k]->c[k], identity permutation, native op set), "
-                  "recomputed from the frozen files and at build",
-                  f"{len(per)} of {nbuilt} built ({L_N[lat]} planned); failures {fails or 'none'}; max segment residual "
-                  f"{seg:.2e} (of which the IR -> pytket writer alone {writer:.2e}); build Q1L {'all ok' if build_ok else 'NOT ok'}; "
-                  f"maps/op set {'ok' if okmap else 'NOT ok'}; calibration {'ok' if cal_ok else 'NOT ok'}",
-                  f"all built; < {Q3_RT:g}; identity", q1)
-            data["Q1L"] = {"per_circuit": {c: {k: v[k] for k in ("ok", "segments_max_residual", "skeleton_per_qubit_identical",
-                                                                 "skeleton_global_order_identical", "first_difference",
-                                                                 "n_rzz_ir", "n_rzz_native")} for c, v in q1l.items()},
-                           "max_segment_residual": seg, "writer_max_segment_residual": writer, "failures": fails,
+            max2q = max(v["i_skeleton"]["max_abs_delta_2q_half_turns"] for v in q1l.values())
+            seg = max((v["ii_segments_vs_readback"]["segments_max_residual"]
+                       if v["ii_segments_vs_readback"]["segments_max_residual"] is not None else float("inf"))
+                      for v in q1l.values())
+            Bmax = max((v["rounding"]["state_bound_B"] if v["rounding"]["state_bound_B"] is not None else float("inf"))
+                       for v in q1l.values())
+            nround = max(v["rounding"]["n_rounded_gates"] for v in q1l.values())
+            raw = max(v["segment_residual_raw"] or 0.0 for v in q1l.values())
+            q1 = (len(per) == nbuilt and not fails and okmap and cal_ok and nbuilt > 0)
+            R.add("Q1L (prompts/35a R2) on every built circuit, recomputed from the frozen files: (i) per-qubit two-qubit "
+                  "skeleton identical, two-qubit angles within 1e-11 half-turns; (ii) one-qubit segment products to 1e-12 "
+                  "against the IR with pytket's stored angles; (iii) rounding bound B < 1e-10; q[k]->c[k], identity "
+                  "permutation, native op set",
+                  f"{len(per)} of {nbuilt} built ({L_N[lat]} planned); failures {fails or 'none'}; (i) max 2q delta "
+                  f"{max2q:.1e} half-turns; (ii) max segment residual {seg:.2e}; (iii) max B {Bmax:.2e} (at most {nround} "
+                  f"rounded gates per circuit); raw prompts/35 residual {raw:.2e} (information); maps/op set "
+                  f"{'ok' if okmap else 'NOT ok'}; calibration {'ok' if cal_ok else 'NOT ok'}",
+                  "all built; <= 1e-11; < 1e-12; < 1e-10; identity", q1)
+            data["Q1L"] = {"per_circuit": {c: {"ok": v["ok"], "i_max_abs_delta_2q_half_turns": v["i_skeleton"]["max_abs_delta_2q_half_turns"],
+                                               "ii_segments_max_residual": v["ii_segments_vs_readback"]["segments_max_residual"],
+                                               "rounding": v["rounding"], "segment_residual_raw": v["segment_residual_raw"],
+                                               "n_rzz_ir": v["n_rzz_ir"], "n_rzz_native": v["n_rzz_native"]}
+                                           for c, v in q1l.items()},
+                           "max_2q_delta_half_turns": max2q, "max_segment_residual_vs_readback": seg, "max_state_bound_B": Bmax,
+                           "max_segment_residual_raw": raw, "failures": fails, "rule": "prompts/35a R2",
                            "compile_modes": sorted({m.get("compile_mode", "level0") for m in mans.values()}),
-                           "what_it_proves": ("native circuit == the IR after the prototype transpile (qiskit opt 3, "
-                                              "seed 7); the transpile itself is verified by statevector at 2x2 (Q0P_2x2 "
-                                              "Q1) and 2x3 (Q0P_2x3 Q1) and at 2x4 only through Q1S / QV_2x4"),
-                           "snapping_note": ("pytket stores any parameter within < 1e-11 half-turns of a multiple of "
-                                             "1/4 as that multiple (measured on pytket 2.18.4: Circuit.Rz(0.5 + 3e-12) "
-                                             "reads back 0.5); the IR -> pytket writer residual above is that rounding")}
+                           "what_it_proves": ("native circuit == the IR after the prototype transpile (qiskit opt 3, seed 7) up "
+                                              "to pytket's angle canonicalisation, whose effect on the state is bounded by B; "
+                                              "the transpile itself is verified by statevector at 2x2 (Q0P_2x2 Q1) and 2x3 "
+                                              "(Q0P_2x3 Q1) and at 2x4 only through Q1S / QV_2x4_K1..K4")}
         else:
             R.add("Q1L local equivalence", "verify stage not run", "run --stage verify", False)
         sp = (S or {}).get("per_circuit", {})
         verified = sorted(c for c, v in sp.items() if v.get("state_verified"))
         bad = sorted(c for c, v in sp.items() if v.get("state_verified") and not v.get("ok"))
         deferred = sorted(c for c in mans if c not in verified)
+        cons = {c: {"max_abs_dpsi": sp[c]["max_abs_dpsi"], "B": per[c]["Q1L"]["rounding"]["state_bound_B"],
+                    "consistent": sp[c]["max_abs_dpsi"] <= (per[c]["Q1L"]["rounding"]["state_bound_B"] or 0.0) + 1e-12}
+                for c in verified if c in per}
         q1s = bool(S) and not bad
         dmax = max((sp[c]["max_abs_dpsi"] for c in verified), default=None)
         lmax = max((sp[c]["leakage"] for c in verified), default=None)
         R.add("Q1S recorded per circuit: the sparse statevector of the native circuit vs the exact coarse state "
-              "(state_verified_ids / deferred_ids; a verified circuit must meet max abs(dpsi) < 1e-10, leakage < 1e-9)",
-              f"verified {len(verified)} of {nbuilt}" + (f" (max abs(dpsi) {dmax:.2e}, leakage {lmax:.2e})" if verified else "")
-              + f"; deferred {len(deferred)} (QV_2x4 for the k = 1, Q1L for k >= 2); failing {bad or 'none'}",
+              "(state_verified_ids / deferred_ids; a verified circuit must meet max abs(dpsi) < 1e-10, leakage < 1e-9; "
+              "consistency max abs(dpsi) <= B + 1e-12 recorded, prompts/35a R2)",
+              f"verified {len(verified)} of {nbuilt}" + (f" (max abs(dpsi) {dmax:.2e}, leakage {lmax:.2e}; consistent with B "
+                                                         f"{sum(v['consistent'] for v in cons.values())} of {len(cons)})"
+                                                         if verified else "")
+              + f"; deferred {len(deferred)} (QV_2x4_K1..K4 on the GPU); failing {bad or 'none'}",
               "recorded; verified ones < 1e-10 / < 1e-9", q1s)
-        data["Q1S"] = {"state_verified_ids": verified, "deferred_ids": deferred, "failing_ids": bad,
-                       "per_circuit": sp, "cap_s": (S or {}).get("cap_s"), "deferred_to": "QV_2x4 (k = 1); Q1L only for k >= 2"}
+        data["Q1S"] = {"state_verified_ids": verified, "deferred_ids": deferred, "failing_ids": bad, "consistency_with_B": cons,
+                       "per_circuit": sp, "cap_s": (S or {}).get("cap_s"), "deferred_to": "QV_2x4_K1..K4 (prompts/35a R1)"}
     # ---- Q2
     rzz_b = {c: int(m["counts"]["rzz_before"]) for c, m in mans.items()}
     rzz_v = {c: v["rzz_before_compilation"] for c, v in per.items()}
     frozen_zz = {c: m["counts"]["n_zz"] for c, m in mans.items()}
     k1 = {(m["twoB"], m["reference"]): rzz_b[c] for c, m in mans.items() if int(m["k"]) == 1}
     same_as_k1 = {c: (rzz_b[c] == k1.get((m["twoB"], m["reference"]))) for c, m in mans.items()}
-    k_times = {c: (rzz_b[c] == int(m["k"]) * k1.get((m["twoB"], m["reference"]), -1)) for c, m in mans.items()}
+    family_k1 = sorted(set(k1.values()))
     levels = {c: {L: v["counts"]["n_zz"] for L, v in m["levels"].items() if "counts" in v} for c, m in mans.items()}
-    q2 = (len(rzz_b) == nbuilt and all(same_as_k1.values()) and all(rzz_v.get(c) == rzz_b[c] for c in rzz_b)
+    q2 = (len(rzz_b) == nbuilt and all(same_as_k1.values()) and len(family_k1) == 1 and len(set(rzz_b.values())) == 1
+          and all(rzz_v.get(c) == rzz_b[c] for c in rzz_b)
           and all(frozen_zz[c] <= rzz_b[c] for c in rzz_b) and bool(V) and all(levels[c] for c in levels))
-    R.add("Q2 rzz_before recorded on every circuit (build and re-transpiled) and equal for k = 1..4 of a reference "
-          "(the family is one coarse step at angle k dt -- see data.Q2.note); frozen ZZ <= rzz_before; ZZ per level recorded",
+    R.add("Q2 rzz_before recorded on every circuit (build and re-transpiled) and equal to the family's k = 1 value on "
+          "every circuit, per reference and across references (prompts/35a R1); frozen ZZ <= rzz_before; ZZ per level recorded",
           f"rzz_before {sorted(set(rzz_b.values()))} (verify {sorted(set(rzz_v.values())) or 'n/a'}); equal to the k = 1 "
-          f"value: {sum(same_as_k1.values())} of {len(same_as_k1)}; as written (k x the k = 1 value): "
-          f"{sum(k_times.values())} of {len(k_times)}; frozen ZZ {sorted(set(frozen_zz.values()))}; ZZ by level "
+          f"value of its reference: {sum(same_as_k1.values())} of {len(same_as_k1)}; family k = 1 values {family_k1}; frozen ZZ {sorted(set(frozen_zz.values()))}; ZZ by level "
           f"{ {L: sorted({v[L] for v in levels.values() if L in v}) for L in sorted({L for v in levels.values() for L in v})} }",
           "recorded; = the k = 1 value; <= rzz_before", q2)
     data["Q2"] = {"rzz_before_build": rzz_b, "rzz_before_verify": rzz_v, "frozen_zz": frozen_zz, "zz_by_level": levels,
-                  "equal_to_k1": same_as_k1, "as_written_k_times_k1": k_times,
-                  "as_written_holds": all(k_times.values()), "note": Q2_NOTE}
+                  "equal_to_k1": same_as_k1, "family_k1_values": family_k1, "note": Q2_NOTE}
     # ---- Q3
     if V:
         sha_ok = all(v["qasm_sha256_ok"] and v["json_sha256_ok"] for v in per.values())
@@ -2098,8 +2110,9 @@ def assemble_L(lat):
             k1v = {c: v for c, v in per.items() if v.get("round_trips_checked")}
             rt_ok = all(v["json_round_trip_Q1L"]["ok"] and v["qasm_round_trip_Q1L"]["ok"] and v["qasm_counts_equal"]
                         for v in k1v.values())
-            rt_max = max([max(v["json_round_trip_Q1L"]["segments_max_residual"] or 0.0,
-                              v["qasm_round_trip_Q1L"]["segments_max_residual"] or 0.0) for v in k1v.values()] or [0.0])
+            rt_max = max([max(v["json_round_trip_Q1L"]["ii_segments_vs_readback"]["segments_max_residual"] or 0.0,
+                              v["qasm_round_trip_Q1L"]["ii_segments_vs_readback"]["segments_max_residual"] or 0.0)
+                          for v in k1v.values()] or [0.0])
             qf = max([v["qasm_vs_frozen_Q1L"]["segments_max_residual"] or 0.0 for v in k1v.values()] or [0.0])
             n_k1 = sum(1 for m in mans.values() if int(m["k"]) == 1)
             q3 = rt_ok and sha_ok and cnt_ok and en["ok"] and len(k1v) == n_k1 and n_k1 > 0
@@ -2109,8 +2122,8 @@ def assemble_L(lat):
                   f"{rt_max:.2e}; QASM vs frozen {qf:.2e}); sha256 {'ok' if sha_ok else 'MISMATCH'} on {len(per)}; counts "
                   f"{'equal' if cnt_ok else 'DIFFER'}; keys {en['key_statevector']}/{en['key_backendresult']}/{en['key_qiskit_reader']}",
                   f"all k = 1; < {Q3_RT:g}; ok; key 1", q3)
-            data["Q3"] = {"k1_round_trips": {c: {"json": v["json_round_trip_Q1L"]["segments_max_residual"],
-                                                 "qasm": v["qasm_round_trip_Q1L"]["segments_max_residual"],
+            data["Q3"] = {"k1_round_trips": {c: {"json": v["json_round_trip_Q1L"]["ii_segments_vs_readback"]["segments_max_residual"],
+                                                 "qasm": v["qasm_round_trip_Q1L"]["ii_segments_vs_readback"]["segments_max_residual"],
                                                  "qasm_vs_frozen": v["qasm_vs_frozen_Q1L"]["segments_max_residual"]}
                                              for c, v in k1v.items()}, "sha_ok": sha_ok, "endianness": en}
     else:
@@ -2195,7 +2208,7 @@ def report_text_L(R, D, lat):
                     fmt(s["hqc_per_shot"]["max"])]]), "",
          f"Q2 note: {D['Q2']['note']}.", ""]
     if lat == 4 and "Q1L" in D:
-        L += [f"Q1L: {D['Q1L']['what_it_proves']}.  {D['Q1L']['snapping_note']}.", ""]
+        L += [f"Q1L ({D['Q1L']['rule']}): {D['Q1L']['what_it_proves']}.  Max rounding bound B {D['Q1L']['max_state_bound_B']:.2e} against the 1e-10 state bar.", ""]
     P = D.get("Q5")
     if P:
         L += ["## Devices (gate-only f of the frozen family; memory term = ESTIMATE)", "",
@@ -2219,7 +2232,7 @@ def report_text_L(R, D, lat):
                        [[c, v.get("state_verified"), fmt(v.get("max_abs_dpsi")), fmt(v.get("leakage")), fmt(v.get("wall_s")),
                          v.get("sparse_capped_at_s") or v.get("error") or v.get("memory_capped_at_bytes") or ""]
                         for c, v in q["per_circuit"].items()]), "",
-              f"Deferred to QV_2x4 / Q1L only: {len(q['deferred_ids'])} circuits.", ""]
+              f"Deferred to QV_2x4_K1..K4: {len(q['deferred_ids'])} circuits.", ""]
     return "\n".join(L)
 
 

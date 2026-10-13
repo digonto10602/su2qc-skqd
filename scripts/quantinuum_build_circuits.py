@@ -265,9 +265,10 @@ def diagnose(pc, ir_t, ref, sv_c, emb, n):
 # =========================================================================== 2x4 (prompts/35 3.3)
 LEVELS_4 = (0,)            # level 2 is not compiled per circuit at 2x4 (cost; at 2x2/2x3 it never passes the state bar)
 SELECTION_RULE_4 = ("fewest ZZ gates among the levels that pass Q1L (local equivalence to the transpiled IR, "
-                    "quantinuum_native.local_equivalence, tol 1e-12, q[k] -> c[k], identity permutation); ties: "
+                    "quantinuum_native.local_equivalence_35a: prompts/35a R2 (i)-(iii), q[k] -> c[k], identity permutation); ties: "
                     "fewer PhasedX, then the lower level; if no level passes, the pure rebase "
-                    "AutoRebase({Rz, PhasedX, ZZPhase}) (compile_mode 'pure_rebase')")
+                    "AutoRebase({Rz, PhasedX, ZZPhase}) (compile_mode 'pure_rebase'); level 2 not attempted at 2x4 "
+                    "(prompts/35a R4)")
 DT_SOURCE_4 = ("gate_S2_2x4.dt_of(4, twoB): validation/E3.json, equal to Model(4).reference(4.0, twoB).dt to "
                "<= 4e-16 and fixed so that the build is bit-reproducible (the sparse eigensolver is not)")
 
@@ -316,7 +317,7 @@ def build_one_4(i):
         rec["compile_s"] = time.time() - tc
         rec["counts"] = qn.native_counts(cc)
         tl = time.time()
-        rec["Q1L"] = qn.local_equivalence(ir_t, cc, n, tol=RT_MAX)
+        rec["Q1L"] = qn.local_equivalence_35a(ir_t, cc, n)
         rec["Q1L_s"] = time.time() - tl
         rec["passes_Q1L"] = bool(rec["Q1L"]["ok"])
         levels[str(lvl)] = rec
@@ -330,14 +331,12 @@ def build_one_4(i):
         tc = time.time()
         cc = qn.compile_native(pc, pure_rebase=True)
         rec = {"compile_s": time.time() - tc, "counts": qn.native_counts(cc)}
-        rec["Q1L"] = qn.local_equivalence(ir_t, cc, n, tol=RT_MAX)
+        rec["Q1L"] = qn.local_equivalence_35a(ir_t, cc, n)
         rec["passes_Q1L"] = bool(rec["Q1L"]["ok"])
         levels["pure_rebase"] = rec
         frozen, mode, q1l = "pure_rebase", "pure_rebase", rec["Q1L"]
     # information (prompts/35 3.3 diagnosis): where a Q1L residual comes from -- the IR -> pytket writer
     # (pytket stores a parameter within < 1e-11 half-turns of a multiple of 1/4 as that multiple) or the compiler
-    q1l_parts = {"ir_vs_pytket_input": qn.local_equivalence(ir_t, pc, n, tol=RT_MAX),
-                 "pytket_input_vs_native": qn.local_equivalence(qn.pytket_to_ir(pc)[0], cc, n, tol=RT_MAX)}
     stop_q1l = not q1l["ok"]
     counts = dict(qn.native_counts(cc), rzz_before=int(tq.count_ops().get("rzz", 0)))
     qasm = qn.to_qasm(cc)
@@ -378,7 +377,7 @@ def build_one_4(i):
                       "rzz": int(tq.count_ops().get("rzz", 0)), "global_phase": float(tq.global_phase),
                       "state_vs_original_ir": "not computed at 2x4 (R2: no dense statevector); Q1S / QV_2x4"},
         "levels": levels, "frozen_level": frozen, "compile_mode": mode, "selection_rule": SELECTION_RULE_4,
-        "Q1L": q1l, "Q1L_parts": q1l_parts, "STOP_Q1L": bool(stop_q1l), "device_name_compiled_for": "H2-2",
+        "Q1L": q1l, "Q1L_rule": "prompts/35a R2 (quantinuum_native.local_equivalence_35a)", "STOP_Q1L": bool(stop_q1l), "device_name_compiled_for": "H2-2",
         "compile_route": ("QuantinuumBackend(device, api_handler=QuantinuumAPIOffline(), compilation_config="
                           "QuantinuumBackendCompilationConfig(allow_implicit_swaps=False, target_2qb_gate=ZZPhase, "
                           "preserve_qubit_names=True)).get_compiled_circuit(circ, optimisation_level)"),
@@ -396,11 +395,11 @@ def build_one_4(i):
     write_gz(os.path.join(OUT, cid + ".json.gz"), js_text)
     write_text(man_path, json.dumps(man, indent=1))
     if stop_q1l:
-        return cid, (f"Q1L FAILS ({mode}): segments max {q1l['segments_max_residual']}, first difference "
-                     f"{q1l['first_difference']} -- STOP (prompts/35 section 7)")
+        return cid, (f"Q1L FAILS ({mode}): {json.dumps({k: q1l[k] for k in ('i_skeleton', 'ii_segments_vs_readback', 'rounding')}, default=str)[:600]}, first difference "
+                     f"{q1l['i_skeleton']['first_difference']} -- STOP (prompts/35 section 7)")
     return cid, (f"built in {time.time() - t0:.0f} s ({mode}, ZZ {counts['n_zz']} = rzz_before "
                  f"{counts['rzz_before']}: {counts['n_zz'] == counts['rzz_before']}, PhasedX {counts['n_phasedx']}, "
-                 f"Q1L segments max {q1l['segments_max_residual']:.1e})")
+                 f"Q1L ok, B {q1l['rounding']['state_bound_B']:.1e}, raw segments {q1l['segment_residual_raw']:.1e})")
 
 
 def set_4():
@@ -439,6 +438,8 @@ def main_4(args, t0):
         from skqd.krylov import term_groups
 
         _G["groups"] = term_groups(M.terms, G2, mass_default(G2))
+        if args.level2_probe:
+            return level2_probe_4(args.level2_probe, 1800.0)
         print(f"2x4 set: {len(cset)} circuits, {len(idx)} selected (k {ks}), {emb.n} qubits, levels "
               f"{_G['levels']} ({time.time() - t0:.0f} s)", flush=True)
         import multiprocessing as mp
@@ -452,6 +453,46 @@ def main_4(args, t0):
     return 0
 
 
+def _level2_child(pc, conn):
+    t = time.time()
+    try:
+        cc = qn.compile_native(pc, "H2-2", 2)
+        conn.send({"finished": True, "compile_s": time.time() - t, "counts": qn.native_counts(cc)})
+    except Exception as exc:                      # recorded
+        conn.send({"finished": False, "error": f"{type(exc).__name__}: {str(exc)[:300]}", "compile_s": time.time() - t})
+
+
+def level2_probe_4(cid, cap_s):
+    """prompts/35 3.3 cost record: pytket level 2 on ONE 2x4 circuit in a child process with a cap; the result
+    decides whether level 2 is compiled per circuit (LEVELS_4) -> data/quantinuum/circuits_2x4/level2_probe.json."""
+    import multiprocessing as mp
+
+    from qiskit import transpile
+    i = next(j for j, c in enumerate(_G["set"]) if circuit_id(*c[:3]) == cid)
+    twoB, r, k, _ = _G["set"][i]
+    gates = _G["factory"].coarse_step(int(r), int(k), float(_G["dt"][twoB]))
+    tq = transpile(cq.ir_to_qiskit(gates, _G["n"], measure=False), **TRANSPILE)
+    pc = qn.ir_to_pytket(qn.qiskit_to_ir(tq), _G["n"], measure=True)
+    a, b = mp.get_context("fork").Pipe(duplex=False)
+    p = mp.get_context("fork").Process(target=_level2_child, args=(pc, b))
+    t0 = time.time()
+    p.start()
+    rec = a.recv() if a.poll(cap_s) else None
+    if rec is None:
+        p.kill()
+        rec = {"finished": False, "capped_at_s": cap_s}
+    p.join()
+    rec.update({"id": cid, "cap_s": cap_s, "wall_s": time.time() - t0, "device": "H2-2", "level": 2,
+                "rzz_before": int(tq.count_ops().get("rzz", 0)), "versions": qn.versions(), "git_commit": git_commit(),
+                "created": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+                "decision": ("level 2 is not compiled per 2x4 circuit (LEVELS_4 = (0,)): one compile exceeds the 30-min "
+                             "per-circuit cap of prompts/35 section 2" if not rec.get("finished") else
+                             "level 2 finishes inside the cap on this circuit")})
+    write_text(os.path.join(OUT, "level2_probe.json"), json.dumps(rec, indent=1))
+    print(f"level-2 probe {cid}: {rec}", flush=True)
+    return 0
+
+
 def write_index_4(cset, t0):
     """index.json over the BUILT circuits (prompts/35 3.3: `built_k`), sha256 of the uncompressed texts."""
     ids_all = [circuit_id(*c[:3]) for c in cset]
@@ -461,6 +502,24 @@ def write_index_4(cset, t0):
     mans = [json.load(open(os.path.join(OUT, i + ".manifest.json"))) for i in ids]
     cals = [json.load(open(os.path.join(OUT, c + ".manifest.json"))) for c in ("CAL_zeros", "CAL_x0")
             if os.path.exists(os.path.join(OUT, c + ".manifest.json"))]
+    # prompts/35a R4: every manifest records the level-2 attempt (scripted from level2_probe.json, never typed)
+    pp = os.path.join(OUT, "level2_probe.json")
+    probe = json.load(open(pp)) if os.path.exists(pp) else None
+    for m in mans:
+        if probe is None:
+            break
+        l2 = (f"capped at {probe['cap_s']:.0f} s on {probe['id']} (prompts/35a R4; attempt wall {probe['wall_s']:.0f} s)"
+              if not probe.get("finished") else f"finished in {probe['compile_s']:.0f} s on {probe['id']}")
+        la = {"0": m["levels"].get("0", {}).get("counts"), "2": l2}
+        changed = m.get("levels_attempted") != la or m.get("selection_rule") != SELECTION_RULE_4
+        m["levels_attempted"] = la
+        m["selection_rule"] = SELECTION_RULE_4
+        if "i_skeleton" not in m.get("Q1L", {}):
+            m["Q1L_rule"] = ("prompts/35 raw form at build (before prompts/35a); the restated Q1L (35a R2) is recomputed "
+                             "from the frozen files by gate_Q0P_2x3.py --lattice 4 --stage verify")
+            changed = True
+        if changed:
+            write_text(os.path.join(OUT, m["id"] + ".manifest.json"), json.dumps(m, indent=1))
     zz = [m["counts"]["n_zz"] for m in mans]
     px = [m["counts"]["n_phasedx"] for m in mans]
     hq = [m["hqc_per_shot"] for m in mans]
@@ -481,8 +540,9 @@ def write_index_4(cset, t0):
                     "n_phasedx": {"min": min(px), "max": max(px), "mean": float(np.mean(px))},
                     "hqc_per_shot": {"min": min(hq), "max": max(hq), "mean": float(np.mean(hq))},
                     "rzz_before": sorted({m["counts"]["rzz_before"] for m in mans}),
-                    "frozen_levels": sorted({str(m["frozen_level"]) for m in mans}),
+                    "frozen_levels": sorted({m["frozen_level"] for m in mans}, key=str),
                     "compile_modes": sorted({m.get("compile_mode", "level0") for m in mans})},
+        "level2_probe": probe,
         "rebuild_command": ("~/.local/share/su2qc-quantinuum/venv/bin/python scripts/quantinuum_build_circuits.py "
                             "--lattice 4 --only <id> [--out <dir>]  (deterministic at pytket 2.18.4 / qiskit 2.5.2: "
                             "the sha256 above is the check)"),
@@ -560,6 +620,8 @@ def main():
     ap.add_argument("--out", default=None, help="output directory (default data/quantinuum/circuits_2x<L>); "
                                                 "the rebuild check of an ignored 2x4 circuit writes elsewhere")
     ap.add_argument("--index-only", action="store_true", help="--lattice 4: (re)write index.json from the manifests")
+    ap.add_argument("--level2-probe", default=None, metavar="ID",
+                    help="--lattice 4: time pytket level 2 on one circuit with a 30-min cap (level2_probe.json)")
     args = ap.parse_args()
     t0 = time.time()
     lat = int(args.lattice)

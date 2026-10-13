@@ -1,0 +1,3585 @@
+{
+ "gate": "Q0P_2x4",
+ "title": "signed 2x4 circuits compiled to the Quantinuum native gate set, proven equal to their IR by local equivalence and costed (prompts/35 T1)",
+ "status": "FAIL",
+ "criteria": [
+  {
+   "name": "Q1L (prompts/35a R2) on every built circuit, recomputed from the frozen files: (i) per-qubit two-qubit skeleton identical, two-qubit angles within 1e-11 half-turns; (ii) one-qubit segment products to 1e-12 against the IR with pytket's stored angles; (iii) rounding bound B < 1e-10; q[k]->c[k], identity permutation, native op set",
+   "value": "19 of 19 built (60 planned); failures ['B0_ref102_k1', 'B0_ref102_k2', 'B0_ref11026_k1', 'B0_ref11026_k2', 'B0_ref1338_k1', 'B0_ref16833_k1', 'B0_ref16833_k2', 'B0_ref2086_k1', 'B0_ref281_k1', 'B0_ref3166_k1', 'B0_ref345_k1', 'B0_ref474_k1', 'B0_ref682_k1', 'B0_ref6930_k1', 'B0_ref6930_k2', 'B1_ref103_k1', 'B1_ref110_k1', 'B1_ref118_k1', 'B1_ref230_k1']; (i) max 2q delta 4.4e-15 half-turns; (ii) max segment residual 7.99e-15; (iii) max B 4.98e-09 (at most 67236 rounded gates per circuit); raw prompts/35 residual 8.85e-13 (information); maps/op set ok; calibration ok",
+   "threshold": "all built; <= 1e-11; < 1e-12; < 1e-10; identity",
+   "passed": false
+  },
+  {
+   "name": "Q1S recorded per circuit: the sparse statevector of the native circuit vs the exact coarse state (state_verified_ids / deferred_ids; a verified circuit must meet max abs(dpsi) < 1e-10, leakage < 1e-9; consistency max abs(dpsi) <= B + 1e-12 recorded, prompts/35a R2)",
+   "value": "verified 0 of 19; deferred 19 (QV_2x4_K1..K4 on the GPU); failing none",
+   "threshold": "recorded; verified ones < 1e-10 / < 1e-9",
+   "passed": false
+  },
+  {
+   "name": "Q2 rzz_before recorded on every circuit (build and re-transpiled) and equal to the family's k = 1 value on every circuit, per reference and across references (prompts/35a R1); frozen ZZ <= rzz_before; ZZ per level recorded",
+   "value": "rzz_before [69676] (verify [69676]); equal to the k = 1 value of its reference: 19 of 19; family k = 1 values [69676]; frozen ZZ [69676]; ZZ by level {'0': [69676], 'pure_rebase': [69676]}",
+   "threshold": "recorded; = the k = 1 value; <= rzz_before",
+   "passed": true
+  },
+  {
+   "name": "Q3 round trips on the k = 1 circuits (gz -> text -> from_json / circuit_from_qasm_str -> pytket_to_ir -> Q1L again); every file matches its sha256 (uncompressed text); endianness X on q0 -> key 1",
+   "value": "15 of 15 k = 1 circuits; JSON/QASM Q1L NOT ok (max segment residual 7.99e-15; QASM vs frozen 7.99e-15); sha256 ok on 19; counts equal; keys 1/1/1",
+   "threshold": "all k = 1; < 1e-12; ok; key 1",
+   "passed": false
+  },
+  {
+   "name": "Q5 HQC and f",
+   "value": "predict stage not run",
+   "threshold": "run --stage predict",
+   "passed": false
+  },
+  {
+   "name": "Q7 tests, pins, Q0P_2x3 reproduction, token indices",
+   "value": "not run (--stage verify --checks-only)",
+   "threshold": "all pass",
+   "passed": false
+  }
+ ],
+ "data": {
+  "prompt": "prompts/35_quantinuum_all_circuits_test.md",
+  "lattice": "2x4",
+  "qpu_seconds": 0,
+  "hqc": 0,
+  "ehqc": 0,
+  "frozen": {
+   "dir": "data/quantinuum/circuits_2x4",
+   "index_summary": {
+    "n_circuits": 19,
+    "n_zz": {
+     "min": 69676,
+     "max": 69676,
+     "mean": 69676.0
+    },
+    "n_phasedx": {
+     "min": 90272,
+     "max": 90646,
+     "mean": 90495.15789473684
+    },
+    "hqc_per_shot": {
+     "min": 157.4624,
+     "max": 157.5372,
+     "mean": 157.50703157894736
+    },
+    "rzz_before": [
+     69676
+    ],
+    "frozen_levels": [
+     0,
+     "pure_rebase"
+    ],
+    "compile_modes": [
+     "level0",
+     "pure_rebase"
+    ]
+   },
+   "versions": {
+    "pytket": "2.18.4",
+    "pytket-quantinuum": "0.59.3",
+    "pytket-qiskit": "0.78.0",
+    "qnexus": "0.51.0",
+    "quantinuum-schemas": "7.8.2"
+   },
+   "selection_rule": "fewest ZZ gates among the levels that pass Q1L (local equivalence to the transpiled IR, quantinuum_native.local_equivalence_35a: prompts/35a R2 (i)-(iii), q[k] -> c[k], identity permutation); ties: fewer PhasedX, then the lower level; if no level passes, the pure rebase AutoRebase({Rz, PhasedX, ZZPhase}) (compile_mode 'pure_rebase'); level 2 not attempted at 2x4 (prompts/35a R4)",
+   "built_k": [
+    1,
+    2
+   ],
+   "n_built": 19,
+   "n_planned": 60
+  },
+  "Q1L": {
+   "per_circuit": {
+    "B0_ref102_k2": {
+     "ok": false,
+     "i_max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+     "ii_segments_max_residual": 7.993671904419226e-15,
+     "rounding": {
+      "n_rounded_gates": 67236,
+      "max_abs_delta": 5.293543381412746e-13,
+      "sum_abs_delta": 3.1695591706792925e-09,
+      "state_bound_B": 4.978731902862111e-09
+     },
+     "segment_residual_raw": 8.313639568730589e-13,
+     "n_rzz_ir": 69676,
+     "n_rzz_native": 69676
+    },
+    "B0_ref16833_k2": {
+     "ok": false,
+     "i_max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+     "ii_segments_max_residual": 7.993671904419226e-15,
+     "rounding": {
+      "n_rounded_gates": 67235,
+      "max_abs_delta": 5.293543381412746e-13,
+      "sum_abs_delta": 3.1695601698800147e-09,
+      "state_bound_B": 4.978733472402935e-09
+     },
+     "segment_residual_raw": 8.313639568730589e-13,
+     "n_rzz_ir": 69676,
+     "n_rzz_native": 69676
+    },
+    "B0_ref11026_k2": {
+     "ok": false,
+     "i_max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+     "ii_segments_max_residual": 7.993671904419226e-15,
+     "rounding": {
+      "n_rounded_gates": 67236,
+      "max_abs_delta": 5.293543381412746e-13,
+      "sum_abs_delta": 3.1695641666829033e-09,
+      "state_bound_B": 4.978739750566232e-09
+     },
+     "segment_residual_raw": 8.313639568730589e-13,
+     "n_rzz_ir": 69676,
+     "n_rzz_native": 69676
+    },
+    "B0_ref6930_k2": {
+     "ok": false,
+     "i_max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+     "ii_segments_max_residual": 7.993671904419226e-15,
+     "rounding": {
+      "n_rounded_gates": 67232,
+      "max_abs_delta": 5.293543381412746e-13,
+      "sum_abs_delta": 3.1695577273893605e-09,
+      "state_bound_B": 4.978729635747587e-09
+     },
+     "segment_residual_raw": 8.313639568730589e-13,
+     "n_rzz_ir": 69676,
+     "n_rzz_native": 69676
+    },
+    "B0_ref11026_k1": {
+     "ok": false,
+     "i_max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+     "ii_segments_max_residual": 7.993671904419226e-15,
+     "rounding": {
+      "n_rounded_gates": 66928,
+      "max_abs_delta": 5.293543381412746e-13,
+      "sum_abs_delta": 3.1548234025180477e-09,
+      "state_bound_B": 4.955585012361927e-09
+     },
+     "segment_residual_raw": 8.313639568730589e-13,
+     "n_rzz_ir": 69676,
+     "n_rzz_native": 69676
+    },
+    "B0_ref102_k1": {
+     "ok": false,
+     "i_max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+     "ii_segments_max_residual": 7.993671904419226e-15,
+     "rounding": {
+      "n_rounded_gates": 66930,
+      "max_abs_delta": 5.293543381412746e-13,
+      "sum_abs_delta": 3.154831840213035e-09,
+      "state_bound_B": 4.9555982662622195e-09
+     },
+     "segment_residual_raw": 8.313639568730589e-13,
+     "n_rzz_ir": 69676,
+     "n_rzz_native": 69676
+    },
+    "B0_ref16833_k1": {
+     "ok": false,
+     "i_max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+     "ii_segments_max_residual": 7.993671904419226e-15,
+     "rounding": {
+      "n_rounded_gates": 66930,
+      "max_abs_delta": 5.293543381412746e-13,
+      "sum_abs_delta": 3.154822736384233e-09,
+      "state_bound_B": 4.9555839660013776e-09
+     },
+     "segment_residual_raw": 8.313639568730589e-13,
+     "n_rzz_ir": 69676,
+     "n_rzz_native": 69676
+    },
+    "B0_ref6930_k1": {
+     "ok": false,
+     "i_max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+     "ii_segments_max_residual": 7.993671904419226e-15,
+     "rounding": {
+      "n_rounded_gates": 66927,
+      "max_abs_delta": 5.293543381412746e-13,
+      "sum_abs_delta": 3.154822292295023e-09,
+      "state_bound_B": 4.9555832684276776e-09
+     },
+     "segment_residual_raw": 8.313639568730589e-13,
+     "n_rzz_ir": 69676,
+     "n_rzz_native": 69676
+    },
+    "B0_ref3166_k1": {
+     "ok": false,
+     "i_max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+     "ii_segments_max_residual": 7.993671904419226e-15,
+     "rounding": {
+      "n_rounded_gates": 66927,
+      "max_abs_delta": 5.293543381412746e-13,
+      "sum_abs_delta": 3.1548224033173256e-09,
+      "state_bound_B": 4.955583442821102e-09
+     },
+     "segment_residual_raw": 8.313639568730589e-13,
+     "n_rzz_ir": 69676,
+     "n_rzz_native": 69676
+    },
+    "B0_ref2086_k1": {
+     "ok": false,
+     "i_max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+     "ii_segments_max_residual": 7.993671904419226e-15,
+     "rounding": {
+      "n_rounded_gates": 66925,
+      "max_abs_delta": 5.293543381412746e-13,
+      "sum_abs_delta": 3.1548218482058132e-09,
+      "state_bound_B": 4.955582570853978e-09
+     },
+     "segment_residual_raw": 8.313639568730589e-13,
+     "n_rzz_ir": 69676,
+     "n_rzz_native": 69676
+    },
+    "B0_ref1338_k1": {
+     "ok": false,
+     "i_max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+     "ii_segments_max_residual": 7.993671904419226e-15,
+     "rounding": {
+      "n_rounded_gates": 66925,
+      "max_abs_delta": 5.293543381412746e-13,
+      "sum_abs_delta": 3.1548218482058132e-09,
+      "state_bound_B": 4.955582570853978e-09
+     },
+     "segment_residual_raw": 8.313639568730589e-13,
+     "n_rzz_ir": 69676,
+     "n_rzz_native": 69676
+    },
+    "B0_ref682_k1": {
+     "ok": false,
+     "i_max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+     "ii_segments_max_residual": 7.993671904419226e-15,
+     "rounding": {
+      "n_rounded_gates": 66929,
+      "max_abs_delta": 5.293543381412746e-13,
+      "sum_abs_delta": 3.154838612573485e-09,
+      "state_bound_B": 4.955608904261138e-09
+     },
+     "segment_residual_raw": 8.313639568730589e-13,
+     "n_rzz_ir": 69676,
+     "n_rzz_native": 69676
+    },
+    "B0_ref474_k1": {
+     "ok": false,
+     "i_max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+     "ii_segments_max_residual": 7.993671904419226e-15,
+     "rounding": {
+      "n_rounded_gates": 66925,
+      "max_abs_delta": 5.293543381412746e-13,
+      "sum_abs_delta": 3.1548218482058132e-09,
+      "state_bound_B": 4.955582570853978e-09
+     },
+     "segment_residual_raw": 8.313639568730589e-13,
+     "n_rzz_ir": 69676,
+     "n_rzz_native": 69676
+    },
+    "B0_ref345_k1": {
+     "ok": false,
+     "i_max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+     "ii_segments_max_residual": 7.993671904419226e-15,
+     "rounding": {
+      "n_rounded_gates": 66926,
+      "max_abs_delta": 5.293543381412746e-13,
+      "sum_abs_delta": 3.1548197387820665e-09,
+      "state_bound_B": 4.955579257378905e-09
+     },
+     "segment_residual_raw": 8.313639568730589e-13,
+     "n_rzz_ir": 69676,
+     "n_rzz_native": 69676
+    },
+    "B0_ref281_k1": {
+     "ok": false,
+     "i_max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+     "ii_segments_max_residual": 7.993671904419226e-15,
+     "rounding": {
+      "n_rounded_gates": 66929,
+      "max_abs_delta": 5.293543381412746e-13,
+      "sum_abs_delta": 3.154828509543961e-09,
+      "state_bound_B": 4.9555930344594724e-09
+     },
+     "segment_residual_raw": 8.313639568730589e-13,
+     "n_rzz_ir": 69676,
+     "n_rzz_native": 69676
+    },
+    "B1_ref230_k1": {
+     "ok": false,
+     "i_max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+     "ii_segments_max_residual": 7.993671904419226e-15,
+     "rounding": {
+      "n_rounded_gates": 67226,
+      "max_abs_delta": 7.968070647734748e-13,
+      "sum_abs_delta": 3.1617700679831273e-09,
+      "state_bound_B": 4.966496808957947e-09
+     },
+     "segment_residual_raw": 8.849881464382669e-13,
+     "n_rzz_ir": 69676,
+     "n_rzz_native": 69676
+    },
+    "B1_ref118_k1": {
+     "ok": false,
+     "i_max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+     "ii_segments_max_residual": 7.993671904419226e-15,
+     "rounding": {
+      "n_rounded_gates": 67226,
+      "max_abs_delta": 7.968070647734748e-13,
+      "sum_abs_delta": 3.16176973491622e-09,
+      "state_bound_B": 4.966496285777672e-09
+     },
+     "segment_residual_raw": 8.849881464382669e-13,
+     "n_rzz_ir": 69676,
+     "n_rzz_native": 69676
+    },
+    "B1_ref110_k1": {
+     "ok": false,
+     "i_max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+     "ii_segments_max_residual": 7.993671904419226e-15,
+     "rounding": {
+      "n_rounded_gates": 67226,
+      "max_abs_delta": 7.968070647734748e-13,
+      "sum_abs_delta": 3.16176973491622e-09,
+      "state_bound_B": 4.966496285777672e-09
+     },
+     "segment_residual_raw": 8.849881464382669e-13,
+     "n_rzz_ir": 69676,
+     "n_rzz_native": 69676
+    },
+    "B1_ref103_k1": {
+     "ok": false,
+     "i_max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+     "ii_segments_max_residual": 7.993671904419226e-15,
+     "rounding": {
+      "n_rounded_gates": 67226,
+      "max_abs_delta": 7.968070647734748e-13,
+      "sum_abs_delta": 3.1617526374816407e-09,
+      "state_bound_B": 4.966469429190237e-09
+     },
+     "segment_residual_raw": 8.849881464382669e-13,
+     "n_rzz_ir": 69676,
+     "n_rzz_native": 69676
+    }
+   },
+   "max_2q_delta_half_turns": 4.440892098500626e-15,
+   "max_segment_residual_vs_readback": 7.993671904419226e-15,
+   "max_state_bound_B": 4.978739750566232e-09,
+   "max_segment_residual_raw": 8.849881464382669e-13,
+   "failures": [
+    "B0_ref102_k1",
+    "B0_ref102_k2",
+    "B0_ref11026_k1",
+    "B0_ref11026_k2",
+    "B0_ref1338_k1",
+    "B0_ref16833_k1",
+    "B0_ref16833_k2",
+    "B0_ref2086_k1",
+    "B0_ref281_k1",
+    "B0_ref3166_k1",
+    "B0_ref345_k1",
+    "B0_ref474_k1",
+    "B0_ref682_k1",
+    "B0_ref6930_k1",
+    "B0_ref6930_k2",
+    "B1_ref103_k1",
+    "B1_ref110_k1",
+    "B1_ref118_k1",
+    "B1_ref230_k1"
+   ],
+   "rule": "prompts/35a R2",
+   "compile_modes": [
+    "level0",
+    "pure_rebase"
+   ],
+   "what_it_proves": "native circuit == the IR after the prototype transpile (qiskit opt 3, seed 7) up to pytket's angle canonicalisation, whose effect on the state is bounded by B; the transpile itself is verified by statevector at 2x2 (Q0P_2x2 Q1) and 2x3 (Q0P_2x3 Q1) and at 2x4 only through Q1S / QV_2x4_K1..K4"
+  },
+  "Q1S": {
+   "state_verified_ids": [],
+   "deferred_ids": [
+    "B0_ref102_k1",
+    "B0_ref102_k2",
+    "B0_ref11026_k1",
+    "B0_ref11026_k2",
+    "B0_ref1338_k1",
+    "B0_ref16833_k1",
+    "B0_ref16833_k2",
+    "B0_ref2086_k1",
+    "B0_ref281_k1",
+    "B0_ref3166_k1",
+    "B0_ref345_k1",
+    "B0_ref474_k1",
+    "B0_ref682_k1",
+    "B0_ref6930_k1",
+    "B0_ref6930_k2",
+    "B1_ref103_k1",
+    "B1_ref110_k1",
+    "B1_ref118_k1",
+    "B1_ref230_k1"
+   ],
+   "failing_ids": [],
+   "consistency_with_B": {},
+   "per_circuit": {},
+   "cap_s": null,
+   "deferred_to": "QV_2x4_K1..K4 (prompts/35a R1)"
+  },
+  "Q2": {
+   "rzz_before_build": {
+    "B0_ref102_k1": 69676,
+    "B0_ref102_k2": 69676,
+    "B0_ref16833_k1": 69676,
+    "B0_ref16833_k2": 69676,
+    "B0_ref11026_k1": 69676,
+    "B0_ref11026_k2": 69676,
+    "B0_ref6930_k1": 69676,
+    "B0_ref6930_k2": 69676,
+    "B0_ref3166_k1": 69676,
+    "B0_ref2086_k1": 69676,
+    "B0_ref1338_k1": 69676,
+    "B0_ref682_k1": 69676,
+    "B0_ref474_k1": 69676,
+    "B0_ref345_k1": 69676,
+    "B0_ref281_k1": 69676,
+    "B1_ref230_k1": 69676,
+    "B1_ref118_k1": 69676,
+    "B1_ref110_k1": 69676,
+    "B1_ref103_k1": 69676
+   },
+   "rzz_before_verify": {
+    "B0_ref102_k2": 69676,
+    "B0_ref16833_k2": 69676,
+    "B0_ref11026_k2": 69676,
+    "B0_ref6930_k2": 69676,
+    "B0_ref11026_k1": 69676,
+    "B0_ref102_k1": 69676,
+    "B0_ref16833_k1": 69676,
+    "B0_ref6930_k1": 69676,
+    "B0_ref3166_k1": 69676,
+    "B0_ref2086_k1": 69676,
+    "B0_ref1338_k1": 69676,
+    "B0_ref682_k1": 69676,
+    "B0_ref474_k1": 69676,
+    "B0_ref345_k1": 69676,
+    "B0_ref281_k1": 69676,
+    "B1_ref230_k1": 69676,
+    "B1_ref118_k1": 69676,
+    "B1_ref110_k1": 69676,
+    "B1_ref103_k1": 69676
+   },
+   "frozen_zz": {
+    "B0_ref102_k1": 69676,
+    "B0_ref102_k2": 69676,
+    "B0_ref16833_k1": 69676,
+    "B0_ref16833_k2": 69676,
+    "B0_ref11026_k1": 69676,
+    "B0_ref11026_k2": 69676,
+    "B0_ref6930_k1": 69676,
+    "B0_ref6930_k2": 69676,
+    "B0_ref3166_k1": 69676,
+    "B0_ref2086_k1": 69676,
+    "B0_ref1338_k1": 69676,
+    "B0_ref682_k1": 69676,
+    "B0_ref474_k1": 69676,
+    "B0_ref345_k1": 69676,
+    "B0_ref281_k1": 69676,
+    "B1_ref230_k1": 69676,
+    "B1_ref118_k1": 69676,
+    "B1_ref110_k1": 69676,
+    "B1_ref103_k1": 69676
+   },
+   "zz_by_level": {
+    "B0_ref102_k1": {
+     "0": 69676
+    },
+    "B0_ref102_k2": {
+     "0": 69676,
+     "pure_rebase": 69676
+    },
+    "B0_ref16833_k1": {
+     "0": 69676
+    },
+    "B0_ref16833_k2": {
+     "0": 69676,
+     "pure_rebase": 69676
+    },
+    "B0_ref11026_k1": {
+     "0": 69676
+    },
+    "B0_ref11026_k2": {
+     "0": 69676,
+     "pure_rebase": 69676
+    },
+    "B0_ref6930_k1": {
+     "0": 69676
+    },
+    "B0_ref6930_k2": {
+     "0": 69676,
+     "pure_rebase": 69676
+    },
+    "B0_ref3166_k1": {
+     "0": 69676
+    },
+    "B0_ref2086_k1": {
+     "0": 69676
+    },
+    "B0_ref1338_k1": {
+     "0": 69676
+    },
+    "B0_ref682_k1": {
+     "0": 69676
+    },
+    "B0_ref474_k1": {
+     "0": 69676
+    },
+    "B0_ref345_k1": {
+     "0": 69676
+    },
+    "B0_ref281_k1": {
+     "0": 69676
+    },
+    "B1_ref230_k1": {
+     "0": 69676
+    },
+    "B1_ref118_k1": {
+     "0": 69676
+    },
+    "B1_ref110_k1": {
+     "0": 69676
+    },
+    "B1_ref103_k1": {
+     "0": 69676
+    }
+   },
+   "equal_to_k1": {
+    "B0_ref102_k1": true,
+    "B0_ref102_k2": true,
+    "B0_ref16833_k1": true,
+    "B0_ref16833_k2": true,
+    "B0_ref11026_k1": true,
+    "B0_ref11026_k2": true,
+    "B0_ref6930_k1": true,
+    "B0_ref6930_k2": true,
+    "B0_ref3166_k1": true,
+    "B0_ref2086_k1": true,
+    "B0_ref1338_k1": true,
+    "B0_ref682_k1": true,
+    "B0_ref474_k1": true,
+    "B0_ref345_k1": true,
+    "B0_ref281_k1": true,
+    "B1_ref230_k1": true,
+    "B1_ref118_k1": true,
+    "B1_ref110_k1": true,
+    "B1_ref103_k1": true
+   },
+   "family_k1_values": [
+    69676
+   ],
+   "note": "prompts/35a R1: gate_S2D.circuit_set(L) = CircuitFactory.coarse_step(r, k, dt) (src/skqd/circuits_ir.py L898) is ONE coarse step at the angle k dt, the same skeleton for every k, so rzz_before is equal to the family's k = 1 value on every circuit (per reference and across references, as at 2x3: validation/Q0P_2x3.json Q2)"
+  },
+  "Q3": {
+   "k1_round_trips": {
+    "B0_ref11026_k1": {
+     "json": 7.993671904419226e-15,
+     "qasm": 3.1401849173675503e-16,
+     "qasm_vs_frozen": 7.993671904419226e-15
+    },
+    "B0_ref102_k1": {
+     "json": 7.993671904419226e-15,
+     "qasm": 3.1401849173675503e-16,
+     "qasm_vs_frozen": 7.993671904419226e-15
+    },
+    "B0_ref16833_k1": {
+     "json": 7.993671904419226e-15,
+     "qasm": 3.1401849173675503e-16,
+     "qasm_vs_frozen": 7.993671904419226e-15
+    },
+    "B0_ref6930_k1": {
+     "json": 7.993671904419226e-15,
+     "qasm": 3.1401849173675503e-16,
+     "qasm_vs_frozen": 7.993671904419226e-15
+    },
+    "B0_ref3166_k1": {
+     "json": 7.993671904419226e-15,
+     "qasm": 3.1401849173675503e-16,
+     "qasm_vs_frozen": 7.993671904419226e-15
+    },
+    "B0_ref2086_k1": {
+     "json": 7.993671904419226e-15,
+     "qasm": 3.1401849173675503e-16,
+     "qasm_vs_frozen": 7.993671904419226e-15
+    },
+    "B0_ref1338_k1": {
+     "json": 7.993671904419226e-15,
+     "qasm": 3.1401849173675503e-16,
+     "qasm_vs_frozen": 7.993671904419226e-15
+    },
+    "B0_ref682_k1": {
+     "json": 7.993671904419226e-15,
+     "qasm": 3.1401849173675503e-16,
+     "qasm_vs_frozen": 7.993671904419226e-15
+    },
+    "B0_ref474_k1": {
+     "json": 7.993671904419226e-15,
+     "qasm": 3.1401849173675503e-16,
+     "qasm_vs_frozen": 7.993671904419226e-15
+    },
+    "B0_ref345_k1": {
+     "json": 7.993671904419226e-15,
+     "qasm": 3.1401849173675503e-16,
+     "qasm_vs_frozen": 7.993671904419226e-15
+    },
+    "B0_ref281_k1": {
+     "json": 7.993671904419226e-15,
+     "qasm": 3.1401849173675503e-16,
+     "qasm_vs_frozen": 7.993671904419226e-15
+    },
+    "B1_ref230_k1": {
+     "json": 7.993671904419226e-15,
+     "qasm": 3.1401849173675503e-16,
+     "qasm_vs_frozen": 7.993671898537102e-15
+    },
+    "B1_ref118_k1": {
+     "json": 7.993671904419226e-15,
+     "qasm": 3.1401849173675503e-16,
+     "qasm_vs_frozen": 7.993671898537102e-15
+    },
+    "B1_ref110_k1": {
+     "json": 7.993671904419226e-15,
+     "qasm": 3.1401849173675503e-16,
+     "qasm_vs_frozen": 7.993671898537102e-15
+    },
+    "B1_ref103_k1": {
+     "json": 7.993671904419226e-15,
+     "qasm": 3.1401849173675503e-16,
+     "qasm_vs_frozen": 7.993671898537102e-15
+    }
+   },
+   "sha_ok": true,
+   "endianness": {
+    "key_statevector": 1,
+    "key_backendresult": 1,
+    "key_qiskit_reader": 1,
+    "measure_map": {
+     "1": 1,
+     "2": 2,
+     "0": 0
+    },
+    "convention": "pytket BackendResult.get_counts(): 'Toggle between ILO (increasing lexicographic order of bit ids) and DLO (decreasing lexicographic order) for column ordering if cbits is None. Defaults to BasisOrder.ilo.' (pytket 2.18.4 docstring); tuple index k = c[k] = qubit k",
+    "ok": true
+   }
+  },
+  "what_pass_means": "every built 2x4 circuit is proven equal to its IR by local equivalence (Q1L); the statevector check (Q1S) was reached on 0 of 19 circuits on the laptop and is the deferred GPU tokens QV_2x4_K1..K4 for the rest; not a device statement; no Quantinuum device can run these circuits at the signed clean-shot fraction (Q5)",
+  "verify": {
+   "per_circuit": {
+    "B0_ref102_k2": {
+     "id": "B0_ref102_k2",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 69676,
+     "native": true,
+     "counts": {
+      "n_phasedx": 90645,
+      "n_rz": 139272,
+      "n_zz": 69676,
+      "n_zzphase": 69676,
+      "n_zzmax": 0,
+      "n_meas": 28,
+      "n_qubits": 28,
+      "depth": 205158,
+      "depth_2q": 68648,
+      "ops": {
+       "Measure": 28,
+       "PhasedX": 90645,
+       "Rz": 139272,
+       "ZZPhase": 69676
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299593,
+       "n_rounded_gates": 67236,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1695591706792925e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.978731902862111e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 67236,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1695591706792925e-09,
+       "state_bound_B": 4.978731902862111e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "round_trips_checked": false,
+     "seconds": 424.9247305393219
+    },
+    "B0_ref16833_k2": {
+     "id": "B0_ref16833_k2",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 69676,
+     "native": true,
+     "counts": {
+      "n_phasedx": 90645,
+      "n_rz": 139272,
+      "n_zz": 69676,
+      "n_zzphase": 69676,
+      "n_zzmax": 0,
+      "n_meas": 28,
+      "n_qubits": 28,
+      "depth": 205159,
+      "depth_2q": 68648,
+      "ops": {
+       "Measure": 28,
+       "PhasedX": 90645,
+       "Rz": 139272,
+       "ZZPhase": 69676
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299593,
+       "n_rounded_gates": 67235,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1695601698800147e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.978733472402935e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 67235,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1695601698800147e-09,
+       "state_bound_B": 4.978733472402935e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "round_trips_checked": false,
+     "seconds": 433.0121445655823
+    },
+    "B0_ref11026_k2": {
+     "id": "B0_ref11026_k2",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 69676,
+     "native": true,
+     "counts": {
+      "n_phasedx": 90646,
+      "n_rz": 139273,
+      "n_zz": 69676,
+      "n_zzphase": 69676,
+      "n_zzmax": 0,
+      "n_meas": 28,
+      "n_qubits": 28,
+      "depth": 205158,
+      "depth_2q": 68648,
+      "ops": {
+       "Measure": 28,
+       "PhasedX": 90646,
+       "Rz": 139273,
+       "ZZPhase": 69676
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299595,
+       "n_rounded_gates": 67236,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1695641666829033e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.978739750566232e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 67236,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1695641666829033e-09,
+       "state_bound_B": 4.978739750566232e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "round_trips_checked": false,
+     "seconds": 454.9740471839905
+    },
+    "B0_ref6930_k2": {
+     "id": "B0_ref6930_k2",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 69676,
+     "native": true,
+     "counts": {
+      "n_phasedx": 90643,
+      "n_rz": 139273,
+      "n_zz": 69676,
+      "n_zzphase": 69676,
+      "n_zzmax": 0,
+      "n_meas": 28,
+      "n_qubits": 28,
+      "depth": 205158,
+      "depth_2q": 68648,
+      "ops": {
+       "Measure": 28,
+       "PhasedX": 90643,
+       "Rz": 139273,
+       "ZZPhase": 69676
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299592,
+       "n_rounded_gates": 67232,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1695577273893605e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.978729635747587e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 67232,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1695577273893605e-09,
+       "state_bound_B": 4.978729635747587e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "round_trips_checked": false,
+     "seconds": 379.85292077064514
+    },
+    "B0_ref11026_k1": {
+     "id": "B0_ref11026_k1",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 69676,
+     "native": true,
+     "counts": {
+      "n_phasedx": 90520,
+      "n_rz": 139268,
+      "n_zz": 69676,
+      "n_zzphase": 69676,
+      "n_zzmax": 0,
+      "n_meas": 28,
+      "n_qubits": 28,
+      "depth": 205138,
+      "depth_2q": 68648,
+      "ops": {
+       "Measure": 28,
+       "PhasedX": 90520,
+       "Rz": 139268,
+       "ZZPhase": 69676
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299464,
+       "n_rounded_gates": 66928,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548234025180477e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.955585012361927e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66928,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548234025180477e-09,
+       "state_bound_B": 4.955585012361927e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "round_trips_checked": true,
+     "json_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299464,
+       "n_rounded_gates": 66928,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548234025180477e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.955585012361927e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66928,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548234025180477e-09,
+       "state_bound_B": 4.955585012361927e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-16,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 3.1401849173675503e-16,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299464,
+       "n_rounded_gates": 66928,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548234025180477e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.955585012361927e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66928,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548234025180477e-09,
+       "state_bound_B": 4.955585012361927e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_vs_frozen_Q1L": {
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676,
+      "skeleton_per_qubit_identical": true,
+      "skeleton_max_angle_diff": 1.4210854715202004e-14,
+      "skeleton_global_order_identical": true,
+      "pair_orientation_identical": true,
+      "segments_compared": 139380,
+      "segments_max_residual": 7.993671904419226e-15,
+      "worst_segment": {
+       "qubit": 15,
+       "segment": 1700
+      },
+      "first_difference": null,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "tol": 1e-12,
+      "ok": true
+     },
+     "qasm_counts_equal": true,
+     "seconds": 976.3901631832123
+    },
+    "B0_ref102_k1": {
+     "id": "B0_ref102_k1",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 69676,
+     "native": true,
+     "counts": {
+      "n_phasedx": 90522,
+      "n_rz": 139267,
+      "n_zz": 69676,
+      "n_zzphase": 69676,
+      "n_zzmax": 0,
+      "n_meas": 28,
+      "n_qubits": 28,
+      "depth": 205139,
+      "depth_2q": 68648,
+      "ops": {
+       "Measure": 28,
+       "PhasedX": 90522,
+       "Rz": 139267,
+       "ZZPhase": 69676
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299465,
+       "n_rounded_gates": 66930,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154831840213035e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.9555982662622195e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66930,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154831840213035e-09,
+       "state_bound_B": 4.9555982662622195e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "round_trips_checked": true,
+     "json_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299465,
+       "n_rounded_gates": 66930,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154831840213035e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.9555982662622195e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66930,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154831840213035e-09,
+       "state_bound_B": 4.9555982662622195e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-16,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 3.1401849173675503e-16,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299465,
+       "n_rounded_gates": 66930,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154831840213035e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.9555982662622195e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66930,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154831840213035e-09,
+       "state_bound_B": 4.9555982662622195e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_vs_frozen_Q1L": {
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676,
+      "skeleton_per_qubit_identical": true,
+      "skeleton_max_angle_diff": 1.4210854715202004e-14,
+      "skeleton_global_order_identical": true,
+      "pair_orientation_identical": true,
+      "segments_compared": 139380,
+      "segments_max_residual": 7.993671904419226e-15,
+      "worst_segment": {
+       "qubit": 15,
+       "segment": 1700
+      },
+      "first_difference": null,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "tol": 1e-12,
+      "ok": true
+     },
+     "qasm_counts_equal": true,
+     "seconds": 988.6990478038788
+    },
+    "B0_ref16833_k1": {
+     "id": "B0_ref16833_k1",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 69676,
+     "native": true,
+     "counts": {
+      "n_phasedx": 90524,
+      "n_rz": 139268,
+      "n_zz": 69676,
+      "n_zzphase": 69676,
+      "n_zzmax": 0,
+      "n_meas": 28,
+      "n_qubits": 28,
+      "depth": 205138,
+      "depth_2q": 68648,
+      "ops": {
+       "Measure": 28,
+       "PhasedX": 90524,
+       "Rz": 139268,
+       "ZZPhase": 69676
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299468,
+       "n_rounded_gates": 66930,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154822736384233e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.9555839660013776e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66930,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154822736384233e-09,
+       "state_bound_B": 4.9555839660013776e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "round_trips_checked": true,
+     "json_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299468,
+       "n_rounded_gates": 66930,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154822736384233e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.9555839660013776e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66930,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154822736384233e-09,
+       "state_bound_B": 4.9555839660013776e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-16,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 3.1401849173675503e-16,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299468,
+       "n_rounded_gates": 66930,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154822736384233e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.9555839660013776e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66930,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154822736384233e-09,
+       "state_bound_B": 4.9555839660013776e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_vs_frozen_Q1L": {
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676,
+      "skeleton_per_qubit_identical": true,
+      "skeleton_max_angle_diff": 1.4210854715202004e-14,
+      "skeleton_global_order_identical": true,
+      "pair_orientation_identical": true,
+      "segments_compared": 139380,
+      "segments_max_residual": 7.993671904419226e-15,
+      "worst_segment": {
+       "qubit": 15,
+       "segment": 1700
+      },
+      "first_difference": null,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "tol": 1e-12,
+      "ok": true
+     },
+     "qasm_counts_equal": true,
+     "seconds": 999.4100935459137
+    },
+    "B0_ref6930_k1": {
+     "id": "B0_ref6930_k1",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 69676,
+     "native": true,
+     "counts": {
+      "n_phasedx": 90519,
+      "n_rz": 139268,
+      "n_zz": 69676,
+      "n_zzphase": 69676,
+      "n_zzmax": 0,
+      "n_meas": 28,
+      "n_qubits": 28,
+      "depth": 205138,
+      "depth_2q": 68648,
+      "ops": {
+       "Measure": 28,
+       "PhasedX": 90519,
+       "Rz": 139268,
+       "ZZPhase": 69676
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299463,
+       "n_rounded_gates": 66927,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154822292295023e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.9555832684276776e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66927,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154822292295023e-09,
+       "state_bound_B": 4.9555832684276776e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "round_trips_checked": true,
+     "json_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299463,
+       "n_rounded_gates": 66927,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154822292295023e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.9555832684276776e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66927,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154822292295023e-09,
+       "state_bound_B": 4.9555832684276776e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-16,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 3.1401849173675503e-16,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299463,
+       "n_rounded_gates": 66927,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154822292295023e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.9555832684276776e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66927,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154822292295023e-09,
+       "state_bound_B": 4.9555832684276776e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_vs_frozen_Q1L": {
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676,
+      "skeleton_per_qubit_identical": true,
+      "skeleton_max_angle_diff": 1.4210854715202004e-14,
+      "skeleton_global_order_identical": true,
+      "pair_orientation_identical": true,
+      "segments_compared": 139380,
+      "segments_max_residual": 7.993671904419226e-15,
+      "worst_segment": {
+       "qubit": 15,
+       "segment": 1700
+      },
+      "first_difference": null,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "tol": 1e-12,
+      "ok": true
+     },
+     "qasm_counts_equal": true,
+     "seconds": 716.4178385734558
+    },
+    "B0_ref3166_k1": {
+     "id": "B0_ref3166_k1",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 69676,
+     "native": true,
+     "counts": {
+      "n_phasedx": 90521,
+      "n_rz": 139268,
+      "n_zz": 69676,
+      "n_zzphase": 69676,
+      "n_zzmax": 0,
+      "n_meas": 28,
+      "n_qubits": 28,
+      "depth": 205138,
+      "depth_2q": 68648,
+      "ops": {
+       "Measure": 28,
+       "PhasedX": 90521,
+       "Rz": 139268,
+       "ZZPhase": 69676
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299465,
+       "n_rounded_gates": 66927,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548224033173256e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.955583442821102e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66927,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548224033173256e-09,
+       "state_bound_B": 4.955583442821102e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "round_trips_checked": true,
+     "json_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299465,
+       "n_rounded_gates": 66927,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548224033173256e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.955583442821102e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66927,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548224033173256e-09,
+       "state_bound_B": 4.955583442821102e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-16,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 3.1401849173675503e-16,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299465,
+       "n_rounded_gates": 66927,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548224033173256e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.955583442821102e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66927,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548224033173256e-09,
+       "state_bound_B": 4.955583442821102e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_vs_frozen_Q1L": {
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676,
+      "skeleton_per_qubit_identical": true,
+      "skeleton_max_angle_diff": 1.4210854715202004e-14,
+      "skeleton_global_order_identical": true,
+      "pair_orientation_identical": true,
+      "segments_compared": 139380,
+      "segments_max_residual": 7.993671904419226e-15,
+      "worst_segment": {
+       "qubit": 15,
+       "segment": 1700
+      },
+      "first_difference": null,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "tol": 1e-12,
+      "ok": true
+     },
+     "qasm_counts_equal": true,
+     "seconds": 708.3519847393036
+    },
+    "B0_ref2086_k1": {
+     "id": "B0_ref2086_k1",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 69676,
+     "native": true,
+     "counts": {
+      "n_phasedx": 90522,
+      "n_rz": 139268,
+      "n_zz": 69676,
+      "n_zzphase": 69676,
+      "n_zzmax": 0,
+      "n_meas": 28,
+      "n_qubits": 28,
+      "depth": 205138,
+      "depth_2q": 68648,
+      "ops": {
+       "Measure": 28,
+       "PhasedX": 90522,
+       "Rz": 139268,
+       "ZZPhase": 69676
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299466,
+       "n_rounded_gates": 66925,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548218482058132e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.955582570853978e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66925,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548218482058132e-09,
+       "state_bound_B": 4.955582570853978e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "round_trips_checked": true,
+     "json_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299466,
+       "n_rounded_gates": 66925,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548218482058132e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.955582570853978e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66925,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548218482058132e-09,
+       "state_bound_B": 4.955582570853978e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-16,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 3.1401849173675503e-16,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299466,
+       "n_rounded_gates": 66925,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548218482058132e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.955582570853978e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66925,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548218482058132e-09,
+       "state_bound_B": 4.955582570853978e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_vs_frozen_Q1L": {
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676,
+      "skeleton_per_qubit_identical": true,
+      "skeleton_max_angle_diff": 1.4210854715202004e-14,
+      "skeleton_global_order_identical": true,
+      "pair_orientation_identical": true,
+      "segments_compared": 139380,
+      "segments_max_residual": 7.993671904419226e-15,
+      "worst_segment": {
+       "qubit": 15,
+       "segment": 1700
+      },
+      "first_difference": null,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "tol": 1e-12,
+      "ok": true
+     },
+     "qasm_counts_equal": true,
+     "seconds": 475.6872947216034
+    },
+    "B0_ref1338_k1": {
+     "id": "B0_ref1338_k1",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 69676,
+     "native": true,
+     "counts": {
+      "n_phasedx": 90522,
+      "n_rz": 139268,
+      "n_zz": 69676,
+      "n_zzphase": 69676,
+      "n_zzmax": 0,
+      "n_meas": 28,
+      "n_qubits": 28,
+      "depth": 205139,
+      "depth_2q": 68648,
+      "ops": {
+       "Measure": 28,
+       "PhasedX": 90522,
+       "Rz": 139268,
+       "ZZPhase": 69676
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299466,
+       "n_rounded_gates": 66925,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548218482058132e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.955582570853978e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66925,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548218482058132e-09,
+       "state_bound_B": 4.955582570853978e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "round_trips_checked": true,
+     "json_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299466,
+       "n_rounded_gates": 66925,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548218482058132e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.955582570853978e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66925,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548218482058132e-09,
+       "state_bound_B": 4.955582570853978e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-16,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 3.1401849173675503e-16,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299466,
+       "n_rounded_gates": 66925,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548218482058132e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.955582570853978e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66925,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548218482058132e-09,
+       "state_bound_B": 4.955582570853978e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_vs_frozen_Q1L": {
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676,
+      "skeleton_per_qubit_identical": true,
+      "skeleton_max_angle_diff": 1.4210854715202004e-14,
+      "skeleton_global_order_identical": true,
+      "pair_orientation_identical": true,
+      "segments_compared": 139380,
+      "segments_max_residual": 7.993671904419226e-15,
+      "worst_segment": {
+       "qubit": 15,
+       "segment": 1700
+      },
+      "first_difference": null,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "tol": 1e-12,
+      "ok": true
+     },
+     "qasm_counts_equal": true,
+     "seconds": 467.9266872406006
+    },
+    "B0_ref682_k1": {
+     "id": "B0_ref682_k1",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 69676,
+     "native": true,
+     "counts": {
+      "n_phasedx": 90521,
+      "n_rz": 139267,
+      "n_zz": 69676,
+      "n_zzphase": 69676,
+      "n_zzmax": 0,
+      "n_meas": 28,
+      "n_qubits": 28,
+      "depth": 205139,
+      "depth_2q": 68648,
+      "ops": {
+       "Measure": 28,
+       "PhasedX": 90521,
+       "Rz": 139267,
+       "ZZPhase": 69676
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299464,
+       "n_rounded_gates": 66929,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154838612573485e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.955608904261138e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66929,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154838612573485e-09,
+       "state_bound_B": 4.955608904261138e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "round_trips_checked": true,
+     "json_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299464,
+       "n_rounded_gates": 66929,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154838612573485e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.955608904261138e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66929,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154838612573485e-09,
+       "state_bound_B": 4.955608904261138e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-16,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 3.1401849173675503e-16,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299464,
+       "n_rounded_gates": 66929,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154838612573485e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.955608904261138e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66929,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154838612573485e-09,
+       "state_bound_B": 4.955608904261138e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_vs_frozen_Q1L": {
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676,
+      "skeleton_per_qubit_identical": true,
+      "skeleton_max_angle_diff": 1.4210854715202004e-14,
+      "skeleton_global_order_identical": true,
+      "pair_orientation_identical": true,
+      "segments_compared": 139380,
+      "segments_max_residual": 7.993671904419226e-15,
+      "worst_segment": {
+       "qubit": 15,
+       "segment": 1700
+      },
+      "first_difference": null,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "tol": 1e-12,
+      "ok": true
+     },
+     "qasm_counts_equal": true,
+     "seconds": 466.8134093284607
+    },
+    "B0_ref474_k1": {
+     "id": "B0_ref474_k1",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 69676,
+     "native": true,
+     "counts": {
+      "n_phasedx": 90522,
+      "n_rz": 139268,
+      "n_zz": 69676,
+      "n_zzphase": 69676,
+      "n_zzmax": 0,
+      "n_meas": 28,
+      "n_qubits": 28,
+      "depth": 205139,
+      "depth_2q": 68648,
+      "ops": {
+       "Measure": 28,
+       "PhasedX": 90522,
+       "Rz": 139268,
+       "ZZPhase": 69676
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299466,
+       "n_rounded_gates": 66925,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548218482058132e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.955582570853978e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66925,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548218482058132e-09,
+       "state_bound_B": 4.955582570853978e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "round_trips_checked": true,
+     "json_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299466,
+       "n_rounded_gates": 66925,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548218482058132e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.955582570853978e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66925,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548218482058132e-09,
+       "state_bound_B": 4.955582570853978e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-16,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 3.1401849173675503e-16,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299466,
+       "n_rounded_gates": 66925,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548218482058132e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.955582570853978e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66925,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548218482058132e-09,
+       "state_bound_B": 4.955582570853978e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_vs_frozen_Q1L": {
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676,
+      "skeleton_per_qubit_identical": true,
+      "skeleton_max_angle_diff": 1.4210854715202004e-14,
+      "skeleton_global_order_identical": true,
+      "pair_orientation_identical": true,
+      "segments_compared": 139380,
+      "segments_max_residual": 7.993671904419226e-15,
+      "worst_segment": {
+       "qubit": 15,
+       "segment": 1700
+      },
+      "first_difference": null,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "tol": 1e-12,
+      "ok": true
+     },
+     "qasm_counts_equal": true,
+     "seconds": 471.92869305610657
+    },
+    "B0_ref345_k1": {
+     "id": "B0_ref345_k1",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 69676,
+     "native": true,
+     "counts": {
+      "n_phasedx": 90524,
+      "n_rz": 139267,
+      "n_zz": 69676,
+      "n_zzphase": 69676,
+      "n_zzmax": 0,
+      "n_meas": 28,
+      "n_qubits": 28,
+      "depth": 205139,
+      "depth_2q": 68648,
+      "ops": {
+       "Measure": 28,
+       "PhasedX": 90524,
+       "Rz": 139267,
+       "ZZPhase": 69676
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299467,
+       "n_rounded_gates": 66926,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548197387820665e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.955579257378905e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66926,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548197387820665e-09,
+       "state_bound_B": 4.955579257378905e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "round_trips_checked": true,
+     "json_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299467,
+       "n_rounded_gates": 66926,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548197387820665e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.955579257378905e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66926,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548197387820665e-09,
+       "state_bound_B": 4.955579257378905e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-16,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 3.1401849173675503e-16,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299467,
+       "n_rounded_gates": 66926,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548197387820665e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.955579257378905e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66926,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.1548197387820665e-09,
+       "state_bound_B": 4.955579257378905e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_vs_frozen_Q1L": {
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676,
+      "skeleton_per_qubit_identical": true,
+      "skeleton_max_angle_diff": 1.4210854715202004e-14,
+      "skeleton_global_order_identical": true,
+      "pair_orientation_identical": true,
+      "segments_compared": 139380,
+      "segments_max_residual": 7.993671904419226e-15,
+      "worst_segment": {
+       "qubit": 15,
+       "segment": 1700
+      },
+      "first_difference": null,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "tol": 1e-12,
+      "ok": true
+     },
+     "qasm_counts_equal": true,
+     "seconds": 469.56998801231384
+    },
+    "B0_ref281_k1": {
+     "id": "B0_ref281_k1",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 69676,
+     "native": true,
+     "counts": {
+      "n_phasedx": 90521,
+      "n_rz": 139266,
+      "n_zz": 69676,
+      "n_zzphase": 69676,
+      "n_zzmax": 0,
+      "n_meas": 28,
+      "n_qubits": 28,
+      "depth": 205139,
+      "depth_2q": 68648,
+      "ops": {
+       "Measure": 28,
+       "PhasedX": 90521,
+       "Rz": 139266,
+       "ZZPhase": 69676
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299463,
+       "n_rounded_gates": 66929,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154828509543961e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.9555930344594724e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66929,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154828509543961e-09,
+       "state_bound_B": 4.9555930344594724e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "round_trips_checked": true,
+     "json_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299463,
+       "n_rounded_gates": 66929,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154828509543961e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.9555930344594724e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66929,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154828509543961e-09,
+       "state_bound_B": 4.9555930344594724e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 4.440892098500626e-16,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 3.1401849173675503e-16,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299463,
+       "n_rounded_gates": 66929,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154828509543961e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.9555930344594724e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 66929,
+       "max_abs_delta": 5.293543381412746e-13,
+       "sum_abs_delta": 3.154828509543961e-09,
+       "state_bound_B": 4.9555930344594724e-09
+      },
+      "segment_residual_raw": 8.313639568730589e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_vs_frozen_Q1L": {
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676,
+      "skeleton_per_qubit_identical": true,
+      "skeleton_max_angle_diff": 1.4210854715202004e-14,
+      "skeleton_global_order_identical": true,
+      "pair_orientation_identical": true,
+      "segments_compared": 139380,
+      "segments_max_residual": 7.993671904419226e-15,
+      "worst_segment": {
+       "qubit": 15,
+       "segment": 1700
+      },
+      "first_difference": null,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "tol": 1e-12,
+      "ok": true
+     },
+     "qasm_counts_equal": true,
+     "seconds": 464.63079166412354
+    },
+    "B1_ref230_k1": {
+     "id": "B1_ref230_k1",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 69676,
+     "native": true,
+     "counts": {
+      "n_phasedx": 90272,
+      "n_rz": 139266,
+      "n_zz": 69676,
+      "n_zzphase": 69676,
+      "n_zzmax": 0,
+      "n_meas": 28,
+      "n_qubits": 28,
+      "depth": 205128,
+      "depth_2q": 68648,
+      "ops": {
+       "Measure": 28,
+       "PhasedX": 90272,
+       "Rz": 139266,
+       "ZZPhase": 69676
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299214,
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.1617700679831273e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.966496808957947e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.1617700679831273e-09,
+       "state_bound_B": 4.966496808957947e-09
+      },
+      "segment_residual_raw": 8.849881464382669e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "round_trips_checked": true,
+     "json_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299214,
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.1617700679831273e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.966496808957947e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.1617700679831273e-09,
+       "state_bound_B": 4.966496808957947e-09
+      },
+      "segment_residual_raw": 8.849881464382669e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 0.0,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 3.1401849173675503e-16,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299214,
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.1617700679831273e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.966496808957947e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.1617700679831273e-09,
+       "state_bound_B": 4.966496808957947e-09
+      },
+      "segment_residual_raw": 8.849881252417874e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_vs_frozen_Q1L": {
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676,
+      "skeleton_per_qubit_identical": true,
+      "skeleton_max_angle_diff": 1.2434497875801753e-14,
+      "skeleton_global_order_identical": true,
+      "pair_orientation_identical": true,
+      "segments_compared": 139380,
+      "segments_max_residual": 7.993671898537102e-15,
+      "worst_segment": {
+       "qubit": 9,
+       "segment": 1615
+      },
+      "first_difference": null,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "tol": 1e-12,
+      "ok": true
+     },
+     "qasm_counts_equal": true,
+     "seconds": 458.7084448337555
+    },
+    "B1_ref118_k1": {
+     "id": "B1_ref118_k1",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 69676,
+     "native": true,
+     "counts": {
+      "n_phasedx": 90273,
+      "n_rz": 139266,
+      "n_zz": 69676,
+      "n_zzphase": 69676,
+      "n_zzmax": 0,
+      "n_meas": 28,
+      "n_qubits": 28,
+      "depth": 205128,
+      "depth_2q": 68648,
+      "ops": {
+       "Measure": 28,
+       "PhasedX": 90273,
+       "Rz": 139266,
+       "ZZPhase": 69676
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299215,
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.16176973491622e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.966496285777672e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.16176973491622e-09,
+       "state_bound_B": 4.966496285777672e-09
+      },
+      "segment_residual_raw": 8.849881464382669e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "round_trips_checked": true,
+     "json_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299215,
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.16176973491622e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.966496285777672e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.16176973491622e-09,
+       "state_bound_B": 4.966496285777672e-09
+      },
+      "segment_residual_raw": 8.849881464382669e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 0.0,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 3.1401849173675503e-16,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299215,
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.16176973491622e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.966496285777672e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.16176973491622e-09,
+       "state_bound_B": 4.966496285777672e-09
+      },
+      "segment_residual_raw": 8.849881252417874e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_vs_frozen_Q1L": {
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676,
+      "skeleton_per_qubit_identical": true,
+      "skeleton_max_angle_diff": 1.2434497875801753e-14,
+      "skeleton_global_order_identical": true,
+      "pair_orientation_identical": true,
+      "segments_compared": 139380,
+      "segments_max_residual": 7.993671898537102e-15,
+      "worst_segment": {
+       "qubit": 9,
+       "segment": 1615
+      },
+      "first_difference": null,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "tol": 1e-12,
+      "ok": true
+     },
+     "qasm_counts_equal": true,
+     "seconds": 427.58793926239014
+    },
+    "B1_ref110_k1": {
+     "id": "B1_ref110_k1",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 69676,
+     "native": true,
+     "counts": {
+      "n_phasedx": 90273,
+      "n_rz": 139266,
+      "n_zz": 69676,
+      "n_zzphase": 69676,
+      "n_zzmax": 0,
+      "n_meas": 28,
+      "n_qubits": 28,
+      "depth": 205128,
+      "depth_2q": 68648,
+      "ops": {
+       "Measure": 28,
+       "PhasedX": 90273,
+       "Rz": 139266,
+       "ZZPhase": 69676
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299215,
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.16176973491622e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.966496285777672e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.16176973491622e-09,
+       "state_bound_B": 4.966496285777672e-09
+      },
+      "segment_residual_raw": 8.849881464382669e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "round_trips_checked": true,
+     "json_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299215,
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.16176973491622e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.966496285777672e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.16176973491622e-09,
+       "state_bound_B": 4.966496285777672e-09
+      },
+      "segment_residual_raw": 8.849881464382669e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 0.0,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 3.1401849173675503e-16,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299215,
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.16176973491622e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.966496285777672e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.16176973491622e-09,
+       "state_bound_B": 4.966496285777672e-09
+      },
+      "segment_residual_raw": 8.849881252417874e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_vs_frozen_Q1L": {
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676,
+      "skeleton_per_qubit_identical": true,
+      "skeleton_max_angle_diff": 1.2434497875801753e-14,
+      "skeleton_global_order_identical": true,
+      "pair_orientation_identical": true,
+      "segments_compared": 139380,
+      "segments_max_residual": 7.993671898537102e-15,
+      "worst_segment": {
+       "qubit": 9,
+       "segment": 1615
+      },
+      "first_difference": null,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "tol": 1e-12,
+      "ok": true
+     },
+     "qasm_counts_equal": true,
+     "seconds": 430.3634738922119
+    },
+    "B1_ref103_k1": {
+     "id": "B1_ref103_k1",
+     "qasm_sha256_ok": true,
+     "json_sha256_ok": true,
+     "rzz_before_compilation": 69676,
+     "native": true,
+     "counts": {
+      "n_phasedx": 90273,
+      "n_rz": 139266,
+      "n_zz": 69676,
+      "n_zzphase": 69676,
+      "n_zzmax": 0,
+      "n_meas": 28,
+      "n_qubits": 28,
+      "depth": 205128,
+      "depth_2q": 68648,
+      "ops": {
+       "Measure": 28,
+       "PhasedX": 90273,
+       "Rz": 139266,
+       "ZZPhase": 69676
+      }
+     },
+     "counts_match_manifest": true,
+     "measure_map_identity": true,
+     "implicit_permutation_identity": true,
+     "Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299215,
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.1617526374816407e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.966469429190237e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.1617526374816407e-09,
+       "state_bound_B": 4.966469429190237e-09
+      },
+      "segment_residual_raw": 8.849881464382669e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "round_trips_checked": true,
+     "json_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 3.552713678800501e-15,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 7.993671904419226e-15,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299215,
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.1617526374816407e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.966469429190237e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.1617526374816407e-09,
+       "state_bound_B": 4.966469429190237e-09
+      },
+      "segment_residual_raw": 8.849881464382669e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_round_trip_Q1L": {
+      "ok": false,
+      "i_skeleton": {
+       "ok": true,
+       "max_abs_delta_2q_half_turns": 0.0,
+       "tol_half_turns": 1e-11,
+       "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+       "first_difference": null
+      },
+      "ii_segments_vs_readback": {
+       "ok": true,
+       "segments_max_residual": 3.1401849173675503e-16,
+       "segments_compared": 139380,
+       "tol": 1e-12,
+       "skeleton_identical": true
+      },
+      "iii_rounding": {
+       "structure_identical": true,
+       "n_gates_compared": 299215,
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.1617526374816407e-09,
+       "unit": "half-turns",
+       "state_bound_B": 4.966469429190237e-09,
+       "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)",
+       "bar": 1e-10,
+       "ok": false
+      },
+      "rounding": {
+       "n_rounded_gates": 67226,
+       "max_abs_delta": 7.968070647734748e-13,
+       "sum_abs_delta": 3.1617526374816407e-09,
+       "state_bound_B": 4.966469429190237e-09
+      },
+      "segment_residual_raw": 8.849881252417874e-13,
+      "raw_check_of_prompts_35": true,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676
+     },
+     "qasm_vs_frozen_Q1L": {
+      "n_rzz_ir": 69676,
+      "n_rzz_native": 69676,
+      "skeleton_per_qubit_identical": true,
+      "skeleton_max_angle_diff": 1.2434497875801753e-14,
+      "skeleton_global_order_identical": true,
+      "pair_orientation_identical": true,
+      "segments_compared": 139380,
+      "segments_max_residual": 7.993671898537102e-15,
+      "worst_segment": {
+       "qubit": 9,
+       "segment": 1615
+      },
+      "first_difference": null,
+      "measure_map_identity": true,
+      "implicit_permutation_identity": true,
+      "tol": 1e-12,
+      "ok": true
+     },
+     "qasm_counts_equal": true,
+     "seconds": 431.77042865753174
+    }
+   },
+   "calibration": {
+    "CAL_zeros": {
+     "qasm_sha256_ok": true,
+     "expected_int": 0,
+     "statevector_argmax_int": 0,
+     "ok": true
+    },
+    "CAL_x0": {
+     "qasm_sha256_ok": true,
+     "expected_int": 1,
+     "statevector_argmax_int": 1,
+     "ok": true
+    }
+   },
+   "endianness": {
+    "key_statevector": 1,
+    "key_backendresult": 1,
+    "key_qiskit_reader": 1,
+    "measure_map": {
+     "1": 1,
+     "2": 2,
+     "0": 0
+    },
+    "convention": "pytket BackendResult.get_counts(): 'Toggle between ILO (increasing lexicographic order of bit ids) and DLO (decreasing lexicographic order) for column ordering if cbits is None. Defaults to BasisOrder.ilo.' (pytket 2.18.4 docstring); tuple index k = c[k] = qubit k",
+    "ok": true
+   },
+   "index_sha256": "bd9911db14dc28d808833d0a494d656a3e6ea1fbd2c75bf702dc489f057ec4b3",
+   "versions": {
+    "pytket": "2.18.4",
+    "pytket-quantinuum": "0.59.3",
+    "pytket-qiskit": "0.78.0",
+    "qnexus": "0.51.0",
+    "quantinuum-schemas": "7.8.2"
+   },
+   "python": "/home/digimonk/.local/share/su2qc-quantinuum/venv/bin/python",
+   "runtime_s": 446.90950322151184,
+   "statevector_engine": "none (R2): Q1L = quantinuum_native.local_equivalence_35a; Q1S in --stage q1s",
+   "stage": "verify",
+   "created": "2026-10-13 19:51:47 UTC"
+  }
+ },
+ "runtime_s": 446.91533493995667,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.2",
+  "scipy": "1.18.0",
+  "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+  "cpu_count": 12,
+  "git_commit": "e3997bc",
+  "timestamp": "2026-10-13 13:51:47 MDT"
+ }
+}

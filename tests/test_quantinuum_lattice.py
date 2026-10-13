@@ -19,6 +19,7 @@ import quantinuum_lattice_tests as Q  # noqa: E402
 HAVE_FAMILY = os.path.exists(os.path.join(ROOT, "data", "quantinuum", "circuits_2x2", "index.json"))
 needs_family = pytest.mark.skipif(not HAVE_FAMILY, reason="the frozen 2x2 family is not built (prompts/35 3.2)")
 HAVE_PECOS = importlib.util.find_spec("pytket_pecos") is not None
+HAVE_AER = importlib.util.find_spec("qiskit_aer") is not None
 HAVE_GUPPY = importlib.util.find_spec("guppylang") is not None and importlib.util.find_spec("selene_sim") is not None
 VENV_REASON = ("needs the isolated venv ~/.local/share/su2qc-pecos/venv (pytket-pecos, guppylang, selene-sim; "
                "prompts/35: nothing is installed into `coding`)")
@@ -59,6 +60,7 @@ def test_2x2_family_plan_of_record_and_sector_sizes():
 
 
 @needs_family
+@pytest.mark.skipif(not HAVE_AER, reason="E7 needs the Aer noise builder of `coding` (qiskit-aer is absent in the pecos venv; prompts/35a R5)")
 def test_e7_matched_f_uses_the_2x2_counts():
     from skqd.campaign33 import noise as N
     _idx, mans, _ = Q.family(2)
@@ -69,12 +71,11 @@ def test_e7_matched_f_uses_the_2x2_counts():
     assert spec.description["parameters"]["p2"] > N.matched_f_eps2(0.10)      # fewer gates at 2x2 -> larger eps2
 
 
-def test_hugr_shot_rule_stays_inside_the_cap():
-    rt = {"seconds_per_shot": 0.085, "compile_s": 8.7, "selene_build_s": 8.3}
-    n = Q.hugr_shots(rt, 2)
-    assert n % 100 == 0 and 20 <= n <= 2000
-    assert 28 * n * 0.085 + 29 * 17.0 <= 3600.0
-    assert Q.hugr_shots({"seconds_per_shot": 1e-4, "compile_s": 1.0, "selene_build_s": 1.0}, 2) == 2000
+def test_hugr_shot_rule_of_prompts_35a_r5():
+    """2x2: min(2000, floor(3600 / (28 s_shot))), floor 500 (prompts/35a R5); 2x3 keeps the 30-min information rule."""
+    assert Q.hugr_shots({"seconds_per_shot": 0.085}, 2) == math.floor(3600 / (28 * 0.085)) == 1512
+    assert Q.hugr_shots({"seconds_per_shot": 1e-4}, 2) == 2000
+    assert Q.hugr_shots({"seconds_per_shot": 1.0}, 2) == 500
     assert Q.hugr_shots({"seconds_per_shot": 100.0, "compile_s": 1.0, "selene_build_s": 1.0}, 3) == 20
     with pytest.raises(SystemExit):
         Q.hugr_shots(None, 2)

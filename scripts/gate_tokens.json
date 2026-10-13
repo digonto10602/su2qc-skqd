@@ -689,19 +689,72 @@
   "estimate_minutes": 55,
   "content": "prompts/33a step D: generic class-4 part slot; its content is ci/parts/C4_PART_20.json in the requested commit (frun part i of n, dropped f-cells, or a cv3 equal-shots sample), written by scripts/campaign33_resize.py"
  },
- "QV_2x4": {
+ "QV_2x4_K1": {
   "script": "scripts/quantinuum_lattice_tests.py",
   "args": [
    "--lattice",
    "4",
    "--tier",
-   "gpu-verify"
+   "gpu-verify",
+   "--k",
+   "1"
   ],
   "class": 3,
   "walltime": "01:00:00",
   "gpus": 1,
   "env": "skqd",
-  "estimate_minutes": 35,
-  "content": "prompts/35 section 4: Aer GPU statevector (cuStateVec) of the 15 native k = 1 2x4 circuits (QPY v13 bundles data/quantinuum/circuits_2x4_qpy/) vs the exact coarse states, then noiseless per-state sampling at 6250 shots; appended after the campaign-33 tokens (their indices and seeds unchanged); allowlist line ci/allowed_jobs.q35"
+  "estimate_minutes": 28,
+  "content": "prompts/35 section 4 + prompts/35a R1: Aer GPU statevector (cuStateVec) of the 15 native k = 1 2x4 circuits vs the exact coarse states, then noiseless per-state sampling at 6250 shots drawn from the statevector; estimate = instruction count (the 15 k = 1 manifests) x 2.32e-4 s/instruction (validation/S2_2x4.json); appended after the campaign-33 tokens (indices and seeds unchanged); allowlist ci/allowed_jobs.q35"
+ },
+ "QV_2x4_K2": {
+  "script": "scripts/quantinuum_lattice_tests.py",
+  "args": [
+   "--lattice",
+   "4",
+   "--tier",
+   "gpu-verify",
+   "--k",
+   "2"
+  ],
+  "class": 3,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 28,
+  "content": "prompts/35 section 4 + prompts/35a R1: Aer GPU statevector (cuStateVec) of the 15 native k = 2 2x4 circuits vs the exact coarse states, then noiseless per-state sampling at 6250 shots drawn from the statevector; estimate = instruction count (K1 manifests (the k manifests are not all built; prompts/35a R1: k-independent count)) x 2.32e-4 s/instruction (validation/S2_2x4.json); appended after the campaign-33 tokens (indices and seeds unchanged); allowlist ci/allowed_jobs.q35"
+ },
+ "QV_2x4_K3": {
+  "script": "scripts/quantinuum_lattice_tests.py",
+  "args": [
+   "--lattice",
+   "4",
+   "--tier",
+   "gpu-verify",
+   "--k",
+   "3"
+  ],
+  "class": 3,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 28,
+  "content": "prompts/35 section 4 + prompts/35a R1: Aer GPU statevector (cuStateVec) of the 15 native k = 3 2x4 circuits vs the exact coarse states, then noiseless per-state sampling at 6250 shots drawn from the statevector; estimate = instruction count (K1 manifests (the k manifests are not all built; prompts/35a R1: k-independent count)) x 2.32e-4 s/instruction (validation/S2_2x4.json); appended after the campaign-33 tokens (indices and seeds unchanged); allowlist ci/allowed_jobs.q35"
+ },
+ "QV_2x4_K4": {
+  "script": "scripts/quantinuum_lattice_tests.py",
+  "args": [
+   "--lattice",
+   "4",
+   "--tier",
+   "gpu-verify",
+   "--k",
+   "4"
+  ],
+  "class": 3,
+  "walltime": "01:00:00",
+  "gpus": 1,
+  "env": "skqd",
+  "estimate_minutes": 28,
+  "content": "prompts/35 section 4 + prompts/35a R1: Aer GPU statevector (cuStateVec) of the 15 native k = 4 2x4 circuits vs the exact coarse states, then noiseless per-state sampling at 6250 shots drawn from the statevector; estimate = instruction count (K1 manifests (the k manifests are not all built; prompts/35a R1: k-independent count)) x 2.32e-4 s/instruction (validation/S2_2x4.json); appended after the campaign-33 tokens (indices and seeds unchanged); allowlist ci/allowed_jobs.q35"
  }
 }

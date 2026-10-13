@@ -412,6 +412,162 @@ def local_equivalence(ir_gates: list, native_circ, n: int, tol: float = 1e-12) -
             "tol": tol, "ok": bool(seg_ok and meas_ok and perm_ok)}
 
 
+CANON_TOL_HALF_TURNS = 1e-11      # pytket stores an angle within < 1e-11 half-turns of a multiple of 1/4 as that multiple
+STATE_BAR = 1e-10                 # the Q1 state bar (prompts/26 Q1, unchanged by prompts/35a)
+
+
+def _wrap_half_turns(d: float) -> float:
+    """A difference in half-turns reduced to (-1, 1]: a shift by 2 half-turns is a global sign of the rotation."""
+    d = (float(d) + 1.0) % 2.0 - 1.0
+    return 1.0 if d == -1.0 else d
+
+
+def _param_sequences(gates: list, n: int):
+    """Per qubit, in order: (name, angle in rad or None, partner or None) of every non-gphase gate."""
+    seq = {q: [] for q in range(n)}
+    for name, qs, par in gates:
+        if name == "gphase":
+            continue
+        if name == "rzz":
+            a, b = int(qs[0]), int(qs[1])
+            seq[a].append(("rzz", float(par), b))
+            seq[b].append(("rzz", float(par), a))
+        else:
+            seq[int(qs[0])].append((name, None if par is None else float(par), None))
+    return seq
+
+
+def rounding_bound(ir_gates: list, n: int) -> dict:
+    """prompts/35a R2 (iii): the angles pytket stores for the IR (the IR written by `ir_to_pytket` and read back by
+    `pytket_to_ir`; pytket canonicalises at construction) against the IR angles, gate by gate along every qubit.
+    B = (pi/2) sum_g |Delta a_g| (half-turns) bounds ||U_pytket - U_IR||_op, hence max|Delta psi| (every gate written
+    here is Rz / Rx / Ry / ZZPhase, so the PhasedX term 2|Delta b| does not occur).  Returns the record and the
+    read-back IR (the IR with the stored angles substituted)."""
+    pc = ir_to_pytket(ir_gates, n, measure=False)
+    back, nn, _ = pytket_to_ir(pc)
+    a, b = _param_sequences(ir_gates, n), _param_sequences(back, n)
+    same = nn == n and all(len(a[q]) == len(b[q]) for q in range(n))
+    deltas = []
+    if same:
+        for q in range(n):
+            for (na, ta, pa), (nb, tb, pb) in zip(a[q], b[q]):
+                if na != nb or pa != pb:
+                    same = False
+                    break
+                if ta is None or (na == "rzz" and q > pa):   # each rzz counted once (on its lower qubit)
+                    continue
+                deltas.append(abs(_wrap_half_turns((ta - tb) / math.pi)))
+    d = np.asarray(deltas, float) if deltas else np.zeros(0)
+    rec = {"structure_identical": bool(same), "n_gates_compared": int(d.size),
+           "n_rounded_gates": int(np.count_nonzero(d)), "max_abs_delta": float(d.max()) if d.size else 0.0,
+           "sum_abs_delta": float(d.sum()), "unit": "half-turns",
+           "state_bound_B": float(math.pi / 2.0 * d.sum()) if same else None,
+           "bound": "B = (pi/2) sum_g |Delta a_g| >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2)"}
+    return rec, back
+
+
+def local_equivalence_35a(ir_gates: list, native_circ, n: int) -> dict:
+    """Q1L as restated by prompts/35a R2 (binding):
+    (i)   the two-qubit skeleton per qubit (partners, order) of the native circuit equals the IR's, every two-qubit
+          angle within CANON_TOL_HALF_TURNS of the IR's;
+    (ii)  per-qubit one-qubit segment products equal to 1e-12 against the IR with pytket's stored angles substituted
+          (`rounding_bound` read-back): this isolates the conversion (PhasedX order, half-turn factor, ZZ sign, order);
+    (iii) the rounding bound B < STATE_BAR;
+    plus q[k] -> c[k] and the identity permutation.  The raw residual of prompts/35 (against the unrounded IR) is
+    `segment_residual_raw`, information."""
+    rnd, back = rounding_bound(ir_gates, n)
+    ir_n, nn, qmap = pytket_to_ir(native_circ)
+    sa, sn = _param_sequences(ir_gates, n), _param_sequences(ir_n, n)
+    skel_ok, max2q, first = True, 0.0, None
+    for q in range(n):
+        A = [(t, p) for nm, t, p in sa[q] if nm == "rzz"]
+        Bq = [(t, p) for nm, t, p in sn[q] if nm == "rzz"]
+        if len(A) != len(Bq):
+            skel_ok = False
+            first = first or {"qubit": q, "reason": f"{len(A)} rzz in the IR, {len(Bq)} native"}
+            continue
+        for j, ((ta, pa), (tb, pb)) in enumerate(zip(A, Bq)):
+            d = abs(_wrap_half_turns((ta - tb) / math.pi))
+            if pa != pb or d > CANON_TOL_HALF_TURNS:
+                skel_ok = False
+                first = first or {"qubit": q, "position": j, "ir": [pa, ta], "native": [pb, tb], "delta_half_turns": d}
+            max2q = max(max2q, d)
+    seg = local_equivalence(back, native_circ, n, tol=1e-12)
+    raw = local_equivalence(ir_gates, native_circ, n, tol=1e-12)
+    B = rnd["state_bound_B"]
+    ok = bool(skel_ok and seg["ok"] and B is not None and B < STATE_BAR and rnd["structure_identical"]
+              and qmap == {q: q for q in range(n)})
+    return {"ok": ok,
+            "i_skeleton": {"ok": bool(skel_ok), "max_abs_delta_2q_half_turns": max2q, "tol_half_turns": CANON_TOL_HALF_TURNS,
+                           "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)", "first_difference": first},
+            "ii_segments_vs_readback": {"ok": bool(seg["ok"]), "segments_max_residual": seg["segments_max_residual"],
+                                        "segments_compared": seg["segments_compared"], "tol": 1e-12,
+                                        "skeleton_identical": seg["skeleton_per_qubit_identical"]},
+            "iii_rounding": dict(rnd, bar=STATE_BAR, ok=bool(B is not None and B < STATE_BAR)),
+            "rounding": {k: rnd[k] for k in ("n_rounded_gates", "max_abs_delta", "sum_abs_delta", "state_bound_B")},
+            "segment_residual_raw": raw["segments_max_residual"], "raw_check_of_prompts_35": raw["ok"],
+            "measure_map_identity": qmap == {q: q for q in range(n)},
+            "implicit_permutation_identity": bool(seg["implicit_permutation_identity"]),
+            "n_rzz_ir": raw["n_rzz_ir"], "n_rzz_native": raw["n_rzz_native"]}
+
+
+def pytket_json_to_ir(d: dict):
+    """pytket-free reader of a frozen pytket JSON (`Circuit.to_dict()`): the same IR as `pytket_to_ir` of
+    `Circuit.from_dict(d)` (tests/test_quantinuum_native.py checks the equality), for environments without pytket --
+    the Perlmutter `skqd` env of tokens QV_2x4_K2..K4 (prompts/35a R1).  Gates Rz, Rx, Ry, PhasedX, ZZPhase, ZZMax,
+    X, H, Measure, Barrier; anything else raises."""
+    def reg(a):
+        name, idx = a[0], a[1]
+        if len(idx) != 1:
+            raise ValueError(f"expected a one-index register element, found {a}")
+        return name, int(idx[0])
+
+    def par(p):
+        return float(p) if not isinstance(p, str) else float(p.strip())
+
+    gates, qmap = [], {}
+    ph = par(d.get("phase", "0"))
+    if ph != 0.0:
+        gates.append(("gphase", [], math.pi * ph))
+    nq = 0
+    for q in d.get("qubits", []):
+        if q[0] != "q":
+            raise ValueError(f"expected qubits q[k], found {q}")
+        nq += 1
+    for cmd in d["commands"]:
+        t = cmd["op"]["type"]
+        args = [reg(a) for a in cmd["args"]]
+        ps = [par(p) for p in cmd["op"].get("params", [])]
+        qs = [i for r, i in args if r == "q"]
+        if t == "Rz":
+            gates.append(("rz", qs, math.pi * ps[0]))
+        elif t == "Rx":
+            gates.append(("rx", qs, math.pi * ps[0]))
+        elif t == "Ry":
+            gates.append(("ry", qs, math.pi * ps[0]))
+        elif t == "PhasedX":
+            a, b = ps
+            gates += [("rz", qs, -math.pi * b), ("rx", qs, math.pi * a), ("rz", qs, math.pi * b)]
+        elif t == "ZZPhase":
+            gates.append(("rzz", qs, math.pi * ps[0]))
+        elif t == "ZZMax":
+            gates.append(("rzz", qs, math.pi / 2.0))
+        elif t == "X":
+            gates.append(("x", qs, None))
+        elif t == "H":
+            gates.append(("h", qs, None))
+        elif t == "Measure":
+            (rq, iq), (rc, ic) = args
+            if rq != "q" or rc != "c":
+                raise ValueError(f"unexpected measure {cmd}")
+            qmap[iq] = ic
+        elif t == "Barrier":
+            continue
+        else:
+            raise ValueError(f"pytket_json_to_ir: unsupported operation {t}")
+    return gates, nq, qmap
+
+
 def native_counts(circ) -> dict:
     """{n_phasedx, n_rz, n_zz, n_zzphase, n_zzmax, n_meas, n_qubits, depth, depth_2q, ops}."""
     from pytket import OpType
