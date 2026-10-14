@@ -23,7 +23,7 @@ from skqd.campaign33 import sampling as SM  # noqa: E402
 from skqd.campaign33 import tokens as TK  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-TOKENS = list(TK.load_tokens())
+TOKENS = [t for t, v in TK.load_tokens().items() if v["script"] == "scripts/campaign33.py"]   # the campaign driver's tokens (prompts/35's QV_2x4 slots run another script)
 
 
 @pytest.mark.parametrize("tok", TOKENS)

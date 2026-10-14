@@ -76,7 +76,9 @@ def test_hugr_shot_rule_of_prompts_35a_r5():
     assert Q.hugr_shots({"seconds_per_shot": 0.085}, 2) == math.floor(3600 / (28 * 0.085)) == 1512
     assert Q.hugr_shots({"seconds_per_shot": 1e-4}, 2) == 2000
     assert Q.hugr_shots({"seconds_per_shot": 1.0}, 2) == 500
-    assert Q.hugr_shots({"seconds_per_shot": 100.0, "compile_s": 1.0, "selene_build_s": 1.0}, 3) == 20
+    # 2x3 (information): one circuit per <= 30-min command, floor((1700 - overhead) / s_shot), at most 100, floor 1
+    assert Q.hugr_shots({"seconds_per_shot": 100.0, "compile_s": 1.0, "selene_build_s": 1.0}, 3) == 16
+    assert Q.hugr_shots({"seconds_per_shot": 5000.0, "compile_s": 1.0, "selene_build_s": 1.0}, 3) == 1
     with pytest.raises(SystemExit):
         Q.hugr_shots(None, 2)
 
