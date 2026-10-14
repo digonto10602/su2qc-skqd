@@ -1,7 +1,7 @@
 {
  "gate": "QN_2x2",
  "title": "2x2 native circuits under noiseless sampling and the Quantinuum noise models (prompts/35 T2 + T3)",
- "status": "FAIL",
+ "status": "PASS",
  "criteria": [
   {
    "name": "N1 per-state 5 sigma test |n_s/N - p_s| <= 5 sqrt(p_s(1-p_s)/N), p_s >= 1e-3, on all 28 noiseless circuits; fraction outside the exact support",
@@ -71,10 +71,67 @@
    "passed": true
   },
   {
-   "name": "N4 plan-of-record runs",
-   "value": "not run (--tier noise --part por)",
-   "threshold": "fields; variational",
-   "passed": false
+   "name": "N4 every plan-of-record run reports recall, E_R, the certificate, the accepted fraction, and E_R >= E0 - 1e-9 (a violation is a STOP)",
+   "value": {
+    "E1": {
+     "B=0": {
+      "recall": 1.0,
+      "E_R_minus_E0": 0.0,
+      "accepted": 0.8589,
+      "E0_inside": true
+     },
+     "B=1": {
+      "recall": 1.0,
+      "E_R_minus_E0": 0.0,
+      "accepted": 0.8537,
+      "E0_inside": true
+     }
+    },
+    "E3": {
+     "B=0": {
+      "recall": 1.0,
+      "E_R_minus_E0": 0.0,
+      "accepted": 0.7856,
+      "E0_inside": true
+     },
+     "B=1": {
+      "recall": 1.0,
+      "E_R_minus_E0": 0.0,
+      "accepted": 0.7776,
+      "E0_inside": true
+     }
+    },
+    "E4": {
+     "B=0": {
+      "recall": 1.0,
+      "E_R_minus_E0": 0.0,
+      "accepted": 0.8671,
+      "E0_inside": true
+     },
+     "B=1": {
+      "recall": 1.0,
+      "E_R_minus_E0": 0.0,
+      "accepted": 0.8617,
+      "E0_inside": true
+     }
+    },
+    "E5b": {
+     "B=0": {
+      "recall": 1.0,
+      "E_R_minus_E0": 0.0,
+      "accepted": 0.8575,
+      "E0_inside": true
+     },
+     "B=1": {
+      "recall": 1.0,
+      "E_R_minus_E0": 0.0,
+      "accepted": 0.8539,
+      "E0_inside": true
+     }
+    }
+   },
+   "threshold": "fields present; variational",
+   "passed": true
   },
   {
    "name": "N5 qpu_seconds == 0, hqc == 0; seeds and s/shot recorded; scenarios_run listed",
@@ -86,10 +143,15 @@
      "E1": 0.023439979553222655,
      "E5b": 0.02779885721206665
     },
-    "scenarios_run": null
+    "scenarios_run": [
+     "E1",
+     "E3",
+     "E4",
+     "E5b"
+    ]
    },
    "threshold": "0; 0; recorded; listed",
-   "passed": false
+   "passed": true
   }
  ],
  "data": {
@@ -9532,6 +9594,1118 @@
    }
   },
   "plan_of_record": {
+   "E1": {
+    "scenario": "E1",
+    "reading": {
+     "B=0": {
+      "circuits": 20,
+      "shots": 69505,
+      "accepted": 59699,
+      "rejected": 9806,
+      "accepted_fraction": 0.8589166247032588,
+      "dim": 38,
+      "garbage_acceptance": 0.00927734375,
+      "mu_per_state": 16.968994140625,
+      "B_all_size": 38,
+      "B_sig_size": 38,
+      "recall_S999_B_all": 1.0,
+      "recall_S999_B_sig": 1.0,
+      "support_B_all": {
+       "size": 38,
+       "recall": 1.0,
+       "false_positives": 0,
+       "captured_weight": 1.0000000000000007,
+       "exact_support_size": 16
+      },
+      "support_B_sig": {
+       "size": 38,
+       "recall": 1.0,
+       "false_positives": 0,
+       "captured_weight": 1.0000000000000007,
+       "exact_support_size": 16
+      },
+      "E0": -3.6407665507263425,
+      "E1": -0.9622447993441413,
+      "E_R_B_all": -3.6407665507263425,
+      "E_R_B_sig": -3.6407665507263425,
+      "E_R_minus_E0_B_all": 0.0,
+      "E_R_minus_E0_B_sig": 0.0,
+      "certificate": {
+       "type": "kato_temple_exact_E1",
+       "interval": [
+        -3.6407665507263425,
+        -3.6407665507263425
+       ],
+       "E0_inside": true,
+       "basis": "B_all u refs"
+      },
+      "variational_ok": true,
+      "energy_B_all": {
+       "basis_size": 38,
+       "E_R": -3.6407665507263425,
+       "E0": -3.6407665507263425,
+       "abs_error": 0.0,
+       "rH": 6.14037362740533e-15,
+       "weinstein_gap_assumed": [
+        -3.6407665507263487,
+        -3.6407665507263425
+       ],
+       "weinstein_rigorous": [
+        -3.6407665507263487,
+        -3.6407665507263363
+       ],
+       "weinstein_contains_some_sector_eigenvalue": true,
+       "E0_inside_gap_assumed_weinstein": true,
+       "kato_temple": [
+        -3.6407665507263425,
+        -3.6407665507263425
+       ],
+       "kato_temple_alpha_second_ritz": -0.9622447993441413,
+       "kato_temple_rigorous_exact_E1": [
+        -3.6407665507263425,
+        -3.6407665507263425
+       ],
+       "gap_assumption_holds": true,
+       "variational_ok": true,
+       "closure_diagnostic": 0.0,
+       "closure_dt": 0.24501194722475933
+      },
+      "energy_B_sig": {
+       "basis_size": 38,
+       "E_R": -3.6407665507263425,
+       "E0": -3.6407665507263425,
+       "abs_error": 0.0,
+       "rH": 6.14037362740533e-15,
+       "weinstein_gap_assumed": [
+        -3.6407665507263487,
+        -3.6407665507263425
+       ],
+       "weinstein_rigorous": [
+        -3.6407665507263487,
+        -3.6407665507263363
+       ],
+       "weinstein_contains_some_sector_eigenvalue": true,
+       "E0_inside_gap_assumed_weinstein": true,
+       "kato_temple": [
+        -3.6407665507263425,
+        -3.6407665507263425
+       ],
+       "kato_temple_alpha_second_ritz": -0.9622447993441413,
+       "kato_temple_rigorous_exact_E1": [
+        -3.6407665507263425,
+        -3.6407665507263425
+       ],
+       "gap_assumption_holds": true,
+       "variational_ok": true,
+       "closure_diagnostic": 0.0,
+       "closure_dt": 0.24501194722475933
+      }
+     },
+     "B=1": {
+      "circuits": 8,
+      "shots": 64402,
+      "accepted": 54977,
+      "rejected": 9425,
+      "accepted_fraction": 0.8536536132418248,
+      "dim": 20,
+      "garbage_acceptance": 0.0048828125,
+      "mu_per_state": 15.72314453125,
+      "B_all_size": 20,
+      "B_sig_size": 20,
+      "recall_S999_B_all": 1.0,
+      "recall_S999_B_sig": 1.0,
+      "support_B_all": {
+       "size": 20,
+       "recall": 1.0,
+       "false_positives": 0,
+       "captured_weight": 1.0000000000000002,
+       "exact_support_size": 13
+      },
+      "support_B_sig": {
+       "size": 20,
+       "recall": 1.0,
+       "false_positives": 0,
+       "captured_weight": 1.0000000000000002,
+       "exact_support_size": 13
+      },
+      "E0": -1.8615880345350209,
+      "E1": -1.8197452519625035,
+      "E_R_B_all": -1.8615880345350209,
+      "E_R_B_sig": -1.8615880345350209,
+      "E_R_minus_E0_B_all": 0.0,
+      "E_R_minus_E0_B_sig": 0.0,
+      "certificate": {
+       "type": "weinstein",
+       "interval": [
+        -1.8615880345350224,
+        -1.8615880345350193
+       ],
+       "E0_inside": true,
+       "basis": "B_all u refs"
+      },
+      "variational_ok": true,
+      "energy_B_all": {
+       "basis_size": 20,
+       "E_R": -1.8615880345350209,
+       "E0": -1.8615880345350209,
+       "abs_error": 0.0,
+       "rH": 1.5091242331971172e-15,
+       "weinstein_gap_assumed": [
+        -1.8615880345350224,
+        -1.8615880345350209
+       ],
+       "weinstein_rigorous": [
+        -1.8615880345350224,
+        -1.8615880345350193
+       ],
+       "weinstein_contains_some_sector_eigenvalue": true,
+       "E0_inside_gap_assumed_weinstein": true,
+       "kato_temple": [
+        -1.8615880345350209,
+        -1.8615880345350209
+       ],
+       "kato_temple_alpha_second_ritz": -1.8197452519625035,
+       "kato_temple_rigorous_exact_E1": [
+        -1.8615880345350209,
+        -1.8615880345350209
+       ],
+       "gap_assumption_holds": true,
+       "variational_ok": true,
+       "closure_diagnostic": 0.0,
+       "closure_dt": 0.33194310785049674
+      },
+      "energy_B_sig": {
+       "basis_size": 20,
+       "E_R": -1.8615880345350209,
+       "E0": -1.8615880345350209,
+       "abs_error": 0.0,
+       "rH": 1.5091242331971172e-15,
+       "weinstein_gap_assumed": [
+        -1.8615880345350224,
+        -1.8615880345350209
+       ],
+       "weinstein_rigorous": [
+        -1.8615880345350224,
+        -1.8615880345350193
+       ],
+       "weinstein_contains_some_sector_eigenvalue": true,
+       "E0_inside_gap_assumed_weinstein": true,
+       "kato_temple": [
+        -1.8615880345350209,
+        -1.8615880345350209
+       ],
+       "kato_temple_alpha_second_ritz": -1.8197452519625035,
+       "kato_temple_rigorous_exact_E1": [
+        -1.8615880345350209,
+        -1.8615880345350209
+       ],
+       "gap_assumption_holds": true,
+       "variational_ok": true,
+       "closure_diagnostic": 0.0,
+       "closure_dt": 0.33194310785049674
+      }
+     }
+    },
+    "seeds": {
+     "B0_ref06_k1": 35300000,
+     "B0_ref06_k2": 35300001,
+     "B0_ref06_k3": 35300002,
+     "B0_ref06_k4": 35300003,
+     "B0_ref17_k1": 35300004,
+     "B0_ref17_k2": 35300005,
+     "B0_ref17_k3": 35300006,
+     "B0_ref17_k4": 35300007,
+     "B0_ref21_k1": 35300008,
+     "B0_ref21_k2": 35300009,
+     "B0_ref21_k3": 35300010,
+     "B0_ref21_k4": 35300011,
+     "B0_ref30_k1": 35300012,
+     "B0_ref30_k2": 35300013,
+     "B0_ref30_k3": 35300014,
+     "B0_ref30_k4": 35300015,
+     "B0_ref43_k1": 35300016,
+     "B0_ref43_k2": 35300017,
+     "B0_ref43_k3": 35300018,
+     "B0_ref43_k4": 35300019,
+     "B1_ref07_k1": 35300020,
+     "B1_ref07_k2": 35300021,
+     "B1_ref07_k3": 35300022,
+     "B1_ref07_k4": 35300023,
+     "B1_ref14_k1": 35300024,
+     "B1_ref14_k2": 35300025,
+     "B1_ref14_k3": 35300026,
+     "B1_ref14_k4": 35300027
+    },
+    "seed_rule": "35 300 000 + 1000 s + c",
+    "shots_total": 133907,
+    "wall_s": 1764.1150226593018,
+    "seconds_per_shot": 0.013174180757236751,
+    "threads": 4,
+    "aer_settings": {
+     "max_parallel_threads": 4,
+     "max_parallel_shots": 4,
+     "fusion_enable": false
+    },
+    "environment": {
+     "sys_prefix": "/home/digimonk/anaconda3/envs/coding",
+     "python": "/home/digimonk/anaconda3/envs/coding/bin/python",
+     "versions": {
+      "python": "3.12.14",
+      "numpy": "2.5.2",
+      "scipy": "1.18.0",
+      "qiskit": "2.5.2",
+      "qiskit-aer": "0.17.2",
+      "pytket": null,
+      "pytket-quantinuum": null,
+      "pytket-pecos": null,
+      "quantum-pecos": null,
+      "guppylang": null,
+      "guppylang-internals": null,
+      "hugr": null,
+      "tket": null,
+      "tket-exts": null,
+      "selene-sim": null,
+      "selene-core": null,
+      "selene-hugr-qis-compiler": null
+     }
+    },
+    "fragment": "por_E1",
+    "created": "2026-10-14 00:10:35 UTC"
+   },
+   "E3": {
+    "scenario": "E3",
+    "reading": {
+     "B=0": {
+      "circuits": 20,
+      "shots": 69505,
+      "accepted": 54606,
+      "rejected": 14899,
+      "accepted_fraction": 0.7856413207682901,
+      "dim": 38,
+      "garbage_acceptance": 0.00927734375,
+      "mu_per_state": 16.968994140625,
+      "B_all_size": 38,
+      "B_sig_size": 38,
+      "recall_S999_B_all": 1.0,
+      "recall_S999_B_sig": 1.0,
+      "support_B_all": {
+       "size": 38,
+       "recall": 1.0,
+       "false_positives": 0,
+       "captured_weight": 1.0000000000000007,
+       "exact_support_size": 16
+      },
+      "support_B_sig": {
+       "size": 38,
+       "recall": 1.0,
+       "false_positives": 0,
+       "captured_weight": 1.0000000000000007,
+       "exact_support_size": 16
+      },
+      "E0": -3.6407665507263425,
+      "E1": -0.9622447993441413,
+      "E_R_B_all": -3.6407665507263425,
+      "E_R_B_sig": -3.6407665507263425,
+      "E_R_minus_E0_B_all": 0.0,
+      "E_R_minus_E0_B_sig": 0.0,
+      "certificate": {
+       "type": "kato_temple_exact_E1",
+       "interval": [
+        -3.6407665507263425,
+        -3.6407665507263425
+       ],
+       "E0_inside": true,
+       "basis": "B_all u refs"
+      },
+      "variational_ok": true,
+      "energy_B_all": {
+       "basis_size": 38,
+       "E_R": -3.6407665507263425,
+       "E0": -3.6407665507263425,
+       "abs_error": 0.0,
+       "rH": 6.14037362740533e-15,
+       "weinstein_gap_assumed": [
+        -3.6407665507263487,
+        -3.6407665507263425
+       ],
+       "weinstein_rigorous": [
+        -3.6407665507263487,
+        -3.6407665507263363
+       ],
+       "weinstein_contains_some_sector_eigenvalue": true,
+       "E0_inside_gap_assumed_weinstein": true,
+       "kato_temple": [
+        -3.6407665507263425,
+        -3.6407665507263425
+       ],
+       "kato_temple_alpha_second_ritz": -0.9622447993441413,
+       "kato_temple_rigorous_exact_E1": [
+        -3.6407665507263425,
+        -3.6407665507263425
+       ],
+       "gap_assumption_holds": true,
+       "variational_ok": true,
+       "closure_diagnostic": 0.0,
+       "closure_dt": 0.24501194722475933
+      },
+      "energy_B_sig": {
+       "basis_size": 38,
+       "E_R": -3.6407665507263425,
+       "E0": -3.6407665507263425,
+       "abs_error": 0.0,
+       "rH": 6.14037362740533e-15,
+       "weinstein_gap_assumed": [
+        -3.6407665507263487,
+        -3.6407665507263425
+       ],
+       "weinstein_rigorous": [
+        -3.6407665507263487,
+        -3.6407665507263363
+       ],
+       "weinstein_contains_some_sector_eigenvalue": true,
+       "E0_inside_gap_assumed_weinstein": true,
+       "kato_temple": [
+        -3.6407665507263425,
+        -3.6407665507263425
+       ],
+       "kato_temple_alpha_second_ritz": -0.9622447993441413,
+       "kato_temple_rigorous_exact_E1": [
+        -3.6407665507263425,
+        -3.6407665507263425
+       ],
+       "gap_assumption_holds": true,
+       "variational_ok": true,
+       "closure_diagnostic": 0.0,
+       "closure_dt": 0.24501194722475933
+      }
+     },
+     "B=1": {
+      "circuits": 8,
+      "shots": 64402,
+      "accepted": 50080,
+      "rejected": 14322,
+      "accepted_fraction": 0.7776156019999378,
+      "dim": 20,
+      "garbage_acceptance": 0.0048828125,
+      "mu_per_state": 15.72314453125,
+      "B_all_size": 20,
+      "B_sig_size": 20,
+      "recall_S999_B_all": 1.0,
+      "recall_S999_B_sig": 1.0,
+      "support_B_all": {
+       "size": 20,
+       "recall": 1.0,
+       "false_positives": 0,
+       "captured_weight": 1.0000000000000002,
+       "exact_support_size": 13
+      },
+      "support_B_sig": {
+       "size": 20,
+       "recall": 1.0,
+       "false_positives": 0,
+       "captured_weight": 1.0000000000000002,
+       "exact_support_size": 13
+      },
+      "E0": -1.8615880345350209,
+      "E1": -1.8197452519625035,
+      "E_R_B_all": -1.8615880345350209,
+      "E_R_B_sig": -1.8615880345350209,
+      "E_R_minus_E0_B_all": 0.0,
+      "E_R_minus_E0_B_sig": 0.0,
+      "certificate": {
+       "type": "weinstein",
+       "interval": [
+        -1.8615880345350224,
+        -1.8615880345350193
+       ],
+       "E0_inside": true,
+       "basis": "B_all u refs"
+      },
+      "variational_ok": true,
+      "energy_B_all": {
+       "basis_size": 20,
+       "E_R": -1.8615880345350209,
+       "E0": -1.8615880345350209,
+       "abs_error": 0.0,
+       "rH": 1.5091242331971172e-15,
+       "weinstein_gap_assumed": [
+        -1.8615880345350224,
+        -1.8615880345350209
+       ],
+       "weinstein_rigorous": [
+        -1.8615880345350224,
+        -1.8615880345350193
+       ],
+       "weinstein_contains_some_sector_eigenvalue": true,
+       "E0_inside_gap_assumed_weinstein": true,
+       "kato_temple": [
+        -1.8615880345350209,
+        -1.8615880345350209
+       ],
+       "kato_temple_alpha_second_ritz": -1.8197452519625035,
+       "kato_temple_rigorous_exact_E1": [
+        -1.8615880345350209,
+        -1.8615880345350209
+       ],
+       "gap_assumption_holds": true,
+       "variational_ok": true,
+       "closure_diagnostic": 0.0,
+       "closure_dt": 0.33194310785049674
+      },
+      "energy_B_sig": {
+       "basis_size": 20,
+       "E_R": -1.8615880345350209,
+       "E0": -1.8615880345350209,
+       "abs_error": 0.0,
+       "rH": 1.5091242331971172e-15,
+       "weinstein_gap_assumed": [
+        -1.8615880345350224,
+        -1.8615880345350209
+       ],
+       "weinstein_rigorous": [
+        -1.8615880345350224,
+        -1.8615880345350193
+       ],
+       "weinstein_contains_some_sector_eigenvalue": true,
+       "E0_inside_gap_assumed_weinstein": true,
+       "kato_temple": [
+        -1.8615880345350209,
+        -1.8615880345350209
+       ],
+       "kato_temple_alpha_second_ritz": -1.8197452519625035,
+       "kato_temple_rigorous_exact_E1": [
+        -1.8615880345350209,
+        -1.8615880345350209
+       ],
+       "gap_assumption_holds": true,
+       "variational_ok": true,
+       "closure_diagnostic": 0.0,
+       "closure_dt": 0.33194310785049674
+      }
+     }
+    },
+    "seeds": {
+     "B0_ref06_k1": 35302000,
+     "B0_ref06_k2": 35302001,
+     "B0_ref06_k3": 35302002,
+     "B0_ref06_k4": 35302003,
+     "B0_ref17_k1": 35302004,
+     "B0_ref17_k2": 35302005,
+     "B0_ref17_k3": 35302006,
+     "B0_ref17_k4": 35302007,
+     "B0_ref21_k1": 35302008,
+     "B0_ref21_k2": 35302009,
+     "B0_ref21_k3": 35302010,
+     "B0_ref21_k4": 35302011,
+     "B0_ref30_k1": 35302012,
+     "B0_ref30_k2": 35302013,
+     "B0_ref30_k3": 35302014,
+     "B0_ref30_k4": 35302015,
+     "B0_ref43_k1": 35302016,
+     "B0_ref43_k2": 35302017,
+     "B0_ref43_k3": 35302018,
+     "B0_ref43_k4": 35302019,
+     "B1_ref07_k1": 35302020,
+     "B1_ref07_k2": 35302021,
+     "B1_ref07_k3": 35302022,
+     "B1_ref07_k4": 35302023,
+     "B1_ref14_k1": 35302024,
+     "B1_ref14_k2": 35302025,
+     "B1_ref14_k3": 35302026,
+     "B1_ref14_k4": 35302027
+    },
+    "seed_rule": "35 300 000 + 1000 s + c",
+    "shots_total": 133907,
+    "wall_s": 1629.99654006958,
+    "seconds_per_shot": 0.012172601432856983,
+    "threads": 4,
+    "aer_settings": {
+     "max_parallel_threads": 4,
+     "max_parallel_shots": 4,
+     "fusion_enable": false
+    },
+    "environment": {
+     "sys_prefix": "/home/digimonk/anaconda3/envs/coding",
+     "python": "/home/digimonk/anaconda3/envs/coding/bin/python",
+     "versions": {
+      "python": "3.12.14",
+      "numpy": "2.5.2",
+      "scipy": "1.18.0",
+      "qiskit": "2.5.2",
+      "qiskit-aer": "0.17.2",
+      "pytket": null,
+      "pytket-quantinuum": null,
+      "pytket-pecos": null,
+      "quantum-pecos": null,
+      "guppylang": null,
+      "guppylang-internals": null,
+      "hugr": null,
+      "tket": null,
+      "tket-exts": null,
+      "selene-sim": null,
+      "selene-core": null,
+      "selene-hugr-qis-compiler": null
+     }
+    },
+    "fragment": "por_E3",
+    "created": "2026-10-14 00:43:58 UTC"
+   },
+   "E4": {
+    "scenario": "E4",
+    "reading": {
+     "B=0": {
+      "circuits": 20,
+      "shots": 69505,
+      "accepted": 60268,
+      "rejected": 9237,
+      "accepted_fraction": 0.8671030861089131,
+      "dim": 38,
+      "garbage_acceptance": 0.00927734375,
+      "mu_per_state": 16.968994140625,
+      "B_all_size": 38,
+      "B_sig_size": 38,
+      "recall_S999_B_all": 1.0,
+      "recall_S999_B_sig": 1.0,
+      "support_B_all": {
+       "size": 38,
+       "recall": 1.0,
+       "false_positives": 0,
+       "captured_weight": 1.0000000000000007,
+       "exact_support_size": 16
+      },
+      "support_B_sig": {
+       "size": 38,
+       "recall": 1.0,
+       "false_positives": 0,
+       "captured_weight": 1.0000000000000007,
+       "exact_support_size": 16
+      },
+      "E0": -3.6407665507263425,
+      "E1": -0.9622447993441413,
+      "E_R_B_all": -3.6407665507263425,
+      "E_R_B_sig": -3.6407665507263425,
+      "E_R_minus_E0_B_all": 0.0,
+      "E_R_minus_E0_B_sig": 0.0,
+      "certificate": {
+       "type": "kato_temple_exact_E1",
+       "interval": [
+        -3.6407665507263425,
+        -3.6407665507263425
+       ],
+       "E0_inside": true,
+       "basis": "B_all u refs"
+      },
+      "variational_ok": true,
+      "energy_B_all": {
+       "basis_size": 38,
+       "E_R": -3.6407665507263425,
+       "E0": -3.6407665507263425,
+       "abs_error": 0.0,
+       "rH": 6.14037362740533e-15,
+       "weinstein_gap_assumed": [
+        -3.6407665507263487,
+        -3.6407665507263425
+       ],
+       "weinstein_rigorous": [
+        -3.6407665507263487,
+        -3.6407665507263363
+       ],
+       "weinstein_contains_some_sector_eigenvalue": true,
+       "E0_inside_gap_assumed_weinstein": true,
+       "kato_temple": [
+        -3.6407665507263425,
+        -3.6407665507263425
+       ],
+       "kato_temple_alpha_second_ritz": -0.9622447993441413,
+       "kato_temple_rigorous_exact_E1": [
+        -3.6407665507263425,
+        -3.6407665507263425
+       ],
+       "gap_assumption_holds": true,
+       "variational_ok": true,
+       "closure_diagnostic": 0.0,
+       "closure_dt": 0.24501194722475933
+      },
+      "energy_B_sig": {
+       "basis_size": 38,
+       "E_R": -3.6407665507263425,
+       "E0": -3.6407665507263425,
+       "abs_error": 0.0,
+       "rH": 6.14037362740533e-15,
+       "weinstein_gap_assumed": [
+        -3.6407665507263487,
+        -3.6407665507263425
+       ],
+       "weinstein_rigorous": [
+        -3.6407665507263487,
+        -3.6407665507263363
+       ],
+       "weinstein_contains_some_sector_eigenvalue": true,
+       "E0_inside_gap_assumed_weinstein": true,
+       "kato_temple": [
+        -3.6407665507263425,
+        -3.6407665507263425
+       ],
+       "kato_temple_alpha_second_ritz": -0.9622447993441413,
+       "kato_temple_rigorous_exact_E1": [
+        -3.6407665507263425,
+        -3.6407665507263425
+       ],
+       "gap_assumption_holds": true,
+       "variational_ok": true,
+       "closure_diagnostic": 0.0,
+       "closure_dt": 0.24501194722475933
+      }
+     },
+     "B=1": {
+      "circuits": 8,
+      "shots": 64402,
+      "accepted": 55497,
+      "rejected": 8905,
+      "accepted_fraction": 0.8617278966491724,
+      "dim": 20,
+      "garbage_acceptance": 0.0048828125,
+      "mu_per_state": 15.72314453125,
+      "B_all_size": 20,
+      "B_sig_size": 20,
+      "recall_S999_B_all": 1.0,
+      "recall_S999_B_sig": 1.0,
+      "support_B_all": {
+       "size": 20,
+       "recall": 1.0,
+       "false_positives": 0,
+       "captured_weight": 1.0000000000000002,
+       "exact_support_size": 13
+      },
+      "support_B_sig": {
+       "size": 20,
+       "recall": 1.0,
+       "false_positives": 0,
+       "captured_weight": 1.0000000000000002,
+       "exact_support_size": 13
+      },
+      "E0": -1.8615880345350209,
+      "E1": -1.8197452519625035,
+      "E_R_B_all": -1.8615880345350209,
+      "E_R_B_sig": -1.8615880345350209,
+      "E_R_minus_E0_B_all": 0.0,
+      "E_R_minus_E0_B_sig": 0.0,
+      "certificate": {
+       "type": "weinstein",
+       "interval": [
+        -1.8615880345350224,
+        -1.8615880345350193
+       ],
+       "E0_inside": true,
+       "basis": "B_all u refs"
+      },
+      "variational_ok": true,
+      "energy_B_all": {
+       "basis_size": 20,
+       "E_R": -1.8615880345350209,
+       "E0": -1.8615880345350209,
+       "abs_error": 0.0,
+       "rH": 1.5091242331971172e-15,
+       "weinstein_gap_assumed": [
+        -1.8615880345350224,
+        -1.8615880345350209
+       ],
+       "weinstein_rigorous": [
+        -1.8615880345350224,
+        -1.8615880345350193
+       ],
+       "weinstein_contains_some_sector_eigenvalue": true,
+       "E0_inside_gap_assumed_weinstein": true,
+       "kato_temple": [
+        -1.8615880345350209,
+        -1.8615880345350209
+       ],
+       "kato_temple_alpha_second_ritz": -1.8197452519625035,
+       "kato_temple_rigorous_exact_E1": [
+        -1.8615880345350209,
+        -1.8615880345350209
+       ],
+       "gap_assumption_holds": true,
+       "variational_ok": true,
+       "closure_diagnostic": 0.0,
+       "closure_dt": 0.33194310785049674
+      },
+      "energy_B_sig": {
+       "basis_size": 20,
+       "E_R": -1.8615880345350209,
+       "E0": -1.8615880345350209,
+       "abs_error": 0.0,
+       "rH": 1.5091242331971172e-15,
+       "weinstein_gap_assumed": [
+        -1.8615880345350224,
+        -1.8615880345350209
+       ],
+       "weinstein_rigorous": [
+        -1.8615880345350224,
+        -1.8615880345350193
+       ],
+       "weinstein_contains_some_sector_eigenvalue": true,
+       "E0_inside_gap_assumed_weinstein": true,
+       "kato_temple": [
+        -1.8615880345350209,
+        -1.8615880345350209
+       ],
+       "kato_temple_alpha_second_ritz": -1.8197452519625035,
+       "kato_temple_rigorous_exact_E1": [
+        -1.8615880345350209,
+        -1.8615880345350209
+       ],
+       "gap_assumption_holds": true,
+       "variational_ok": true,
+       "closure_diagnostic": 0.0,
+       "closure_dt": 0.33194310785049674
+      }
+     }
+    },
+    "seeds": {
+     "B0_ref06_k1": 35303000,
+     "B0_ref06_k2": 35303001,
+     "B0_ref06_k3": 35303002,
+     "B0_ref06_k4": 35303003,
+     "B0_ref17_k1": 35303004,
+     "B0_ref17_k2": 35303005,
+     "B0_ref17_k3": 35303006,
+     "B0_ref17_k4": 35303007,
+     "B0_ref21_k1": 35303008,
+     "B0_ref21_k2": 35303009,
+     "B0_ref21_k3": 35303010,
+     "B0_ref21_k4": 35303011,
+     "B0_ref30_k1": 35303012,
+     "B0_ref30_k2": 35303013,
+     "B0_ref30_k3": 35303014,
+     "B0_ref30_k4": 35303015,
+     "B0_ref43_k1": 35303016,
+     "B0_ref43_k2": 35303017,
+     "B0_ref43_k3": 35303018,
+     "B0_ref43_k4": 35303019,
+     "B1_ref07_k1": 35303020,
+     "B1_ref07_k2": 35303021,
+     "B1_ref07_k3": 35303022,
+     "B1_ref07_k4": 35303023,
+     "B1_ref14_k1": 35303024,
+     "B1_ref14_k2": 35303025,
+     "B1_ref14_k3": 35303026,
+     "B1_ref14_k4": 35303027
+    },
+    "seed_rule": "35 300 000 + 1000 s + c",
+    "shots_total": 133907,
+    "wall_s": 1637.8156476020813,
+    "seconds_per_shot": 0.012230993507449807,
+    "threads": 4,
+    "aer_settings": {
+     "max_parallel_threads": 4,
+     "max_parallel_shots": 4,
+     "fusion_enable": false
+    },
+    "environment": {
+     "sys_prefix": "/home/digimonk/anaconda3/envs/coding",
+     "python": "/home/digimonk/anaconda3/envs/coding/bin/python",
+     "versions": {
+      "python": "3.12.14",
+      "numpy": "2.5.2",
+      "scipy": "1.18.0",
+      "qiskit": "2.5.2",
+      "qiskit-aer": "0.17.2",
+      "pytket": null,
+      "pytket-quantinuum": null,
+      "pytket-pecos": null,
+      "quantum-pecos": null,
+      "guppylang": null,
+      "guppylang-internals": null,
+      "hugr": null,
+      "tket": null,
+      "tket-exts": null,
+      "selene-sim": null,
+      "selene-core": null,
+      "selene-hugr-qis-compiler": null
+     }
+    },
+    "fragment": "por_E4",
+    "created": "2026-10-14 01:11:20 UTC"
+   },
+   "E5b": {
+    "scenario": "E5b",
+    "reading": {
+     "B=0": {
+      "circuits": 20,
+      "shots": 69505,
+      "accepted": 59601,
+      "rejected": 9904,
+      "accepted_fraction": 0.8575066541975398,
+      "dim": 38,
+      "garbage_acceptance": 0.00927734375,
+      "mu_per_state": 16.968994140625,
+      "B_all_size": 38,
+      "B_sig_size": 38,
+      "recall_S999_B_all": 1.0,
+      "recall_S999_B_sig": 1.0,
+      "support_B_all": {
+       "size": 38,
+       "recall": 1.0,
+       "false_positives": 0,
+       "captured_weight": 1.0000000000000007,
+       "exact_support_size": 16
+      },
+      "support_B_sig": {
+       "size": 38,
+       "recall": 1.0,
+       "false_positives": 0,
+       "captured_weight": 1.0000000000000007,
+       "exact_support_size": 16
+      },
+      "E0": -3.6407665507263425,
+      "E1": -0.9622447993441413,
+      "E_R_B_all": -3.6407665507263425,
+      "E_R_B_sig": -3.6407665507263425,
+      "E_R_minus_E0_B_all": 0.0,
+      "E_R_minus_E0_B_sig": 0.0,
+      "certificate": {
+       "type": "kato_temple_exact_E1",
+       "interval": [
+        -3.6407665507263425,
+        -3.6407665507263425
+       ],
+       "E0_inside": true,
+       "basis": "B_all u refs"
+      },
+      "variational_ok": true,
+      "energy_B_all": {
+       "basis_size": 38,
+       "E_R": -3.6407665507263425,
+       "E0": -3.6407665507263425,
+       "abs_error": 0.0,
+       "rH": 6.14037362740533e-15,
+       "weinstein_gap_assumed": [
+        -3.6407665507263487,
+        -3.6407665507263425
+       ],
+       "weinstein_rigorous": [
+        -3.6407665507263487,
+        -3.6407665507263363
+       ],
+       "weinstein_contains_some_sector_eigenvalue": true,
+       "E0_inside_gap_assumed_weinstein": true,
+       "kato_temple": [
+        -3.6407665507263425,
+        -3.6407665507263425
+       ],
+       "kato_temple_alpha_second_ritz": -0.9622447993441413,
+       "kato_temple_rigorous_exact_E1": [
+        -3.6407665507263425,
+        -3.6407665507263425
+       ],
+       "gap_assumption_holds": true,
+       "variational_ok": true,
+       "closure_diagnostic": 0.0,
+       "closure_dt": 0.24501194722475933
+      },
+      "energy_B_sig": {
+       "basis_size": 38,
+       "E_R": -3.6407665507263425,
+       "E0": -3.6407665507263425,
+       "abs_error": 0.0,
+       "rH": 6.14037362740533e-15,
+       "weinstein_gap_assumed": [
+        -3.6407665507263487,
+        -3.6407665507263425
+       ],
+       "weinstein_rigorous": [
+        -3.6407665507263487,
+        -3.6407665507263363
+       ],
+       "weinstein_contains_some_sector_eigenvalue": true,
+       "E0_inside_gap_assumed_weinstein": true,
+       "kato_temple": [
+        -3.6407665507263425,
+        -3.6407665507263425
+       ],
+       "kato_temple_alpha_second_ritz": -0.9622447993441413,
+       "kato_temple_rigorous_exact_E1": [
+        -3.6407665507263425,
+        -3.6407665507263425
+       ],
+       "gap_assumption_holds": true,
+       "variational_ok": true,
+       "closure_diagnostic": 0.0,
+       "closure_dt": 0.24501194722475933
+      }
+     },
+     "B=1": {
+      "circuits": 8,
+      "shots": 64402,
+      "accepted": 54990,
+      "rejected": 9412,
+      "accepted_fraction": 0.8538554703270085,
+      "dim": 20,
+      "garbage_acceptance": 0.0048828125,
+      "mu_per_state": 15.72314453125,
+      "B_all_size": 20,
+      "B_sig_size": 20,
+      "recall_S999_B_all": 1.0,
+      "recall_S999_B_sig": 1.0,
+      "support_B_all": {
+       "size": 20,
+       "recall": 1.0,
+       "false_positives": 0,
+       "captured_weight": 1.0000000000000002,
+       "exact_support_size": 13
+      },
+      "support_B_sig": {
+       "size": 20,
+       "recall": 1.0,
+       "false_positives": 0,
+       "captured_weight": 1.0000000000000002,
+       "exact_support_size": 13
+      },
+      "E0": -1.8615880345350209,
+      "E1": -1.8197452519625035,
+      "E_R_B_all": -1.8615880345350209,
+      "E_R_B_sig": -1.8615880345350209,
+      "E_R_minus_E0_B_all": 0.0,
+      "E_R_minus_E0_B_sig": 0.0,
+      "certificate": {
+       "type": "weinstein",
+       "interval": [
+        -1.8615880345350224,
+        -1.8615880345350193
+       ],
+       "E0_inside": true,
+       "basis": "B_all u refs"
+      },
+      "variational_ok": true,
+      "energy_B_all": {
+       "basis_size": 20,
+       "E_R": -1.8615880345350209,
+       "E0": -1.8615880345350209,
+       "abs_error": 0.0,
+       "rH": 1.5091242331971172e-15,
+       "weinstein_gap_assumed": [
+        -1.8615880345350224,
+        -1.8615880345350209
+       ],
+       "weinstein_rigorous": [
+        -1.8615880345350224,
+        -1.8615880345350193
+       ],
+       "weinstein_contains_some_sector_eigenvalue": true,
+       "E0_inside_gap_assumed_weinstein": true,
+       "kato_temple": [
+        -1.8615880345350209,
+        -1.8615880345350209
+       ],
+       "kato_temple_alpha_second_ritz": -1.8197452519625035,
+       "kato_temple_rigorous_exact_E1": [
+        -1.8615880345350209,
+        -1.8615880345350209
+       ],
+       "gap_assumption_holds": true,
+       "variational_ok": true,
+       "closure_diagnostic": 0.0,
+       "closure_dt": 0.33194310785049674
+      },
+      "energy_B_sig": {
+       "basis_size": 20,
+       "E_R": -1.8615880345350209,
+       "E0": -1.8615880345350209,
+       "abs_error": 0.0,
+       "rH": 1.5091242331971172e-15,
+       "weinstein_gap_assumed": [
+        -1.8615880345350224,
+        -1.8615880345350209
+       ],
+       "weinstein_rigorous": [
+        -1.8615880345350224,
+        -1.8615880345350193
+       ],
+       "weinstein_contains_some_sector_eigenvalue": true,
+       "E0_inside_gap_assumed_weinstein": true,
+       "kato_temple": [
+        -1.8615880345350209,
+        -1.8615880345350209
+       ],
+       "kato_temple_alpha_second_ritz": -1.8197452519625035,
+       "kato_temple_rigorous_exact_E1": [
+        -1.8615880345350209,
+        -1.8615880345350209
+       ],
+       "gap_assumption_holds": true,
+       "variational_ok": true,
+       "closure_diagnostic": 0.0,
+       "closure_dt": 0.33194310785049674
+      }
+     }
+    },
+    "seeds": {
+     "B0_ref06_k1": 35305000,
+     "B0_ref06_k2": 35305001,
+     "B0_ref06_k3": 35305002,
+     "B0_ref06_k4": 35305003,
+     "B0_ref17_k1": 35305004,
+     "B0_ref17_k2": 35305005,
+     "B0_ref17_k3": 35305006,
+     "B0_ref17_k4": 35305007,
+     "B0_ref21_k1": 35305008,
+     "B0_ref21_k2": 35305009,
+     "B0_ref21_k3": 35305010,
+     "B0_ref21_k4": 35305011,
+     "B0_ref30_k1": 35305012,
+     "B0_ref30_k2": 35305013,
+     "B0_ref30_k3": 35305014,
+     "B0_ref30_k4": 35305015,
+     "B0_ref43_k1": 35305016,
+     "B0_ref43_k2": 35305017,
+     "B0_ref43_k3": 35305018,
+     "B0_ref43_k4": 35305019,
+     "B1_ref07_k1": 35305020,
+     "B1_ref07_k2": 35305021,
+     "B1_ref07_k3": 35305022,
+     "B1_ref07_k4": 35305023,
+     "B1_ref14_k1": 35305024,
+     "B1_ref14_k2": 35305025,
+     "B1_ref14_k3": 35305026,
+     "B1_ref14_k4": 35305027
+    },
+    "seed_rule": "35 300 000 + 1000 s + c",
+    "shots_total": 133907,
+    "wall_s": 1856.5289359092712,
+    "seconds_per_shot": 0.013864315800587506,
+    "threads": 4,
+    "aer_settings": {
+     "max_parallel_threads": 4,
+     "max_parallel_shots": 4,
+     "fusion_enable": false
+    },
+    "environment": {
+     "sys_prefix": "/home/digimonk/anaconda3/envs/coding",
+     "python": "/home/digimonk/anaconda3/envs/coding/bin/python",
+     "versions": {
+      "python": "3.12.14",
+      "numpy": "2.5.2",
+      "scipy": "1.18.0",
+      "qiskit": "2.5.2",
+      "qiskit-aer": "0.17.2",
+      "pytket": null,
+      "pytket-quantinuum": null,
+      "pytket-pecos": null,
+      "quantum-pecos": null,
+      "guppylang": null,
+      "guppylang-internals": null,
+      "hugr": null,
+      "tket": null,
+      "tket-exts": null,
+      "selene-sim": null,
+      "selene-core": null,
+      "selene-hugr-qis-compiler": null
+     }
+    },
+    "fragment": "por_E5b",
+    "created": "2026-10-14 01:42:22 UTC"
+   },
    "E7_0.10_lat": {
     "status": "dropped by prompts/35a: 0.87 h predicted",
     "predicted_h": 0.8718825950092739,
@@ -9573,36 +10747,19 @@
     "predicted_h": 1.0340171035267247,
     "shots": 133907,
     "rate_used": "E5b of data.rates"
-   },
-   "E1": {
-    "status": "not run (yet): no completed plan-of-record fragment: 0.87 h predicted",
-    "predicted_h": 0.8718825950092739,
-    "shots": 133907,
-    "rate_used": "E1 of data.rates"
-   },
-   "E3": {
-    "status": "not run (yet): no completed plan-of-record fragment: 0.87 h predicted",
-    "predicted_h": 0.8718825950092739,
-    "shots": 133907,
-    "rate_used": "E1 of data.rates"
-   },
-   "E4": {
-    "status": "not run (yet): no completed plan-of-record fragment: 0.87 h predicted",
-    "predicted_h": 0.8718825950092739,
-    "shots": 133907,
-    "rate_used": "E1 of data.rates"
-   },
-   "E5b": {
-    "status": "not run (yet): no completed plan-of-record fragment: 1.03 h predicted",
-    "predicted_h": 1.0340171035267247,
-    "shots": 133907,
-    "rate_used": "E5b of data.rates"
    }
   },
+  "scenarios_run": [
+   "E1",
+   "E3",
+   "E4",
+   "E5b"
+  ],
+  "stop_variational": [],
   "t3_cap": {
    "fcells_s": 12021.370131492615,
-   "plan_of_record_s": 0,
-   "total_h": 3.3392694809701706,
+   "plan_of_record_s": 6888.456146240234,
+   "total_h": 5.252729521592458,
    "cap_h": 10.0,
    "rule": "prompts/35a R3: f-cells 28 x 11, plan of record E1, E3, E4, E5b, 10 h"
   },
@@ -9673,6 +10830,26 @@
     "status": "FAIL",
     "title": "Campaign 33 token C4_FCELLS_A (class 4): 10-min ladder then f-cells E1,E2,E3,E4,E5a/b/c x O0-O4 (+O6 info)"
    },
+   "validation/C33_F4_B0a_part2of2.json": {
+    "status": "FAIL",
+    "title": "Campaign 33 token C4_PART_02 (class 4): prompts/33a step D: generic class-4 part slot; its content is ci/parts/C4_PART_02.json in the requested commit (frun part i of n, dropped f-cells, or a cv3 equa"
+   },
+   "validation/C33_F4_B0b_part2of2.json": {
+    "status": "FAIL",
+    "title": "Campaign 33 token C4_PART_04 (class 4): prompts/33a step D: generic class-4 part slot; its content is ci/parts/C4_PART_04.json in the requested commit (frun part i of n, dropped f-cells, or a cv3 equa"
+   },
+   "validation/C33_F4_B1a_part2of2.json": {
+    "status": "PASS",
+    "title": "Campaign 33 token C4_PART_03 (class 4): prompts/33a step D: generic class-4 part slot; its content is ci/parts/C4_PART_03.json in the requested commit (frun part i of n, dropped f-cells, or a cv3 equa"
+   },
+   "validation/C33_F4_B1b_part2of2.json": {
+    "status": "PASS",
+    "title": "Campaign 33 token C4_PART_05 (class 4): prompts/33a step D: generic class-4 part slot; its content is ci/parts/C4_PART_05.json in the requested commit (frun part i of n, dropped f-cells, or a cv3 equa"
+   },
+   "validation/C33_F5_B1_part2of2.json": {
+    "status": "PASS",
+    "title": "Campaign 33 token C4_PART_01 (class 4): prompts/33a step D: generic class-4 part slot; its content is ci/parts/C4_PART_01.json in the requested commit (frun part i of n, dropped f-cells, or a cv3 equa"
+   },
    "C3_AER": {
     "file": "validation/C3_AER.json",
     "status": "PASS"
@@ -9702,14 +10879,14 @@
    }
   }
  },
- "runtime_s": 12035.638821840286,
+ "runtime_s": 18923.636717557907,
  "environment": {
   "python": "3.12.14",
   "numpy": "2.5.2",
   "scipy": "1.18.0",
   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
   "cpu_count": 12,
-  "git_commit": "3d80e19",
-  "timestamp": "2026-10-13 17:44:46 MDT"
+  "git_commit": "1691220",
+  "timestamp": "2026-10-13 19:42:46 MDT"
  }
 }
