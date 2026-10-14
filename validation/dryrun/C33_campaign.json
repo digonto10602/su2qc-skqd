@@ -1,21 +1,22 @@
 {
  "gate": "dryrun/C33_campaign",
  "title": "DRY RUN skeleton: 2x3 four-class campaign: matrix, S3-quota merges and the comparison with every earlier 2x3 result",
- "status": "PASS",
+ "status": "FAIL",
  "criteria": [
   {
    "name": "every token JSON present",
-   "value": "33 of 33",
-   "threshold": "33 of 33",
+   "value": "34 of 34",
+   "threshold": "34 of 34",
    "passed": true
   },
   {
    "name": "every present token PASS (tokens dropped by data/campaign33/engines.json excluded)",
    "value": {
-    "C3_SEL": "DROPPED"
+    "C3_SEL": "DROPPED",
+    "C2_KCHK": "FAIL"
    },
    "threshold": "no FAIL",
-   "passed": true
+   "passed": false
   },
   {
    "name": "comparison table generated (section 6 rows)",
@@ -59,7 +60,8 @@
    "C4_F8_B0b",
    "C4_F8_B1a",
    "C4_F8_B1b",
-   "C4_CF"
+   "C4_CF",
+   "C2_KCHK"
   ],
   "present": {
    "C1_IDEAL": true,
@@ -94,7 +96,8 @@
    "C4_F8_B0b": true,
    "C4_F8_B1a": true,
    "C4_F8_B1b": true,
-   "C4_CF": true
+   "C4_CF": true,
+   "C2_KCHK": true
   },
   "statuses": {
    "C1_IDEAL": "PASS",
@@ -130,6 +133,7 @@
    "C4_F8_B1a": "PASS",
    "C4_F8_B1b": "PASS",
    "C4_CF": "PASS",
+   "C2_KCHK": "FAIL",
    "C33_F5_B1": "PASS"
   },
   "merged_s3_quota": {
@@ -286,6 +290,13 @@
     "json": "validation/dryrun/C33_F5_B1.json"
    }
   },
+  "cf_parts": {
+   "status": "absent",
+   "files": [],
+   "parts": 0,
+   "present": [],
+   "complete": false
+  },
   "matrix": [
    {
     "token": "C1_IDEAL",
@@ -363,8 +374,8 @@
     "token": "C2_XY4",
     "class": 2,
     "status": "PASS",
-    "s_per_shot": 95.52452182769775,
-    "wall_s": 193.3643958568573,
+    "s_per_shot": 125.68285822868347,
+    "wall_s": 532.4005818367004,
     "node_hours": null,
     "dry_run": true,
     "scenario": "I-XY4",
@@ -381,17 +392,17 @@
     "token": "C2_XY4",
     "class": 2,
     "status": "PASS",
-    "s_per_shot": 95.52452182769775,
-    "wall_s": 193.3643958568573,
+    "s_per_shot": 125.68285822868347,
+    "wall_s": 532.4005818367004,
     "node_hours": null,
     "dry_run": true,
     "scenario": "I-XY4",
     "variant": "IBM-T3",
-    "run": "B0_ref117_k1|star",
+    "run": "B1_ref29_k1|echo",
     "accepted": 0,
     "reference_hits": 0,
     "shots": 1,
-    "f0_twirled": 2.7227572912327896e-62,
+    "f0_twirled": 7.857960433725092e-21,
     "P_K1_accepted": null,
     "P_K1_hits": 1.0
    },
@@ -1362,7 +1373,37 @@
      "verdict": "tension"
     },
     "r_nc_new": 1.0011961423615006,
-    "owner_item": true
+    "owner_item": true,
+    "owner_item_rules": {
+     "fires": true,
+     "section6_new_interval_excludes_old_r_nc": true,
+     "section8_new_r_nc_outside_old_interval": true,
+     "new_pooled_ci95": [
+      0.9928143359536241,
+      1.0011961423615006
+     ],
+     "old_r_nc": 1.1151352098004452,
+     "old_pooled_ci95": [
+      1.0285934561902321,
+      1.1151352098004452
+     ],
+     "why": "the new pooled interval [0.9928, 1.0012] excludes the old r_nc 1.1151 (section 6); the new r_nc 1.0012 lies outside the old pooled interval [1.0286, 1.1151] (section 8)",
+     "rule": "fires iff (prompts/33 section 6) old r_nc is outside the new pooled 95 % interval of r(1e-3) OR (section 8) the new r_nc = that interval's upper end is outside the old pooled interval; no criterion, verdict or r_nc value changes (the replacement is the owner's decision)",
+     "k4_note": "r_nc bounds the k = 1 excess only (the campaign's pooled statistic is the k = 1 pool); the k = 4 arm's r(1e-3) interval is not covered by r_nc (prompts/33c R4 (c))"
+    },
+    "owner_item_field_as_harvested": true,
+    "r_nc_in_use": 1.1151352098004452,
+    "r_nc_in_use_source": "data/cf_trajectories/r_nc.json (owner item: replacement is the owner's decision, prompts/33c section 5)",
+    "k4_note": "r_nc bounds the k = 1 excess only (the campaign's pooled statistic is the k = 1 pool); the k = 4 arm's r(1e-3) interval is not covered by r_nc (prompts/33c R4 (c))",
+    "k4_r": {
+     "value": 1.7892869363755766,
+     "se_boot": 0.7139069939672849,
+     "ci95": [
+      1.0001925933047462,
+      3.3653668795941885
+     ]
+    },
+    "merged_cf_parts": null
    },
    {
     "old": "CV_2x3_plan / Q0P_2x3_plan P3 B=0 f=0.10 (proxy at 0.7 f, 3 seeds)",
@@ -1490,15 +1531,15 @@
        "f_idle_aware 0.174": 0.095367431640625
       }
      },
-     "B0_ref117_k1|star": {
+     "B1_ref29_k1|echo": {
       "accepted_per_1e5": 0.0,
       "hits_per_1e5": 0.0,
       "P_K1_accepted": null,
       "P_K1_hits": 1.0,
       "prereg_expected_hits_1e5": {
-       "f_gates_layout (no idle)": 1.3675207444775161,
-       "f_idle_aware_xy4 echo (2x2 transfer)": 0.09536743199740676,
-       "f_idle_aware echo": 0.09536743176718294,
+       "f_gates_layout (no idle)": 1.369858905168166,
+       "f_idle_aware_xy4 echo (2x2 transfer)": 0.09536743200398612,
+       "f_idle_aware echo": 0.0953674317695168,
        "f_idle_aware_xy4 0.174 (2x2 transfer)": 0.095367431640625,
        "f_idle_aware 0.174": 0.095367431640625
       }
@@ -1560,16 +1601,16 @@
    }
   ],
   "prompt": "prompts/33 A7 / section 6",
-  "created": "2026-10-11 18:57:09 UTC"
+  "created": "2026-10-13 21:18:52 UTC"
  },
- "runtime_s": 4.202643871307373,
+ "runtime_s": 6.024412631988525,
  "environment": {
   "python": "3.12.14",
   "numpy": "2.5.2",
   "scipy": "1.18.0",
   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
   "cpu_count": 12,
-  "git_commit": "7186860",
-  "timestamp": "2026-10-11 12:57:09 MDT"
+  "git_commit": "a6e4c14",
+  "timestamp": "2026-10-13 15:18:52 MDT"
  }
 }

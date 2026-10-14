@@ -29,7 +29,7 @@ SLOTS = [f"C4_PART_{i:02d}" for i in range(1, 21)]
 # --------------------------------------------------------------------------- the slots
 def test_twenty_slots_in_the_table():
     tok = TK.load_tokens()
-    assert list(TK.slot_tokens()) == SLOTS and list(tok)[33:53] == SLOTS
+    assert list(TK.slot_tokens()) == SLOTS and list(tok)[33:53] == SLOTS       # C2_KCHK after them (33d)
     for t in SLOTS:
         v = tok[t]
         assert (v["class"], v["walltime"], v["gpus"], v["env"]) == (4, "01:00:00", 1, "skqd")
@@ -40,13 +40,15 @@ def test_allowlist_33a_is_generated_from_the_table():
     txt = open(TK.ALLOWLIST_FILE_33A).read()
     assert txt == TK.allowlist_text(TK.slot_tokens())
     assert txt.splitlines() == [f"{t}  01:00:00 1" for t in SLOTS]
-    assert len(open(TK.ALLOWLIST_FILE).read().splitlines()) == 33, "the prompts/33 allowlist is unchanged"
+    lines = open(TK.ALLOWLIST_FILE).read().splitlines()
+    assert len(lines) == 34 and lines[-1] == "C2_KCHK      01:00:00 1", "the prompts/33 allowlist + C2_KCHK (33d)"
 
 
 def test_slot_seeds_are_disjoint_from_the_33():
-    s33 = [TK.base_seed(t) for t in TK.campaign_tokens()]
+    s33 = [TK.base_seed(t) for t in list(TK.campaign_tokens())[:33]]
     ss = [TK.base_seed(t) for t in SLOTS]
     assert max(s33) < min(ss) and len(set(ss)) == 20
+    assert TK.base_seed("C2_KCHK") > max(ss), "prompts/33d: C2_KCHK appended after the slots, its own seed range"
     assert TK.base_seed("C4_CF") == TK.BASE_SEED + 32 * TK.SEED_PER_TOKEN, "the 33 indices are unchanged"
 
 
@@ -250,10 +252,13 @@ def test_scenario_rates_ratio_rule_on_a_synthetic_fcells_a():
     assert RS.parts_for(shots, n1) == 1 and RS.parts_for(shots, n3) == 3
     plan = {f"c{i}": shots // 40 for i in range(40)}
     assert RS.split_run(plan, 476, n1)["parts"] == 1 and RS.split_run(plan, 476, n3)["parts"] == 3
-    # E8 measured by C4_FCELLS_B's s3_redo replaces the upper bound
-    fb = {"data": {"s3_redo": {"seconds": 63.6, "shots": 3200, "chunk": 476}, "run": {"ci": {"SLURM_JOB_ID": "2"}}}}
-    r2 = RS.scenario_rates([("a", fa, "1"), ("validation/C4_FCELLS_B.json", fb, "2")], fit, 1428)["scenario_rates"]
-    assert abs(r2["E8"]["s_per_shot"] - 63.6 / 3200) < 1e-15 and "s3_redo" in r2["E8"]["source"]
+    # prompts/33c R5: C4_FCELLS_B's s3_redo is recorded, rho_E8 stays rho_E1 (upper bound from S3 and the redo)
+    fb = {"data": {"s3_redo": {"seconds": 141.0, "shots": 3200, "chunk": 14}, "run": {"ci": {"SLURM_JOB_ID": "2"}}}}
+    r2 = RS.scenario_rates([("a", fa, "1"), ("validation/C4_FCELLS_B.json", fb, "2")], fit, 1428,
+                           {"s_per_shot": 0.0199, "source": "validation/S3.json"})["scenario_rates"]
+    assert r2["E8"]["rho"] == r2["E1"]["rho"] and r2["E8"]["s_per_shot"] == r2["E1"]["s_per_shot"]
+    assert r2["E8"]["label"].startswith("upper bound (S3 and FCELLS_B s3_redo)")
+    assert abs(r2["E8"]["s3_redo_s_per_shot"] - 141.0 / 3200) < 1e-15 and "s3_redo" in r2["E8"]["s3_redo_source"]
 
 
 @pytest.fixture(scope="module")

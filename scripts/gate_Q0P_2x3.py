@@ -1865,7 +1865,8 @@ def token_index_check():
         return {"ok": False, "error": r.stderr.strip()[:300]}
     before = [t for t in json.loads(r.stdout) if not t.startswith("_")]
     now = T.load_tokens()
-    moved = {t: [i, T.token_index(t, now)] for i, t in enumerate(before) if t not in now or T.token_index(t, now) != i}
+    moved = {t: [i, (T.token_index(t, now) if t in now else None)] for i, t in enumerate(before)
+             if t not in now or T.token_index(t, now) != i}
     return {"ok": not moved, "n_tokens_master": len(before), "n_tokens_now": len(now), "moved": moved,
             "C4_PART_20_index": {"master": before.index("C4_PART_20") if "C4_PART_20" in before else None,
                                  "now": T.token_index("C4_PART_20", now)},

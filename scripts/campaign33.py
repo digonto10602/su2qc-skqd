@@ -99,7 +99,7 @@ PREFLIGHT_MODULES = {
              "skqd.campaign33.tokens", "skqd.campaign33.stats", "skqd.campaign33.sampling",
              "skqd.campaign33.circuits", "skqd.campaign33.noise", "skqd.campaign33.analysis",
              "skqd.campaign33.tokens_run", "skqd.campaign33.assemble", "skqd.campaign33.cf_gpu",
-             "skqd.campaign33.engines", "gate_CV"),
+             "skqd.campaign33.engines", "skqd.campaign33.kchk_cpu", "gate_CV"),
     "engine": ("numpy", "skqd.report", "skqd.campaign33.tokens", "skqd.campaign33.stats", "skqd.campaign33.engines"),
 }
 PREFLIGHT_EXIT = 3
@@ -292,6 +292,8 @@ def build_parser(ci: dict = None):
                     help="C2_CAL dry run only: 'pta,rm,kraus,chunk' (default 4,8,4,2; a reduced check under the 30-minute rule)")
     ap.add_argument("--parts-file", default=None,
                     help="C4_PART_NN: the slot content (default ci/parts/<TOKEN>.json; prompts/33a step D)")
+    ap.add_argument("--c2kchk-file", default=None,
+                    help="C2 cells: the C2_KCHK decision file (default validation/[dryrun/]C2_KCHK.json; prompts/33d)")
     if ci:
         tok = None
         for i, a in enumerate(sys.argv):
@@ -462,6 +464,8 @@ def run_token(args, ci, pre=None):
         TR.run_ideal(ctx)
     elif t == "C2_CAL":
         TR.run_c2_cal(ctx)
+    elif t == "C2_KCHK":
+        TR.run_c2_kchk(ctx)
     elif t.startswith("C2_"):
         TR.run_c2_cell(ctx)
     elif t in ("C3_LE", "C3_SEL"):

@@ -66,8 +66,8 @@ CAMPAIGN_SCRIPT = "scripts/campaign33.py"
 
 
 def campaign_tokens(tokens: dict = None) -> dict:
-    """The 33 tokens of prompts/33 (the generic part slots of prompts/33a excluded, and so is every token appended
-    later for another driver, e.g. prompts/35's QV_2x4: their indices follow the campaign's, which stay unchanged)."""
+    """The 33 tokens of prompts/33 plus C2_KCHK (prompts/33d; appended after the slots, so no index moves) -- the
+    generic part slots of prompts/33a excluded."""
     tokens = load_tokens() if tokens is None else tokens
     return {t: v for t, v in tokens.items() if not is_slot(t) and v.get("script") == CAMPAIGN_SCRIPT}
 

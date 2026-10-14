@@ -69,3 +69,15 @@ sizing JSON says which.
 - `python scripts/campaign33.py --stage assemble` merges the parts of every run whose parts are all present into
   `validation/C33_<run>.json` (CV0-CV5, the certificate, recall, bootstrap, P13 / P14 / P15, `parts` listed); the cv3
   parts of a run are merged (equal-shots totals summed, ranges checked to tile N_eq) before CV3 is read.
+
+## The `cf` content (prompts/33c step 3; owner-gated, after the maintenance)
+
+The C4_CF re-request in parts: `{"content": "cf", "token": "C4_CF", "run": "CF", "part": i, "parts": n,
+"K_per_arm": K, "seed_chunk_index": i, "seed_token_index": <index of C4_CF>, "sizing": {...}}`, written by
+`python scripts/campaign33_resize.py --reassign --with-cf` (never without the owner's go: `--with-cf` puts the parts
+at the head of the slot queue; without it the plan is only recorded in `sizing_33a.json` `cf`).  K = floor(0.95 x
+the fewest trajectories an arm of the harvested C4_CF reached), n = ceil(2000 / K).  Seeds: C4_CF's own base seed,
+arm i, chunk index i_part >= 1 (the harvested job is index 0), so the parts are disjoint from each other and from it.
+Each part writes `validation/C33_CF_part<i>of<n>.json` with the compact per-trajectory arrays (`merge_arrays`); the
+assembly merges them into `validation/C33_CF.json` (per-arm r(1e-3) with the bootstrap interval, P16 / P17, pooled
+r, r_nc, the owner item).

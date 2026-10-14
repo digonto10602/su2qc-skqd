@@ -1,0 +1,611 @@
+{
+ "gate": "C4_CF",
+ "title": "Campaign 33 token C4_CF (class 4): CF_traj redo on the GPU: K=2000 faulty Pauli trajectories per arm",
+ "status": "FAIL",
+ "criteria": [
+  {
+   "name": "P16 r per arm with 95 % bootstrap intervals; pooled r; new r_nc = its upper end",
+   "value": {
+    "B0_ref25_k1": 1.0609849861673817,
+    "B1_ref57_k1": 1.0483133476577402,
+    "B0_ref25_k4": 1.1720203542733039,
+    "B0_ref25_k1__xx": 1.0516929598521412
+   },
+   "threshold": "fields present",
+   "passed": true
+  },
+  {
+   "name": "P17 floor theorem (CF_traj C4'): min_S99 f_eff / f_ideal(1e-3) >= 0.95 on every arm",
+   "value": {
+    "B0_ref25_k1": 1.0566536447076567,
+    "B1_ref57_k1": 1.0483133476577216,
+    "B0_ref25_k4": 1.1720203542732954,
+    "B0_ref25_k1__xx": 1.051692959852136
+   },
+   "threshold": ">= 0.95",
+   "passed": true
+  },
+  {
+   "name": "S1 the run happened on the requested device (GPU under the CI)",
+   "value": "GPU (available ['CPU', 'GPU'])",
+   "threshold": "GPU",
+   "passed": true
+  },
+  {
+   "name": "S2 wall time inside the walltime budget",
+   "value": "2401 s",
+   "threshold": "<= min(walltime 3600 s, 3600 s) and <= 1.1 x budget + 120 s",
+   "passed": true
+  },
+  {
+   "name": "S3 telemetry and run block present (policy fields non-null on the CI)",
+   "value": {
+    "engine": true,
+    "device": true,
+    "wall_seconds": true,
+    "seconds_per_shot": true,
+    "gpus": true
+   },
+   "threshold": "every policy field non-null on the CI; present on the laptop",
+   "passed": true
+  },
+  {
+   "name": "S4 every seed and every chunk recorded",
+   "value": true,
+   "threshold": "true",
+   "passed": true
+  },
+  {
+   "name": "S5 no out-of-memory retry left unrecorded",
+   "value": "0 recorded",
+   "threshold": "each OOM split recorded",
+   "passed": true
+  },
+  {
+   "name": "S6 shots >= the token's minimum",
+   "value": {
+    "B0_ref25_k1": 1232,
+    "B1_ref57_k1": 1262,
+    "B0_ref25_k4": 1244,
+    "B0_ref25_k1__xx": 1239
+   },
+   "threshold": "no reduction below the minimum",
+   "passed": false
+  }
+ ],
+ "data": {
+  "token": "C4_CF",
+  "class": 4,
+  "prompt": "prompts/33_2x3_four_class_perlmutter_campaign.md",
+  "content": "CF_traj redo on the GPU: K=2000 faulty Pauli trajectories per arm",
+  "dry_run": false,
+  "created": "2026-10-13 14:37:04 UTC",
+  "seeds": {
+   "s0": 36200000,
+   "rule": "aer seed of chunk i of circuit c = s0 * 1e4 + c * 1e6 + i * stride, stride = chunk size, s0 = 33 000 000 + 1e5 x token index (prompts/33 2.3 s0; the circuit/chunk offsets are widened from 1e3 c so that circuits, chunks, tokens and the a/b halves are disjoint for <= 1e6 shots per circuit: the literal s0 + 1e3 c + i stride overlaps above 1000 shots per circuit).  prompts/33b R4: every part of a split class-4 run (part 1 on the F token, parts >= 2 on any C4_PART slot) uses s0 of the run's OWN F token, i = the chunk's index in the UNSPLIT chunk plan and stride = the sizing's chunk, so the parts concatenate to the unsplit run seed for seed and a slot can be re-used; the run's CV3 equal-shots sample uses the same s0 with circuit offsets 100 (k <= 4) / 200 (k = 5); an f-cell slot uses the slot's own s0 with circuit offset 4 x the cell's global index"
+  },
+  "preflight": {
+   "ok": true,
+   "modules": [
+    "threadpoolctl",
+    "numpy",
+    "scipy",
+    "qiskit",
+    "qiskit_aer",
+    "skqd.campaign33.tokens",
+    "skqd.campaign33.stats",
+    "skqd.campaign33.sampling",
+    "skqd.campaign33.circuits",
+    "skqd.campaign33.noise",
+    "skqd.campaign33.analysis",
+    "skqd.campaign33.tokens_run",
+    "skqd.campaign33.assemble",
+    "skqd.campaign33.cf_gpu",
+    "skqd.campaign33.engines",
+    "gate_CV"
+   ],
+   "env": "skqd",
+   "versions": {
+    "qiskit": "1.4.3",
+    "qiskit_aer": "0.15.1",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "threadpoolctl": "3.7.0",
+    "python": "3.12.14"
+   },
+   "seconds": 13.970722913742065
+  },
+  "arms": {
+   "B0_ref25_k1": {
+    "K": 1232,
+    "r": {
+     "value": 1.0609849861673817,
+     "se_boot": 0.014232713341102383,
+     "ci95": [
+      1.0348462754921783,
+      1.0895793662507445
+     ]
+    },
+    "f_hit": {
+     "value": 0.25316770903132785,
+     "se_boot": 0.006664575038731446,
+     "ci95": [
+      0.23997325998444116,
+      0.26612117828157983
+     ]
+    },
+    "b": {
+     "value": 0.08035714285714288,
+     "se_boot": 0.0075546353215251464,
+     "ci95": [
+      0.06574675324675325,
+      0.09496753246753248
+     ]
+    },
+    "f_ideal": {
+     "value": 0.23861573192081717,
+     "se_boot": 0.006254580721427877,
+     "ci95": [
+      0.22651960056563156,
+      0.25071186327600276
+     ]
+    },
+    "floor_min_feff_over_fideal_S99": {
+     "value": 1.0566536447076567,
+     "se_boot": 0.013452985068811422,
+     "ci95": [
+      1.0304205222456757,
+      1.0830498430609539
+     ]
+    },
+    "floor_theorem_S99": {
+     "d1e-03": {
+      "n_states": 31,
+      "n_below_bound": 0,
+      "n_bound_nonvacuous": 8,
+      "min_margin_feff_minus_bound": 0.015073529643759298
+     },
+     "d1e-02": {
+      "n_states": 31,
+      "n_below_bound": 0,
+      "n_bound_nonvacuous": 1,
+      "min_margin_feff_minus_bound": 0.005963804518748589
+     },
+     "d3e-02": {
+      "n_states": 31,
+      "n_below_bound": 0,
+      "n_bound_nonvacuous": 1,
+      "min_margin_feff_minus_bound": 0.01449999682543493
+     }
+    }
+   },
+   "B1_ref57_k1": {
+    "K": 1262,
+    "r": {
+     "value": 1.0483133476577402,
+     "se_boot": 0.017149803423248285,
+     "ci95": [
+      1.0155991204811454,
+      1.0823237832974153
+     ]
+    },
+    "f_hit": {
+     "value": 0.23500433185061853,
+     "se_boot": 0.006011081724225756,
+     "ci95": [
+      0.223833875901493,
+      0.24762401096455405
+     ]
+    },
+    "b": {
+     "value": 0.06259904912836768,
+     "se_boot": 0.00688135325024897,
+     "ci95": [
+      0.04992076069730586,
+      0.07686212361331221
+     ]
+    },
+    "f_ideal": {
+     "value": 0.2241737476449114,
+     "se_boot": 0.005695251853871069,
+     "ci95": [
+      0.21368074676775042,
+      0.23597837363171748
+     ]
+    },
+    "floor_min_feff_over_fideal_S99": {
+     "value": 1.0483133476577216,
+     "se_boot": 0.017153402359057313,
+     "ci95": [
+      1.0155991204811283,
+      1.0823237832973953
+     ]
+    },
+    "floor_theorem_S99": {
+     "d1e-03": {
+      "n_states": 42,
+      "n_below_bound": 0,
+      "n_bound_nonvacuous": 6,
+      "min_margin_feff_minus_bound": 0.011322085867098014
+     },
+     "d1e-02": {
+      "n_states": 42,
+      "n_below_bound": 0,
+      "n_bound_nonvacuous": 1,
+      "min_margin_feff_minus_bound": 0.004199791636582212
+     },
+     "d3e-02": {
+      "n_states": 42,
+      "n_below_bound": 0,
+      "n_bound_nonvacuous": 1,
+      "min_margin_feff_minus_bound": 0.0016812536337496575
+     }
+    }
+   },
+   "B0_ref25_k4": {
+    "K": 1244,
+    "r": {
+     "value": 1.1720203542733039,
+     "se_boot": 0.022604157459803355,
+     "ci95": [
+      1.1275906784564032,
+      1.2171176043537477
+     ]
+    },
+    "f_hit": {
+     "value": 0.24782299685918077,
+     "se_boot": 0.006548406211773478,
+     "ci95": [
+      0.23539042416067055,
+      0.261003632814746
+     ]
+    },
+    "b": {
+     "value": 0.047427652733118976,
+     "se_boot": 0.006033148599435505,
+     "ci95": [
+      0.03617363344051447,
+      0.06028938906752411
+     ]
+    },
+    "f_ideal": {
+     "value": 0.21144939672386512,
+     "se_boot": 0.004994311436175408,
+     "ci95": [
+      0.20213318706490657,
+      0.22209649347696062
+     ]
+    },
+    "floor_min_feff_over_fideal_S99": {
+     "value": 1.1720203542732954,
+     "se_boot": 0.022576044110390325,
+     "ci95": [
+      1.1273379811592634,
+      1.216866291812005
+     ]
+    },
+    "floor_theorem_S99": {
+     "d1e-03": {
+      "n_states": 31,
+      "n_below_bound": 0,
+      "n_bound_nonvacuous": 31,
+      "min_margin_feff_minus_bound": 0.0381633300431537
+     },
+     "d1e-02": {
+      "n_states": 31,
+      "n_below_bound": 0,
+      "n_bound_nonvacuous": 8,
+      "min_margin_feff_minus_bound": 0.03965202626591849
+     },
+     "d3e-02": {
+      "n_states": 31,
+      "n_below_bound": 0,
+      "n_bound_nonvacuous": 4,
+      "min_margin_feff_minus_bound": 0.07219250449436687
+     }
+    }
+   },
+   "B0_ref25_k1__xx": {
+    "K": 1239,
+    "r": {
+     "value": 1.0516929598521412,
+     "se_boot": 0.011830270480030314,
+     "ci95": [
+      1.0294919670277305,
+      1.0754235546787254
+     ]
+    },
+    "f_hit": {
+     "value": 0.18309095363540687,
+     "se_boot": 0.002366726558573056,
+     "ci95": [
+      0.17868528756983543,
+      0.18779598965091426
+     ]
+    },
+    "b": {
+     "value": 0.002421307506053269,
+     "se_boot": 0.0014053858773805145,
+     "ci95": [
+      0.0,
+      0.005649717514124294
+     ]
+    },
+    "f_ideal": {
+     "value": 0.17409164140563216,
+     "se_boot": 0.0011635372245945334,
+     "ci95": [
+      0.17208700946729633,
+      0.17676448399007996
+     ]
+    },
+    "floor_min_feff_over_fideal_S99": {
+     "value": 1.051692959852136,
+     "se_boot": 0.011681482163808017,
+     "ci95": [
+      1.0283596669515989,
+      1.0736706289307665
+     ]
+    },
+    "floor_theorem_S99": {
+     "d1e-03": {
+      "n_states": 31,
+      "n_below_bound": 0,
+      "n_bound_nonvacuous": 8,
+      "min_margin_feff_minus_bound": 0.009379831719678128
+     },
+     "d1e-02": {
+      "n_states": 31,
+      "n_below_bound": 0,
+      "n_bound_nonvacuous": 1,
+      "min_margin_feff_minus_bound": 0.010843691281618995
+     },
+     "d3e-02": {
+      "n_states": 31,
+      "n_below_bound": 0,
+      "n_bound_nonvacuous": 1,
+      "min_margin_feff_minus_bound": 0.01604413504208571
+     }
+    }
+   }
+  },
+  "trajectory_runs": {
+   "B0_ref25_k1": {
+    "K_target": 2000,
+    "K": 1232,
+    "seed": 362000000000,
+    "draws": 2415,
+    "stopped": {
+     "after": 1232,
+     "reason": "deadline"
+    },
+    "checkpoint_s": 5.976785898208618,
+    "wall_s": 596.1545443534851,
+    "seconds_per_trajectory": 0.4790403883565556,
+    "placement_after_gate": true,
+    "crosscheck_from_scratch_max_abs_dprob": 2.275957200481571e-15,
+    "p_ref_vs_manifest_abs": 6.994405055138486e-15
+   },
+   "B1_ref57_k1": {
+    "K_target": 2000,
+    "K": 1262,
+    "seed": 362001000000,
+    "draws": 2430,
+    "stopped": {
+     "after": 1262,
+     "reason": "deadline"
+    },
+    "checkpoint_s": 4.7779645919799805,
+    "wall_s": 597.6280648708344,
+    "seconds_per_trajectory": 0.469770285482452,
+    "placement_after_gate": true,
+    "crosscheck_from_scratch_max_abs_dprob": 2.6645352591003757e-15,
+    "p_ref_vs_manifest_abs": 1.887379141862766e-14
+   },
+   "B0_ref25_k4": {
+    "K_target": 2000,
+    "K": 1244,
+    "seed": 362002000000,
+    "draws": 2404,
+    "stopped": {
+     "after": 1244,
+     "reason": "deadline"
+    },
+    "checkpoint_s": 4.878147602081299,
+    "wall_s": 596.9156775474548,
+    "seconds_per_trajectory": 0.4759144131393678,
+    "placement_after_gate": true,
+    "crosscheck_from_scratch_max_abs_dprob": 2.0816681711721685e-16,
+    "p_ref_vs_manifest_abs": 2.2620794126737565e-14
+   },
+   "B0_ref25_k1__xx": {
+    "K_target": 2000,
+    "K": 1239,
+    "seed": 362003000000,
+    "draws": 2436,
+    "stopped": {
+     "after": 1239,
+     "reason": "deadline"
+    },
+    "checkpoint_s": 4.868431806564331,
+    "wall_s": 596.0350449085236,
+    "seconds_per_trajectory": 0.4771320525439542,
+    "placement_after_gate": true,
+    "crosscheck_from_scratch_max_abs_dprob": 5.329070518200751e-15,
+    "p_ref_vs_manifest_abs": 6.994405055138486e-15
+   }
+  },
+  "pooled": {
+   "f_hit": {
+    "value": 0.24410004413277606,
+    "se_boot": 0.004449200470812854,
+    "ci95": [
+     0.23529517876409173,
+     0.2527637246793074
+    ],
+    "one_sided_upper95": 0.2514347421503171
+   },
+   "f_ideal_d1e-03": {
+    "value": 0.2313947397828643,
+    "se_boot": 0.0041681407865621885,
+    "ci95": [
+     0.22314789131666823,
+     0.23945093241592771
+    ],
+    "one_sided_upper95": 0.23805043865578357
+   },
+   "r_d1e-03": {
+    "value": 1.0549074899534627,
+    "se_boot": 0.011479247634412357,
+    "ci95": [
+     1.0325296566934796,
+     1.0779387384536234
+    ],
+    "one_sided_upper95": 1.0746156541498268
+   },
+   "f_ideal_d1e-02": {
+    "value": 0.24435312940012563,
+    "se_boot": 0.004599511078518673,
+    "ci95": [
+     0.23538589184263953,
+     0.25315693760407243
+    ],
+    "one_sided_upper95": 0.2519840448653677
+   },
+   "r_d1e-02": {
+    "value": 0.9989642642679842,
+    "se_boot": 0.008487923684442419,
+    "ci95": [
+     0.9825400143671524,
+     1.0153758235418133
+    ],
+    "one_sided_upper95": 1.0128714705073114
+   },
+   "f_ideal_d3e-02": {
+    "value": 0.25258317582078305,
+    "se_boot": 0.00484836356800879,
+    "ci95": [
+     0.2432799346145419,
+     0.261927713620878
+    ],
+    "one_sided_upper95": 0.26061487390553134
+   },
+   "r_d3e-02": {
+    "value": 0.9664145022310351,
+    "se_boot": 0.008889424063940167,
+    "ci95": [
+     0.9484522630062845,
+     0.9834861274594734
+    ],
+    "one_sided_upper95": 0.9810848407631183
+   }
+  },
+  "r_nc_new": 1.0779387384536234,
+  "r_nc_old": 1.1151352098004452,
+  "r_nc_old_pooled_ci95": [
+   1.0285934561902321,
+   1.1151352098004452
+  ],
+  "owner_item_r_nc_outside_old_interval": false,
+  "comparison": {
+   "B0_ref25_k1": {
+    "new": 1.0609849861673817,
+    "old": null,
+    "delta": null,
+    "verdict": "not_comparable"
+   },
+   "B1_ref57_k1": {
+    "new": 1.0483133476577402,
+    "old": null,
+    "delta": null,
+    "verdict": "not_comparable"
+   },
+   "B0_ref25_k4": {
+    "new": 1.1720203542733039,
+    "old": null,
+    "delta": null,
+    "verdict": "not_comparable"
+   },
+   "B0_ref25_k1__xx": {
+    "new": 1.0516929598521412,
+    "old": null,
+    "delta": null,
+    "verdict": "not_comparable"
+   }
+  },
+  "engine": "Aer statevector per trajectory (GPU), checkpoints in memory",
+  "seconds_per_shot": 0.4754642848805824,
+  "K_target_per_arm": 2000,
+  "bootstrap_B": 2000,
+  "seconds_per_shot_note": "for C4_CF this is seconds per simulated trajectory",
+  "run": {
+   "engine": "Aer statevector per trajectory (GPU), checkpoints in memory",
+   "device": "GPU",
+   "device_requested": "GPU",
+   "available_devices": [
+    "CPU",
+    "GPU"
+   ],
+   "gpu_mode": null,
+   "ci": {
+    "CI_GATE": "C4_CF",
+    "SLURM_JOB_ID": "59736866",
+    "SLURM_JOB_NODELIST": "nid002276"
+   },
+   "slurm": {
+    "gpus_per_task": null,
+    "gpus": 1,
+    "gpus_on_node": 1,
+    "cuda_visible_devices": "0",
+    "tasks": 1,
+    "rank": 0,
+    "cpus_per_task": 32,
+    "nodelist": "nid002276"
+   },
+   "gpus": 1,
+   "tasks": 1,
+   "rank": 0,
+   "wall_seconds": 2400.888847351074,
+   "gpu_node_hours": 0.6669135687086317,
+   "node_hours_charged_shared_qos": 0.16672839217715793,
+   "parallel_efficiency_Ep": null,
+   "parallel_efficiency_note": "one task: E(p) needs T_1 and T_p from two task counts (not measured)",
+   "phases_s": {
+    "preflight_s": 13.970722913742065,
+    "trajectories_s": 2400.460928440094
+   },
+   "gpu_telemetry": {
+    "source": "/pscratch/sd/d/digonto/skqd-ci-runs/20b38879ea5d-20261013142621-C4_CF/gpu_telemetry.csv",
+    "samples": 234,
+    "peak_memory_mib": 473.0,
+    "mean_utilization_pct": 2.1965811965811968,
+    "max_utilization_pct": 7.0
+   },
+   "versions": {
+    "qiskit": "1.4.3",
+    "qiskit_aer": "0.15.1",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "threadpoolctl": "3.7.0",
+    "python": "3.12.14"
+   },
+   "seconds_per_shot": 0.4754642848805824,
+   "budget_minutes": 50.0,
+   "shots_scale": 1.0,
+   "max_shots_per_run": 476,
+   "oom_retries": []
+  },
+  "physics_criteria_information_dry_run": null,
+  "notes": []
+ },
+ "runtime_s": 2400.888847351074,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.3",
+  "scipy": "1.18.1",
+  "platform": "Linux-6.4.0-150600.23.125_15.0.29-cray_shasta_c-x86_64-with-glibc2.38",
+  "cpu_count": 128,
+  "git_commit": "n/a",
+  "timestamp": "2026-10-13 08:17:05 PDT"
+ }
+}

@@ -125,6 +125,10 @@ def make_simulator(device: str = "CPU", mode: str = "policy", noise_model=None, 
         elif mode == "batched":
             kw.update(cuStateVec_enable=False, batched_shots_gpu=True,
                       batched_shots_gpu_max_qubits=int(batched_max_qubits))
+        elif mode == "native":            # prompts/33d R3: Aer's own GPU statevector kernels, no cuStateVec
+            kw.update(cuStateVec_enable=False, batched_shots_gpu=False)
+        elif mode == "custatevec_nofusion":   # prompts/33d R3: C2_CAL's path with gate fusion off
+            kw.update(cuStateVec_enable=True, batched_shots_gpu=False, fusion_enable=False)
         else:
             raise ValueError(mode)
     else:

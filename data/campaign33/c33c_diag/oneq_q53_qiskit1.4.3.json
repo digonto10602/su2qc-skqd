@@ -1,0 +1,48 @@
+{
+ "title": "prompts/33c step 1(b): one-qubit relaxation on physical qubit 53 (CPU)",
+ "git_commit": "da2ef9f",
+ "command": "python scripts/c33c_diag_full.py --qubit 53",
+ "versions": {
+  "python": "3.12.14",
+  "qiskit": "1.4.3",
+  "qiskit_aer": "0.15.1",
+  "numpy": "2.5.3"
+ },
+ "machine": {
+  "host": "pichkaCommander",
+  "processor": "x86_64",
+  "cpu_count": 12
+ },
+ "created": "2026-10-13 18:35:41 UTC",
+ "qubit": 53,
+ "T1_s": 0.0002927449184658886,
+ "T2_s": 6.849195710412899e-05,
+ "delay_s": 0.0004,
+ "shots": 20000,
+ "seed": 7,
+ "expected_P1": 0.2550291921233439,
+ "binomial_sigma": 0.003082120238474308,
+ "rule": "x, delay(400 us), measure; P(1) within 4 sigma (binomial at the expectation) of e^{-t/T1}; the measured P(1) also contains the x gate error and the readout error of this qubit",
+ "record": {
+  "path": "data/hardware/K0_prep/ibm_kingston_full_20261006T0652Z.json",
+  "fingerprint": "b948ddc86b1c4696121e377bd2c751b889705006bd1abb685eeee303398a44d9"
+ },
+ "by_representation": {
+  "rm": {
+   "P1": 0.2614,
+   "z_vs_exp": 2.067021200902192,
+   "within_4_sigma": true
+  },
+  "kraus": {
+   "P1": 0.25095,
+   "z_vs_exp": -1.3235019427286057,
+   "within_4_sigma": true
+  },
+  "pta": {
+   "P1": 0.62345,
+   "z_vs_exp": 119.5348589187518,
+   "within_4_sigma": false
+  }
+ },
+ "note": "pta is unital by construction (information): it is not expected to reproduce relaxation"
+}
