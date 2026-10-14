@@ -8,7 +8,7 @@ What PASS means: "the analytic fault-free fraction f0 of every built 2x4 native 
 
 | check | value | criterion | result |
 |---|---|---|---|
-| A1 the table is complete over the built circuits x 11 scenarios x 4 devices | {'circuits': 34, 'scenarios': 11, 'devices': 4, 'max_f0_any_scenario': 0.35090942140987547, 'E1_log10_f0_range': [-26.121648927069632, -24.387760067112136]} | complete | PASS |
+| A1 the table is complete over the built circuits x 11 scenarios x 4 devices | {'circuits': 79, 'scenarios': 11, 'devices': 4, 'max_f0_any_scenario': 0.35090942140987547, 'E1_log10_f0_range': [-26.121648927069632, -24.387760067112136]} | complete | PASS |
 | A2 sampled_shots == 0 and the reason (R3) in what_pass_means | {'sampled_shots': 0} | 0 | PASS |
 
 ## log10 f0 per scenario (min / max over the built circuits)
