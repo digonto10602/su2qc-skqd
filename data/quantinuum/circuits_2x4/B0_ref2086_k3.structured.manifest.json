@@ -1,0 +1,335 @@
+{
+ "id": "B0_ref2086_k3.structured",
+ "base_id": "B0_ref2086_k3",
+ "source": "structured",
+ "source_text": "the exact structured IR of circuit_set(4) itself (cx, ry, one-qubit unitary, p, cp, x; no qiskit opt-3) through ir_to_pytket (CX, Ry, Unitary1qBox, U1, CU1, X), then pytket level 0 (prompts/35b R4)",
+ "kind": "signed_2x4_coarse_step",
+ "lattice": "2x4",
+ "sector": "B=0",
+ "twoB": 0,
+ "reference": 2086,
+ "k": 3,
+ "repetitions": 1,
+ "dt": 0.11469820342078263,
+ "dt_source": "gate_S2_2x4.dt_of(4, twoB): validation/E3.json, equal to Model(4).reference(4.0, twoB).dt to <= 4e-16 and fixed so that the build is bit-reproducible (the sparse eigensolver is not)",
+ "g2": 4.0,
+ "n_qubits": 28,
+ "family": "gate_S2D.circuit_set(4): CircuitFactory(Model(4), 4.0) default (angle_mode exact, structured hopping), coarse_step(r, k, dt); the term IR from gate_S2_2x4.preload_factory",
+ "original_ir_counts": {
+  "x": 5,
+  "cx": 71544,
+  "p": 40,
+  "cp": 4,
+  "unitary": 388,
+  "ry": 70308
+ },
+ "rzz_before_rule": "two-qubit gates of the structured source (cx + cp): each becomes one ZZPhase (prompts/35b R4)",
+ "levels": {
+  "0": {
+   "level": 0,
+   "compile_s": 174.2529194355011,
+   "counts": {
+    "n_phasedx": 210995,
+    "n_rz": 143140,
+    "n_zz": 71548,
+    "n_zzphase": 71548,
+    "n_zzmax": 0,
+    "n_meas": 28,
+    "n_qubits": 28,
+    "depth": 347828,
+    "depth_2q": 70300,
+    "ops": {
+     "Measure": 28,
+     "PhasedX": 210995,
+     "Rz": 143140,
+     "ZZPhase": 71548
+    }
+   },
+   "Q1L": {
+    "ok": true,
+    "rule": "prompts/35b R2: (i) + (ii) + maps",
+    "source": "structured",
+    "ok_35a": true,
+    "i_skeleton": {
+     "ok": true,
+     "max_abs_delta_2q_half_turns": 0.0,
+     "tol_half_turns": 1e-11,
+     "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+     "first_difference": null
+    },
+    "ii_segments_vs_readback": {
+     "ok": true,
+     "segments_max_residual": 8.041228680433387e-13,
+     "segments_compared": 143124,
+     "tol": 1e-12,
+     "skeleton_identical": true,
+     "worst": {
+      "qubit": 6,
+      "segment": 8432,
+      "kind": "frame at an rzz not diagonal / anti-diagonal (A)"
+     },
+     "frame_info": {
+      "step_max_residual": 8.041228680433387e-13,
+      "final_drift_max": 5.7656102120846295e-12,
+      "final_drift_per_segment_max": 1.8982349986774077e-16,
+      "n_sign_flips": 71544,
+      "rule": "per-segment residual = max(frame off the rzz commutant at any rzz, final drift / n_segments of the qubit); the final drift is the triangle-inequality sum of the per-segment differences"
+     }
+    },
+    "iii_rounding": {
+     "structure_identical": true,
+     "n_gates_compared": 70352,
+     "n_unitaries_compared": 388,
+     "n_rounded_gates": 7041,
+     "max_abs_delta": 8.881784197001252e-16,
+     "sum_abs_delta": 3.908429135890401e-12,
+     "unit": "half-turns",
+     "max_unitary_opnorm_delta": 0.0,
+     "state_bound_B": 6.1393461301945495e-12,
+     "incoherent_estimate_not_a_bound": 7.743068065579163e-14,
+     "bound": "B = sum_g c_g |Delta a_g| + sum_u ||Delta U||_op >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2, 35b R4)",
+     "bar": 1e-10,
+     "ok": true,
+     "status": "recorded (prompts/35b R2: GPU consistency criterion, not a Q1L criterion)"
+    },
+    "rounding": {
+     "n_rounded_gates": 7041,
+     "max_abs_delta": 8.881784197001252e-16,
+     "sum_abs_delta": 3.908429135890401e-12,
+     "state_bound_B": 6.1393461301945495e-12,
+     "incoherent_estimate_not_a_bound": 7.743068065579163e-14,
+     "max_unitary_opnorm_delta": 0.0
+    },
+    "segment_residual_raw": 8.041228680433387e-13,
+    "raw_check_of_prompts_35": true,
+    "measure_map_identity": true,
+    "implicit_permutation_identity": true,
+    "n_rzz_ir": 71548,
+    "n_rzz_native": 71548
+   },
+   "Q1L_s": 99.04522967338562,
+   "passes_Q1L": true
+  }
+ },
+ "levels_attempted": {
+  "0": {
+   "n_phasedx": 210995,
+   "n_rz": 143140,
+   "n_zz": 71548,
+   "n_zzphase": 71548,
+   "n_zzmax": 0,
+   "n_meas": 28,
+   "n_qubits": 28,
+   "depth": 347828,
+   "depth_2q": 70300,
+   "ops": {
+    "Measure": 28,
+    "PhasedX": 210995,
+    "Rz": 143140,
+    "ZZPhase": 71548
+   }
+  },
+  "2": "not attempted at 2x4 (prompts/35a R4)"
+ },
+ "frozen_level": 0,
+ "compile_mode": "level0",
+ "selection_rule": "fewest ZZ gates among the levels that pass Q1L (local equivalence to the transpiled IR, quantinuum_native.local_equivalence_35a: prompts/35a R2 (i)-(iii), q[k] -> c[k], identity permutation); ties: fewer PhasedX, then the lower level; if no level passes, the pure rebase AutoRebase({Rz, PhasedX, ZZPhase}) (compile_mode 'pure_rebase'); level 2 not attempted at 2x4 (prompts/35a R4)",
+ "Q1L": {
+  "ok": true,
+  "rule": "prompts/35b R2: (i) + (ii) + maps",
+  "source": "structured",
+  "ok_35a": true,
+  "i_skeleton": {
+   "ok": true,
+   "max_abs_delta_2q_half_turns": 0.0,
+   "tol_half_turns": 1e-11,
+   "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+   "first_difference": null
+  },
+  "ii_segments_vs_readback": {
+   "ok": true,
+   "segments_max_residual": 8.041228680433387e-13,
+   "segments_compared": 143124,
+   "tol": 1e-12,
+   "skeleton_identical": true,
+   "worst": {
+    "qubit": 6,
+    "segment": 8432,
+    "kind": "frame at an rzz not diagonal / anti-diagonal (A)"
+   },
+   "frame_info": {
+    "step_max_residual": 8.041228680433387e-13,
+    "final_drift_max": 5.783151735422301e-12,
+    "final_drift_per_segment_max": 1.7194722577847892e-16,
+    "n_sign_flips": 71544,
+    "rule": "per-segment residual = max(frame off the rzz commutant at any rzz, final drift / n_segments of the qubit); the final drift is the triangle-inequality sum of the per-segment differences"
+   }
+  },
+  "iii_rounding": {
+   "structure_identical": true,
+   "n_gates_compared": 70352,
+   "n_unitaries_compared": 388,
+   "n_rounded_gates": 7041,
+   "max_abs_delta": 8.881784197001252e-16,
+   "sum_abs_delta": 3.908429135890401e-12,
+   "unit": "half-turns",
+   "max_unitary_opnorm_delta": 0.0,
+   "state_bound_B": 6.1393461301945495e-12,
+   "incoherent_estimate_not_a_bound": 7.743068065579163e-14,
+   "bound": "B = sum_g c_g |Delta a_g| + sum_u ||Delta U||_op >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2, 35b R4)",
+   "bar": 1e-10,
+   "ok": true,
+   "status": "recorded (prompts/35b R2: GPU consistency criterion, not a Q1L criterion)"
+  },
+  "rounding": {
+   "n_rounded_gates": 7041,
+   "max_abs_delta": 8.881784197001252e-16,
+   "sum_abs_delta": 3.908429135890401e-12,
+   "state_bound_B": 6.1393461301945495e-12,
+   "incoherent_estimate_not_a_bound": 7.743068065579163e-14,
+   "max_unitary_opnorm_delta": 0.0
+  },
+  "segment_residual_raw": 8.041228680433387e-13,
+  "raw_check_of_prompts_35": true,
+  "measure_map_identity": true,
+  "implicit_permutation_identity": true,
+  "n_rzz_ir": 71548,
+  "n_rzz_native": 71548
+ },
+ "Q1L_rule": "prompts/35b R2, recomputed from the frozen files by gate_Q0P_2x3.py --stage verify",
+ "STOP_Q1L": false,
+ "device_name_compiled_for": "H2-2",
+ "counts": {
+  "n_phasedx": 210995,
+  "n_rz": 143140,
+  "n_zz": 71548,
+  "n_zzphase": 71548,
+  "n_zzmax": 0,
+  "n_meas": 28,
+  "n_qubits": 28,
+  "depth": 347828,
+  "depth_2q": 70300,
+  "ops": {
+   "Measure": 28,
+   "PhasedX": 210995,
+   "Rz": 143140,
+   "ZZPhase": 71548
+  },
+  "rzz_before": 71548
+ },
+ "hqc_per_shot": 185.351,
+ "files": {
+  "qasm": "B0_ref2086_k3.structured.qasm.gz",
+  "json": "B0_ref2086_k3.structured.json.gz"
+ },
+ "sha256_of": "the uncompressed text",
+ "qasm_sha256": "ff8da5a97343cc38a00c7c47e3cd7be832b5b9300634ad96bf3e4df0e363b9c4",
+ "json_sha256": "799ff438679962c7b75762711bb2992076527db96d7b71fef0770bc3468d7c92",
+ "reference_bits": [
+  0,
+  0,
+  0,
+  0,
+  0,
+  1,
+  0,
+  0,
+  1,
+  0,
+  0,
+  1,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  1,
+  0,
+  0,
+  1,
+  0,
+  0,
+  0
+ ],
+ "reference_int": 18876704,
+ "p_reference": 0.5778800053344635,
+ "p_reference_source": "exact coarse state (krylov.apply_groups), basis index r",
+ "most_probable_basis_index": 2086,
+ "p_most_probable": 0.5778800053344635,
+ "versions": {
+  "pytket": "2.18.4",
+  "pytket-quantinuum": "0.59.3",
+  "pytket-qiskit": "0.78.0",
+  "qnexus": "0.51.0",
+  "quantinuum-schemas": "7.8.2"
+ },
+ "git_commit": "08920b7",
+ "built": "2026-10-14 02:47:27 UTC",
+ "build_s": 555.348845243454,
+ "Q1L_at_build": {
+  "ok": true,
+  "rule": "prompts/35b R2: (i) + (ii) + maps",
+  "source": "structured",
+  "ok_35a": true,
+  "i_skeleton": {
+   "ok": true,
+   "max_abs_delta_2q_half_turns": 0.0,
+   "tol_half_turns": 1e-11,
+   "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+   "first_difference": null
+  },
+  "ii_segments_vs_readback": {
+   "ok": true,
+   "segments_max_residual": 8.041228680433387e-13,
+   "segments_compared": 143124,
+   "tol": 1e-12,
+   "skeleton_identical": true,
+   "worst": {
+    "qubit": 6,
+    "segment": 8432,
+    "kind": "frame at an rzz not diagonal / anti-diagonal (A)"
+   },
+   "frame_info": {
+    "step_max_residual": 8.041228680433387e-13,
+    "final_drift_max": 5.7656102120846295e-12,
+    "final_drift_per_segment_max": 1.8982349986774077e-16,
+    "n_sign_flips": 71544,
+    "rule": "per-segment residual = max(frame off the rzz commutant at any rzz, final drift / n_segments of the qubit); the final drift is the triangle-inequality sum of the per-segment differences"
+   }
+  },
+  "iii_rounding": {
+   "structure_identical": true,
+   "n_gates_compared": 70352,
+   "n_unitaries_compared": 388,
+   "n_rounded_gates": 7041,
+   "max_abs_delta": 8.881784197001252e-16,
+   "sum_abs_delta": 3.908429135890401e-12,
+   "unit": "half-turns",
+   "max_unitary_opnorm_delta": 0.0,
+   "state_bound_B": 6.1393461301945495e-12,
+   "incoherent_estimate_not_a_bound": 7.743068065579163e-14,
+   "bound": "B = sum_g c_g |Delta a_g| + sum_u ||Delta U||_op >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2, 35b R4)",
+   "bar": 1e-10,
+   "ok": true,
+   "status": "recorded (prompts/35b R2: GPU consistency criterion, not a Q1L criterion)"
+  },
+  "rounding": {
+   "n_rounded_gates": 7041,
+   "max_abs_delta": 8.881784197001252e-16,
+   "sum_abs_delta": 3.908429135890401e-12,
+   "state_bound_B": 6.1393461301945495e-12,
+   "incoherent_estimate_not_a_bound": 7.743068065579163e-14,
+   "max_unitary_opnorm_delta": 0.0
+  },
+  "segment_residual_raw": 8.041228680433387e-13,
+  "raw_check_of_prompts_35": true,
+  "measure_map_identity": true,
+  "implicit_permutation_identity": true,
+  "n_rzz_ir": 71548,
+  "n_rzz_native": 71548
+ }
+}
