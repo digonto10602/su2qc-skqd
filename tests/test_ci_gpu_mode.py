@@ -398,3 +398,17 @@ def test_sample_many_strides_its_seeds_so_chunks_are_independent():
     # and the un-chunked call is unaffected
     _, info1 = cq.sample_many(gs, n, 400, noise_model=nm, seed=11, return_info=True)
     assert info1["run_calls"] == 1 and info1["seeds"] == [11]
+
+
+def test_gate_sbatch_srun_step_gets_the_allocations_cpus():
+    """prompts/33e R1: Slurm >= 22.05 does not let a job step inherit the allocation's --cpus-per-task, so the one
+    srun line of jobs/gate.sbatch must ask for it (C2_KCHK job 59780907 ran its CPU arm on 1 CPU of 32 without it)."""
+    import re
+    path = os.path.join(os.path.dirname(__file__), "..", "jobs", "gate.sbatch")
+    lines = [ln.strip() for ln in open(path) if ln.strip().startswith("srun ")]
+    assert len(lines) == 1, lines
+    assert re.search(r'--cpus-per-task="\$\{SLURM_CPUS_PER_TASK:-1\}"', lines[0]), lines[0]
+    assert lines[0].endswith('python scripts/run_gate.py "$CI_GATE"'), lines[0]
+    # the thread variables of the job still follow the same allocation value
+    s = open(path).read()
+    assert 'export OMP_NUM_THREADS="${SLURM_CPUS_PER_TASK:-1}"' in s

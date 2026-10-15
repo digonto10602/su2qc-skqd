@@ -49,7 +49,11 @@ if command -v nvidia-smi > /dev/null 2>&1; then
 fi
 
 START=$(date +%s)
-srun python scripts/run_gate.py "$CI_GATE"
+# prompts/33e R1: Slurm >= 22.05 no longer lets a job step inherit the allocation's --cpus-per-task, so a bare
+# `srun` bound the step to one CPU (C2_KCHK job 59780907: the CPU arm ran on 1 thread while the allocation had 32).
+# The step asks for the allocation's CPUs explicitly; every campaign-33 token JSON records run.cpu_affinity and
+# its structural criterion S3 FAILs on the CI when that differs from SLURM_CPUS_PER_TASK.
+srun --cpus-per-task="${SLURM_CPUS_PER_TASK:-1}" python scripts/run_gate.py "$CI_GATE"
 RC=$?
 [ -n "$SMI_PID" ] && { pkill -P "$SMI_PID" 2> /dev/null; kill "$SMI_PID" 2> /dev/null; }
 

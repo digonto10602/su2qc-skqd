@@ -696,10 +696,13 @@ def _save_kchk_npz(ctx, arm, r0):
 def run_c2_kchk(ctx):
     """C2_KCHK (prompts/33d R3): is the GPU Kraus result of C2_CAL a defect of the cuStateVec execution?  The CPU
     process (kraus_cpu, rm_cpu; kchk_cpu.py) is started first; the GPU arms run in this process in the order of
-    KCHK_GPU_ARMS, each deadline-stopped at a chunk boundary; raw counts of every chunk are stored."""
+    KCHK_GPU_ARMS, each deadline-stopped at a chunk boundary; raw counts of every chunk are stored.
+    Content `full` is run 1 (33d R3); the default since prompts/33e R2 is `cpu_only` (run 2: run_c2_kchk_cpu_only)."""
     import subprocess
     import sys
 
+    if kchk_content(ctx) == "cpu_only":
+        return run_c2_kchk_cpu_only(ctx)
     from campaign33 import add_table
     P = A.Physics(with_sectors=False)
     rec = load_record()
@@ -871,6 +874,354 @@ def run_c2_kchk(ctx):
                                                                     "clbits outside", "min visible marginal diff"],
               [[k, v.get("z_mean_hamming_weight"), v.get("max_abs_z_marginal"), v.get("clbits_outside"),
                 (v.get("power") or {}).get("min_visible_marginal_diff")] for k, v in cmp.items()])
+
+
+# =========================================================================== prompts/33e R2-R3: C2_KCHK run 2 (cpu_only)
+KCHK_CONTENTS = ("full", "cpu_only")
+KCHK_DEFAULT_CONTENT = "cpu_only"   # prompts/33e R2: run 2 is CPU-only on the GPU node; `full` is run 1's content
+KCHK_RUN1_JOB = "59780907"
+KCHK_RUN1_ARCHIVE = "validation/archive/C2_KCHK_job59780907.json"
+# sha256 of validation/C2_KCHK.json as harvested by CI commit 6a80f1d (job 59780907), copied byte-identically to the
+# archive; run 2 refuses to sample when the archive is absent or differs (it would read GPU arms of unknown origin)
+KCHK_RUN1_SHA256 = "30f6326b5dba109bdfd454e645057b099ffc9ad37a75e6587e244c2bfad712b4"
+KCHK_GPU_ARM_NAMES = tuple(a[0] for a in KCHK_GPU_ARMS)
+KCHK_RUN2_WINDOW_SHARE = 0.9        # prompts/33e R2: the CPU process alone for 0.9 of the remaining budget
+KCHK_RUN2_CPU = {"chunk": 1, "min": 8, "ratio": (1, 2)}   # prompts/33e R1/R2: --chunk 1 --min-shots 8; Kraus : RM = 1 : 2
+KCHK_RUN2_DRY_CPU = {"chunk": 1, "min": 2, "max": 2}
+# (arm, representation, GPU mode, shots, chunk): rm_gpu_cusv repeated at 128 shots first, a same-job anchor that
+# the GPU side is unchanged (information); its own seed offset, disjoint from run 1's arms (600-603, 610-611)
+KCHK_ANCHOR = ("rm_gpu_cusv_anchor", "rm", "custatevec", 128, 128)
+KCHK_ANCHOR_OFFSET = KCHK_SEED_OFFSET + 20
+KCHK_LAPTOP_SUMMARY = "data/campaign33/c33c_diag/summary.json"
+KCHK_K4_REPS = (("kraus_cpu", "cpu_kraus"), ("rm_cpu", "cpu_rm"))
+
+
+def kchk_content(ctx) -> str:
+    c = getattr(ctx.args, "content", None) or KCHK_DEFAULT_CONTENT
+    if c not in KCHK_CONTENTS:
+        raise SystemExit(f"C2_KCHK: unknown --content {c} (one of {KCHK_CONTENTS})")
+    return c
+
+
+def kchk_run1_archive(root=None) -> dict:
+    """Run 1's archived JSON: path, sha256, whether it is the harvested bytes, and the parsed document."""
+    import hashlib
+    p = os.path.join(root or ROOT, KCHK_RUN1_ARCHIVE)
+    if not os.path.exists(p):
+        return {"path": KCHK_RUN1_ARCHIVE, "sha256": None, "ok": False, "doc": None, "reason": "archive absent"}
+    raw = open(p, "rb").read()
+    sha = hashlib.sha256(raw).hexdigest()
+    ok = sha == KCHK_RUN1_SHA256
+    return {"path": KCHK_RUN1_ARCHIVE, "sha256": sha, "ok": ok, "doc": json.loads(raw) if ok else None,
+            "reason": None if ok else f"sha256 {sha} != the harvested run 1's {KCHK_RUN1_SHA256}"}
+
+
+def kchk_run1_gpu_arms(doc: dict, clb) -> dict:
+    """The four GPU arms of run 1 as evidence of record (33e R2: not repeated): their stored structure, the
+    structure recomputed from their raw counts (must agree: the counts are the evidence), shots, s/shot."""
+    D = doc["data"]
+    out = {}
+    for arm in KCHK_GPU_ARM_NAMES:
+        a = D["arms"][arm]
+        tot = {int(k): int(v) for k, v in a["raw_counts"]["total"].items()}
+        re_st = ST.garbage_structure(tot, len(clb), clb)
+        st = a["structure"]
+        diff = max([abs(re_st["mean_hamming_weight"] - st["mean_hamming_weight"])]
+                   + [abs(x - y) for x, y in zip(re_st["marginals_by_clbit"], st["marginals_by_clbit"])])
+        out[arm] = {"source": f"{KCHK_RUN1_ARCHIVE} data.arms.{arm}", "job": KCHK_RUN1_JOB, "run": 1,
+                    "engine": a.get("engine"), "gpu_mode": a.get("gpu_mode"),
+                    "planned_representation": a.get("planned_representation"),
+                    "representation": a.get("representation"), "shots_done": a["shots_done"],
+                    "minimum_shots": a.get("minimum_shots"), "seconds_per_shot": a.get("seconds_per_shot"),
+                    "seed_circuit_offset": a.get("seed_circuit_offset"), "raw_counts_sum": a["raw_counts"]["sum_counts"],
+                    "structure_recomputed_max_abs_diff": diff, "structure": st,
+                    "accepted": a.get("accepted"), "reference_hits": a.get("reference_hits")}
+    return out
+
+
+def kchk_laptop_reference(path=None) -> dict:
+    """The laptop CPU reference (prompts/33e R3), read from data/campaign33/c33c_diag/summary.json if it is in the
+    commit: the merged CPU arms (cpu_kraus, cpu_rm) with their structure, shots, s/shot, provenance."""
+    import hashlib
+    p = path or os.path.join(ROOT, KCHK_LAPTOP_SUMMARY)
+    if not os.path.exists(p):
+        return {"present": False, "path": os.path.relpath(p, ROOT)}
+    raw = open(p, "rb").read()
+    d = json.loads(raw)
+    arms = {}
+    for _arm, key in KCHK_K4_REPS:
+        a = (d.get("arms") or {}).get(key)
+        if a:
+            arms[key] = {k: a.get(k) for k in ("shots", "mean_hamming_weight", "se_mean_hamming_weight",
+                                                "sd_hamming_weight", "seconds_per_shot", "versions", "source",
+                                                "status", "aer")}
+            arms[key]["structure"] = a.get("structure")
+    return {"present": True, "path": os.path.relpath(p, ROOT), "sha256": hashlib.sha256(raw).hexdigest(),
+            "git_commit": d.get("git_commit"), "created": d.get("created"), "versions": d.get("versions"),
+            "machine": d.get("machine"), "aer": d.get("aer"), "arms": arms}
+
+
+def kchk_weight_z(a: dict, b: dict) -> float:
+    """z of the mean Hamming weight between two arms given (mean, se) -- the P4a weight statistic."""
+    return ST._z(a["mean_hamming_weight"], a["se_mean_hamming_weight"], b["mean_hamming_weight"],
+                 b["se_mean_hamming_weight"])
+
+
+def kchk_k4(ci: dict, laptop: dict, n_sigma: float = KCHK_SIGMA) -> dict:
+    """K4 (prompts/33e R3 (b)): the two CPU references agree, |z_w| <= 3 per representation (the CI's CPU arms of
+    run 2 against the laptop's merged segments).  A disagreement is a STOP for the planner (the reference itself
+    would be in question), recorded here as stop_planner; the marginals are information."""
+    if not laptop.get("present"):
+        return {"evaluated": False, "status": "not_evaluated",
+                "reason": f"{laptop.get('path')} is not in the commit", "stop_planner": False}
+    per = {}
+    for arm, key in KCHK_K4_REPS:
+        a, b = ci.get(arm) or {}, (laptop["arms"].get(key) or {})
+        if not a.get("shots") or not b.get("shots"):
+            per[arm] = {"evaluated": False, "reason": "an arm has no shots", "shots": [a.get("shots"), b.get("shots")]}
+            continue
+        z = kchk_weight_z(a, b)
+        row = {"evaluated": True, "laptop_arm": key, "shots": [a["shots"], b["shots"]],
+               "mean_hamming_weight": [a["mean_hamming_weight"], b["mean_hamming_weight"]],
+               "se_mean_hamming_weight": [a["se_mean_hamming_weight"], b["se_mean_hamming_weight"]],
+               "z_mean_hamming_weight": z, "agree": abs(z) <= n_sigma,
+               "power": kchk_power(a, b, n_sigma)}
+        if b.get("structure") and a.get("marginals_by_clbit"):
+            c = ST.structure_compare(a, b["structure"], n_sigma)
+            row["marginals_information"] = {k: c.get(k) for k in ("z_marginals_by_clbit", "max_abs_z_marginal",
+                                                                   "clbits_outside", "family_wise_rule")}
+        per[arm] = row
+    ev = [r for r in per.values() if r.get("evaluated")]
+    evaluated = len(ev) == len(KCHK_K4_REPS)
+    agree = evaluated and all(r["agree"] for r in ev)
+    return {"evaluated": evaluated, "status": ("agree" if agree else "disagree") if evaluated else "partial",
+            "per_representation": per, "stop_planner": bool(ev) and not all(r["agree"] for r in ev),
+            "rule": (f"K4: |z_w(CI CPU arm, laptop CPU arm)| <= {n_sigma:g} for kraus and rm; a disagreement is a STOP "
+                     "for the planner (prompts/33e R3 (b)); the laptop alone decides nothing of record"),
+            "laptop": {k: laptop.get(k) for k in ("path", "sha256", "git_commit", "created", "versions", "aer")}}
+
+
+def run_c2_kchk_cpu_only(ctx):
+    """C2_KCHK run 2 (prompts/33e R2): the CPU process (kraus_cpu, rm_cpu; --chunk 1, --min-shots 8, Kraus : RM = 1 : 2,
+    threads = the step's CPUs minus 4) alone for 0.9 of the remaining budget, beside a 128-shot rm_gpu_cusv anchor;
+    the GPU arms of run 1 (archived byte-identically, sha256 checked) are read, not repeated.  K1-K3 on run 1's GPU
+    arms and run 2's CPU arms; K4 against the laptop CPU reference when its summary is in the commit."""
+    import subprocess
+    import sys
+
+    from campaign33 import add_table
+    from .kchk_cpu import cpu_affinity, cpu_threads
+    P = A.Physics(with_sectors=False)
+    rec = load_record()
+    cid = KCHK_CIRCUIT
+    man = C.load_manifest("IBM-T0", cid)
+    if rec["fingerprint"] != man["record_fingerprint"]:
+        raise SystemExit("the record is not the one the IBM circuits were built on")
+    circ = C.load_circuit("IBM-T0", cid)
+    clb = clbit_physical(circ)
+    dry = ctx.dry
+    stand_in = "pta" if dry else None
+    if dry:
+        ctx.notes.append("dry run: CPU only, the Pauli-twirled representation stands in for the CPU arms and the anchor "
+                         f"(Kraus on this CPU costs minutes per shot), {KCHK_RUN2_DRY_CPU['max']} shots per CPU arm, "
+                         f"{KCHK_DRY['shots']} anchor shots -- a path check of run 2, not a measurement")
+    # ---- run 1: the archive (byte-identical copy of the harvested JSON), its GPU arms read as evidence of record
+    arch = kchk_run1_archive()
+    supersedes = {"token": "C2_KCHK", "job": KCHK_RUN1_JOB, "calibration_run": 1, "archived": arch["path"],
+                  "sha256": arch["sha256"], "sha256_harvested": KCHK_RUN1_SHA256,
+                  "why": ("prompts/33e R2: run 1's GPU arms completed with raw counts (evidence of record, not repeated); "
+                          "its CPU arms drew 0 shots because the job step was bound to 1 CPU (R1: srun without "
+                          "--cpus-per-task); run 2 runs the CPU arms only")}
+    ctx.R.add("P0a run 1 archived byte-identically (sha256 of the archive = the harvested run 1's)",
+              arch["sha256"], f"{KCHK_RUN1_ARCHIVE} with sha256 {KCHK_RUN1_SHA256}", arch["ok"])
+    ctx.extra_run = {"calibration_run": 2}
+    ctx.data.update({"calibration_run": 2, "kchk_content": "cpu_only", "supersedes": supersedes,
+                     "supersedes_decision_of": KCHK_SUPERSEDES, "circuit": f"IBM-T0 {cid}",
+                     "model": "I-ECHO (record T2 echo)"})
+    if not arch["ok"]:
+        ctx.notes.append(f"run 2 refused to sample: {arch['reason']} (K1-K3 need run 1's GPU arms of record)")
+        ctx.min_shots_ok, ctx.no_shots = False, True
+        ctx.shots_reduced_to = {"not_run": arch["reason"]}
+        return
+    gpu1 = kchk_run1_gpu_arms(arch["doc"], clb)
+    run1_ok = all(v["structure_recomputed_max_abs_diff"] <= 1e-12 and v["raw_counts_sum"] == v["shots_done"]
+                  for v in gpu1.values())
+    ctx.R.add("P0b run 1's GPU arms: the stored structure equals the one recomputed from their raw counts",
+              {a: [v["shots_done"], v["structure_recomputed_max_abs_diff"]] for a, v in gpu1.items()},
+              "sum of counts = shots_done and max |diff| <= 1e-12", run1_ok)
+    # ---- the window and the CPU process (started first, alone for the whole window)
+    rem = ctx.remaining()
+    t_w = time.time()
+    window_end = None if rem is None else t_w + KCHK_RUN2_WINDOW_SHARE * max(0.0, rem)
+    cpu_json = os.path.join(ctx.results_dir, "cpu_arms.json")
+    if os.path.exists(cpu_json):
+        os.remove(cpu_json)
+    threads = cpu_threads(ctx.args.threads if dry or ctx.args.threads else 0)
+    cpu_cfg = dict(KCHK_RUN2_CPU, **({"min": KCHK_RUN2_DRY_CPU["min"]} if dry else {}))
+    cmd = [sys.executable, "-m", "skqd.campaign33.kchk_cpu", "--out", cpu_json,
+           "--deadline", str(window_end if window_end is not None else t_w + 3600.0), "--s0", str(ctx.s0),
+           "--offsets", f"{KCHK_SEED_OFFSET + 10},{KCHK_SEED_OFFSET + 11}",
+           "--chunk", str(cpu_cfg["chunk"]), "--min-shots", str(cpu_cfg["min"]),
+           "--ratio", ",".join(str(x) for x in cpu_cfg["ratio"]), "--threads", str(threads)]
+    if dry:
+        cmd += ["--max-shots", str(KCHK_RUN2_DRY_CPU["max"]), "--stand-in", stand_in]
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.pathsep.join([os.path.join(ROOT, "src"), os.path.join(ROOT, "scripts")]
+                                        + ([env["PYTHONPATH"]] if env.get("PYTHONPATH") else []))
+    t_cpu = time.time()
+    proc = subprocess.Popen(cmd, env=env, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    ctx.log(f"CPU process {proc.pid} started ({threads} threads of an affinity of {cpu_affinity()}), deadline "
+            f"{None if window_end is None else round(window_end - t_w)} s")
+    # ---- the GPU anchor: rm_gpu_cusv at 128 shots, first (C2_CAL's path, as run 1's rm_gpu_cusv)
+    arm, rep, mode, target, chunk = KCHK_ANCHOR
+    spec = N.ibm_spec(rec, "I-ECHO", stand_in or rep, "echo")
+    m = mode if ctx.device == "GPU" else "policy"
+    sim, kw = SM.make_simulator("GPU" if ctx.device == "GPU" else "CPU", m, spec.noise_model, threads=ctx.args.threads)
+    n = KCHK_DRY["shots"] if dry else target
+    ck = KCHK_DRY["chunk"] if dry else chunk
+    t_a = time.time()
+    res, info = sample(ctx, sim, [spec.apply(circ)], [n], [f"{cid}|{arm}"], circuit_offset=KCHK_ANCHOR_OFFSET,
+                       deadline=window_end, max_chunk=ck, phis=(1.0,), min_rounds=10 ** 6 if dry else int(math.ceil(n / ck)))
+    r0 = res[0]
+    _save_kchk_npz(ctx, arm, r0)
+    obs = arm_observables(P, r0, man, clb, 0)
+    arms = {arm: {"representation": spec.description["representation"], "planned_representation": rep,
+                  "engine": f"GPU {mode}" if ctx.device == "GPU" else f"CPU stand-in for GPU {mode}", "gpu_mode": mode,
+                  "simulator_options": kw, "target_shots": n, "minimum_shots": n, "deadline_stopped": False, "chunk": ck,
+                  "shots_done": r0["shots_done"], "seconds": time.time() - t_a,
+                  "seconds_per_shot": info["seconds_per_shot"], "calls": info["calls"], "stopped": info["stopped"],
+                  "warmup": info["warmup"], "seed_circuit_offset": KCHK_ANCHOR_OFFSET, "run": 2,
+                  "purpose": "same-job anchor that the GPU side is unchanged (information; prompts/33e R2)",
+                  "raw_counts": c2_kchk_rows_raw(r0), **obs}}
+    ctx.phases["gpu_anchor_s"] = time.time() - t_a
+    ctx.log(f"{arm}: {r0['shots_done']}/{n} shots, {info['seconds_per_shot']} s/shot, "
+            f"w {obs['structure'].get('mean_hamming_weight')}")
+    # ---- the CPU process: wait to the window's end (+ grace + its slowest chunk), never past the job's budget
+    killed = False
+    try:
+        if window_end is None:
+            wait = None
+        else:
+            slow = 0.0
+            if os.path.exists(cpu_json):
+                try:
+                    slow = max([c["seconds"] for a in load_json(cpu_json).get("arms", {}).values()
+                                for c in a["chunks"]] or [0.0])
+                except (ValueError, OSError):
+                    slow = 0.0
+            end = window_end + KCHK_CPU_GRACE_S + slow
+            if ctx.deadline is not None:
+                end = min(end, ctx.deadline)
+            wait = max(1.0, end - time.time())
+        out, _ = proc.communicate(timeout=wait)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        out, _ = proc.communicate()
+        killed = True
+    cpu = load_json(cpu_json) if os.path.exists(cpu_json) else {"arms": {}}
+    ctx.phases["cpu_process_s"] = time.time() - t_cpu
+    for a_name, a_rep in KCHK_CPU_ARMS:
+        o = cpu.get("arms", {}).get(a_name) or {"chunks": [], "shots_done": 0, "planned_representation": a_rep,
+                                                "engine": "CPU statevector (separate process): no output"}
+        rr = {"chunks": [dict(ch, counts={int(k): int(v) for k, v in ch["counts"].items()}) for ch in o["chunks"]],
+              "shots_done": int(o["shots_done"])}
+        _save_kchk_npz(ctx, a_name, rr)
+        ob = arm_observables(P, rr, man, clb, 0)
+        secs = sum(ch["seconds"] for ch in o["chunks"])
+        arms[a_name] = {**{k: v for k, v in o.items() if k != "chunks"}, "run": 2,
+                        "minimum_shots": cpu_cfg["min"], "seconds_per_shot": secs / rr["shots_done"] if rr["shots_done"] else None,
+                        "raw_counts": c2_kchk_rows_raw(rr), **ob}
+        ctx.log(f"{a_name}: {rr['shots_done']} shots, w {ob['structure'].get('mean_hamming_weight')}")
+    cpu_info = {k: cpu.get(k) for k in ("pid", "threads", "cpu_affinity", "deadline", "min_shots", "chunk", "ratio",
+                                        "cycle", "sequence", "stand_in", "build_s", "status", "wall_s", "rule", "aer")}
+    cpu_info.update({"returncode": proc.returncode, "killed_after_grace": killed, "grace_s": KCHK_CPU_GRACE_S,
+                     "window_share": KCHK_RUN2_WINDOW_SHARE, "parent_cpu_affinity": cpu_affinity(),
+                     "threads_rule": "the step's CPUs (sched_getaffinity) minus 4 (prompts/33d R3, 33e R1)",
+                     "aer_wheel_note": ("the CPU statevector code is the same source on every stack; the wheel is "
+                                        "qiskit-aer-gpu on the CI and qiskit-aer on the laptop (prompts/33e R3 (a))"),
+                     "log_tail": (out or "")[-2000:],
+                     "command": " ".join(os.path.relpath(c, ROOT) if c.startswith(ROOT) else c for c in cmd)})
+    # ---- comparisons and the decision: run 1's GPU arms, run 2's CPU arms (and the anchor, information)
+    st = {a: v["structure"] for a, v in gpu1.items()}
+    st.update({a: arms[a]["structure"] for a in arms})
+    pairs = [("kraus_gpu_cusv", "kraus_cpu"), ("rm_gpu_cusv", "rm_cpu"), ("rm_gpu_cusv", "kraus_cpu"),
+             ("kraus_gpu_native", "kraus_cpu"), ("kraus_gpu_cusv_nofusion", "kraus_cpu"), ("rm_cpu", "kraus_cpu"),
+             ("kraus_gpu_cusv", "rm_gpu_cusv"), ("rm_gpu_cusv_anchor", "rm_gpu_cusv"), ("rm_gpu_cusv_anchor", "rm_cpu"),
+             ("kraus_gpu_cusv_nofusion", "kraus_gpu_cusv"), ("kraus_gpu_native", "kraus_gpu_cusv"),
+             ("kraus_gpu_native", "kraus_gpu_cusv_nofusion")]
+    cmp = {f"{x}~{y}": kchk_compare(st, x, y) for x, y in pairs}
+    dec = kchk_decide(cmp, st)
+    lap = kchk_laptop_reference()
+    k4 = kchk_k4({a: arms[a]["structure"] for a, _r in KCHK_CPU_ARMS}, lap)
+    dec["k4"] = {k: k4[k] for k in ("evaluated", "status", "stop_planner")}
+    sps = {a: v["seconds_per_shot"] for a, v in gpu1.items()}
+    sps.update({a: arms[a]["seconds_per_shot"] for a in arms})
+    dec["seconds_per_shot"] = sps
+    dec["production_seconds_per_shot"] = gpu1["rm_gpu_cusv"]["seconds_per_shot"]
+    dec["production_seconds_per_shot_source"] = f"run 1 ({KCHK_RUN1_ARCHIVE}) rm_gpu_cusv, 512 shots"
+    dec["anchor_seconds_per_shot"] = arms[KCHK_ANCHOR[0]]["seconds_per_shot"]
+    dec["validated_path_seconds_per_shot"] = (gpu1[dec["validated_kraus_gpu_path"]]["seconds_per_shot"]
+                                              if dec["validated_kraus_gpu_path"] != "none" else None)
+    dec["validated_path_gpu_mode"] = dict((a, mm) for a, _r, mm, *_ in KCHK_GPU_ARMS).get(dec["validated_kraus_gpu_path"])
+    dec["evidence"] = {"gpu_arms": f"run 1, job {KCHK_RUN1_JOB} ({KCHK_RUN1_ARCHIVE})", "cpu_arms": "run 2 (this job)"}
+    # ---- criteria (K1/K2 decided = both outcomes PASS; K3 recorded; K4 recorded, a disagreement is a planner STOP)
+    k1 = cmp["kraus_gpu_cusv~kraus_cpu"]
+    ctx.physics(f"K1 kraus_gpu_cusv (run 1) vs kraus_cpu (run 2): bug_confirmed iff |z_w| > {KCHK_SIGMA:g} (both "
+                "outcomes PASS; the field is the decision)",
+                {"z_w": k1.get("z_mean_hamming_weight"), "w": k1.get("mean_hamming_weight"),
+                 "bug_confirmed": dec["bug_confirmed"]}, "decided (both arms sampled)", dec["k1_evaluated"])
+    ctx.physics("K2 production representation: rm iff rm_gpu_cusv (run 1) agrees with rm_cpu and kraus_cpu (run 2) "
+                "(|z_w| <= 3, no marginal beyond 3 sigma), else blocked",
+                {"production_representation": dec["production_representation"],
+                 "z_w": {k: cmp[k].get("z_mean_hamming_weight") for k in ("rm_gpu_cusv~rm_cpu", "rm_gpu_cusv~kraus_cpu")},
+                 "clbits_outside": {k: cmp[k].get("clbits_outside") for k in ("rm_gpu_cusv~rm_cpu", "rm_gpu_cusv~kraus_cpu")}},
+                "decided (all three arms sampled)", dec["k2_evaluated"])
+    ctx.physics("K3 validated Kraus GPU path (run 1's native / cuStateVec-no-fusion arms vs kraus_cpu of run 2): "
+                "first with |z_w| <= 3, else none", {"validated_kraus_gpu_path": dec["validated_kraus_gpu_path"],
+                                                     "z_w": {a: cmp[f"{a}~kraus_cpu"].get("z_mean_hamming_weight")
+                                                             for a in KCHK_K3_ORDER}}, "recorded", True)
+    ctx.physics("K4 the two CPU references agree (CI CPU arms vs the laptop's c33c_diag summary): |z_w| <= 3 per "
+                "representation; recorded -- a disagreement is a STOP for the planner, not a token failure "
+                "(prompts/33e R3 (b), section 2)",
+                {"status": k4["status"], "stop_planner": k4["stop_planner"],
+                 "z_w": {a: (k4.get("per_representation") or {}).get(a, {}).get("z_mean_hamming_weight")
+                         for a, _k in KCHK_K4_REPS}}, "recorded (evaluated when the laptop summary is in the commit)",
+                True)
+    raw_ok = all(arms[a]["raw_counts"]["sum_counts"] == arms[a]["shots_done"] for a in arms)
+    ctx.R.add("P0 raw counts of every run-2 arm stored (sum of counts = shots_done)",
+              {a: [arms[a]["raw_counts"]["sum_counts"], arms[a]["shots_done"]] for a in arms}, "equal", raw_ok)
+    mins = {a: [arms[a]["shots_done"], arms[a]["minimum_shots"]] for a in arms}
+    ctx.min_shots_ok = all(d >= mm for d, mm in mins.values())
+    ctx.no_shots = any(d == 0 for d, _m in mins.values())
+    if not ctx.min_shots_ok:
+        ctx.shots_reduced_to = mins
+    ctx.data["seconds_per_shot"] = arms[KCHK_ANCHOR[0]]["seconds_per_shot"]
+    ctx.data["gpu_mode_used"] = "custatevec (the 128-shot RM anchor)" if ctx.device == "GPU" else "cpu"
+    ctx.data.update({"arms": arms, "run1_gpu_arms": gpu1, "comparisons": cmp, "bug_confirmed": dec["bug_confirmed"],
+                     "decision": dec, "k4": k4, "laptop_reference": lap, "cpu_process": cpu_info,
+                     "minimum_shots": mins,
+                     "design": {"content": "cpu_only", "anchor": list(KCHK_ANCHOR), "anchor_seed_offset": KCHK_ANCHOR_OFFSET,
+                                "cpu_arms": [list(a) for a in KCHK_CPU_ARMS], "cpu": cpu_cfg,
+                                "window_share": KCHK_RUN2_WINDOW_SHARE, "sigma": KCHK_SIGMA,
+                                "dry": {"anchor": KCHK_DRY, "cpu": KCHK_RUN2_DRY_CPU} if dry else None,
+                                "source": "prompts/33e R1-R3 (33d R3 otherwise)"},
+                     "record": {"path": os.path.relpath(RECORD, ROOT), "fingerprint": rec["fingerprint"]},
+                     "raw_counts_npz": {a: os.path.relpath(os.path.join(ctx.results_dir, a + ".npz"), ROOT) for a in arms},
+                     "counts_convention": "keys: int with bit k = clbit k (skqd.reference_sim); physical_by_clbit in "
+                                          "each structure"})
+    add_table(ctx, "C2_KCHK run 2 arms (I-ECHO on IBM-T0 B0_ref117_k1); GPU arms read from run 1",
+              ["arm", "run", "engine", "representation", "shots", "minimum", "s/shot", "mean weight", "se"],
+              [[a, v["run"], v["engine"], v["planned_representation"], v["shots_done"], v["minimum_shots"],
+                v["seconds_per_shot"], v["structure"].get("mean_hamming_weight"),
+                v["structure"].get("se_mean_hamming_weight")] for a, v in list(gpu1.items()) + list(arms.items())])
+    add_table(ctx, "Pairwise comparisons (P4a statistic, 3 sigma)", ["pair", "z mean weight", "max |z| marginal",
+                                                                    "clbits outside", "min visible marginal diff"],
+              [[k, v.get("z_mean_hamming_weight"), v.get("max_abs_z_marginal"), v.get("clbits_outside"),
+                (v.get("power") or {}).get("min_visible_marginal_diff")] for k, v in cmp.items()])
+    add_table(ctx, "K4 the CI CPU arms vs the laptop CPU reference", ["arm", "shots (CI, laptop)", "mean weight",
+                                                                      "z mean weight", "agree"],
+              [[a, (r or {}).get("shots"), (r or {}).get("mean_hamming_weight"), (r or {}).get("z_mean_hamming_weight"),
+                (r or {}).get("agree")] for a, r in (k4.get("per_representation") or {}).items()])
 
 
 def c2_kchk_decision(ctx) -> dict:

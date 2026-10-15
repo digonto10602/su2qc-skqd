@@ -63,6 +63,27 @@ def slurm_layout() -> dict:
             "nodelist": os.environ.get("SLURM_JOB_NODELIST")}
 
 
+def cpu_affinity():
+    """The number of CPUs this process may run on (`os.sched_getaffinity(0)`), i.e. what a Slurm step binding
+    actually granted -- prompts/33e R1: a bare `srun` gave the step 1 CPU of a 32-CPU allocation.  None where the
+    call does not exist (not Linux)."""
+    try:
+        return len(os.sched_getaffinity(0))
+    except AttributeError:                                         # pragma: no cover
+        return None
+
+
+def cpu_affinity_check(affinity, cpus_per_task, ci: bool) -> dict:
+    """prompts/33e R1 (S3 clause): on the CI the step's CPU affinity must equal SLURM_CPUS_PER_TASK (a missing
+    value on either side is a failure there); off the CI it is recorded only."""
+    if not ci:
+        return {"applies": False, "ok": True, "affinity": affinity, "slurm_cpus_per_task": cpus_per_task,
+                "rule": "recorded only (not the CI)"}
+    ok = affinity is not None and cpus_per_task is not None and int(affinity) == int(cpus_per_task)
+    return {"applies": True, "ok": bool(ok), "affinity": affinity, "slurm_cpus_per_task": cpus_per_task,
+            "rule": "on the CI: len(os.sched_getaffinity(0)) == SLURM_CPUS_PER_TASK (prompts/33e R1)"}
+
+
 def gpu_telemetry(path: str = None) -> dict:
     """Peak GPU memory and mean GPU utilization from the background nvidia-smi sampler that
     jobs/gate.sbatch starts before `srun` (policy: sample
