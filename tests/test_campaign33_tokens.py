@@ -61,7 +61,8 @@ def test_env_files():
         assert open(os.path.join(ROOT, "jobs", "env", t)).read().strip() == e
     s = open(os.path.join(ROOT, "jobs", "gate.sbatch")).read()
     assert 'jobs/env/${CI_GATE' in s and 'conda activate "$CI_ENV"' in s and "CI_ENV=skqd" in s
-    assert "srun python scripts/run_gate.py \"$CI_GATE\"" in s, "the job line is unchanged"
+    # the job line (prompts/33e R1 adds --cpus-per-task to it; tests/test_ci_gpu_mode.py pins that part)
+    assert 'python scripts/run_gate.py "$CI_GATE"' in s and s.count("srun ") == 1
 
 
 def test_run_gate_resolves_every_token():

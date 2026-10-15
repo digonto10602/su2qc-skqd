@@ -1,7 +1,7 @@
 {
- "title": "prompts/33c R2 diagnostic summary: CPU (this laptop) vs GPU (C2_CAL job )",
- "git_commit": "60ccd40",
- "command": "python scripts/c33c_diag_full.py --summarize",
+ "title": "prompts/33c R2 / 33e R3 diagnostic summary: CPU (this laptop, the qiskit 1.4.3 twin) vs the GPU arms of validation/C2_CAL.json, validation/archive/C2_KCHK_job59780907.json",
+ "git_commit": "6753767-dirty",
+ "command": "python scripts/c33c_diag_full.py --summarize --gpu-source validation/C2_CAL.json --gpu-source validation/archive/C2_KCHK_job59780907.json",
  "versions": {
   "python": "3.12.14",
   "qiskit": "1.4.3",
@@ -13,30 +13,155 @@
   "processor": "x86_64",
   "cpu_count": 12
  },
- "created": "2026-10-13 19:36:01 UTC",
- "gpu_source": "validation/C2_CAL.json",
- "gpu_versions": {
-  "qiskit": "1.4.3",
-  "qiskit_aer": "0.15.1",
-  "numpy": "2.5.3",
-  "scipy": "1.18.1",
-  "threadpoolctl": "3.7.0",
-  "python": "3.12.14"
+ "created": "2026-10-15 18:48:24 UTC",
+ "aer": {
+  "distributions": [
+   "qiskit-aer"
+  ],
+  "versions": {
+   "qiskit-aer": "0.15.1"
+  }
+ },
+ "aer_wheel_note": "the CPU statevector code is the same source on every stack; the wheel is qiskit-aer here and qiskit-aer-gpu on the CI (prompts/33e R3 (a))",
+ "gpu_sources": {
+  "C2_CAL_job59736871": {
+   "path": "validation/C2_CAL.json",
+   "sha256": "6ba5ade2f6699fc428d5031cd248d56f4baf767e33606282a487f761f72de0c8",
+   "job": "59736871",
+   "status": "PASS",
+   "versions": {
+    "qiskit": "1.4.3",
+    "qiskit_aer": "0.15.1",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "threadpoolctl": "3.7.0",
+    "python": "3.12.14"
+   },
+   "device": "GPU",
+   "calibration_run": 2
+  },
+  "C2_KCHK_job59780907": {
+   "path": "validation/archive/C2_KCHK_job59780907.json",
+   "sha256": "30f6326b5dba109bdfd454e645057b099ffc9ad37a75e6587e244c2bfad712b4",
+   "job": "59780907",
+   "status": "FAIL",
+   "versions": {
+    "qiskit": "1.4.3",
+    "qiskit_aer": "0.15.1",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "threadpoolctl": "3.7.0",
+    "python": "3.12.14"
+   },
+   "device": "GPU",
+   "calibration_run": null
+  }
  },
  "arms": {
   "cpu_kraus": {
-   "source": "data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg2.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg3.json",
-   "shots": 19,
+   "source": "data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg2.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg3.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg4.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg5.json",
+   "shots": 29,
    "status": "done",
-   "mean_hamming_weight": 7.473684210526316,
-   "se_mean_hamming_weight": 0.558655555371602,
-   "sd_hamming_weight": 2.4351231101124045,
-   "seconds_per_shot": 173.92319881288628,
+   "mean_hamming_weight": 7.620689655172414,
+   "se_mean_hamming_weight": 0.4281182134507901,
+   "sd_hamming_weight": 2.3054871363684923,
+   "seconds_per_shot": 207.58503758496252,
    "versions": {
     "python": "3.12.14",
     "qiskit": "1.4.3",
     "qiskit_aer": "0.15.1",
     "numpy": "2.5.3"
+   },
+   "versions_all_equal": true,
+   "git_commits": [
+    "60ccd40",
+    "ae01bf2",
+    "daeb40c",
+    "daeb40c-dirty"
+   ],
+   "aer": {
+    "distributions": [
+     "qiskit-aer"
+    ],
+    "versions": {
+     "qiskit-aer": "0.15.1"
+    }
+   },
+   "structure": {
+    "shots": 29,
+    "n_bits": 20,
+    "mean_hamming_weight": 7.620689655172414,
+    "sd_hamming_weight": 2.3054871363684923,
+    "se_mean_hamming_weight": 0.4281182134507901,
+    "unital_limit": 10.0,
+    "deficit_vs_unital": 2.3793103448275863,
+    "marginals_by_clbit": [
+     0.3448275862068966,
+     0.1724137931034483,
+     0.10344827586206896,
+     0.3103448275862069,
+     0.41379310344827586,
+     0.1724137931034483,
+     0.5172413793103449,
+     0.4827586206896552,
+     0.2413793103448276,
+     0.5517241379310345,
+     0.41379310344827586,
+     0.4482758620689655,
+     0.4827586206896552,
+     0.5517241379310345,
+     0.3448275862068966,
+     0.13793103448275862,
+     0.6206896551724138,
+     0.27586206896551724,
+     0.5172413793103449,
+     0.5172413793103449
+    ],
+    "se_marginals_by_clbit": [
+     0.0882632273954608,
+     0.0701445003745666,
+     0.056552304164538,
+     0.08590911709007583,
+     0.09145723911072252,
+     0.0701445003745666,
+     0.09279245191499011,
+     0.09279245191499011,
+     0.07946270842617656,
+     0.09234952598786016,
+     0.09145723911072252,
+     0.09234952598786016,
+     0.09279245191499011,
+     0.09234952598786016,
+     0.0882632273954608,
+     0.06403287523346615,
+     0.0901022421425571,
+     0.08299609211231937,
+     0.09279245191499011,
+     0.09279245191499011
+    ],
+    "physical_by_clbit": [
+     92,
+     69,
+     54,
+     52,
+     53,
+     68,
+     73,
+     94,
+     50,
+     72,
+     71,
+     79,
+     51,
+     74,
+     70,
+     93,
+     75,
+     58,
+     95,
+     59
+    ],
+    "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
    }
   },
   "cpu_rm": {
@@ -52,68 +177,680 @@
     "qiskit": "1.4.3",
     "qiskit_aer": "0.15.1",
     "numpy": "2.5.3"
+   },
+   "versions_all_equal": true,
+   "git_commits": [
+    "60ccd40",
+    "ae01bf2"
+   ],
+   "aer": {
+    "distributions": [
+     "qiskit-aer"
+    ],
+    "versions": {
+     "qiskit-aer": "0.15.1"
+    }
+   },
+   "structure": {
+    "shots": 24,
+    "n_bits": 20,
+    "mean_hamming_weight": 6.916666666666667,
+    "sd_hamming_weight": 2.7962189792128487,
+    "se_mean_hamming_weight": 0.5707758090131267,
+    "unital_limit": 10.0,
+    "deficit_vs_unital": 3.083333333333333,
+    "marginals_by_clbit": [
+     0.16666666666666666,
+     0.0,
+     0.0,
+     0.16666666666666666,
+     0.6666666666666666,
+     0.125,
+     0.6666666666666666,
+     0.3333333333333333,
+     0.375,
+     0.4166666666666667,
+     0.4166666666666667,
+     0.20833333333333334,
+     0.5,
+     0.5,
+     0.3333333333333333,
+     0.5,
+     0.3333333333333333,
+     0.3333333333333333,
+     0.5,
+     0.375
+    ],
+    "se_marginals_by_clbit": [
+     0.07607257743127308,
+     0.0,
+     0.0,
+     0.07607257743127308,
+     0.09622504486493763,
+     0.06750771560841522,
+     0.09622504486493763,
+     0.09622504486493763,
+     0.09882117688026186,
+     0.10063456073742665,
+     0.10063456073742665,
+     0.08289816934939807,
+     0.10206207261596575,
+     0.10206207261596575,
+     0.09622504486493763,
+     0.10206207261596575,
+     0.09622504486493763,
+     0.09622504486493763,
+     0.10206207261596575,
+     0.09882117688026186
+    ],
+    "physical_by_clbit": [
+     92,
+     69,
+     54,
+     52,
+     53,
+     68,
+     73,
+     94,
+     50,
+     72,
+     71,
+     79,
+     51,
+     74,
+     70,
+     93,
+     75,
+     58,
+     95,
+     59
+    ],
+    "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
    }
   },
-  "gpu_pta": {
+  "gpu:C2_CAL_job59736871:pta": {
    "source": "validation/C2_CAL.json data.arms.pta.structure",
+   "job": "59736871",
+   "engine": "GPU (custatevec)",
    "shots": 512,
    "mean_hamming_weight": 9.95703125,
    "se_mean_hamming_weight": 0.10213173006827322,
    "sd_hamming_weight": 2.3109772449788806
   },
-  "gpu_rm": {
+  "gpu:C2_CAL_job59736871:rm": {
    "source": "validation/C2_CAL.json data.arms.rm.structure",
+   "job": "59736871",
+   "engine": "GPU (custatevec)",
    "shots": 1024,
    "mean_hamming_weight": 7.419921875,
    "se_mean_hamming_weight": 0.07661781505287477,
    "sd_hamming_weight": 2.4517700816919925
   },
-  "gpu_kraus": {
+  "gpu:C2_CAL_job59736871:kraus": {
    "source": "validation/C2_CAL.json data.arms.kraus.structure",
+   "job": "59736871",
+   "engine": "GPU (custatevec)",
    "shots": 640,
    "mean_hamming_weight": 2.3984375,
    "se_mean_hamming_weight": 0.13584955580764982,
    "sd_hamming_weight": 3.436752123794628
+  },
+  "gpu:C2_KCHK_job59780907:kraus_gpu_cusv": {
+   "source": "validation/archive/C2_KCHK_job59780907.json data.arms.kraus_gpu_cusv.structure",
+   "job": "59780907",
+   "engine": "GPU custatevec",
+   "shots": 256,
+   "mean_hamming_weight": 2.99609375,
+   "se_mean_hamming_weight": 0.2351273413114684,
+   "sd_hamming_weight": 3.7620374609834943
+  },
+  "gpu:C2_KCHK_job59780907:rm_gpu_cusv": {
+   "source": "validation/archive/C2_KCHK_job59780907.json data.arms.rm_gpu_cusv.structure",
+   "job": "59780907",
+   "engine": "GPU custatevec",
+   "shots": 512,
+   "mean_hamming_weight": 7.43359375,
+   "se_mean_hamming_weight": 0.09964433041118702,
+   "sd_hamming_weight": 2.2546938156973844
+  },
+  "gpu:C2_KCHK_job59780907:kraus_gpu_native": {
+   "source": "validation/archive/C2_KCHK_job59780907.json data.arms.kraus_gpu_native.structure",
+   "job": "59780907",
+   "engine": "GPU native",
+   "shots": 256,
+   "mean_hamming_weight": 3.56640625,
+   "se_mean_hamming_weight": 0.24657181040443638,
+   "sd_hamming_weight": 3.945148966470982
+  },
+  "gpu:C2_KCHK_job59780907:kraus_gpu_cusv_nofusion": {
+   "source": "validation/archive/C2_KCHK_job59780907.json data.arms.kraus_gpu_cusv_nofusion.structure",
+   "job": "59780907",
+   "engine": "GPU custatevec_nofusion",
+   "shots": 128,
+   "mean_hamming_weight": 1.140625,
+   "se_mean_hamming_weight": 0.21869287077397426,
+   "sd_hamming_weight": 2.4742273907428887
+  }
+ },
+ "segments": {
+  "kraus": [
+   {
+    "file": "data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu.json",
+    "seed0": 33033000,
+    "shots_per_call": 4,
+    "threads": 6,
+    "calls": 1,
+    "shots": 4,
+    "mean_hamming_weight": 7.5,
+    "se_mean_hamming_weight": 0.9574271077563381,
+    "seconds": 979.6877791881561,
+    "seconds_per_shot": 244.92194479703903,
+    "seconds_per_call": [
+     979.7
+    ],
+    "status": "done",
+    "stop": "time cap: the next call (predicted 980 s) would pass 1700 s",
+    "git_commit": "ae01bf2",
+    "created": "2026-10-13 18:30:20 UTC",
+    "versions": {
+     "python": "3.12.14",
+     "qiskit": "1.4.3",
+     "qiskit_aer": "0.15.1",
+     "numpy": "2.5.3"
+    },
+    "machine": {
+     "host": "pichkaCommander",
+     "processor": "x86_64",
+     "cpu_count": 12
+    },
+    "prompt_33e": false
+   },
+   {
+    "file": "data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg2.json",
+    "seed0": 33133000,
+    "shots_per_call": 3,
+    "threads": 6,
+    "calls": 1,
+    "shots": 3,
+    "mean_hamming_weight": 9.333333333333334,
+    "se_mean_hamming_weight": 1.4529663145135578,
+    "seconds": 951.7405977249146,
+    "seconds_per_shot": 317.24686590830487,
+    "seconds_per_call": [
+     951.7
+    ],
+    "status": "done",
+    "stop": "time cap: the next call (predicted 952 s) would pass 1700 s",
+    "git_commit": "60ccd40",
+    "created": "2026-10-13 18:47:27 UTC",
+    "versions": {
+     "python": "3.12.14",
+     "qiskit": "1.4.3",
+     "qiskit_aer": "0.15.1",
+     "numpy": "2.5.3"
+    },
+    "machine": {
+     "host": "pichkaCommander",
+     "processor": "x86_64",
+     "cpu_count": 12
+    },
+    "prompt_33e": false
+   },
+   {
+    "file": "data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg3.json",
+    "seed0": 33233000,
+    "shots_per_call": 12,
+    "threads": 0,
+    "calls": 1,
+    "shots": 12,
+    "mean_hamming_weight": 7.0,
+    "se_mean_hamming_weight": 0.7282190812544191,
+    "seconds": 1373.1124005317688,
+    "seconds_per_shot": 114.4260333776474,
+    "seconds_per_call": [
+     1373.1
+    ],
+    "status": "done",
+    "stop": "max_shots reached",
+    "git_commit": "60ccd40",
+    "created": "2026-10-13 19:05:10 UTC",
+    "versions": {
+     "python": "3.12.14",
+     "qiskit": "1.4.3",
+     "qiskit_aer": "0.15.1",
+     "numpy": "2.5.3"
+    },
+    "machine": {
+     "host": "pichkaCommander",
+     "processor": "x86_64",
+     "cpu_count": 12
+    },
+    "prompt_33e": false
+   },
+   {
+    "file": "data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg4.json",
+    "seed0": 33433000,
+    "shots_per_call": 2,
+    "threads": 10,
+    "calls": 3,
+    "shots": 6,
+    "mean_hamming_weight": 7.5,
+    "se_mean_hamming_weight": 1.0567244989431572,
+    "seconds": 1599.2535643577576,
+    "seconds_per_shot": 266.5422607262929,
+    "seconds_per_call": [
+     487.5,
+     530.3,
+     581.5
+    ],
+    "status": "done",
+    "stop": "time cap: the next call (predicted 581 s) would pass 1700 s",
+    "git_commit": "daeb40c",
+    "created": "2026-10-15 17:46:43 UTC",
+    "versions": {
+     "python": "3.12.14",
+     "qiskit": "1.4.3",
+     "qiskit_aer": "0.15.1",
+     "numpy": "2.5.3"
+    },
+    "machine": {
+     "host": "pichkaCommander",
+     "processor": "x86_64",
+     "cpu_count": 12
+    },
+    "prompt_33e": true
+   },
+   {
+    "file": "data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg5.json",
+    "seed0": 33533000,
+    "shots_per_call": 2,
+    "threads": 10,
+    "calls": 2,
+    "shots": 4,
+    "mean_hamming_weight": 8.5,
+    "se_mean_hamming_weight": 0.6454972243679028,
+    "seconds": 1116.171748161316,
+    "seconds_per_shot": 279.042937040329,
+    "seconds_per_call": [
+     517.2,
+     599.0
+    ],
+    "status": "done",
+    "stop": "time cap: the next call (predicted 599 s) would pass 1700 s",
+    "git_commit": "daeb40c-dirty",
+    "created": "2026-10-15 18:13:37 UTC",
+    "versions": {
+     "python": "3.12.14",
+     "qiskit": "1.4.3",
+     "qiskit_aer": "0.15.1",
+     "numpy": "2.5.3"
+    },
+    "machine": {
+     "host": "pichkaCommander",
+     "processor": "x86_64",
+     "cpu_count": 12
+    },
+    "prompt_33e": true
+   }
+  ],
+  "rm": [
+   {
+    "file": "data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_rm_cpu.json",
+    "seed0": 33033000,
+    "shots_per_call": 8,
+    "threads": 6,
+    "calls": 2,
+    "shots": 16,
+    "mean_hamming_weight": 7.4375,
+    "se_mean_hamming_weight": 0.591387845101109,
+    "seconds": 1272.0079703330994,
+    "seconds_per_shot": 79.50049814581871,
+    "seconds_per_call": [
+     709.4,
+     562.6
+    ],
+    "status": "done",
+    "stop": "time cap: the next call (predicted 563 s) would pass 1700 s",
+    "git_commit": "ae01bf2",
+    "created": "2026-10-13 18:30:24 UTC",
+    "versions": {
+     "python": "3.12.14",
+     "qiskit": "1.4.3",
+     "qiskit_aer": "0.15.1",
+     "numpy": "2.5.3"
+    },
+    "machine": {
+     "host": "pichkaCommander",
+     "processor": "x86_64",
+     "cpu_count": 12
+    },
+    "prompt_33e": false
+   },
+   {
+    "file": "data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_rm_cpu_seg2.json",
+    "seed0": 33133000,
+    "shots_per_call": 8,
+    "threads": 6,
+    "calls": 1,
+    "shots": 8,
+    "mean_hamming_weight": 5.875,
+    "se_mean_hamming_weight": 1.2165158093036499,
+    "seconds": 744.7823696136475,
+    "seconds_per_shot": 93.09779620170593,
+    "seconds_per_call": [
+     744.8
+    ],
+    "status": "done",
+    "stop": "max_shots reached",
+    "git_commit": "60ccd40",
+    "created": "2026-10-13 18:52:12 UTC",
+    "versions": {
+     "python": "3.12.14",
+     "qiskit": "1.4.3",
+     "qiskit_aer": "0.15.1",
+     "numpy": "2.5.3"
+    },
+    "machine": {
+     "host": "pichkaCommander",
+     "processor": "x86_64",
+     "cpu_count": 12
+    },
+    "prompt_33e": false
+   }
+  ]
+ },
+ "segments_excluded_running": {
+  "kraus": [
+   "data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg6.json"
+  ],
+  "rm": [],
+  "pta": []
+ },
+ "stop_33e": {
+  "kraus": {
+   "band": [
+    5.789999999999999,
+    9.15
+   ],
+   "evaluated": false,
+   "checks": [],
+   "stop": false,
+   "rule": {
+    "center": 7.47,
+    "se": 0.56,
+    "n_sigma": 3.0,
+    "min_shots": 32,
+    "source": "prompts/33e section 1 step 3 (7.47 +- 0.56: data/campaign33/c33c_diag/summary.json of 33c, cpu_kraus)"
+   }
+  },
+  "rm": {
+   "band": [
+    5.789999999999999,
+    9.15
+   ],
+   "evaluated": false,
+   "checks": [],
+   "stop": false,
+   "rule": {
+    "center": 7.47,
+    "se": 0.56,
+    "n_sigma": 3.0,
+    "min_shots": 32,
+    "source": "prompts/33e section 1 step 3 (7.47 +- 0.56: data/campaign33/c33c_diag/summary.json of 33c, cpu_kraus)"
+   }
   }
  },
  "comparisons": {
   "cpu_kraus_vs_cpu_rm": {
    "shots": [
-    19,
+    29,
     24
    ],
    "mean_hamming_weight": [
-    7.473684210526316,
+    7.620689655172414,
     6.916666666666667
    ],
-   "delta_mean_hamming_weight": 0.557017543859649,
-   "z_mean_hamming_weight": 0.6974274270885936,
-   "max_abs_z_marginal": 2.592393162886242,
-   "clbits_outside": [],
-   "pass": true
+   "delta_mean_hamming_weight": 0.7040229885057467,
+   "z_mean_hamming_weight": 0.9867292233177916,
+   "max_abs_z_marginal": 3.005070885731958,
+   "clbits_outside": [
+    15
+   ],
+   "pass": false,
+   "power": {
+    "evaluated": true,
+    "min_visible_marginal_diff": 0.4139277798077241,
+    "min_visible_weight_diff": 2.1404747276214153,
+    "note": "at N = 29 / 24 shots a marginal difference below 0.414 (p = 1/2, 3 sigma) and a mean-weight difference below 2.140 bits are invisible to this comparison"
+   }
   },
-  "cpu_kraus_vs_gpu_kraus": {
+  "cpu_kraus_vs_gpu:C2_CAL_job59736871:pta": {
    "shots": [
-    19,
+    29,
+    512
+   ],
+   "mean_hamming_weight": [
+    7.620689655172414,
+    9.95703125
+   ],
+   "delta_mean_hamming_weight": -2.3363415948275863,
+   "z_mean_hamming_weight": -5.308275908185495,
+   "max_abs_z_marginal": 6.595608362768441,
+   "clbits_outside": [
+    1,
+    2,
+    5,
+    8,
+    15
+   ],
+   "pass": false,
+   "power": {
+    "evaluated": true,
+    "min_visible_marginal_diff": 0.28632278663520955,
+    "min_visible_weight_diff": 1.3203957190082503,
+    "note": "at N = 29 / 512 shots a marginal difference below 0.286 (p = 1/2, 3 sigma) and a mean-weight difference below 1.320 bits are invisible to this comparison"
+   }
+  },
+  "cpu_kraus_vs_gpu:C2_CAL_job59736871:rm": {
+   "shots": [
+    29,
+    1024
+   ],
+   "mean_hamming_weight": [
+    7.620689655172414,
+    7.419921875
+   ],
+   "delta_mean_hamming_weight": 0.2007677801724137,
+   "z_mean_hamming_weight": 0.4616199152471508,
+   "max_abs_z_marginal": 3.9569466730903766,
+   "clbits_outside": [
+    15
+   ],
+   "pass": false,
+   "power": {
+    "evaluated": true,
+    "min_visible_marginal_diff": 0.2824596830019317,
+    "min_visible_weight_diff": 1.3047603030618133,
+    "note": "at N = 29 / 1024 shots a marginal difference below 0.282 (p = 1/2, 3 sigma) and a mean-weight difference below 1.305 bits are invisible to this comparison"
+   }
+  },
+  "cpu_kraus_vs_gpu:C2_CAL_job59736871:kraus": {
+   "shots": [
+    29,
     640
    ],
    "mean_hamming_weight": [
-    7.473684210526316,
+    7.620689655172414,
     2.3984375
    ],
-   "delta_mean_hamming_weight": 5.075246710526316,
-   "z_mean_hamming_weight": 8.827502199027856,
-   "max_abs_z_marginal": 4.074054157241735,
+   "delta_mean_hamming_weight": 5.222252155172414,
+   "z_mean_hamming_weight": 11.626834741345917,
+   "max_abs_z_marginal": 4.86159733895377,
    "clbits_outside": [
     6,
+    7,
+    9,
+    11,
+    12,
     13,
     16,
     18,
     19
    ],
-   "pass": false
+   "pass": false,
+   "power": {
+    "evaluated": true,
+    "min_visible_marginal_diff": 0.2847838336292138,
+    "min_visible_weight_diff": 1.3474653088346609,
+    "note": "at N = 29 / 640 shots a marginal difference below 0.285 (p = 1/2, 3 sigma) and a mean-weight difference below 1.347 bits are invisible to this comparison"
+   }
   },
-  "cpu_rm_vs_gpu_rm": {
+  "cpu_kraus_vs_gpu:C2_KCHK_job59780907:kraus_gpu_cusv": {
+   "shots": [
+    29,
+    256
+   ],
+   "mean_hamming_weight": [
+    7.620689655172414,
+    2.99609375
+   ],
+   "delta_mean_hamming_weight": 4.624595905172414,
+   "z_mean_hamming_weight": 9.468164834582675,
+   "max_abs_z_marginal": 4.685107178949967,
+   "clbits_outside": [
+    6,
+    7,
+    9,
+    11,
+    12,
+    13,
+    16,
+    18,
+    19
+   ],
+   "pass": false,
+   "power": {
+    "evaluated": true,
+    "min_visible_marginal_diff": 0.2938966985125075,
+    "min_visible_weight_diff": 1.4653090601932632,
+    "note": "at N = 29 / 256 shots a marginal difference below 0.294 (p = 1/2, 3 sigma) and a mean-weight difference below 1.465 bits are invisible to this comparison"
+   }
+  },
+  "cpu_kraus_vs_gpu:C2_KCHK_job59780907:rm_gpu_cusv": {
+   "shots": [
+    29,
+    512
+   ],
+   "mean_hamming_weight": [
+    7.620689655172414,
+    7.43359375
+   ],
+   "delta_mean_hamming_weight": 0.1870959051724137,
+   "z_mean_hamming_weight": 0.42564228408738475,
+   "max_abs_z_marginal": 3.5685935277611254,
+   "clbits_outside": [
+    15
+   ],
+   "pass": false,
+   "power": {
+    "evaluated": true,
+    "min_visible_marginal_diff": 0.28632278663520955,
+    "min_visible_weight_diff": 1.318684107526329,
+    "note": "at N = 29 / 512 shots a marginal difference below 0.286 (p = 1/2, 3 sigma) and a mean-weight difference below 1.319 bits are invisible to this comparison"
+   }
+  },
+  "cpu_kraus_vs_gpu:C2_KCHK_job59780907:kraus_gpu_native": {
+   "shots": [
+    29,
+    256
+   ],
+   "mean_hamming_weight": [
+    7.620689655172414,
+    3.56640625
+   ],
+   "delta_mean_hamming_weight": 4.054283405172414,
+   "z_mean_hamming_weight": 8.206263538527349,
+   "max_abs_z_marginal": 4.596333827192581,
+   "clbits_outside": [
+    6,
+    7,
+    9,
+    13,
+    16,
+    18,
+    19
+   ],
+   "pass": false,
+   "power": {
+    "evaluated": true,
+    "min_visible_marginal_diff": 0.2938966985125075,
+    "min_visible_weight_diff": 1.482142287828587,
+    "note": "at N = 29 / 256 shots a marginal difference below 0.294 (p = 1/2, 3 sigma) and a mean-weight difference below 1.482 bits are invisible to this comparison"
+   }
+  },
+  "cpu_kraus_vs_gpu:C2_KCHK_job59780907:kraus_gpu_cusv_nofusion": {
+   "shots": [
+    29,
+    128
+   ],
+   "mean_hamming_weight": [
+    7.620689655172414,
+    1.140625
+   ],
+   "delta_mean_hamming_weight": 6.480064655172414,
+   "z_mean_hamming_weight": 13.479329857556122,
+   "max_abs_z_marginal": 5.823238427299148,
+   "clbits_outside": [
+    0,
+    4,
+    6,
+    7,
+    9,
+    10,
+    11,
+    12,
+    13,
+    16,
+    18,
+    19
+   ],
+   "pass": false,
+   "power": {
+    "evaluated": true,
+    "min_visible_marginal_diff": 0.308487166502193,
+    "min_visible_weight_diff": 1.4422225860597684,
+    "note": "at N = 29 / 128 shots a marginal difference below 0.308 (p = 1/2, 3 sigma) and a mean-weight difference below 1.442 bits are invisible to this comparison"
+   }
+  },
+  "cpu_rm_vs_gpu:C2_CAL_job59736871:pta": {
+   "shots": [
+    24,
+    512
+   ],
+   "mean_hamming_weight": [
+    6.916666666666667,
+    9.95703125
+   ],
+   "delta_mean_hamming_weight": -3.040364583333333,
+   "z_mean_hamming_weight": -5.243442762847288,
+   "max_abs_z_marginal": 23.900620691134524,
+   "clbits_outside": [
+    0,
+    1,
+    2,
+    3,
+    5,
+    11
+   ],
+   "pass": false,
+   "power": {
+    "evaluated": true,
+    "min_visible_marginal_diff": 0.31328027587130347,
+    "min_visible_weight_diff": 1.739523851509933,
+    "note": "at N = 24 / 512 shots a marginal difference below 0.313 (p = 1/2, 3 sigma) and a mean-weight difference below 1.740 bits are invisible to this comparison"
+   }
+  },
+  "cpu_rm_vs_gpu:C2_CAL_job59736871:rm": {
    "shots": [
     24,
     1024
@@ -129,9 +866,15 @@
     1,
     2
    ],
-   "pass": false
+   "pass": false,
+   "power": {
+    "evaluated": true,
+    "min_visible_marginal_diff": 0.3097535562749845,
+    "min_visible_weight_diff": 1.727685684273211,
+    "note": "at N = 24 / 1024 shots a marginal difference below 0.310 (p = 1/2, 3 sigma) and a mean-weight difference below 1.728 bits are invisible to this comparison"
+   }
   },
-  "cpu_rm_vs_gpu_kraus": {
+  "cpu_rm_vs_gpu:C2_CAL_job59736871:kraus": {
    "shots": [
     24,
     640
@@ -153,22 +896,129 @@
     15,
     18
    ],
-   "pass": false
+   "pass": false,
+   "power": {
+    "evaluated": true,
+    "min_visible_marginal_diff": 0.3118743737468662,
+    "min_visible_weight_diff": 1.7601594057668544,
+    "note": "at N = 24 / 640 shots a marginal difference below 0.312 (p = 1/2, 3 sigma) and a mean-weight difference below 1.760 bits are invisible to this comparison"
+   }
   },
-  "cpu_kraus_vs_gpu_rm": {
+  "cpu_rm_vs_gpu:C2_KCHK_job59780907:kraus_gpu_cusv": {
    "shots": [
-    19,
-    1024
+    24,
+    256
    ],
    "mean_hamming_weight": [
-    7.473684210526316,
-    7.419921875
+    6.916666666666667,
+    2.99609375
    ],
-   "delta_mean_hamming_weight": 0.05376233552631593,
-   "z_mean_hamming_weight": 0.09534272650663894,
-   "max_abs_z_marginal": 2.82851130424167,
-   "clbits_outside": [],
-   "pass": true
+   "delta_mean_hamming_weight": 3.920572916666667,
+   "z_mean_hamming_weight": 6.351074654283605,
+   "max_abs_z_marginal": 5.332539591787397,
+   "clbits_outside": [
+    1,
+    2,
+    4,
+    6,
+    15,
+    18
+   ],
+   "pass": false,
+   "power": {
+    "evaluated": true,
+    "min_visible_marginal_diff": 0.32021721143623744,
+    "min_visible_weight_diff": 1.851925759063009,
+    "note": "at N = 24 / 256 shots a marginal difference below 0.320 (p = 1/2, 3 sigma) and a mean-weight difference below 1.852 bits are invisible to this comparison"
+   }
+  },
+  "cpu_rm_vs_gpu:C2_KCHK_job59780907:rm_gpu_cusv": {
+   "shots": [
+    24,
+    512
+   ],
+   "mean_hamming_weight": [
+    6.916666666666667,
+    7.43359375
+   ],
+   "delta_mean_hamming_weight": -0.516927083333333,
+   "z_mean_hamming_weight": -0.8921637014749922,
+   "max_abs_z_marginal": 9.373998802374082,
+   "clbits_outside": [
+    1,
+    2
+   ],
+   "pass": false,
+   "power": {
+    "evaluated": true,
+    "min_visible_marginal_diff": 0.31328027587130347,
+    "min_visible_weight_diff": 1.73822500000407,
+    "note": "at N = 24 / 512 shots a marginal difference below 0.313 (p = 1/2, 3 sigma) and a mean-weight difference below 1.738 bits are invisible to this comparison"
+   }
+  },
+  "cpu_rm_vs_gpu:C2_KCHK_job59780907:kraus_gpu_native": {
+   "shots": [
+    24,
+    256
+   ],
+   "mean_hamming_weight": [
+    6.916666666666667,
+    3.56640625
+   ],
+   "delta_mean_hamming_weight": 3.350260416666667,
+   "z_mean_hamming_weight": 5.388369495980316,
+   "max_abs_z_marginal": 4.905953125374932,
+   "clbits_outside": [
+    1,
+    2,
+    4,
+    6,
+    15
+   ],
+   "pass": false,
+   "power": {
+    "evaluated": true,
+    "min_visible_marginal_diff": 0.32021721143623744,
+    "min_visible_weight_diff": 1.8652732069502302,
+    "note": "at N = 24 / 256 shots a marginal difference below 0.320 (p = 1/2, 3 sigma) and a mean-weight difference below 1.865 bits are invisible to this comparison"
+   }
+  },
+  "cpu_rm_vs_gpu:C2_KCHK_job59780907:kraus_gpu_cusv_nofusion": {
+   "shots": [
+    24,
+    128
+   ],
+   "mean_hamming_weight": [
+    6.916666666666667,
+    1.140625
+   ],
+   "delta_mean_hamming_weight": 5.776041666666667,
+   "z_mean_hamming_weight": 9.449746188292263,
+   "max_abs_z_marginal": 6.225546690565869,
+   "clbits_outside": [
+    4,
+    6,
+    8,
+    9,
+    10,
+    12,
+    13,
+    15,
+    18,
+    19
+   ],
+   "pass": false,
+   "power": {
+    "evaluated": true,
+    "min_visible_marginal_diff": 0.3336586953759785,
+    "min_visible_weight_diff": 1.8337132717351328,
+    "note": "at N = 24 / 128 shots a marginal difference below 0.334 (p = 1/2, 3 sigma) and a mean-weight difference below 1.834 bits are invisible to this comparison"
+   }
   }
+ },
+ "k4": {
+  "evaluated": false,
+  "status": "not_evaluated",
+  "reason": "validation/C2_KCHK.json is not C2_KCHK run 2 (calibration_run None, job 59780907, dry_run False): run 2 not harvested yet"
  }
 }

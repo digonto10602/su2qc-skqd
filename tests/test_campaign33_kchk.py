@@ -86,7 +86,7 @@ def test_c2_kchk_dry_path_with_a_fake_cpu_process(sandbox, monkeypatch):  # noqa
         def kill(self):
             pass
     monkeypatch.setattr(subprocess, "Popen", popen)
-    rc = run_dry("C2_KCHK")
+    rc = run_dry("C2_KCHK", ["--content", "full"])      # run 1 (33d R3); the default is run 2 since 33e
     d = json.load(open(tmp / "validation" / "dryrun" / "C2_KCHK.json"))
     assert rc == 0 and d["status"] == "PASS", [c for c in d["criteria"] if not c["passed"]]
     D = d["data"]

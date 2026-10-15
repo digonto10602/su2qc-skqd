@@ -1,9 +1,11 @@
 """
 C2_KCHK's CPU arms (prompts/33d R3): Kraus and RM on Aer's CPU statevector in a SEPARATE process, started first by
-`tokens_run.run_c2_kchk` and run beside the GPU arms.  The two arms alternate in chunks of `--chunk` shots
-(kraus, rm, kraus, ...).  Each arm runs its chunks regardless of the deadline until it has `--min-shots`, then only
-while the predicted end of its next chunk (its slowest chunk so far) is before `--deadline` (epoch seconds).  The
-JSON is rewritten after every chunk, so a process stopped by the driver keeps every completed chunk.
+`tokens_run.run_c2_kchk` and run beside the GPU arms.  The two arms alternate in chunks of `--chunk` shots in the
+pattern `--ratio K,R` (K Kraus chunks, then R RM chunks, repeated; run 1 of 33d: 1,1 = kraus, rm, kraus, ...; run 2 of
+prompts/33e R2: 1,2 = kraus, rm, rm, kraus, ... with --chunk 1, so every completed shot is recorded).  Each arm runs
+its chunks regardless of the deadline until it has `--min-shots`, then only while the predicted end of its next
+chunk (its slowest chunk so far) is before `--deadline` (epoch seconds).  The JSON is rewritten after every chunk,
+so a process stopped by the driver keeps every completed chunk.
 
 Seeds (the token rule, tokens.chunk_seed): s0 of C2_KCHK, circuit offset per arm (`--offsets`), chunk index j,
 stride = the chunk.  Raw counts of every chunk are kept ({int with bit k = clbit k: count}).
@@ -30,6 +32,36 @@ def cpu_threads(requested: int = 0, reserve: int = 4) -> int:
     return min(t, int(requested)) if requested and requested > 0 else t
 
 
+def cpu_affinity():
+    try:
+        return len(os.sched_getaffinity(0))
+    except AttributeError:
+        return None
+
+
+def aer_distribution() -> dict:
+    """Which wheel provides qiskit_aer here (prompts/33e R3 (a): `qiskit-aer-gpu` on the CI, `qiskit-aer` on the
+    laptop -- the CPU statevector code is the same source, the wheel is not) and its version."""
+    try:
+        from importlib import metadata
+        names = sorted(set(metadata.packages_distributions().get("qiskit_aer", [])))
+        return {"distributions": names, "versions": {n: metadata.version(n) for n in names}}
+    except Exception as exc:          # recorded, never fatal: the arms' numbers do not depend on it
+        return {"distributions": None, "error": f"{type(exc).__name__}: {exc}"}
+
+
+def pattern(arms, ratio) -> list:
+    """The alternation of one cycle: ratio[i] consecutive chunks of arm i, in the order of `arms`."""
+    out = []
+    for name, r in zip(arms, ratio):
+        if int(r) < 0:
+            raise ValueError("ratio entries must be >= 0")
+        out += [name] * int(r)
+    if not out:
+        raise ValueError("an empty alternation pattern")
+    return out
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
@@ -41,6 +73,7 @@ def main(argv=None):
     ap.add_argument("--max-shots", type=int, default=0, help="per arm (0 = until the deadline)")
     ap.add_argument("--threads", type=int, default=0, help="cap on the thread count (0 = CPUs minus 4)")
     ap.add_argument("--stand-in", default=None, help="dry run: one representation for both arms (pta)")
+    ap.add_argument("--ratio", default="1,1", help="chunks of kraus_cpu, rm_cpu per cycle (prompts/33e R2: 1,2)")
     a = ap.parse_args(argv)
 
     from . import circuits as C
@@ -62,10 +95,14 @@ def main(argv=None):
                               "engine": "CPU statevector (separate process)", "simulator_options": kw,
                               "seed_circuit_offset": off, "chunk": a.chunk, "chunks": [], "shots_done": 0,
                               "stopped": None}}
-    doc = {"pid": os.getpid(), "threads": threads, "deadline": a.deadline, "min_shots": a.min_shots,
-           "chunk": a.chunk, "stand_in": a.stand_in, "build_s": time.time() - t0, "status": "running",
-           "rule": ("alternating chunks; an arm runs regardless of the deadline until min_shots, then only while its "
-                    "slowest chunk so far would end before the deadline")}
+    ratio = [int(x) for x in a.ratio.split(",")]
+    cycle = pattern(list(arms), ratio)
+    doc = {"pid": os.getpid(), "threads": threads, "cpu_affinity": cpu_affinity(), "deadline": a.deadline,
+           "min_shots": a.min_shots, "chunk": a.chunk, "ratio": dict(zip(arms, ratio)), "cycle": cycle,
+           "stand_in": a.stand_in, "build_s": time.time() - t0, "status": "running", "aer": aer_distribution(),
+           "sequence": [],
+           "rule": ("alternating chunks in the cycle order; an arm runs regardless of the deadline until min_shots, "
+                    "then only while its slowest chunk so far would end before the deadline")}
 
     def dump():
         doc["arms"] = {k: v["out"] for k, v in arms.items()}
@@ -79,7 +116,9 @@ def main(argv=None):
     active = list(arms)
     j = {k: 0 for k in arms}
     while active:
-        for name in list(active):
+        for name in cycle:
+            if name not in active:
+                continue
             arm = arms[name]
             o = arm["out"]
             if a.max_shots and o["shots_done"] >= a.max_shots:
@@ -103,6 +142,7 @@ def main(argv=None):
                                 "seconds": time.time() - t_c, "counts": {str(x): int(v) for x, v in cnt.items()}})
             o["shots_done"] += k
             j[name] += 1
+            doc["sequence"].append(name)
             dump()
     doc["status"] = "done"
     dump()

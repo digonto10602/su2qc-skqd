@@ -41,7 +41,7 @@ sys.path.insert(0, os.path.join(ROOT, "src"))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 
 from skqd.campaign33 import tokens as TK  # noqa: E402
-from skqd.hpc import ci_context, gpu_count, gpu_telemetry, slurm_layout  # noqa: E402
+from skqd.hpc import ci_context, cpu_affinity, cpu_affinity_check, gpu_count, gpu_telemetry, slurm_layout  # noqa: E402
 
 PROMPT = "prompts/33_2x3_four_class_perlmutter_campaign.md"
 DATA = os.path.join(ROOT, "data", "campaign33")
@@ -153,6 +153,14 @@ def preflight(token, dry=False, root=None, write=True):
     return out
 
 
+def _affinity_or_none():
+    """run.cpu_affinity (prompts/33e R1) for the preflight-failure JSON: os only, no skqd import needed."""
+    try:
+        return len(os.sched_getaffinity(0))
+    except AttributeError:
+        return None
+
+
 def _write_preflight_fail(token, dry, root, module, missing, pkg, env, msg, loaded, seconds):
     """The token JSON of a preflight failure (GateResult's schema, written with json only: the failure may be
     numpy itself), so the CI harvest has a record instead of `status UNKNOWN`."""
@@ -173,7 +181,7 @@ def _write_preflight_fail(token, dry, root, module, missing, pkg, env, msg, load
                     "dry_run": bool(dry), "preflight": {"ok": False, "module": module, "missing": missing,
                                                         "install": f"pip install {pkg}", "env": env, "message": msg,
                                                         "imported_before_failure": loaded, "seconds": seconds},
-                    "run": {"versions": versions()}},
+                    "run": {"versions": versions(), "cpu_affinity": _affinity_or_none()}},
            "runtime_s": seconds, "environment": envblk}
     path = os.path.join(root, "validation", gate + ".json")
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -294,6 +302,8 @@ def build_parser(ci: dict = None):
                     help="C4_PART_NN: the slot content (default ci/parts/<TOKEN>.json; prompts/33a step D)")
     ap.add_argument("--c2kchk-file", default=None,
                     help="C2 cells: the C2_KCHK decision file (default validation/[dryrun/]C2_KCHK.json; prompts/33d)")
+    ap.add_argument("--content", default=None, choices=("full", "cpu_only"),
+                    help="C2_KCHK only: full = run 1 (prompts/33d R3), cpu_only = run 2 (prompts/33e R2; the default)")
     if ci:
         tok = None
         for i, a in enumerate(sys.argv):
@@ -365,7 +375,7 @@ def finish(ctx, extra_run=None):
            "phases_s": ctx.phases, "gpu_telemetry": tele, "versions": versions(),
            "seconds_per_shot": ctx.data.get("seconds_per_shot"), "budget_minutes": ctx.args.budget_minutes,
            "shots_scale": ctx.args.shots_scale, "max_shots_per_run": chunk_bound(ctx),
-           "oom_retries": ctx.oom}
+           "oom_retries": ctx.oom, "cpu_affinity": cpu_affinity()}
     if extra_run:
         run.update(extra_run)
     ctx.data["run"] = run
@@ -373,9 +383,16 @@ def finish(ctx, extra_run=None):
     if ctx.ci:
         policy_ok = policy_ok and gpus is not None and tele.get("peak_memory_mib") is not None \
             and tele.get("mean_utilization_pct") is not None and run["seconds_per_shot"] is not None
-    ctx.R.add("S3 telemetry and run block present" + (" (policy fields non-null on the CI)" if ctx.ci else ""),
-              {k: run.get(k) is not None for k in ("engine", "device", "wall_seconds", "seconds_per_shot", "gpus")},
-              "every policy field non-null on the CI; present on the laptop", policy_ok)
+    # prompts/33e R1: the step's CPU affinity must equal the allocation's CPUs on the CI (a stronger check)
+    aff = cpu_affinity_check(run["cpu_affinity"], layout.get("cpus_per_task"), bool(ctx.ci))
+    run["cpu_affinity_check"] = aff
+    policy_ok = policy_ok and aff["ok"]
+    ctx.R.add("S3 telemetry and run block present" + (" (policy fields non-null on the CI; run.cpu_affinity == "
+                                                      "SLURM_CPUS_PER_TASK)" if ctx.ci else ""),
+              {**{k: run.get(k) is not None for k in ("engine", "device", "wall_seconds", "seconds_per_shot", "gpus")},
+               "cpu_affinity": run["cpu_affinity"], "slurm_cpus_per_task": layout.get("cpus_per_task")},
+              "every policy field non-null on the CI and cpu_affinity == SLURM_CPUS_PER_TASK there; present on the "
+              "laptop", policy_ok)
     ctx.R.add("S4 every seed and every chunk recorded", ctx.seeds_recorded, "true", ctx.seeds_recorded)
     oom_ok = all("split" in o for o in ctx.oom)
     ctx.R.add("S5 no out-of-memory retry left unrecorded", f"{len(ctx.oom)} recorded", "each OOM split recorded",
