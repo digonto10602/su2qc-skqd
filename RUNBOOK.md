@@ -3,7 +3,7 @@
 **How to use this file.** Open a terminal, then:
 
 ```bash
-cd ~/Projects/su2qc-skqd-v0.1.0
+cd ~/Projects/su2qc-skqd
 claude
 ```
 
@@ -23,7 +23,7 @@ instruction to you, Claude, not as documentation for a human.)
 
 You are running the first working session of the **su2qc-skqd** project: sample-based Krylov quantum
 diagonalization (SKQD) for SU(2) lattice gauge theory with staggered quarks on 2×Lx ladders. The
-repository root is `~/Projects/su2qc-skqd-v0.1.0` and it is already a git repository with 8 commits.
+repository root is `~/Projects/su2qc-skqd` and it is already a git repository with 8 commits.
 Your job in this session is to (a) verify the package is intact on this machine, (b) reproduce the four
 already-passing physics gates locally, (c) publish the repository to GitHub, (d) install the quantum
 stack, and (e) run the four laptop gates that have never been executed anywhere, reporting honestly
@@ -60,7 +60,7 @@ Create a task list at the start with one task per phase and keep it updated as y
 ## Phase 0 — orientation and package integrity
 
 ```bash
-cd ~/Projects/su2qc-skqd-v0.1.0
+cd ~/Projects/su2qc-skqd
 ls
 git log --oneline | head -3
 git status --short
