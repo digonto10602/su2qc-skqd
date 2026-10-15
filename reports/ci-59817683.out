@@ -1,0 +1,22 @@
+conda env: skqd
+preflight: 17 modules imported in 12.34 s (env skqd; threadpoolctl 3.7.0)
+[    0.0 s] C4_F2_B0: device GPU (available ['CPU', 'GPU']), budget 50.0 min, shots x 1.0, chunk <= 476, s0 34400000
+/global/homes/d/digonto/.conda/envs/skqd/lib/python3.12/site-packages/qiskit/qpy/interface.py:346: UserWarning: The qiskit version used to generate the provided QPY file, 2.5.2, is newer than the current qiskit version 1.4.3. This may result in an error if the QPY file uses instructions not present in this current qiskit version
+  warnings.warn(
+/global/homes/d/digonto/.conda/envs/skqd/lib/python3.12/site-packages/qiskit/qpy/interface.py:346: UserWarning: The qiskit version used to generate the provided QPY file, 2.5.2, is newer than the current qiskit version 1.4.3. This may result in an error if the QPY file uses instructions not present in this current qiskit version
+  warnings.warn(
+| check | value | criterion | result |
+|---|---|---|---|
+| P13 E_R >= E0 - 1e-9 everywhere, prefixes nested (CV0), E0 inside the certificate of ruling 2 at N | {'variational': True, 'cv0': True, 'E0_inside': True, 'certificate': 'kato_temple_exact_E1'} | all true | PASS |
+| P14 recall of S999 >= 0.9 on B_all at N (criterion: f_hat_ideal lower end 0.2225176706718596 vs tier 0.15) | 1 | >= 0.9 | PASS |
+| S1 the run happened on the requested device (GPU under the CI) | GPU (available ['CPU', 'GPU']) | GPU | PASS |
+| S2 wall time inside the walltime budget | 1618 s | <= min(walltime 3600 s, 3600 s) and <= 1.1 x budget + 120 s | PASS |
+| S3 telemetry and run block present (policy fields non-null on the CI) | {'engine': True, 'device': True, 'wall_seconds': True, 'seconds_per_shot': True, 'gpus': True} | every policy field non-null on the CI; present on the laptop | PASS |
+| S4 every seed and every chunk recorded | True | true | PASS |
+| S5 no out-of-memory retry left unrecorded | 0 recorded | each OOM split recorded | PASS |
+| S6 shots >= the token's minimum (C4_F*: the plan of record in full) | full | no reduction below the minimum | PASS |
+C4_F2_B0: PASS (1618 s)
+gate C4_F2_B0: status PASS, exit code 0, 1632 s
+/var/spool/slurmd/job59817683/slurm_script: line 56: 624636 Terminated              ( while true; do
+    nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader,nounits | sed "s/^/$(date +%s),/"; sleep 10;
+done ) > "$SKQD_GPU_TELEMETRY" 2> /dev/null
