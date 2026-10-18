@@ -1010,6 +1010,7 @@ def run_c2_kchk_cpu_only(ctx):
     import sys
 
     from campaign33 import add_table
+    from ..hpc import step_cpu_count
     from .kchk_cpu import cpu_affinity, cpu_threads
     P = A.Physics(with_sectors=False)
     rec = load_record()
@@ -1070,7 +1071,8 @@ def run_c2_kchk_cpu_only(ctx):
                                         + ([env["PYTHONPATH"]] if env.get("PYTHONPATH") else []))
     t_cpu = time.time()
     proc = subprocess.Popen(cmd, env=env, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-    ctx.log(f"CPU process {proc.pid} started ({threads} threads of an affinity of {cpu_affinity()}), deadline "
+    ctx.log(f"CPU process {proc.pid} started ({threads} threads; step CPUs {step_cpu_count()}, main-thread affinity "
+            f"now {cpu_affinity()}), deadline "
             f"{None if window_end is None else round(window_end - t_w)} s")
     # ---- the GPU anchor: rm_gpu_cusv at 128 shots, first (C2_CAL's path, as run 1's rm_gpu_cusv)
     arm, rep, mode, target, chunk = KCHK_ANCHOR
@@ -1132,10 +1134,13 @@ def run_c2_kchk_cpu_only(ctx):
                         "minimum_shots": cpu_cfg["min"], "seconds_per_shot": secs / rr["shots_done"] if rr["shots_done"] else None,
                         "raw_counts": c2_kchk_rows_raw(rr), **ob}
         ctx.log(f"{a_name}: {rr['shots_done']} shots, w {ob['structure'].get('mean_hamming_weight')}")
-    cpu_info = {k: cpu.get(k) for k in ("pid", "threads", "cpu_affinity", "deadline", "min_shots", "chunk", "ratio",
+    cpu_info = {k: cpu.get(k) for k in ("pid", "threads", "cpu_affinity", "cpu_affinity_inherited", "step_cpus",
+                                        "cpu_affinity_main_thread_after_imports", "deadline", "min_shots", "chunk",
+                                        "ratio",
                                         "cycle", "sequence", "stand_in", "build_s", "status", "wall_s", "rule", "aer")}
     cpu_info.update({"returncode": proc.returncode, "killed_after_grace": killed, "grace_s": KCHK_CPU_GRACE_S,
                      "window_share": KCHK_RUN2_WINDOW_SHARE, "parent_cpu_affinity": cpu_affinity(),
+                     "parent_step_cpus": step_cpu_count(),
                      "threads_rule": "the step's CPUs (sched_getaffinity) minus 4 (prompts/33d R3, 33e R1)",
                      "aer_wheel_note": ("the CPU statevector code is the same source on every stack; the wheel is "
                                         "qiskit-aer-gpu on the CI and qiskit-aer on the laptop (prompts/33e R3 (a))"),

@@ -22,12 +22,12 @@ import time
 
 
 def cpu_threads(requested: int = 0, reserve: int = 4) -> int:
-    """prompts/33d R3: the node's CPUs minus `reserve` (the CPUs this process may run on, so a Slurm binding is
-    respected); `requested` > 0 caps it (the laptop: the other executor's share)."""
-    try:
-        n = len(os.sched_getaffinity(0))
-    except AttributeError:
-        n = os.cpu_count() or 1
+    """prompts/33d R3: the step's CPUs minus `reserve` (so a Slurm binding is respected); `requested` > 0 caps it
+    (the laptop: the other executor's share).  prompts/33e part 2: the step's CPUs are the set recorded at process
+    start (skqd.hpc.step_cpus), not the main thread's affinity after qiskit_aer's OpenMP runtime pinned it to one
+    CPU under OMP_PROC_BIND (job 59828887: 1 thread of a 32-CPU step)."""
+    from ..hpc import step_cpu_count
+    n = step_cpu_count() or os.cpu_count() or 1
     t = max(1, n - int(reserve))
     return min(t, int(requested)) if requested and requested > 0 else t
 
@@ -76,6 +76,10 @@ def main(argv=None):
     ap.add_argument("--ratio", default="1,1", help="chunks of kraus_cpu, rm_cpu per cycle (prompts/33e R2: 1,2)")
     a = ap.parse_args(argv)
 
+    # prompts/33e part 2: a parent pinned by its OpenMP runtime hands its 1-CPU mask to this process; take the
+    # step's CPU set back BEFORE this process loads qiskit_aer (whose runtime builds its places from the mask)
+    from ..hpc import restore_step_affinity
+    restored = restore_step_affinity()
     from . import circuits as C
     from . import noise as N
     from . import sampling as SM
@@ -97,7 +101,9 @@ def main(argv=None):
                               "stopped": None}}
     ratio = [int(x) for x in a.ratio.split(",")]
     cycle = pattern(list(arms), ratio)
-    doc = {"pid": os.getpid(), "threads": threads, "cpu_affinity": cpu_affinity(), "deadline": a.deadline,
+    doc = {"pid": os.getpid(), "threads": threads, "cpu_affinity": restored["after"],
+           "cpu_affinity_inherited": restored["before"], "step_cpus": restored["step_cpus"],
+           "cpu_affinity_main_thread_after_imports": cpu_affinity(), "deadline": a.deadline,
            "min_shots": a.min_shots, "chunk": a.chunk, "ratio": dict(zip(arms, ratio)), "cycle": cycle,
            "stand_in": a.stand_in, "build_s": time.time() - t0, "status": "running", "aer": aer_distribution(),
            "sequence": [],

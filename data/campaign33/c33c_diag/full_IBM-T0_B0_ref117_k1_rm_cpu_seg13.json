@@ -1,0 +1,196 @@
+{
+ "title": "prompts/33c R2 diagnostic: IBM-T0 B0_ref117_k1 under I-ECHO (rm) on the CPU",
+ "prompt": "prompts/33c R2 (coordinator's resume order 2026-10-13: Kraus and RM on one CPU engine)",
+ "git_commit": "78cf8de",
+ "command": "python scripts/c33c_diag_full.py --rep rm --shots-per-call 2 --max-shots 1000 --max-seconds 1700 --threads 10 --seed 34333000 --out data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_rm_cpu_seg13.json",
+ "versions": {
+  "python": "3.12.14",
+  "qiskit": "1.4.3",
+  "qiskit_aer": "0.15.1",
+  "numpy": "2.5.3"
+ },
+ "machine": {
+  "host": "pichkaCommander",
+  "processor": "x86_64",
+  "cpu_count": 12
+ },
+ "created": "2026-10-15 21:17:48 UTC",
+ "representation": "rm",
+ "family": "IBM-T0",
+ "circuit": "B0_ref117_k1",
+ "model": "I-ECHO (echo T2)",
+ "record": {
+  "path": "data/hardware/K0_prep/ibm_kingston_full_20261006T0652Z.json",
+  "fingerprint": "b948ddc86b1c4696121e377bd2c751b889705006bd1abb685eeee303398a44d9"
+ },
+ "simulator_options": {
+  "method": "statevector",
+  "precision": "double",
+  "noise_model": "attached",
+  "max_parallel_threads": 10
+ },
+ "noise_model_build_s": 9.40021824836731,
+ "plan": {
+  "shots_per_call": 2,
+  "max_shots": 1000,
+  "max_seconds": 1700.0,
+  "seed0": 34333000,
+  "seed_rule": "seed0 + 1000 x call index"
+ },
+ "calls": [
+  {
+   "index": 0,
+   "seed": 34333000,
+   "shots": 2,
+   "seconds": 185.4730613231659
+  },
+  {
+   "index": 1,
+   "seed": 34334000,
+   "shots": 2,
+   "seconds": 180.94285035133362
+  },
+  {
+   "index": 2,
+   "seed": 34335000,
+   "shots": 2,
+   "seconds": 183.83586359024048
+  },
+  {
+   "index": 3,
+   "seed": 34336000,
+   "shots": 2,
+   "seconds": 185.11557602882385
+  },
+  {
+   "index": 4,
+   "seed": 34337000,
+   "shots": 2,
+   "seconds": 182.1341016292572
+  },
+  {
+   "index": 5,
+   "seed": 34338000,
+   "shots": 2,
+   "seconds": 183.6598298549652
+  },
+  {
+   "index": 6,
+   "seed": 34339000,
+   "shots": 2,
+   "seconds": 187.8799753189087
+  },
+  {
+   "index": 7,
+   "seed": 34340000,
+   "shots": 2,
+   "seconds": 186.6873278617859
+  },
+  {
+   "index": 8,
+   "seed": 34341000,
+   "shots": 2,
+   "seconds": 186.70836448669434
+  }
+ ],
+ "counts": {
+  "10320": 1,
+  "23873": 1,
+  "41873": 1,
+  "45200": 1,
+  "51363": 1,
+  "154446": 1,
+  "155968": 1,
+  "280706": 1,
+  "299019": 1,
+  "315840": 1,
+  "406416": 1,
+  "584601": 1,
+  "757828": 1,
+  "842624": 1,
+  "845512": 1,
+  "885400": 1,
+  "989896": 1,
+  "1020784": 1
+ },
+ "status": "done",
+ "structure": {
+  "shots": 18,
+  "n_bits": 20,
+  "mean_hamming_weight": 7.611111111111111,
+  "sd_hamming_weight": 2.173067468400883,
+  "se_mean_hamming_weight": 0.5121969142940493,
+  "unital_limit": 10.0,
+  "deficit_vs_unital": 2.3888888888888893,
+  "marginals_by_clbit": [
+   0.2777777777777778,
+   0.2222222222222222,
+   0.1111111111111111,
+   0.3333333333333333,
+   0.3888888888888889,
+   0.1111111111111111,
+   0.5,
+   0.6111111111111112,
+   0.5,
+   0.5,
+   0.1111111111111111,
+   0.4444444444444444,
+   0.5555555555555556,
+   0.3888888888888889,
+   0.5,
+   0.6111111111111112,
+   0.2222222222222222,
+   0.3333333333333333,
+   0.5,
+   0.3888888888888889
+  ],
+  "se_marginals_by_clbit": [
+   0.10557179862029056,
+   0.09799078929868854,
+   0.07407407407407407,
+   0.11111111111111112,
+   0.11490438561102646,
+   0.07407407407407407,
+   0.11785113019775792,
+   0.11490438561102645,
+   0.11785113019775792,
+   0.11785113019775792,
+   0.07407407407407407,
+   0.11712139482105108,
+   0.11712139482105108,
+   0.11490438561102646,
+   0.11785113019775792,
+   0.11490438561102645,
+   0.09799078929868854,
+   0.11111111111111112,
+   0.11785113019775792,
+   0.11490438561102646
+  ],
+  "physical_by_clbit": [
+   92,
+   69,
+   54,
+   52,
+   53,
+   68,
+   73,
+   94,
+   50,
+   72,
+   71,
+   79,
+   51,
+   74,
+   70,
+   93,
+   75,
+   58,
+   95,
+   59
+  ],
+  "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
+ },
+ "wall_s": 1662.443817615509,
+ "stop": "time cap: the next call (predicted 187 s) would pass 1700 s",
+ "seconds_per_shot": 92.35760835806529
+}

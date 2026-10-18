@@ -40,12 +40,12 @@
      2
     ],
     "kraus_cpu": [
-     2,
-     2
+     1,
+     1
     ],
     "rm_cpu": [
-     2,
-     2
+     1,
+     1
     ]
    },
    "threshold": "equal",
@@ -59,7 +59,7 @@
   },
   {
    "name": "S2 wall time inside the walltime budget",
-   "value": "936 s",
+   "value": "480 s",
    "threshold": "<= min(walltime 3600 s, 3600 s) and <= 1.1 x budget + 120 s",
    "passed": true
   },
@@ -91,7 +91,20 @@
   },
   {
    "name": "S6 (dry run) every unit sampled; any budget reduction recorded (the full-plan check is the CI's)",
-   "value": "full",
+   "value": {
+    "rm_gpu_cusv_anchor": [
+     2,
+     2
+    ],
+    "kraus_cpu": [
+     1,
+     2
+    ],
+    "rm_cpu": [
+     1,
+     2
+    ]
+   },
    "threshold": "shots > 0 on every unit",
    "passed": true
   }
@@ -102,7 +115,7 @@
   "prompt": "prompts/33_2x3_four_class_perlmutter_campaign.md",
   "content": "prompts/33d R3 + 33e R2: the GPU Kraus check on IBM-T0 B0_ref117_k1 (I-ECHO); run 2 (default, --content cpu_only): Kraus and RM on the CPU in a separate process on the step's CPUs beside a 128-shot RM cuStateVec anchor, the four GPU arms read from run 1 (job 59780907, archived); raw counts; decides the class-2 representation",
   "dry_run": true,
-  "created": "2026-10-15 18:06:26 UTC",
+  "created": "2026-10-18 17:42:50 UTC",
   "seeds": {
    "s0": 38300000,
    "rule": "aer seed of chunk i of circuit c = s0 * 1e4 + c * 1e6 + i * stride, stride = chunk size, s0 = 33 000 000 + 1e5 x token index (prompts/33 2.3 s0; the circuit/chunk offsets are widened from 1e3 c so that circuits, chunks, tokens and the a/b halves are disjoint for <= 1e6 shots per circuit: the literal s0 + 1e3 c + i stride overlaps above 1000 shots per circuit).  prompts/33b R4: every part of a split class-4 run (part 1 on the F token, parts >= 2 on any C4_PART slot) uses s0 of the run's OWN F token, i = the chunk's index in the UNSPLIT chunk plan and stride = the sizing's chunk, so the parts concatenate to the unsplit run seed for seed and a slot can be re-used; the run's CV3 equal-shots sample uses the same s0 with circuit offsets 100 (k <= 4) / 200 (k = 5); an f-cell slot uses the slot's own s0 with circuit offset 4 x the cell's global index"
@@ -112,7 +125,7 @@
    "max_shots_per_run": 16,
    "max_circuits_per_sector": 4,
    "max_shots_per_circuit": 32,
-   "budget_minutes": 25.0,
+   "budget_minutes": 8.0,
    "reason": "a laptop path check, not a result: shots x 0.01 (prompts/33 A4), <= 16 shots per run() call, at most 4 circuits per sector, and at most 32 shots per circuit / unit -- noisy 20-21-qubit Aer runs at several seconds per shot on this CPU (the 1-shot warm-up of C4_F8_B0a took 52 s under load), so a 0.01-scaled plan of record (up to 676 shots for C4_F1_B1) would not fit the 10-minute dry-run bound"
   },
   "preflight": {
@@ -145,7 +158,7 @@
     "threadpoolctl": "3.7.0",
     "python": "3.12.14"
    },
-   "seconds": 0.777972936630249
+   "seconds": 0.6992931365966797
   },
   "calibration_run": 2,
   "kchk_content": "cpu_only",
@@ -166,7 +179,7 @@
   },
   "circuit": "IBM-T0 B0_ref117_k1",
   "model": "I-ECHO (record T2 echo)",
-  "seconds_per_shot": 114.4727373123169,
+  "seconds_per_shot": 87.650062084198,
   "gpu_mode_used": "cpu",
   "arms": {
    "rm_gpu_cusv_anchor": {
@@ -178,15 +191,15 @@
      "method": "statevector",
      "precision": "double",
      "noise_model": "attached",
-     "max_parallel_threads": 2
+     "max_parallel_threads": 6
     },
     "target_shots": 2,
     "minimum_shots": 2,
     "deadline_stopped": false,
     "chunk": 2,
     "shots_done": 2,
-    "seconds": 232.89653038978577,
-    "seconds_per_shot": 114.4727373123169,
+    "seconds": 178.4836823940277,
+    "seconds_per_shot": 87.650062084198,
     "calls": 1,
     "stopped": null,
     "warmup": null,
@@ -308,7 +321,7 @@
       "shots": 2,
       "index": 0,
       "seed": 383620000000,
-      "seconds": 228.94546031951904
+      "seconds": 175.30011177062988
      }
     ]
    },
@@ -320,15 +333,15 @@
      "method": "statevector",
      "precision": "double",
      "noise_model": "attached",
-     "max_parallel_threads": 2
+     "max_parallel_threads": 6
     },
     "seed_circuit_offset": 610,
     "chunk": 1,
-    "shots_done": 2,
-    "stopped": "max_shots",
+    "shots_done": 1,
+    "stopped": null,
     "run": 2,
     "minimum_shots": 2,
-    "seconds_per_shot": 206.7106033563614,
+    "seconds_per_shot": 169.88974571228027,
     "raw_counts": {
      "chunks": [
       {
@@ -338,222 +351,63 @@
        "counts": {
         "1011915": 1
        }
-      },
-      {
-       "index": 1,
-       "seed": 383610000001,
-       "shots": 1,
-       "counts": {
-        "32930": 1
-       }
       }
      ],
      "total": {
-      "32930": 1,
       "1011915": 1
      },
-     "sum_counts": 2
+     "sum_counts": 1
     },
     "structure": {
-     "shots": 2,
+     "shots": 1,
      "n_bits": 20,
-     "mean_hamming_weight": 8.0,
-     "sd_hamming_weight": 5.656854249492381,
-     "se_mean_hamming_weight": 4.0,
+     "mean_hamming_weight": 12.0,
+     "sd_hamming_weight": 0.0,
+     "se_mean_hamming_weight": 0.0,
      "unital_limit": 10.0,
-     "deficit_vs_unital": 2.0,
+     "deficit_vs_unital": -2.0,
      "marginals_by_clbit": [
-      0.5,
+      1.0,
       1.0,
       0.0,
-      0.5,
-      0.0,
-      0.5,
-      0.5,
       1.0,
       0.0,
       0.0,
-      0.0,
-      0.0,
-      0.5,
-      0.5,
-      0.5,
-      0.5,
-      0.5,
-      0.5,
-      0.5,
-      0.5
-     ],
-     "se_marginals_by_clbit": [
-      0.3535533905932738,
-      0.0,
-      0.0,
-      0.3535533905932738,
-      0.0,
-      0.3535533905932738,
-      0.3535533905932738,
-      0.0,
-      0.0,
-      0.0,
-      0.0,
-      0.0,
-      0.3535533905932738,
-      0.3535533905932738,
-      0.3535533905932738,
-      0.3535533905932738,
-      0.3535533905932738,
-      0.3535533905932738,
-      0.3535533905932738,
-      0.3535533905932738
-     ],
-     "physical_by_clbit": [
-      92,
-      69,
-      54,
-      52,
-      53,
-      68,
-      73,
-      94,
-      50,
-      72,
-      71,
-      79,
-      51,
-      74,
-      70,
-      93,
-      75,
-      58,
-      95,
-      59
-     ],
-     "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
-    },
-    "accepted": 0,
-    "distinct_accepted": 0,
-    "reference_hits": 0,
-    "rejected": 2,
-    "rejections": {
-     "flag": 1,
-     "link": 1,
-     "sector": 0,
-     "unknown": 0
-    },
-    "roundtrip": {
-     "accepted_states": 0,
-     "mismatches": 0,
-     "ok": true
-    },
-    "chunks": [
-     {
-      "start": 0,
-      "shots": 1,
-      "index": 0,
-      "seed": 383610000000,
-      "seconds": 230.9769811630249
-     },
-     {
-      "start": 1,
-      "shots": 1,
-      "index": 1,
-      "seed": 383610000001,
-      "seconds": 182.44422554969788
-     }
-    ]
-   },
-   "rm_cpu": {
-    "representation": "pta",
-    "planned_representation": "rm",
-    "engine": "CPU statevector (separate process)",
-    "simulator_options": {
-     "method": "statevector",
-     "precision": "double",
-     "noise_model": "attached",
-     "max_parallel_threads": 2
-    },
-    "seed_circuit_offset": 611,
-    "chunk": 1,
-    "shots_done": 2,
-    "stopped": "max_shots",
-    "run": 2,
-    "minimum_shots": 2,
-    "seconds_per_shot": 188.32283401489258,
-    "raw_counts": {
-     "chunks": [
-      {
-       "index": 0,
-       "seed": 383611000000,
-       "shots": 1,
-       "counts": {
-        "947700": 1
-       }
-      },
-      {
-       "index": 1,
-       "seed": 383611000001,
-       "shots": 1,
-       "counts": {
-        "715011": 1
-       }
-      }
-     ],
-     "total": {
-      "715011": 1,
-      "947700": 1
-     },
-     "sum_counts": 2
-    },
-    "structure": {
-     "shots": 2,
-     "n_bits": 20,
-     "mean_hamming_weight": 11.0,
-     "sd_hamming_weight": 2.8284271247461903,
-     "se_mean_hamming_weight": 2.0,
-     "unital_limit": 10.0,
-     "deficit_vs_unital": -1.0,
-     "marginals_by_clbit": [
-      0.5,
-      0.5,
-      0.5,
-      0.0,
-      0.5,
-      0.5,
-      0.5,
-      0.5,
-      1.0,
-      0.0,
-      0.5,
-      0.5,
-      0.5,
       1.0,
       1.0,
-      0.5,
+      0.0,
+      0.0,
+      0.0,
       0.0,
       1.0,
-      0.5,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
       1.0
      ],
      "se_marginals_by_clbit": [
-      0.3535533905932738,
-      0.3535533905932738,
-      0.3535533905932738,
-      0.0,
-      0.3535533905932738,
-      0.3535533905932738,
-      0.3535533905932738,
-      0.3535533905932738,
       0.0,
       0.0,
-      0.3535533905932738,
-      0.3535533905932738,
-      0.3535533905932738,
       0.0,
       0.0,
-      0.3535533905932738,
       0.0,
       0.0,
-      0.3535533905932738,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
       0.0
      ],
      "physical_by_clbit": [
@@ -583,9 +437,143 @@
     "accepted": 0,
     "distinct_accepted": 0,
     "reference_hits": 0,
-    "rejected": 2,
+    "rejected": 1,
     "rejections": {
-     "flag": 2,
+     "flag": 1,
+     "link": 0,
+     "sector": 0,
+     "unknown": 0
+    },
+    "roundtrip": {
+     "accepted_states": 0,
+     "mismatches": 0,
+     "ok": true
+    },
+    "chunks": [
+     {
+      "start": 0,
+      "shots": 1,
+      "index": 0,
+      "seed": 383610000000,
+      "seconds": 169.88974571228027
+     }
+    ]
+   },
+   "rm_cpu": {
+    "representation": "pta",
+    "planned_representation": "rm",
+    "engine": "CPU statevector (separate process)",
+    "simulator_options": {
+     "method": "statevector",
+     "precision": "double",
+     "noise_model": "attached",
+     "max_parallel_threads": 6
+    },
+    "seed_circuit_offset": 611,
+    "chunk": 1,
+    "shots_done": 1,
+    "stopped": null,
+    "run": 2,
+    "minimum_shots": 2,
+    "seconds_per_shot": 168.80154705047607,
+    "raw_counts": {
+     "chunks": [
+      {
+       "index": 0,
+       "seed": 383611000000,
+       "shots": 1,
+       "counts": {
+        "947700": 1
+       }
+      }
+     ],
+     "total": {
+      "947700": 1
+     },
+     "sum_counts": 1
+    },
+    "structure": {
+     "shots": 1,
+     "n_bits": 20,
+     "mean_hamming_weight": 13.0,
+     "sd_hamming_weight": 0.0,
+     "se_mean_hamming_weight": 0.0,
+     "unital_limit": 10.0,
+     "deficit_vs_unital": -3.0,
+     "marginals_by_clbit": [
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "se_marginals_by_clbit": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "physical_by_clbit": [
+      92,
+      69,
+      54,
+      52,
+      53,
+      68,
+      73,
+      94,
+      50,
+      72,
+      71,
+      79,
+      51,
+      74,
+      70,
+      93,
+      75,
+      58,
+      95,
+      59
+     ],
+     "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
+    },
+    "accepted": 0,
+    "distinct_accepted": 0,
+    "reference_hits": 0,
+    "rejected": 1,
+    "rejections": {
+     "flag": 1,
      "link": 0,
      "sector": 0,
      "unknown": 0
@@ -601,14 +589,7 @@
       "shots": 1,
       "index": 0,
       "seed": 383611000000,
-      "seconds": 189.34334063529968
-     },
-     {
-      "start": 1,
-      "shots": 1,
-      "index": 1,
-      "seed": 383611000001,
-      "seconds": 187.30232739448547
+      "seconds": 168.80154705047607
      }
     ]
    }
@@ -993,48 +974,59 @@
     "n_sigma": 3.0,
     "shots": [
      256,
-     2
+     1
     ],
     "mean_hamming_weight": [
      2.99609375,
-     8.0
+     12.0
     ],
-    "delta_mean_hamming_weight": -5.00390625,
-    "z_mean_hamming_weight": -1.248820894996344,
+    "delta_mean_hamming_weight": -9.00390625,
+    "z_mean_hamming_weight": -38.29374414638028,
     "z_marginals_by_clbit": [
-     -1.1142615181904925,
+     -46.596773056288555,
      -56.50896528777302,
      4.782948436339331,
-     -1.0699309296119879,
+     -43.105272486425974,
      8.46640419540669,
-     -1.3363185481949647,
-     -1.0145520498625284,
+     2.6826828266857,
+     -39.55305859784354,
      -38.32272927320507,
      6.26156587501938,
      8.46640419540669,
      7.784538124797457,
      6.885303726590964,
-     -0.8707317999511565,
-     -0.7823337093810069,
-     -0.9924107725244063,
-     -1.0256248580094833,
-     -0.8928434362363309,
-     -0.9370821395489026,
-     -0.9370821395489026,
-     -0.9592094626931716
+     -32.88570187414436,
+     -29.89572521222578,
+     -38.32272927320507,
+     6.367337467524347,
+     -33.73993151628207,
+     -35.610293782217155,
+     -35.610293782217155,
+     -36.63930982415258
     ],
     "max_abs_z_marginal": 56.50896528777302,
     "clbits_outside": [
+     0,
      1,
      2,
+     3,
      4,
+     6,
      7,
      8,
      9,
      10,
-     11
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19
     ],
-    "weight_ok": true,
+    "weight_ok": false,
     "marginals_ok": false,
     "pass": false,
     "n_marginal_tests": 20,
@@ -1046,31 +1038,31 @@
     ],
     "power": {
      "evaluated": true,
-     "min_visible_marginal_diff": 1.0647953148375513,
-     "min_visible_weight_diff": 12.020713947170101,
-     "note": "at N = 256 / 2 shots a marginal difference below 1.065 (p = 1/2, 3 sigma) and a mean-weight difference below 12.021 bits are invisible to this comparison"
+     "min_visible_marginal_diff": 1.5029268320513811,
+     "min_visible_weight_diff": 0.7053820239344052,
+     "note": "at N = 256 / 1 shots a marginal difference below 1.503 (p = 1/2, 3 sigma) and a mean-weight difference below 0.705 bits are invisible to this comparison"
     },
     "z_marginals_pooled_information": [
-     -1.7868302995555951,
-     -4.769462009193789,
-     0.42261055777666484,
-     -1.6193748633800402,
-     0.7475206543720857,
-     -3.8412735925080894,
-     -1.4444273283756932,
-     -3.3143862554023484,
-     0.5531212166940831,
-     0.7475206543720857,
-     0.6874320323079673,
-     0.6081442670463025,
-     -1.0998039871250485,
-     -0.9359102901030042,
-     -1.3825887433717263,
-     -1.4769305677746085,
-     -1.145406441041158,
-     -1.2436282217314791,
-     -1.2436282217314791,
-     -1.2967988001136455
+     -2.865400316398092,
+     -3.4490997466730358,
+     0.29888231946676025,
+     -2.6568243864268677,
+     0.5288622444756675,
+     0.16765850709105098,
+     -2.443188960620381,
+     -2.3688770600520885,
+     0.3912313119650361,
+     0.5288622444756675,
+     0.48630972171312015,
+     0.43017652576351995,
+     -2.038669143093111,
+     -1.8559194382318691,
+     -2.3688770600520885,
+     0.39783603140349527,
+     -2.0907355476502363,
+     -2.2044996920039375,
+     -2.2044996920039375,
+     -2.266945940866152
     ]
    },
    "rm_gpu_cusv~rm_cpu": {
@@ -1078,48 +1070,60 @@
     "n_sigma": 3.0,
     "shots": [
      512,
-     2
+     1
     ],
     "mean_hamming_weight": [
      7.43359375,
-     11.0
+     13.0
     ],
-    "delta_mean_hamming_weight": -3.56640625,
-    "z_mean_hamming_weight": -1.7809940604099272,
+    "delta_mean_hamming_weight": -5.56640625,
+    "z_mean_hamming_weight": -55.86274931077325,
     "z_marginals_by_clbit": [
-     -0.672946072513238,
-     -1.026568395280802,
-     -0.9989179446356058,
+     13.472291768761746,
+     9.004775002779288,
+     -54.61916635516632,
      11.767811588318526,
-     0.016540545346429007,
-     -1.1648919959612705,
-     -0.055135300100783796,
-     -0.3363614897191743,
+     -22.363787607178622,
+     -72.89322480328485,
+     -23.529258727383713,
+     -28.850098875536027,
      -26.917063396418126,
      22.016930920277897,
-     -0.204008295961968,
-     -0.286725726352012,
-     -0.04410819294155127,
+     -26.17259188941832,
+     18.41512647572324,
+     -23.345925941468163,
      -24.469974683618887,
      -27.690273012597675,
-     -0.34187686111637633,
+     17.6734886555502,
      20.678109908564682,
      -26.488292312446827,
-     -0.17643780014118268,
+     -25.657079223592742,
      -24.760483538581745
     ],
-    "max_abs_z_marginal": 27.690273012597675,
+    "max_abs_z_marginal": 72.89322480328485,
     "clbits_outside": [
+     0,
+     1,
+     2,
      3,
+     4,
+     5,
+     6,
+     7,
      8,
      9,
+     10,
+     11,
+     12,
      13,
      14,
+     15,
      16,
      17,
+     18,
      19
     ],
-    "weight_ok": true,
+    "weight_ok": false,
     "marginals_ok": false,
     "pass": false,
     "n_marginal_tests": 20,
@@ -1131,31 +1135,31 @@
     ],
     "power": {
      "evaluated": true,
-     "min_visible_marginal_diff": 1.062729754570747,
-     "min_visible_weight_diff": 6.007442128996987,
-     "note": "at N = 512 / 2 shots a marginal difference below 1.063 (p = 1/2, 3 sigma) and a mean-weight difference below 6.007 bits are invisible to this comparison"
+     "min_visible_marginal_diff": 1.5014641291919029,
+     "min_visible_weight_diff": 0.29893299123356104,
+     "note": "at N = 512 / 1 shots a marginal difference below 1.501 (p = 1/2, 3 sigma) and a mean-weight difference below 0.299 bits are invisible to this comparison"
     },
     "z_marginals_pooled_information": [
-     -0.764249068893258,
-     -1.4860844285405974,
-     -1.4057118319203923,
-     0.7351015089054448,
-     0.016541667969848513,
-     -2.0377091226723847,
-     -0.0551769219336031,
-     -0.34621813785703986,
-     -1.6777039132578633,
-     1.3735305183743316,
-     -0.20614760581166117,
-     -0.29275798561327504,
-     -0.044129494566243585,
-     -1.525905503313366,
-     -1.725621693613232,
-     -0.35224157888173196,
-     1.2902871656150383,
-     -1.6511220816282384,
-     -0.1778162203726217,
-     -1.5439376124260429
+     0.5951911928688138,
+     0.39789717795081053,
+     -2.4002563339672705,
+     0.5199316658856181,
+     -0.9874094712642307,
+     -3.1893576747861614,
+     -1.0387619757710098,
+     -1.2729908952994542,
+     -1.1879400593073046,
+     0.9721234336083329,
+     -1.155170718640559,
+     0.8133164307358204,
+     -1.030685086235341,
+     -1.080199744187052,
+     -1.2219664427705377,
+     0.7806012196420034,
+     0.9131090494353423,
+     -1.16906777820881,
+     -1.1324751652906124,
+     -1.0929942443898004
     ]
    },
    "rm_gpu_cusv~kraus_cpu": {
@@ -1163,48 +1167,60 @@
     "n_sigma": 3.0,
     "shots": [
      512,
-     2
+     1
     ],
     "mean_hamming_weight": [
      7.43359375,
-     8.0
+     12.0
     ],
-    "delta_mean_hamming_weight": -0.56640625,
-    "z_mean_hamming_weight": -0.14155764666132578,
+    "delta_mean_hamming_weight": -4.56640625,
+    "z_mean_hamming_weight": -45.827055399504516,
     "z_marginals_by_clbit": [
-     -0.672946072513238,
+     -38.003927526805526,
      -56.858722160406366,
      9.373998802374082,
-     -0.8110069273136072,
+     -43.508514404517115,
      22.894154111696693,
-     -1.1648919959612705,
-     -0.055135300100783796,
+     7.023972411451432,
+     -23.529258727383713,
      -28.850098875536027,
      19.02139146680214,
      22.016930920277897,
      19.562449227927004,
      18.41512647572324,
-     -0.04410819294155127,
-     -0.11027158228033988,
-     -0.28121091008204235,
-     -0.34187686111637633,
-     -0.12681280526962124,
-     -0.2205510217156791,
-     -0.17643780014118268,
-     -0.12681280526962124
+     -23.345925941468163,
+     -24.469974683618887,
+     -27.690273012597675,
+     17.6734886555502,
+     -24.760483538581745,
+     -26.488292312446827,
+     -25.657079223592742,
+     -24.760483538581745
     ],
     "max_abs_z_marginal": 56.858722160406366,
     "clbits_outside": [
+     0,
      1,
      2,
+     3,
      4,
+     5,
+     6,
      7,
      8,
      9,
      10,
-     11
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19
     ],
-    "weight_ok": true,
+    "weight_ok": false,
     "marginals_ok": false,
     "pass": false,
     "n_marginal_tests": 20,
@@ -1216,31 +1232,31 @@
     ],
     "power": {
      "evaluated": true,
-     "min_visible_marginal_diff": 1.062729754570747,
-     "min_visible_weight_diff": 12.003722794751964,
-     "note": "at N = 512 / 2 shots a marginal difference below 1.063 (p = 1/2, 3 sigma) and a mean-weight difference below 12.004 bits are invisible to this comparison"
+     "min_visible_marginal_diff": 1.5014641291919029,
+     "min_visible_weight_diff": 0.29893299123356104,
+     "note": "at N = 512 / 1 shots a marginal difference below 1.501 (p = 1/2, 3 sigma) and a mean-weight difference below 0.299 bits are invisible to this comparison"
     },
     "z_marginals_pooled_information": [
-     -0.764249068893258,
-     -3.5108030202821436,
-     0.5856793993047149,
-     -0.9880794943424157,
-     1.4280432759686297,
-     -2.0377091226723847,
-     -0.0551769219336031,
-     -1.797455283150003,
-     1.187205871555963,
-     1.3735305183743316,
-     1.2208790074562907,
-     1.149465163147767,
-     -0.044129494566243585,
-     -0.11060570160731373,
-     -0.2868948712278907,
-     -0.35224157888173196,
-     -0.127321711666155,
-     -0.22326131407331498,
-     -0.1778162203726217,
-     -0.127321711666155
+     -1.6749533575595472,
+     -2.4975009516557,
+     0.41420685161481524,
+     -1.9159310800258684,
+     1.010780199505609,
+     0.3103895079325579,
+     -1.0387619757710098,
+     -1.2729908952994542,
+     0.8400562837100051,
+     0.9721234336083329,
+     0.8639171476537574,
+     0.8133164307358204,
+     -1.030685086235341,
+     -1.080199744187052,
+     -1.2219664427705377,
+     0.7806012196420034,
+     -1.0929942443898004,
+     -1.16906777820881,
+     -1.1324751652906124,
+     -1.0929942443898004
     ]
    },
    "kraus_gpu_native~kraus_cpu": {
@@ -1248,48 +1264,60 @@
     "n_sigma": 3.0,
     "shots": [
      256,
-     2
+     1
     ],
     "mean_hamming_weight": [
      3.56640625,
-     8.0
+     12.0
     ],
-    "delta_mean_hamming_weight": -4.43359375,
-    "z_mean_hamming_weight": -1.1062985441745348,
+    "delta_mean_hamming_weight": -8.43359375,
+    "z_mean_hamming_weight": -34.20339793168936,
     "z_marginals_by_clbit": [
-     -1.0256248580094833,
+     -40.20518800922516,
      -59.99215635005473,
      4.905953125374932,
-     -1.0810112379078054,
+     -43.91506954717633,
      9.045133110667345,
-     -1.3140803872163553,
-     -0.8044262189515275,
+     3.0541668622837332,
+     -30.586984754363026,
      -34.18619095737215,
      7.587448714187834,
      9.333831948785425,
      8.46640419540669,
      8.563097171341052,
-     -0.8044262189515275,
-     -0.8154741871805513,
-     -0.7381619524465721,
-     -0.9592094626931716,
-     -0.8707317999511565,
-     -0.8375736301431113,
-     -0.8707317999511565,
-     -0.8486251367484989
+     -30.586984754363026,
+     -30.945591440940817,
+     -28.60700361341091,
+     6.987031175768632,
+     -32.88570187414436,
+     -31.690814005129187,
+     -32.88570187414436,
+     -32.0783354905322
     ],
     "max_abs_z_marginal": 59.99215635005473,
     "clbits_outside": [
+     0,
      1,
      2,
+     3,
      4,
+     5,
+     6,
      7,
      8,
      9,
      10,
-     11
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19
     ],
-    "weight_ok": true,
+    "weight_ok": false,
     "marginals_ok": false,
     "pass": false,
     "n_marginal_tests": 20,
@@ -1301,31 +1329,31 @@
     ],
     "power": {
      "evaluated": true,
-     "min_visible_marginal_diff": 1.0647953148375513,
-     "min_visible_weight_diff": 12.022777504352941,
-     "note": "at N = 256 / 2 shots a marginal difference below 1.065 (p = 1/2, 3 sigma) and a mean-weight difference below 12.023 bits are invisible to this comparison"
+     "min_visible_marginal_diff": 1.5029268320513811,
+     "min_visible_weight_diff": 0.7397154312133092,
+     "note": "at N = 256 / 1 shots a marginal difference below 1.503 (p = 1/2, 3 sigma) and a mean-weight difference below 0.740 bits are invisible to this comparison"
     },
     "z_marginals_pooled_information": [
-     -1.4769305677746085,
-     -5.035319333416073,
-     0.433471159089866,
-     -1.658582842126063,
-     0.7984958755468348,
-     -3.392547906869294,
-     -0.974446567306469,
-     -2.9695722545511503,
-     0.6700582665475595,
-     0.8239159151473897,
-     0.7475206543720857,
-     0.7560391188647128,
-     -0.974446567306469,
-     -0.9942766129113842,
-     -0.8628907042199666,
-     -1.2967988001136455,
-     -1.0998039871250485,
-     -1.0351507356704794,
-     -1.0998039871250485,
-     -1.0562344087876256
+     -2.482512623051716,
+     -3.650978512292591,
+     0.3065660006686284,
+     -2.7053281507472997,
+     0.5649696497407671,
+     0.19087189854251935,
+     -1.8982376989215926,
+     -2.117909007448098,
+     0.47400820642886005,
+     0.5829786403051859,
+     0.5288622444756675,
+     0.5348955797630038,
+     -1.8982376989215926,
+     -1.9201754773031459,
+     -1.7769206725717677,
+     0.4365275236857181,
+     -2.038669143093111,
+     -1.965729376372057,
+     -2.038669143093111,
+     -1.9893987362343348
     ]
    },
    "kraus_gpu_cusv_nofusion~kraus_cpu": {
@@ -1333,43 +1361,53 @@
     "n_sigma": 3.0,
     "shots": [
      128,
-     2
+     1
     ],
     "mean_hamming_weight": [
      1.140625,
-     8.0
+     12.0
     ],
-    "delta_mean_hamming_weight": -6.859375,
-    "z_mean_hamming_weight": -1.7122865097752757,
+    "delta_mean_hamming_weight": -10.859375,
+    "z_mean_hamming_weight": -49.65582536626672,
     "z_marginals_by_clbit": [
-     -1.3245727016335813,
+     -62.99206299209449,
      -73.02967433402215,
      2.281063794048804,
-     -1.2351772568149308,
+     -43.81780460041329,
      2.7212053721992304,
-     -1.346959225622549,
-     -1.2575040639719015,
+     1.7527121840165314,
+     -47.037978576586696,
      -43.81780460041329,
      2.7212053721992304,
      3.4690327231359515,
      2.281063794048804,
      2.7212053721992304,
-     -1.2351772568149308,
-     -1.2128647015021252,
-     -1.1682812702286447,
-     -1.3022015150096216,
-     -1.190566128783839,
-     -1.123751625872203,
-     -1.2575040639719015,
-     -1.2351772568149308
+     -43.81780460041329,
+     -41.13932965477737,
+     -36.897893509718756,
+     2.281063794048804,
+     -38.86386496477159,
+     -33.64977997413493,
+     -47.037978576586696,
+     -43.81780460041329
     ],
     "max_abs_z_marginal": 73.02967433402215,
     "clbits_outside": [
+     0,
      1,
+     3,
+     6,
      7,
-     9
+     9,
+     12,
+     13,
+     14,
+     16,
+     17,
+     18,
+     19
     ],
-    "weight_ok": true,
+    "weight_ok": false,
     "marginals_ok": false,
     "pass": false,
     "n_marginal_tests": 20,
@@ -1381,73 +1419,81 @@
     ],
     "power": {
      "evaluated": true,
-     "min_visible_marginal_diff": 1.0689144610304417,
-     "min_visible_weight_diff": 12.017921581768885,
-     "note": "at N = 128 / 2 shots a marginal difference below 1.069 (p = 1/2, 3 sigma) and a mean-weight difference below 12.018 bits are invisible to this comparison"
+     "min_visible_marginal_diff": 1.5058479753945946,
+     "min_visible_weight_diff": 0.6560786123219229,
+     "note": "at N = 128 / 1 shots a marginal difference below 1.506 (p = 1/2, 3 sigma) and a mean-weight difference below 0.656 bits are invisible to this comparison"
     },
     "z_marginals_pooled_information": [
-     -3.4205262752974144,
-     -7.126096406869613,
-     0.2850438562747845,
-     -2.418553932028474,
-     0.33999940219937885,
-     -3.8725430638981964,
-     -2.600348977604327,
-     -4.937104414532874,
-     0.33999940219937885,
-     0.4333158259768697,
-     0.2850438562747845,
-     0.33999940219937885,
-     -2.418553932028474,
-     -2.2628395233275675,
-     -2.007363079386954,
-     -3.082813364322808,
-     -2.1271867820682693,
-     -1.8036773550808713,
-     -2.600348977604327,
-     -2.418553932028474
+     -4.999374960932617,
+     -5.611964061271241,
+     0.2015877000376055,
+     -3.665719574653795,
+     0.24046893224915603,
+     0.15490492475801315,
+     -3.904249487737688,
+     -3.665719574653795,
+     0.24046893224915603,
+     0.30651039604123703,
+     0.2015877000376055,
+     0.24046893224915603,
+     -3.665719574653795,
+     -3.4630865929110124,
+     -3.1346725307438414,
+     0.2015877000376055,
+     -3.2880206120787245,
+     -2.877231277014167,
+     -3.904249487737688,
+     -3.665719574653795
     ]
    },
    "rm_cpu~kraus_cpu": {
     "evaluated": true,
     "n_sigma": 3.0,
     "shots": [
-     2,
-     2
+     1,
+     1
     ],
     "mean_hamming_weight": [
-     11.0,
-     8.0
+     13.0,
+     12.0
     ],
-    "delta_mean_hamming_weight": 3.0,
-    "z_mean_hamming_weight": 0.6708203932499369,
+    "delta_mean_hamming_weight": 1.0,
+    "z_mean_hamming_weight": Infinity,
     "z_marginals_by_clbit": [
-     0.0,
-     -1.414213562373095,
-     1.414213562373095,
-     -1.414213562373095,
-     1.414213562373095,
-     0.0,
-     0.0,
-     -1.414213562373095,
+     Infinity,
+     Infinity,
+     Infinity,
+     Infinity,
+     Infinity,
      Infinity,
      0.0,
-     1.414213562373095,
-     1.414213562373095,
      0.0,
-     1.414213562373095,
-     1.414213562373095,
+     Infinity,
      0.0,
-     -1.414213562373095,
-     1.414213562373095,
+     Infinity,
      0.0,
-     1.414213562373095
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     Infinity,
+     0.0,
+     0.0,
+     0.0
     ],
     "max_abs_z_marginal": Infinity,
     "clbits_outside": [
-     8
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     8,
+     10,
+     16
     ],
-    "weight_ok": true,
+    "weight_ok": false,
     "marginals_ok": false,
     "pass": false,
     "n_marginal_tests": 20,
@@ -1459,31 +1505,31 @@
     ],
     "power": {
      "evaluated": true,
-     "min_visible_marginal_diff": 1.5,
-     "min_visible_weight_diff": 13.416407864998739,
-     "note": "at N = 2 / 2 shots a marginal difference below 1.500 (p = 1/2, 3 sigma) and a mean-weight difference below 13.416 bits are invisible to this comparison"
+     "min_visible_marginal_diff": 2.121320343559643,
+     "min_visible_weight_diff": 0.0,
+     "note": "at N = 1 / 1 shots a marginal difference below 2.121 (p = 1/2, 3 sigma) and a mean-weight difference below 0.000 bits are invisible to this comparison"
     },
     "z_marginals_pooled_information": [
+     -1.414213562373095,
+     -1.414213562373095,
+     1.414213562373095,
+     -1.414213562373095,
+     1.414213562373095,
+     1.414213562373095,
      0.0,
-     -1.1547005383792517,
-     1.1547005383792517,
-     -1.1547005383792517,
-     1.1547005383792517,
+     0.0,
+     1.414213562373095,
+     0.0,
+     1.414213562373095,
      0.0,
      0.0,
-     -1.1547005383792517,
-     2.0,
      0.0,
-     1.1547005383792517,
-     1.1547005383792517,
      0.0,
-     1.1547005383792517,
-     1.1547005383792517,
      0.0,
-     -1.1547005383792517,
-     1.1547005383792517,
+     -1.414213562373095,
      0.0,
-     1.1547005383792517
+     0.0,
+     0.0
     ]
    },
    "kraus_gpu_cusv~rm_gpu_cusv": {
@@ -1673,43 +1719,46 @@
     "n_sigma": 3.0,
     "shots": [
      2,
-     2
+     1
     ],
     "mean_hamming_weight": [
      8.0,
-     11.0
+     13.0
     ],
-    "delta_mean_hamming_weight": -3.0,
-    "z_mean_hamming_weight": -1.3416407864998738,
+    "delta_mean_hamming_weight": -5.0,
+    "z_mean_hamming_weight": -5.0,
     "z_marginals_by_clbit": [
-     0.0,
-     -1.414213562373095,
-     -1.414213562373095,
-     Infinity,
      1.414213562373095,
      0.0,
-     -1.414213562373095,
+     Infinity,
+     Infinity,
      0.0,
      -1.414213562373095,
      Infinity,
      -1.414213562373095,
-     0.0,
-     0.0,
      -1.414213562373095,
      Infinity,
+     Infinity,
+     1.414213562373095,
      -1.414213562373095,
+     -1.414213562373095,
+     Infinity,
+     0.0,
      0.0,
      -1.414213562373095,
-     0.0,
+     -1.414213562373095,
      -1.414213562373095
     ],
     "max_abs_z_marginal": Infinity,
     "clbits_outside": [
+     2,
      3,
+     6,
      9,
+     10,
      14
     ],
-    "weight_ok": true,
+    "weight_ok": false,
     "marginals_ok": false,
     "pass": false,
     "n_marginal_tests": 20,
@@ -1721,31 +1770,31 @@
     ],
     "power": {
      "evaluated": true,
-     "min_visible_marginal_diff": 1.5,
-     "min_visible_weight_diff": 6.708203932499369,
-     "note": "at N = 2 / 2 shots a marginal difference below 1.500 (p = 1/2, 3 sigma) and a mean-weight difference below 6.708 bits are invisible to this comparison"
+     "min_visible_marginal_diff": 1.8371173070873834,
+     "min_visible_weight_diff": 3.0,
+     "note": "at N = 2 / 1 shots a marginal difference below 1.837 (p = 1/2, 3 sigma) and a mean-weight difference below 3.000 bits are invisible to this comparison"
     },
     "z_marginals_pooled_information": [
+     0.8660254037844385,
      0.0,
-     -1.1547005383792517,
-     -1.1547005383792517,
-     2.0,
-     1.1547005383792517,
+     -1.732050807568877,
+     1.732050807568877,
      0.0,
-     -1.1547005383792517,
+     -0.8660254037844385,
+     -1.732050807568877,
+     -0.8660254037844385,
+     -0.8660254037844385,
+     1.732050807568877,
+     -1.732050807568877,
+     0.8660254037844385,
+     -0.8660254037844385,
+     -0.8660254037844385,
+     -1.732050807568877,
      0.0,
-     -1.1547005383792517,
-     2.0,
-     -1.1547005383792517,
      0.0,
-     0.0,
-     -1.1547005383792517,
-     -2.0,
-     -1.1547005383792517,
-     0.0,
-     -1.1547005383792517,
-     0.0,
-     -1.1547005383792517
+     -0.8660254037844385,
+     -0.8660254037844385,
+     -0.8660254037844385
     ]
    },
    "kraus_gpu_cusv_nofusion~kraus_gpu_cusv": {
@@ -2005,14 +2054,14 @@
     ]
    }
   },
-  "bug_confirmed": false,
+  "bug_confirmed": true,
   "decision": {
-   "bug_confirmed": false,
+   "bug_confirmed": true,
    "k1_evaluated": true,
    "production_representation": "blocked",
    "k2_evaluated": true,
-   "validated_kraus_gpu_path": "kraus_gpu_native",
-   "c2_cal_decision_reinstated": true,
+   "validated_kraus_gpu_path": "none",
+   "c2_cal_decision_reinstated": false,
    "rules": {
     "K1": "bug_confirmed iff |z_w(kraus_gpu_cusv, kraus_cpu)| > 3",
     "K2": "rm iff rm_gpu_cusv agrees with rm_cpu AND kraus_cpu: |z_w| <= 3 and no marginal beyond 3 sigma (Bonferroni expectation 20 x 0.0027 = 0.054 < 1), else blocked",
@@ -2020,23 +2069,23 @@
    },
    "k4": {
     "evaluated": true,
-    "status": "agree",
-    "stop_planner": false
+    "status": "disagree",
+    "stop_planner": true
    },
    "seconds_per_shot": {
     "kraus_gpu_cusv": 1.9195747850462794,
     "rm_gpu_cusv": 0.4172244002111256,
     "kraus_gpu_native": 2.2227095924317837,
     "kraus_gpu_cusv_nofusion": 5.046831406652927,
-    "rm_gpu_cusv_anchor": 114.4727373123169,
-    "kraus_cpu": 206.7106033563614,
-    "rm_cpu": 188.32283401489258
+    "rm_gpu_cusv_anchor": 87.650062084198,
+    "kraus_cpu": 169.88974571228027,
+    "rm_cpu": 168.80154705047607
    },
    "production_seconds_per_shot": 0.4172244002111256,
    "production_seconds_per_shot_source": "run 1 (validation/archive/C2_KCHK_job59780907.json) rm_gpu_cusv, 512 shots",
-   "anchor_seconds_per_shot": 114.4727373123169,
-   "validated_path_seconds_per_shot": 2.2227095924317837,
-   "validated_path_gpu_mode": "native",
+   "anchor_seconds_per_shot": 87.650062084198,
+   "validated_path_seconds_per_shot": null,
+   "validated_path_gpu_mode": null,
    "evidence": {
     "gpu_arms": "run 1, job 59780907 (validation/archive/C2_KCHK_job59780907.json)",
     "cpu_arms": "run 2 (this job)"
@@ -2044,62 +2093,75 @@
   },
   "k4": {
    "evaluated": true,
-   "status": "agree",
+   "status": "disagree",
    "per_representation": {
     "kraus_cpu": {
      "evaluated": true,
      "laptop_arm": "cpu_kraus",
      "shots": [
-      2,
-      19
+      1,
+      67
      ],
      "mean_hamming_weight": [
-      8.0,
-      7.473684210526316
+      12.0,
+      7.462686567164179
      ],
      "se_mean_hamming_weight": [
-      4.0,
-      0.558655555371602
+      0.0,
+      0.2692841560048415
      ],
-     "z_mean_hamming_weight": 0.1303141316093172,
-     "agree": true,
+     "z_mean_hamming_weight": 16.849537307179126,
+     "agree": false,
      "power": {
       "evaluated": true,
-      "min_visible_marginal_diff": 1.1150879125125421,
-      "min_visible_weight_diff": 12.116470784264205,
-      "note": "at N = 2 / 19 shots a marginal difference below 1.115 (p = 1/2, 3 sigma) and a mean-weight difference below 12.116 bits are invisible to this comparison"
+      "min_visible_marginal_diff": 1.5111525699121975,
+      "min_visible_weight_diff": 0.8078524680145245,
+      "note": "at N = 1 / 67 shots a marginal difference below 1.511 (p = 1/2, 3 sigma) and a mean-weight difference below 0.808 bits are invisible to this comparison"
      },
      "marginals_information": {
       "z_marginals_by_clbit": [
-       0.7915275573833728,
-       10.066445913694334,
-       -1.8874586088176875,
-       0.355169348667511,
-       -3.7172815091383407,
-       0.9416205066358682,
-       -0.07080857342481793,
-       5.111262075065219,
-       -2.2509257354845507,
-       -4.594682917363406,
-       -3.3291640592396967,
-       -3.7172815091383407,
-       0.07080857342481807,
-       -0.07080857342481793,
-       0.355169348667511,
-       0.9416205066358682,
-       -0.3551693486675109,
-       0.49882931237167427,
-       -0.07080857342481793,
-       -0.07080857342481793
+       14.613777745675483,
+       17.523793348853822,
+       -4.01617101598396,
+       13.505143053255264,
+       -6.935601207001748,
+       -2.795830228512931,
+       8.820796540727102,
+       9.369797407002771,
+       -5.723246941689268,
+       -8.308447690772509,
+       -6.115173655523553,
+       -6.518267014939537,
+       8.820796540727102,
+       7.150634863238958,
+       9.660301681181007,
+       -4.584714586878583,
+       6.518267014939537,
+       11.321391833316179,
+       8.820796540727102,
+       8.560446834131966
       ],
-      "max_abs_z_marginal": 10.066445913694334,
+      "max_abs_z_marginal": 17.523793348853822,
       "clbits_outside": [
+       0,
        1,
+       2,
+       3,
        4,
+       6,
        7,
+       8,
        9,
        10,
-       11
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17,
+       18,
+       19
       ],
       "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)"
      }
@@ -2108,69 +2170,82 @@
      "evaluated": true,
      "laptop_arm": "cpu_rm",
      "shots": [
-      2,
-      24
+      1,
+      78
      ],
      "mean_hamming_weight": [
-      11.0,
-      6.916666666666667
+      13.0,
+      7.269230769230769
      ],
      "se_mean_hamming_weight": [
-      2.0,
-      0.5707758090131267
+      0.0,
+      0.2735255187941228
      ],
-     "z_mean_hamming_weight": 1.9632805657938275,
-     "agree": true,
+     "z_mean_hamming_weight": 20.95149752766822,
+     "agree": false,
      "power": {
       "evaluated": true,
-      "min_visible_marginal_diff": 1.1039701082909807,
-      "min_visible_weight_diff": 6.239556492042629,
-      "note": "at N = 2 / 24 shots a marginal difference below 1.104 (p = 1/2, 3 sigma) and a mean-weight difference below 6.240 bits are invisible to this comparison"
+      "min_visible_marginal_diff": 1.5095847620607972,
+      "min_visible_weight_diff": 0.8205765563823684,
+      "note": "at N = 1 / 78 shots a marginal difference below 1.510 (p = 1/2, 3 sigma) and a mean-weight difference below 0.821 bits are invisible to this comparison"
      },
      "marginals_information": {
       "z_marginals_by_clbit": [
-       0.9217144471710823,
-       1.414213562373095,
-       1.414213562373095,
-       -2.1908902300206643,
-       -0.4548588261473419,
-       1.0418383443118187,
-       -0.4548588261473419,
-       0.454858826147342,
-       6.324555320336758,
-       -4.140393356054126,
-       0.22669773478143113,
-       0.8031752673906905,
-       0.0,
-       4.898979485566356,
-       6.92820323027551,
-       0.0,
-       -3.4641016151377544,
-       6.92820323027551,
-       0.0,
-       6.324555320336758
+       -5.360675526952098,
+       -3.3868256871728892,
+       30.59411708155671,
+       -5.186188554626405,
+       9.29690445430265,
+       24.454038521274967,
+       8.389889385590195,
+       9.78920688455257,
+       10.588909292273685,
+       -7.763551202428388,
+       11.801936887041647,
+       -5.535599077142161,
+       7.763551202428388,
+       9.061195459645196,
+       10.313274764284929,
+       -7.763551202428388,
+       -7.5630681604756145,
+       13.24764129949177,
+       9.29690445430265,
+       11.480117745401214
       ],
-      "max_abs_z_marginal": 6.92820323027551,
+      "max_abs_z_marginal": 30.59411708155671,
       "clbits_outside": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
        8,
        9,
+       10,
+       11,
+       12,
        13,
        14,
+       15,
        16,
        17,
+       18,
        19
       ],
       "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)"
      }
     }
    },
-   "stop_planner": false,
+   "stop_planner": true,
    "rule": "K4: |z_w(CI CPU arm, laptop CPU arm)| <= 3 for kraus and rm; a disagreement is a STOP for the planner (prompts/33e R3 (b)); the laptop alone decides nothing of record",
    "laptop": {
     "path": "data/campaign33/c33c_diag/summary.json",
-    "sha256": "39b8c801980ed0e7178faa9e1d85ef004d8e80cbac8ebd1403942cf3fc6a10f8",
-    "git_commit": "daeb40c-dirty",
-    "created": "2026-10-15 17:54:18 UTC",
+    "sha256": "f6686011575e37dd54e3e13f8500ba3e3c90a716df81e558ade95dd106a812fe",
+    "git_commit": "61af981",
+    "created": "2026-10-18 17:27:44 UTC",
     "versions": {
      "python": "3.12.14",
      "qiskit": "1.4.3",
@@ -2190,9 +2265,9 @@
   "laptop_reference": {
    "present": true,
    "path": "data/campaign33/c33c_diag/summary.json",
-   "sha256": "39b8c801980ed0e7178faa9e1d85ef004d8e80cbac8ebd1403942cf3fc6a10f8",
-   "git_commit": "daeb40c-dirty",
-   "created": "2026-10-15 17:54:18 UTC",
+   "sha256": "f6686011575e37dd54e3e13f8500ba3e3c90a716df81e558ade95dd106a812fe",
+   "git_commit": "61af981",
+   "created": "2026-10-18 17:27:44 UTC",
    "versions": {
     "python": "3.12.14",
     "qiskit": "1.4.3",
@@ -2214,18 +2289,18 @@
    },
    "arms": {
     "cpu_kraus": {
-     "shots": 19,
-     "mean_hamming_weight": 7.473684210526316,
-     "se_mean_hamming_weight": 0.558655555371602,
-     "sd_hamming_weight": 2.4351231101124045,
-     "seconds_per_shot": 173.92319881288628,
+     "shots": 67,
+     "mean_hamming_weight": 7.462686567164179,
+     "se_mean_hamming_weight": 0.2692841560048415,
+     "sd_hamming_weight": 2.2041858127755627,
+     "seconds_per_shot": 236.41599844106986,
      "versions": {
       "python": "3.12.14",
       "qiskit": "1.4.3",
       "qiskit_aer": "0.15.1",
       "numpy": "2.5.3"
      },
-     "source": "data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg2.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg3.json",
+     "source": "data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg10.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg11.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg12.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg2.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg3.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg4.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg5.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg6.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg7.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg8.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg9.json",
      "status": "done",
      "aer": {
       "distributions": [
@@ -2236,56 +2311,56 @@
       }
      },
      "structure": {
-      "shots": 19,
+      "shots": 67,
       "n_bits": 20,
-      "mean_hamming_weight": 7.473684210526316,
-      "sd_hamming_weight": 2.4351231101124045,
-      "se_mean_hamming_weight": 0.558655555371602,
+      "mean_hamming_weight": 7.462686567164179,
+      "sd_hamming_weight": 2.2041858127755627,
+      "se_mean_hamming_weight": 0.2692841560048415,
       "unital_limit": 10.0,
-      "deficit_vs_unital": 2.526315789473684,
+      "deficit_vs_unital": 2.5373134328358207,
       "marginals_by_clbit": [
-       0.21052631578947367,
-       0.15789473684210525,
-       0.15789473684210525,
-       0.3684210526315789,
-       0.42105263157894735,
-       0.15789473684210525,
-       0.5263157894736842,
-       0.42105263157894735,
-       0.21052631578947367,
-       0.5263157894736842,
-       0.3684210526315789,
-       0.42105263157894735,
-       0.47368421052631576,
-       0.5263157894736842,
-       0.3684210526315789,
-       0.15789473684210525,
-       0.631578947368421,
-       0.3157894736842105,
-       0.5263157894736842,
-       0.5263157894736842
+       0.23880597014925373,
+       0.1791044776119403,
+       0.19402985074626866,
+       0.26865671641791045,
+       0.417910447761194,
+       0.1044776119402985,
+       0.4626865671641791,
+       0.43283582089552236,
+       0.3283582089552239,
+       0.5074626865671642,
+       0.3582089552238806,
+       0.3880597014925373,
+       0.4626865671641791,
+       0.5671641791044776,
+       0.417910447761194,
+       0.23880597014925373,
+       0.6119402985074627,
+       0.34328358208955223,
+       0.4626865671641791,
+       0.47761194029850745
       ],
       "se_marginals_by_clbit": [
-       0.09352877017248827,
-       0.08365467518305539,
-       0.08365467518305539,
-       0.11066473327112564,
-       0.1132689656524148,
-       0.08365467518305539,
-       0.11454888159631764,
-       0.1132689656524148,
-       0.09352877017248827,
-       0.11454888159631764,
-       0.11066473327112564,
-       0.1132689656524148,
-       0.11454888159631764,
-       0.11454888159631764,
-       0.11066473327112564,
-       0.08365467518305539,
-       0.11066473327112565,
-       0.10663920529041639,
-       0.11454888159631764,
-       0.11454888159631764
+       0.0520874234642031,
+       0.04684462467949339,
+       0.048312148554941814,
+       0.05415294608121959,
+       0.06025583583717268,
+       0.03736908302757314,
+       0.06091438912063716,
+       0.06053110376544451,
+       0.057372713828473386,
+       0.06107791797627373,
+       0.05857706999053527,
+       0.05953418302796191,
+       0.06091438912063716,
+       0.0605311037654445,
+       0.06025583583717268,
+       0.0520874234642031,
+       0.05953418302796191,
+       0.058006685713137024,
+       0.06091438912063716,
+       0.06102345704883558
       ],
       "physical_by_clbit": [
        92,
@@ -2313,18 +2388,18 @@
      }
     },
     "cpu_rm": {
-     "shots": 24,
-     "mean_hamming_weight": 6.916666666666667,
-     "se_mean_hamming_weight": 0.5707758090131267,
-     "sd_hamming_weight": 2.7962189792128487,
-     "seconds_per_shot": 84.03293083111446,
+     "shots": 78,
+     "mean_hamming_weight": 7.269230769230769,
+     "se_mean_hamming_weight": 0.2735255187941228,
+     "sd_hamming_weight": 2.415711972827956,
+     "seconds_per_shot": 90.40019211402306,
      "versions": {
       "python": "3.12.14",
       "qiskit": "1.4.3",
       "qiskit_aer": "0.15.1",
       "numpy": "2.5.3"
      },
-     "source": "data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_rm_cpu.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_rm_cpu_seg2.json",
+     "source": "data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_rm_cpu.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_rm_cpu_seg13.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_rm_cpu_seg14.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_rm_cpu_seg15.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_rm_cpu_seg2.json",
      "status": "done",
      "aer": {
       "distributions": [
@@ -2335,56 +2410,56 @@
       }
      },
      "structure": {
-      "shots": 24,
+      "shots": 78,
       "n_bits": 20,
-      "mean_hamming_weight": 6.916666666666667,
-      "sd_hamming_weight": 2.7962189792128487,
-      "se_mean_hamming_weight": 0.5707758090131267,
+      "mean_hamming_weight": 7.269230769230769,
+      "sd_hamming_weight": 2.415711972827956,
+      "se_mean_hamming_weight": 0.2735255187941228,
       "unital_limit": 10.0,
-      "deficit_vs_unital": 3.083333333333333,
+      "deficit_vs_unital": 2.730769230769231,
       "marginals_by_clbit": [
-       0.16666666666666666,
-       0.0,
-       0.0,
-       0.16666666666666666,
-       0.6666666666666666,
-       0.125,
-       0.6666666666666666,
-       0.3333333333333333,
-       0.375,
-       0.4166666666666667,
-       0.4166666666666667,
-       0.20833333333333334,
-       0.5,
-       0.5,
-       0.3333333333333333,
-       0.5,
-       0.3333333333333333,
-       0.3333333333333333,
-       0.5,
-       0.375
+       0.2692307692307692,
+       0.1282051282051282,
+       0.07692307692307693,
+       0.2564102564102564,
+       0.47435897435897434,
+       0.11538461538461539,
+       0.5256410256410257,
+       0.44871794871794873,
+       0.41025641025641024,
+       0.4358974358974359,
+       0.358974358974359,
+       0.28205128205128205,
+       0.5641025641025641,
+       0.48717948717948717,
+       0.4230769230769231,
+       0.4358974358974359,
+       0.4230769230769231,
+       0.3076923076923077,
+       0.47435897435897434,
+       0.3717948717948718
       ],
       "se_marginals_by_clbit": [
-       0.07607257743127308,
-       0.0,
-       0.0,
-       0.07607257743127308,
-       0.09622504486493763,
-       0.06750771560841522,
-       0.09622504486493763,
-       0.09622504486493763,
-       0.09882117688026186,
-       0.10063456073742665,
-       0.10063456073742665,
-       0.08289816934939807,
-       0.10206207261596575,
-       0.10206207261596575,
-       0.09622504486493763,
-       0.10206207261596575,
-       0.09622504486493763,
-       0.09622504486493763,
-       0.10206207261596575,
-       0.09882117688026186
+       0.05022329142607982,
+       0.03785406750949318,
+       0.03017171309818216,
+       0.04944098227618862,
+       0.05653935976482544,
+       0.03617461319715232,
+       0.05653935976482544,
+       0.056315292728359626,
+       0.05569446044588395,
+       0.05614665563886408,
+       0.05431529139335406,
+       0.050952259750157956,
+       0.05614665563886408,
+       0.056595237913628776,
+       0.05593985325795573,
+       0.05614665563886408,
+       0.05593985325795573,
+       0.05225894003744288,
+       0.05653935976482544,
+       0.05472113981207022
       ],
       "physical_by_clbit": [
        92,
@@ -2414,10 +2489,13 @@
    }
   },
   "cpu_process": {
-   "pid": 1114026,
-   "threads": 2,
+   "pid": 3333010,
+   "threads": 6,
    "cpu_affinity": 12,
-   "deadline": 1792088936.5791466,
+   "cpu_affinity_inherited": 12,
+   "step_cpus": 12,
+   "cpu_affinity_main_thread_after_imports": 12,
+   "deadline": 1792345802.446506,
    "min_shots": 2,
    "chunk": 1,
    "ratio": {
@@ -2431,14 +2509,12 @@
    ],
    "sequence": [
     "kraus_cpu",
-    "rm_cpu",
-    "rm_cpu",
-    "kraus_cpu"
+    "rm_cpu"
    ],
    "stand_in": "pta",
-   "build_s": 140.87803745269775,
-   "status": "done",
-   "wall_s": 931.18852186203,
+   "build_s": 117.16925191879272,
+   "status": "running",
+   "wall_s": 456.09702229499817,
    "rule": "alternating chunks in the cycle order; an arm runs regardless of the deadline until min_shots, then only while its slowest chunk so far would end before the deadline",
    "aer": {
     "distributions": [
@@ -2448,15 +2524,16 @@
      "qiskit-aer": "0.15.1"
     }
    },
-   "returncode": 0,
-   "killed_after_grace": false,
+   "returncode": -9,
+   "killed_after_grace": true,
    "grace_s": 60.0,
    "window_share": 0.9,
    "parent_cpu_affinity": 12,
+   "parent_step_cpus": 12,
    "threads_rule": "the step's CPUs (sched_getaffinity) minus 4 (prompts/33d R3, 33e R1)",
    "aer_wheel_note": "the CPU statevector code is the same source on every stack; the wheel is qiskit-aer-gpu on the CI and qiskit-aer on the laptop (prompts/33e R3 (a))",
    "log_tail": "/home/digimonk/.local/share/su2qc-qiskit143/venv/lib/python3.12/site-packages/qiskit/qpy/interface.py:346: UserWarning: The qiskit version used to generate the provided QPY file, 2.5.2, is newer than the current qiskit version 1.4.3. This may result in an error if the QPY file uses instructions not present in this current qiskit version\n  warnings.warn(\n",
-   "command": "/home/digimonk/.local/share/su2qc-qiskit143/venv/bin/python -m skqd.campaign33.kchk_cpu --out results/campaign33/dryrun/C2_KCHK/cpu_arms.json --deadline 1792088936.5791466 --s0 38300000 --offsets 610,611 --chunk 1 --min-shots 2 --ratio 1,2 --threads 2 --max-shots 2 --stand-in pta"
+   "command": "/home/digimonk/.local/share/su2qc-qiskit143/venv/bin/python -m skqd.campaign33.kchk_cpu --out results/campaign33/dryrun/C2_KCHK/cpu_arms.json --deadline 1792345802.446506 --s0 38300000 --offsets 610,611 --chunk 1 --min-shots 2 --ratio 1,2 --threads 6 --max-shots 2 --stand-in pta"
   },
   "minimum_shots": {
    "rm_gpu_cusv_anchor": [
@@ -2464,11 +2541,11 @@
     2
    ],
    "kraus_cpu": [
-    2,
+    1,
     2
    ],
    "rm_cpu": [
-    2,
+    1,
     2
    ]
   },
@@ -2549,15 +2626,15 @@
    "gpus": null,
    "tasks": null,
    "rank": null,
-   "wall_seconds": 935.7350935935974,
+   "wall_seconds": 480.1400291919708,
    "gpu_node_hours": null,
    "node_hours_charged_shared_qos": null,
    "parallel_efficiency_Ep": null,
    "parallel_efficiency_note": "one task: E(p) needs T_1 and T_p from two task counts (not measured)",
    "phases_s": {
-    "preflight_s": 0.777972936630249,
-    "gpu_anchor_s": 232.89656019210815,
-    "cpu_process_s": 932.9549627304077
+    "preflight_s": 0.6992931365966797,
+    "gpu_anchor_s": 178.483704328537,
+    "cpu_process_s": 477.6879811286926
    },
    "gpu_telemetry": {
     "source": "gpu_telemetry.csv",
@@ -2574,12 +2651,14 @@
     "threadpoolctl": "3.7.0",
     "python": "3.12.14"
    },
-   "seconds_per_shot": 114.4727373123169,
-   "budget_minutes": 25.0,
+   "seconds_per_shot": 87.650062084198,
+   "budget_minutes": 8.0,
    "shots_scale": 0.01,
    "max_shots_per_run": 16,
    "oom_retries": [],
    "cpu_affinity": 12,
+   "cpu_affinity_source": "os.sched_getaffinity(0) at process start, before any OpenMP runtime loaded (SKQD_STEP_CPUS; prompts/33e part 2)",
+   "cpu_affinity_main_thread_now": 12,
    "calibration_run": 2,
    "cpu_affinity_check": {
     "applies": false,
@@ -2593,12 +2672,12 @@
    {
     "name": "K1 kraus_gpu_cusv (run 1) vs kraus_cpu (run 2): bug_confirmed iff |z_w| > 3 (both outcomes PASS; the field is the decision)",
     "value": {
-     "z_w": -1.248820894996344,
+     "z_w": -38.29374414638028,
      "w": [
       2.99609375,
-      8.0
+      12.0
      ],
-     "bug_confirmed": false
+     "bug_confirmed": true
     },
     "threshold": "decided (both arms sampled)",
     "passed": true,
@@ -2609,29 +2688,53 @@
     "value": {
      "production_representation": "blocked",
      "z_w": {
-      "rm_gpu_cusv~rm_cpu": -1.7809940604099272,
-      "rm_gpu_cusv~kraus_cpu": -0.14155764666132578
+      "rm_gpu_cusv~rm_cpu": -55.86274931077325,
+      "rm_gpu_cusv~kraus_cpu": -45.827055399504516
      },
      "clbits_outside": {
       "rm_gpu_cusv~rm_cpu": [
-       3,
-       8,
-       9,
-       13,
-       14,
-       16,
-       17,
-       19
-      ],
-      "rm_gpu_cusv~kraus_cpu": [
+       0,
        1,
        2,
+       3,
        4,
+       5,
+       6,
        7,
        8,
        9,
        10,
-       11
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17,
+       18,
+       19
+      ],
+      "rm_gpu_cusv~kraus_cpu": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17,
+       18,
+       19
       ]
      }
     },
@@ -2642,10 +2745,10 @@
    {
     "name": "K3 validated Kraus GPU path (run 1's native / cuStateVec-no-fusion arms vs kraus_cpu of run 2): first with |z_w| <= 3, else none",
     "value": {
-     "validated_kraus_gpu_path": "kraus_gpu_native",
+     "validated_kraus_gpu_path": "none",
      "z_w": {
-      "kraus_gpu_native": -1.1062985441745348,
-      "kraus_gpu_cusv_nofusion": -1.7122865097752757
+      "kraus_gpu_native": -34.20339793168936,
+      "kraus_gpu_cusv_nofusion": -49.65582536626672
      }
     },
     "threshold": "recorded",
@@ -2655,11 +2758,11 @@
    {
     "name": "K4 the two CPU references agree (CI CPU arms vs the laptop's c33c_diag summary): |z_w| <= 3 per representation; recorded -- a disagreement is a STOP for the planner, not a token failure (prompts/33e R3 (b), section 2)",
     "value": {
-     "status": "agree",
-     "stop_planner": false,
+     "status": "disagree",
+     "stop_planner": true,
      "z_w": {
-      "kraus_cpu": 0.1303141316093172,
-      "rm_cpu": 1.9632805657938275
+      "kraus_cpu": 16.849537307179126,
+      "rm_cpu": 20.95149752766822
      }
     },
     "threshold": "recorded (evaluated when the laptop summary is in the commit)",
@@ -2671,14 +2774,14 @@
    "dry run: CPU only, the Pauli-twirled representation stands in for the CPU arms and the anchor (Kraus on this CPU costs minutes per shot), 2 shots per CPU arm, 2 anchor shots -- a path check of run 2, not a measurement"
   ]
  },
- "runtime_s": 935.7350935935974,
+ "runtime_s": 480.1400291919708,
  "environment": {
   "python": "3.12.14",
   "numpy": "2.5.3",
   "scipy": "1.18.1",
   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
   "cpu_count": 12,
-  "git_commit": "39e0516",
-  "timestamp": "2026-10-15 12:22:02 MDT"
+  "git_commit": "61af981",
+  "timestamp": "2026-10-18 11:50:50 MDT"
  }
 }

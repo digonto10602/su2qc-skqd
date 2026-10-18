@@ -63,14 +63,58 @@ def slurm_layout() -> dict:
             "nodelist": os.environ.get("SLURM_JOB_NODELIST")}
 
 
+STEP_CPUS_ENV = "SKQD_STEP_CPUS"
+
+
+def record_step_cpus(environ=None) -> list:
+    """Capture the CPU set Slurm gave this job step, BEFORE any OpenMP runtime is loaded, into the environment
+    variable SKQD_STEP_CPUS (inherited by every subprocess); an existing value (set by an earlier process of the
+    same step) is kept.  Returns the recorded set.
+
+    Why (prompts/33e part 2, C2_KCHK job 59828887): jobs/gate.sbatch exports OMP_PROC_BIND=spread and
+    OMP_PLACES=threads (the RUNBOOK policy).  When qiskit_aer's OpenMP runtime initialises under those variables
+    it binds the initial thread to the first place, so after `import qiskit_aer` (the campaign preflight does it
+    first) `os.sched_getaffinity(0)` of the main thread is 1 CPU, and every subprocess started afterwards inherits
+    that 1-CPU mask -- the CPU arm ran on 1 thread although the step had 32 CPUs."""
+    env = os.environ if environ is None else environ
+    if not env.get(STEP_CPUS_ENV):
+        try:
+            env[STEP_CPUS_ENV] = ",".join(str(c) for c in sorted(os.sched_getaffinity(0)))
+        except AttributeError:                                     # pragma: no cover (not Linux)
+            return []
+    return step_cpus(env)
+
+
+def step_cpus(environ=None) -> list:
+    """The step's CPU set recorded by record_step_cpus (empty when nothing was recorded)."""
+    v = (os.environ if environ is None else environ).get(STEP_CPUS_ENV, "")
+    return [int(x) for x in v.split(",") if x.strip()]
+
+
+def restore_step_affinity(environ=None) -> dict:
+    """Give the calling process (a worker started by a pinned parent) the step's CPU set back; a no-op when none
+    was recorded.  Returns the CPU counts before and after."""
+    before = cpu_affinity()
+    cpus = step_cpus(environ)
+    if cpus and before is not None and before != len(cpus):
+        os.sched_setaffinity(0, cpus)
+    return {"before": before, "after": cpu_affinity(), "step_cpus": len(cpus) or None}
+
+
 def cpu_affinity():
-    """The number of CPUs this process may run on (`os.sched_getaffinity(0)`), i.e. what a Slurm step binding
-    actually granted -- prompts/33e R1: a bare `srun` gave the step 1 CPU of a 32-CPU allocation.  None where the
-    call does not exist (not Linux)."""
+    """The number of CPUs the calling thread may run on now (`os.sched_getaffinity(0)`).  NB: once an OpenMP
+    runtime has initialised under OMP_PROC_BIND this is 1 on the main thread even when the step has more (see
+    record_step_cpus); the step's own count is step_cpu_count().  None where the call does not exist."""
     try:
         return len(os.sched_getaffinity(0))
     except AttributeError:                                         # pragma: no cover
         return None
+
+
+def step_cpu_count():
+    """The CPUs this job step was granted: len(step_cpus()) when recorded, else the current affinity."""
+    s = step_cpus()
+    return len(s) if s else cpu_affinity()
 
 
 def cpu_affinity_check(affinity, cpus_per_task, ci: bool) -> dict:
@@ -81,7 +125,8 @@ def cpu_affinity_check(affinity, cpus_per_task, ci: bool) -> dict:
                 "rule": "recorded only (not the CI)"}
     ok = affinity is not None and cpus_per_task is not None and int(affinity) == int(cpus_per_task)
     return {"applies": True, "ok": bool(ok), "affinity": affinity, "slurm_cpus_per_task": cpus_per_task,
-            "rule": "on the CI: len(os.sched_getaffinity(0)) == SLURM_CPUS_PER_TASK (prompts/33e R1)"}
+            "rule": ("on the CI: the step's CPU count (os.sched_getaffinity(0) recorded at process start, before any "
+                     "OpenMP runtime pins the main thread) == SLURM_CPUS_PER_TASK (prompts/33e R1 + part 2)")}
 
 
 def gpu_telemetry(path: str = None) -> dict:
