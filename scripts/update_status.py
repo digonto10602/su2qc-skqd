@@ -59,6 +59,8 @@ GATES = [  # gate, description (manual Step 10), where it runs
     ("QEMU_2x3_laptop_smoke", "prompts/35 3.6: the C3_LE engine path (pytket-pecos H2-1LE) on the laptop pecos venv in dry mode; the token itself waits for the owner's skqd-pecos env", "laptop"),
     ("QSC_prepared", "prompts/35 T5: the four syntax-check job sets (H2-2SC x 2x2/2x3/2x4 k=1, Helios-1SC x 2x2 HUGR) as local job records; needs the owner's Nexus login", "laptop"),
     ("QV_2x4_01", "prompts/35b section 4: the 2x4 decision slot -- native and source statevectors of B0_ref0_k1 and B1_ref0_k1 for both sources on the Aer GPU vs the exact coarse states, the S2_2x4 reproduction, the frozen source (deferred GPU token; slots 02-08 follow)", "Perlmutter GPU"),
+    ("C2_KCHK", "prompts/33d R3 / 33e R2: the GPU Kraus check (calibration; the harvested JSON is not edited) -- decision in "
+                "data/campaign33/c2_representation_decision.json (prompts/33f): production RM, no reference arm", "Perlmutter GPU"),
 ]
 
 
