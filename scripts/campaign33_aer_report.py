@@ -405,6 +405,24 @@ def readme(S) -> str:
     oneq = "\n".join(f"- `{o['path']}`: {o['summary']}" for o in S["small_scale"]["one_qubit"])
     dl = "\n".join(f"- `{o['path']}`: {o['summary']}" for o in S["small_scale"]["delay_sites"])
     v = S["environment"]["ci_versions"]
+    sm = S.get("smoke")
+    if sm:
+        lines = []
+        for arm, r in sm["arms"].items():
+            if r.get("skipped"):
+                lines.append(f"- `{arm}`: skipped ({r['skipped']})")
+                continue
+            idt = r.get("identical_to_recorded_chunks") or []
+            lines.append(f"- `{arm}`: {r['shots']} shots, $\\bar w$ = {r['mean_hamming_weight']:.3f} $\\pm$ {r['se']:.3f}, "
+                         f"{r['seconds_per_shot']:.1f} s/shot; seeds of `counts/{r['recorded_source']}`: counts identical "
+                         f"to the recorded chunks in {sum(idt)} of {len(idt)} calls")
+        smoke = (f"`smoke/reproduce_laptop_cpu_2shots.json` (`{sm['command']}`; qiskit {sm['versions']['qiskit']}, aer "
+                 f"{sm['versions']['qiskit_aer']}, laptop CPU, Aer devices {sm['devices']}):\n\n" + "\n".join(lines) + "\n\n"
+                 "The CPU arms recorded on the CI (job 59828887, qiskit-aer-gpu wheel, CPU path) are reproduced bit for "
+                 "bit by `reproduce.py` from the bundle files alone on a different installation, which also checks that "
+                 "the exported models and the relaxation pass are the ones the CI ran.")
+    else:
+        smoke = "not run"
     return f"""# qiskit-aer 0.15.1: GPU statevector with Kraus noise instructions samples a different distribution than the CPU statevector
 
 Bundle assembled by `scripts/campaign33_aer_report.py` (prompts/33f R5) at commit {S['git_commit']}, {S['created']}.
@@ -480,11 +498,32 @@ model; a `pip freeze` of the CI env.
 - The 2- and 8-qubit statevector-vs-density-matrix checks mentioned in prompts/33d R4 have no committed record in
   this repository; they are not quoted here.  No small-scale **GPU** check was run (the CI runs one job at a time).
 
+## Reproducer smoke test (laptop CPU)
+
+{smoke}
+
 ## Upstream status
 
 Release notes read {rn['read']} ({', '.join(s['url'] for s in rn['sources'])}): {rn['finding']}
 Re-checked {S['release_notes_recheck']['date']}: latest release {S['release_notes_recheck']['latest']} -- **no fix found**.
 """
+
+
+SMOKE = "smoke/reproduce_laptop_cpu_2shots.json"
+
+
+def smoke_record(out_dir):
+    """The reproduce.py smoke run (prompts/33f step 3: laptop CPU, 2 shots, GPU branches skipped), when present."""
+    p = os.path.join(out_dir, SMOKE)
+    if not os.path.exists(p):
+        return None
+    d = load(p)
+    ar = d["args"]
+    d["command"] = (f"python reproduce.py --arms {' '.join(ar['arms'])} --shots {ar['shots']} --threads {ar['threads']}"
+                    + (f" --out {os.path.basename(SMOKE)}" if ar.get("out") else ""))
+    d["arms"] = {k: {kk: vv for kk, vv in v.items() if kk != "calls"} for k, v in d["arms"].items()}
+    d["path"], d["sha256"] = SMOKE, sha256(p)
+    return d
 
 
 def main(argv=None):
@@ -546,6 +585,7 @@ def main(argv=None):
          "release_notes_recheck": {"date": a.latest_release_date, "latest": a.latest_release,
                                    "source": "https://api.github.com/repos/Qiskit/qiskit-aer/releases"},
          "decision_file": {"path": DECISION, "sha256": sha256(DECISION)} if os.path.exists(_abs(DECISION)) else None,
+         "smoke": smoke_record(a.out),
          "seconds": time.time() - t0}
     jdump(os.path.join(a.out, "summary.json"), S)
     with open(os.path.join(a.out, "README.md"), "w") as fh:
