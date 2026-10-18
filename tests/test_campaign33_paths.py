@@ -105,11 +105,12 @@ def test_c2_cal_run2_and_a_c2_cell(sandbox, monkeypatch):
     assert set(D["comparisons"]["P4c_vs_K1"]) == {"pta", "rm", "kraus", "K1_device"}
     names = [c["name"] for c in d["criteria"]]
     assert any(n.startswith("P0 ") for n in names) and any(n.startswith("P4r ") for n in names)
-    # ---- a production cell reads the C2_KCHK decision (prompts/33d), here a stub with a validated Kraus GPU path
+    # ---- a production cell reads the class-2 decision file (prompts/33f R2), here a stub with a validated Kraus GPU
+    # path (the code keeps that branch; the decision of record says none)
     monkeypatch.setattr(N, "f0_ibm", lambda *a, **k: {"g0": None, "f0": None, "stub": True})
-    write_kchk(tmp, "rm", "kraus_gpu_native")
+    dfile = write_decision(tmp, "rm", "kraus_gpu_native")
     for tok in ("C2_ECHO", "C2_XY4"):
-        rc = run_dry(tok)
+        rc = run_dry(tok, ["--c2-decision-file", dfile])
         c = json.load(open(tmp / "validation" / "dryrun" / f"{tok}.json"))
         assert rc == 0 and c["status"] == "PASS", [x for x in c["criteria"] if not x["passed"]]
         C = c["data"]
@@ -125,20 +126,23 @@ def test_c2_cal_run2_and_a_c2_cell(sandbox, monkeypatch):
         assert C["arms"]["production"]["equal_shots"]
 
 
-def write_kchk(tmp, prod, path, stub=True):
-    d = {"status": "PASS", "data": {"stub": stub, "bug_confirmed": True,
-                                    "decision": {"production_representation": prod, "validated_kraus_gpu_path": path,
-                                                 "production_seconds_per_shot": None,
-                                                 "validated_path_seconds_per_shot": None}}}
-    (tmp / "validation" / "dryrun" / "C2_KCHK.json").write_text(json.dumps(d))
+def write_decision(tmp, prod, ref, stub=True):
+    """A stub of data/campaign33/c2_representation_decision.json (prompts/33f R2) in the sandbox; returns its path."""
+    d = {"stub": stub, "production_representation": prod, "reference_arm": ref, "bug_confirmed": True,
+         "production_seconds_per_shot": None, "reference_arm_seconds_per_shot": None,
+         "representation_reason": "stub", "kraus_gpu": "stub"}
+    path = tmp / "c2_representation_decision.json"
+    path.write_text(json.dumps(d))
+    return str(path)
 
 
 @pytest.mark.parametrize("case", ["rm|kraus_gpu_native", "rm|kraus_gpu_cusv_nofusion", "rm|none", "blocked|none",
                                   "absent"])
-def test_c2_xy4_reads_the_c2_kchk_decision(sandbox, monkeypatch, case):
-    """prompts/33d R1/R3 / step 2: C2_XY4 = I-XY4 on IBM-T3, echo half only, both K1 circuits, production RM from
-    C2_KCHK; a Kraus reference arm on the validated Kraus GPU path (mode native / custatevec_nofusion), none when no
-    path was validated; S0 FAILs (and nothing is sampled) when C2_KCHK is absent or says blocked."""
+def test_c2_xy4_reads_the_decision_file(sandbox, monkeypatch, case):
+    """prompts/33d R1/R3 / step 2 and prompts/33f R2/R3: C2_XY4 = I-XY4 on IBM-T3, echo half only, both K1 circuits,
+    production RM from data/campaign33/c2_representation_decision.json; a Kraus reference arm on a validated Kraus GPU
+    path (mode native / custatevec_nofusion), none when the file names none; S0 FAILs (and nothing is sampled) when the
+    file is absent or says blocked."""
     tmp, _ = sandbox
     assert TR.C2_CELLS["C2_XY4"] == ("I-XY4", "IBM-T3", ("echo",)) and TR.C2_MIN_SHOTS["rm"] == 1000
     built = []
@@ -147,8 +151,10 @@ def test_c2_xy4_reads_the_c2_kchk_decision(sandbox, monkeypatch, case):
     monkeypatch.setattr(N, "f0_ibm", lambda *a, **k: {"g0": None, "f0": None, "stub": True})
     if case != "absent":
         prod, path = case.split("|")
-        write_kchk(tmp, prod, path)
-    rc = run_dry("C2_XY4")
+        dfile = write_decision(tmp, prod, path)
+    else:
+        dfile = str(tmp / "no_such_decision.json")
+    rc = run_dry("C2_XY4", ["--c2-decision-file", dfile])
     c = json.load(open(tmp / "validation" / "dryrun" / "C2_XY4.json"))
     s0 = [x for x in c["criteria"] if x["name"].startswith("S0 representation decided")]
     assert len(s0) == 1

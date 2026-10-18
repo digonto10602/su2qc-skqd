@@ -256,6 +256,47 @@ def structure_compare(a: dict, b: dict, n_sigma: float = 3.0) -> dict:
             "family_wise_rule": f"{nb} marginal tests x P(|Z| > 3) = {nb} x {THREE_SIGMA_TWO_SIDED:.4g} (Bonferroni bound)"}
 
 
+def marginal_ones(structure: dict) -> list:
+    """The per-clbit counts of ones of a garbage_structure() result, p_k x N rounded -- exact, since p_k = (ones)/N;
+    a value that is not an integer to 1e-6 means the structure was not built from counts and raises."""
+    N = int(structure["shots"])
+    out = []
+    for k, p in enumerate(structure["marginals_by_clbit"]):
+        x = p * N
+        if abs(x - round(x)) > 1e-6:
+            raise ValueError(f"clbit {k}: p x N = {x} is not an integer count")
+        out.append(int(round(x)))
+    return out
+
+
+def fisher_marginals(ones_a, n_a: int, ones_b, n_b: int, level: float = THREE_SIGMA_TWO_SIDED) -> dict:
+    """prompts/33f R1: K2's per-clbit test.  Fisher's exact test (two-sided, scipy.stats.fisher_exact) on the 2 x 2 table
+    [[ones_a, n_a - ones_a], [ones_b, n_b - ones_b]] of every clbit -- the test that the two-sample Wald z of
+    structure_compare approximates at large N.  It conditions on the common marginal, needs no variance estimate and
+    stays a test when a small arm returns p = 0 or 1 (where the Wald z is undefined: that arm's variance term is 0).
+    A clbit is flagged at the same per-test level as the 3-sigma Wald test, P(|Z| > 3) = 0.0027 (prompts/33a);
+    the Bonferroni line over the n tests is n x level, as before."""
+    from scipy.stats import fisher_exact
+    if len(ones_a) != len(ones_b):
+        raise ValueError("different string lengths")
+    n_a, n_b = int(n_a), int(n_b)
+    p = []
+    for xa, xb in zip(ones_a, ones_b):
+        xa, xb = int(xa), int(xb)
+        if not (0 <= xa <= n_a and 0 <= xb <= n_b):
+            raise ValueError(f"counts out of range: {xa}/{n_a}, {xb}/{n_b}")
+        p.append(float(fisher_exact([[xa, n_a - xa], [xb, n_b - xb]], alternative="two-sided")[1]))
+    flagged = [k for k, v in enumerate(p) if v < level]
+    kmin = int(np.argmin(p)) if p else None
+    return {"test": "Fisher exact, two-sided (scipy.stats.fisher_exact), per clbit",
+            "shots": [n_a, n_b], "ones_by_clbit": [[int(x) for x in ones_a], [int(x) for x in ones_b]],
+            "p_by_clbit": p, "min_p": min(p) if p else None, "argmin_clbit": kmin,
+            "per_test_level": level, "flagged_clbits": flagged, "n_tests": len(p),
+            "bonferroni_line": len(p) * level,
+            "rule": (f"a clbit is flagged iff p < {level:.4g} = P(|Z| > 3) (the per-test level of the 3-sigma Wald "
+                     f"test, prompts/33a); family-wise {len(p)} x {level:.4g} = {len(p) * level:.3f} (Bonferroni)")}
+
+
 def readout_share(structure: dict, p00_mean: float, p11_mean: float) -> dict:
     """The part of a Hamming-weight deficit that the readout asymmetry alone explains (prompts/33a R2, the
     planner's section-9 formula): a uniform n-bit string read through the mean confusion loses

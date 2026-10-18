@@ -7,6 +7,7 @@ Criteria numbering follows prompts/33 section 5 (S1-S6 are added by campaign33.f
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
@@ -1229,23 +1230,32 @@ def run_c2_kchk_cpu_only(ctx):
                 (r or {}).get("agree")] for a, r in (k4.get("per_representation") or {}).items()])
 
 
-def c2_kchk_decision(ctx) -> dict:
-    """The class-2 representation of record (prompts/33d R1/R3): validation/[dryrun/]C2_KCHK.json, or the file given
-    by --c2kchk-file (the dry run's stub).  None when absent -- the cell then FAILs `S0 representation decided`."""
-    p = getattr(ctx.args, "c2kchk_file", None) or validation_path(ctx, "C2_KCHK")
+C2_DECISION_FILE = "data/campaign33/c2_representation_decision.json"
+
+
+def c2_representation_decision(ctx) -> dict:
+    """The class-2 representation of record (prompts/33f R2, replacing 33d's read of validation/C2_KCHK.json): the
+    laptop decision file data/campaign33/c2_representation_decision.json written by scripts/campaign33_c2_decide.py
+    (K2 by Fisher's exact test on every CPU reference that passed K4), or the file given by --c2-decision-file.  None
+    when absent -- the cell then FAILs `S0 representation decided` and samples nothing (never a silent default)."""
+    p = getattr(ctx.args, "c2_decision_file", None) or C2_DECISION_FILE
     p = p if os.path.isabs(p) else os.path.join(ROOT, p)
     if not os.path.exists(p):
         return None
     d = load_json(p)
-    dec = (d.get("data") or {}).get("decision") or {}
-    return {"path": os.path.relpath(p, ROOT), "status": d.get("status"),
-            "production_representation": dec.get("production_representation"),
-            "validated_kraus_gpu_path": dec.get("validated_kraus_gpu_path"),
-            "validated_path_gpu_mode": dec.get("validated_path_gpu_mode"),
-            "seconds_per_shot": dec.get("seconds_per_shot") or {},
-            "production_seconds_per_shot": dec.get("production_seconds_per_shot"),
-            "validated_path_seconds_per_shot": dec.get("validated_path_seconds_per_shot"),
-            "bug_confirmed": (d.get("data") or {}).get("bug_confirmed"), "stub": bool((d.get("data") or {}).get("stub"))}
+    ref = d.get("reference_arm") or "none"
+    with open(p, "rb") as fh:
+        sha = hashlib.sha256(fh.read()).hexdigest()
+    return {"path": os.path.relpath(p, ROOT), "sha256": sha, "git_commit": d.get("git_commit"),
+            "production_representation": d.get("production_representation"),
+            "reference_arm": ref, "validated_kraus_gpu_path": ref,
+            "production_seconds_per_shot": d.get("production_seconds_per_shot"),
+            "production_seconds_per_shot_source": d.get("production_seconds_per_shot_source"),
+            "validated_path_seconds_per_shot": d.get("reference_arm_seconds_per_shot"),
+            "representation_reason": d.get("representation_reason"),
+            "kraus_gpu": d.get("kraus_gpu"), "bug_confirmed": d.get("bug_confirmed"),
+            "fisher_min_p_by_reference": d.get("fisher_min_p_by_reference"),
+            "stub": bool(d.get("stub"))}
 
 
 C2_CELLS = {"C2_GATE": ("I-GATE", "IBM-U", ("echo",)), "C2_ECHO": ("I-ECHO", "IBM-T0", ("echo",)),
@@ -1330,26 +1340,30 @@ def _c2_run_record(P, r0, man, clb, cid, device, meas, scale_shots, like_for_lik
 
 
 def run_c2_cell(ctx):
-    """A class-2 production cell (prompts/33a step C, prompts/33d R1/R3): the representation is C2_KCHK's decision
-    (`S0 representation decided`: the cell refuses to sample without it, or when it says blocked).  Production RM;
-    the 20 % reference arm is Kraus on C2_KCHK's validated Kraus GPU path when one exists (both K1 circuits, equal
-    shots, chunk 128; the in-cell P4a statistic against production, information), else no reference arm and
-    production takes the whole window.  Observables: garbage structure, accepted / hits, round trip, and P7' against
-    the K1 strings."""
+    """A class-2 production cell (prompts/33a step C, prompts/33d R1/R3, prompts/33f R2/R3): the representation is the
+    decision of record in data/campaign33/c2_representation_decision.json (`S0 representation decided`: the cell
+    refuses to sample without it, or when it does not say rm).  Production RM; a 20 % Kraus reference arm only when the
+    decision names a validated Kraus GPU path (both K1 circuits, equal shots, chunk 128; the in-cell P4a statistic
+    against production, information) -- prompts/33f: `reference_arm: none`, so production takes 100 % of the window.
+    Observables: garbage structure, accepted / hits, round trip, and P7' against the K1 strings."""
     from campaign33 import add_table
     cell, family, convs = C2_CELLS[ctx.token]
-    dk = c2_kchk_decision(ctx)
+    dk = c2_representation_decision(ctx)
     decided = bool(dk and dk["production_representation"] == "rm")
-    ctx.R.add("S0 representation decided (prompts/33d: C2_KCHK decision.production_representation = rm; never a "
-              "silent default)", {"file": (dk or {}).get("path"), "status": (dk or {}).get("status"),
-                                  "production_representation": (dk or {}).get("production_representation"),
-                                  "validated_kraus_gpu_path": (dk or {}).get("validated_kraus_gpu_path"),
-                                  "stub": (dk or {}).get("stub")},
-              "C2_KCHK.json present with production_representation rm", decided)
+    ctx.R.add("S0 representation decided (prompts/33f R2: data/campaign33/c2_representation_decision.json "
+              "production_representation = rm; never a silent default)",
+              {"file": (dk or {}).get("path"), "sha256": (dk or {}).get("sha256"),
+               "production_representation": (dk or {}).get("production_representation"),
+               "reference_arm": (dk or {}).get("reference_arm"), "stub": (dk or {}).get("stub")},
+              "the decision file present with production_representation rm", decided)
     ctx.data["representation_decision"] = dk
+    ctx.data["noise"] = {"representation": "rm" if decided else None,
+                         "representation_reason": (dk or {}).get("representation_reason"),
+                         "kraus_gpu": (dk or {}).get("kraus_gpu"),
+                         "decision_file": (dk or {}).get("path")}
     if not decided:
-        ctx.notes.append("the cell did not sample: " + ("validation/C2_KCHK.json is absent" if dk is None else
-                                                        f"C2_KCHK says {dk['production_representation']}"))
+        ctx.notes.append("the cell did not sample: " + (f"{C2_DECISION_FILE} is absent" if dk is None else
+                                                        f"the decision file says {dk['production_representation']}"))
         ctx.min_shots_ok = False
         ctx.seeds_recorded = True
         return
@@ -1412,7 +1426,7 @@ def run_c2_cell(ctx):
             n = 1 if ctx.dry else ctx.scaled(C2_TARGET_PER_CIRCUIT)
             phis, min_rounds = (1.0,), 1
             rule = (f"deadline-stopped at {C2_KRAUS_REF_SHARE:.0%} of the sampling window, equal shots per run at round "
-                    f"boundaries, chunk {chunk} (128, halved while one round at the C2_KCHK {ref_rep} rate {rate} s/shot "
+                    f"boundaries, chunk {chunk} (128, halved while one round at the decision-file {ref_rep} rate {rate} s/shot "
                     "would not fit 0.9 of the arm's budget); >= 1 round always")
         else:
             deadline = None if window is None else t_w + window
@@ -1468,7 +1482,7 @@ def run_c2_cell(ctx):
               if ref_arm else {})
     evaluated = bool(incell) and all(v.get("evaluated") for v in incell.values())
     incell_pass = evaluated and all(v.get("pass") for v in incell.values())
-    later = "rm"          # prompts/33d R1: C2_KCHK is the decision of record; the in-cell statistic is information
+    later = "rm"          # prompts/33f R2: the decision file is the decision of record; the in-cell statistic is information
     # ---- criteria
     allruns = [v for a in arms.values() for v in a["per_run"].values()]
     ctx.physics("P6 decoder round trip on every accepted string (both arms)",
@@ -1501,14 +1515,14 @@ def run_c2_cell(ctx):
                      "representation_used": prod, "representation_source": dec_src, "arms": arms,
                      "reference_arm": {"name": ref_arm, "representation": ref_rep, "gpu_mode": ref_mode,
                                        "validated_kraus_gpu_path": vpath_name,
-                                       "rule": "prompts/33d R3: a Kraus reference arm on C2_KCHK's validated Kraus GPU "
-                                               "path; none (production RM at 100 %) when no path was validated"},
+                                       "rule": "prompts/33d R3 / 33f R2: a Kraus reference arm on a validated Kraus GPU "
+                                               "path; none (production RM at 100 %) when the decision file names none"},
                      "per_run": pr["per_run"], "shots_per_circuit": pr["shots_per_circuit"],
                      "minimum_shots_per_circuit": minimum, "rm_vs_kraus_in_cell": incell,
                      "rm_vs_kraus_in_cell_arms": {"rm": rm_arm, "kraus": kr_arm},
                      "rm_vs_kraus_in_cell_pass": incell_pass if evaluated else None,
                      "representation_decision_for_later_cells": later,
-                     "representation_decision_rule": ("C2_KCHK decision.production_representation (prompts/33d R1/R3); "
+                     "representation_decision_rule": (f"{C2_DECISION_FILE} production_representation (prompts/33f R2); "
                                                       "the in-cell RM-vs-Kraus statistic is information"),
                      "K1_device_structure": device, "shots_total": tot,
                      "information_only": False, "primary_class2_cell": ctx.token == C2_PRIMARY_CELL,

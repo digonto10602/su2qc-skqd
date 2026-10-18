@@ -307,8 +307,10 @@ def build_parser(ci: dict = None):
                     help="C2_CAL dry run only: 'pta,rm,kraus,chunk' (default 4,8,4,2; a reduced check under the 30-minute rule)")
     ap.add_argument("--parts-file", default=None,
                     help="C4_PART_NN: the slot content (default ci/parts/<TOKEN>.json; prompts/33a step D)")
-    ap.add_argument("--c2kchk-file", default=None,
-                    help="C2 cells: the C2_KCHK decision file (default validation/[dryrun/]C2_KCHK.json; prompts/33d)")
+    ap.add_argument("--c2-decision-file", "--c2kchk-file", dest="c2_decision_file", default=None,
+                    help="C2 cells: the class-2 representation decision (default "
+                         "data/campaign33/c2_representation_decision.json, written by scripts/campaign33_c2_decide.py; "
+                         "prompts/33f R2)")
     ap.add_argument("--content", default=None, choices=("full", "cpu_only"),
                     help="C2_KCHK only: full = run 1 (prompts/33d R3), cpu_only = run 2 (prompts/33e R2; the default)")
     if ci:
