@@ -4,15 +4,15 @@
  "status": "PASS",
  "criteria": [
   {
-   "name": "S0 representation decided (prompts/33d: C2_KCHK decision.production_representation = rm; never a silent default)",
+   "name": "S0 representation decided (prompts/33f R2: data/campaign33/c2_representation_decision.json production_representation = rm; never a silent default)",
    "value": {
-    "file": "data/campaign33/dryrun/C2_KCHK_stub.json",
-    "status": "STUB",
+    "file": "data/campaign33/c2_representation_decision.json",
+    "sha256": "3cad544f32abcfdc6335e3aaab9bef7d2f6f6685afbe19bbccebfa6edb54f7ee",
     "production_representation": "rm",
-    "validated_kraus_gpu_path": "kraus_gpu_native",
-    "stub": true
+    "reference_arm": "none",
+    "stub": false
    },
-   "threshold": "C2_KCHK.json present with production_representation rm",
+   "threshold": "the decision file present with production_representation rm",
    "passed": true
   },
   {
@@ -23,7 +23,7 @@
   },
   {
    "name": "S2 wall time inside the walltime budget",
-   "value": "532 s",
+   "value": "239 s",
    "threshold": "<= min(walltime 3600 s, 3600 s) and <= 1.1 x budget + 120 s",
    "passed": true
   },
@@ -34,9 +34,11 @@
     "device": true,
     "wall_seconds": true,
     "seconds_per_shot": true,
-    "gpus": false
+    "gpus": false,
+    "cpu_affinity": 12,
+    "slurm_cpus_per_task": null
    },
-   "threshold": "every policy field non-null on the CI; present on the laptop",
+   "threshold": "every policy field non-null on the CI and cpu_affinity == SLURM_CPUS_PER_TASK there; present on the laptop",
    "passed": true
   },
   {
@@ -64,7 +66,7 @@
   "prompt": "prompts/33_2x3_four_class_perlmutter_campaign.md",
   "content": "I-XY4 on IBM-T3, echo and star halves (information)",
   "dry_run": true,
-  "created": "2026-10-13 20:50:11 UTC",
+  "created": "2026-10-18 19:51:22 UTC",
   "seeds": {
    "s0": 33500000,
    "rule": "aer seed of chunk i of circuit c = s0 * 1e4 + c * 1e6 + i * stride, stride = chunk size, s0 = 33 000 000 + 1e5 x token index (prompts/33 2.3 s0; the circuit/chunk offsets are widened from 1e3 c so that circuits, chunks, tokens and the a/b halves are disjoint for <= 1e6 shots per circuit: the literal s0 + 1e3 c + i stride overlaps above 1000 shots per circuit).  prompts/33b R4: every part of a split class-4 run (part 1 on the F token, parts >= 2 on any C4_PART slot) uses s0 of the run's OWN F token, i = the chunk's index in the UNSPLIT chunk plan and stride = the sizing's chunk, so the parts concatenate to the unsplit run seed for seed and a slot can be re-used; the run's CV3 equal-shots sample uses the same s0 with circuit offsets 100 (k <= 4) / 200 (k = 5); an f-cell slot uses the slot's own s0 with circuit offset 4 x the cell's global index"
@@ -100,596 +102,59 @@
    ],
    "env": "skqd",
    "versions": {
-    "qiskit": "2.5.2",
-    "qiskit_aer": "0.17.2",
-    "numpy": "2.5.2",
-    "scipy": "1.18.0",
+    "qiskit": "1.4.3",
+    "qiskit_aer": "0.15.1",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
     "threadpoolctl": "3.7.0",
     "python": "3.12.14"
    },
-   "seconds": 0.6967129707336426
+   "seconds": 0.727851390838623
   },
   "representation_decision": {
-   "path": "data/campaign33/dryrun/C2_KCHK_stub.json",
-   "status": "STUB",
+   "path": "data/campaign33/c2_representation_decision.json",
+   "sha256": "3cad544f32abcfdc6335e3aaab9bef7d2f6f6685afbe19bbccebfa6edb54f7ee",
+   "git_commit": "136e5fc",
    "production_representation": "rm",
-   "validated_kraus_gpu_path": "kraus_gpu_native",
-   "validated_path_gpu_mode": "native",
-   "seconds_per_shot": {},
-   "production_seconds_per_shot": null,
+   "reference_arm": "none",
+   "validated_kraus_gpu_path": "none",
+   "production_seconds_per_shot": 0.4172244002111256,
+   "production_seconds_per_shot_source": "validation/archive/C2_KCHK_job59780907.json data.arms.rm_gpu_cusv.seconds_per_shot (job 59780907, 512 shots)",
    "validated_path_seconds_per_shot": null,
-   "bug_confirmed": null,
-   "stub": true
+   "representation_reason": "class-2 production is RM -- the Kraus channel of the record with T2 := min(T2, T1) on the four qubits with T2 > T1 (identical super-operators on the other 17), no Kraus instruction -- because aer 0.15.1's GPU Kraus path is unusable (C2_KCHK K1 bug_confirmed; GPU Kraus arms mutually inconsistent across fusion / kernel options; prompts/33f R2, data/campaign33/aer_gpu_kraus_report)",
+   "kraus_gpu": "unusable (aer 0.15.1 GPU Kraus path, see data/campaign33/aer_gpu_kraus_report)",
+   "bug_confirmed": true,
+   "fisher_min_p_by_reference": {
+    "ci_kraus_cpu": 0.04526888480298333,
+    "ci_rm_cpu": 0.0744849389767584,
+    "laptop_kraus_cpu": 0.018857516888080753,
+    "laptop_rm_cpu": 0.06024394300003938
+   },
+   "stub": false
+  },
+  "noise": {
+   "representation": "rm",
+   "representation_reason": "class-2 production is RM -- the Kraus channel of the record with T2 := min(T2, T1) on the four qubits with T2 > T1 (identical super-operators on the other 17), no Kraus instruction -- because aer 0.15.1's GPU Kraus path is unusable (C2_KCHK K1 bug_confirmed; GPU Kraus arms mutually inconsistent across fusion / kernel options; prompts/33f R2, data/campaign33/aer_gpu_kraus_report)",
+   "kraus_gpu": "unusable (aer 0.15.1 GPU Kraus path, see data/campaign33/aer_gpu_kraus_report)",
+   "decision_file": "data/campaign33/c2_representation_decision.json"
   },
   "gpu_mode_used": "cpu",
-  "seconds_per_shot": 125.68285822868347,
+  "seconds_per_shot": 59.158382058143616,
   "cell": "I-XY4",
   "family": "IBM-T3",
   "conventions": [
    "echo"
   ],
   "representation_used": "rm",
-  "representation_source": "data/campaign33/dryrun/C2_KCHK_stub.json decision: rm, validated Kraus GPU path kraus_gpu_native (stub)",
+  "representation_source": "data/campaign33/c2_representation_decision.json decision: rm, validated Kraus GPU path none",
   "arms": {
-   "kraus_reference": {
-    "representation": "pta",
-    "planned_representation": "kraus",
-    "mode": "cpu",
-    "target_shots_per_run": 1,
-    "chunk": 128,
-    "rule": "deadline-stopped at 20% of the sampling window, equal shots per run at round boundaries, chunk 128 (128, halved while one round at the C2_KCHK kraus rate None s/shot would not fit 0.9 of the arm's budget); >= 1 round always",
-    "shots_per_circuit": {
-     "B0_ref117_k1|echo": 1,
-     "B1_ref29_k1|echo": 1
-    },
-    "equal_shots": true,
-    "per_run": {
-     "B0_ref117_k1|echo": {
-      "structure": {
-       "shots": 1,
-       "n_bits": 20,
-       "mean_hamming_weight": 13.0,
-       "sd_hamming_weight": 0.0,
-       "se_mean_hamming_weight": 0.0,
-       "unital_limit": 10.0,
-       "deficit_vs_unital": -3.0,
-       "marginals_by_clbit": [
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        0.0,
-        1.0,
-        1.0,
-        0.0,
-        1.0,
-        0.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        0.0,
-        1.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0
-       ],
-       "se_marginals_by_clbit": [
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0
-       ],
-       "physical_by_clbit": [
-        92,
-        69,
-        54,
-        52,
-        53,
-        68,
-        73,
-        94,
-        50,
-        72,
-        71,
-        79,
-        51,
-        74,
-        70,
-        93,
-        75,
-        58,
-        95,
-        59
-       ],
-       "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
-      },
-      "accepted": 0,
-      "distinct_accepted": 0,
-      "reference_hits": 0,
-      "rejected": 1,
-      "rejections": {
-       "flag": 1,
-       "link": 0,
-       "sector": 0,
-       "unknown": 0
-      },
-      "roundtrip": {
-       "accepted_states": 0,
-       "mismatches": 0,
-       "ok": true
-      },
-      "chunks": [
-       {
-        "start": 0,
-        "shots": 1,
-        "index": 0,
-        "seed": 335050000000,
-        "seconds": 65.18389534950256
-       }
-      ],
-      "circuit": "B0_ref117_k1",
-      "family": "IBM-T3",
-      "shots": 1,
-      "t2_convention": "echo",
-      "representation": "pta",
-      "scaled_to_1e5": {
-       "accepted": 0.0,
-       "reference_hits": 0.0
-      },
-      "measured_K1": {
-       "accepted": 58,
-       "reference_hits": 0,
-       "shots": 100000,
-       "source": "validation/K1_2x3_fpilot.json data.circuits.B0_ref117_k1",
-       "mean_hamming_weight": 9.77099,
-       "se_mean_hamming_weight": 0.00714756987209994,
-       "marginals_by_clbit": [
-        0.50707,
-        0.49856,
-        0.47731,
-        0.48498,
-        0.49821,
-        0.49634,
-        0.44523,
-        0.49545,
-        0.49939,
-        0.4922,
-        0.45983,
-        0.47248,
-        0.49226,
-        0.48605,
-        0.47336,
-        0.50373,
-        0.50188,
-        0.4789,
-        0.50544,
-        0.50232
-       ],
-       "structure_source": "data/hardware/K1_2x3_ibm_kingston/counts/B0_ref117_k1.json"
-      },
-      "P_measured_accepted_under_model": null,
-      "P_measured_accepted_note": "no simulated accepted string: the scaled rate is 0",
-      "P_measured_hits_under_model": 1.0,
-      "z_vs_K1": {
-       "evaluated": true,
-       "n_sigma": 3.0,
-       "shots": [
-        1,
-        100000
-       ],
-       "mean_hamming_weight": [
-        13.0,
-        9.77099
-       ],
-       "delta_mean_hamming_weight": 3.2290100000000006,
-       "z_mean_hamming_weight": 451.76333464108194,
-       "z_marginals_by_clbit": [
-        311.78747629515925,
-        317.13981722794375,
-        330.91909583729984,
-        325.8743160461574,
-        -315.0976898299834,
-        318.55108774430914,
-        352.9915213888999,
-        -313.3630684125542,
-        316.61379951545575,
-        -311.33249811042384,
-        342.7414102708054,
-        334.13944743961656,
-        321.1614541641637,
-        325.17710588279374,
-        -299.8049900389515,
-        313.8774408947643,
-        -317.4190261966041,
-        -303.1530080766005,
-        312.80572256536846,
-        -317.69848283019184
-       ],
-       "max_abs_z_marginal": 352.9915213888999,
-       "clbits_outside": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9,
-        10,
-        11,
-        12,
-        13,
-        14,
-        15,
-        16,
-        17,
-        18,
-        19
-       ],
-       "weight_ok": false,
-       "marginals_ok": false,
-       "pass": false,
-       "n_marginal_tests": 20,
-       "family_wise_false_alarm_marginals": 0.053995921265203826,
-       "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)"
-      },
-      "comparison_power": {
-       "counts": "underpowered",
-       "expected_accepted_at_device_rate": 0.00058,
-       "circuit": "like_for_like",
-       "rule": "counts underpowered when N_sim x (K1 accepted / K1 shots) < 5.0; like_for_like only for the T3 circuits the device flew (C2_XY4)"
-      },
-      "f0_twirled": {
-       "g0": 1.0141375125694863e-20,
-       "f0": 7.599107538471273e-21,
-       "readout_survival": 0.7493172715027244,
-       "noisy_sites": 25312,
-       "rule": "identity weight of the Pauli twirl of every gate error and delay window, x readout survival"
-      },
-      "seconds_per_shot": null,
-      "simulator_options": {
-       "method": "statevector",
-       "precision": "double",
-       "noise_model": "attached",
-       "max_parallel_threads": 5
-      },
-      "noise": {
-       "id": "I-XY4",
-       "class": "IBM Heron (ibm_kingston record)",
-       "representation": "pta",
-       "t2_convention": "echo",
-       "t2_star_ratio": null,
-       "t2_star_ratio_source": null,
-       "dt_s": 4e-09,
-       "record_fingerprint": "b948ddc86b1c4696121e377bd2c751b889705006bd1abb685eeee303398a44d9",
-       "record_stamp": "20261006T0652Z",
-       "channel_classes": [
-        "depolarizing gate error (cz, sx, x)",
-        "thermal relaxation T1/T2 on every gate for its duration",
-        "readout confusion per qubit",
-        "thermal relaxation on every explicit delay (idle-aware)"
-       ],
-       "coherent_eps_rad": null,
-       "coherent_eps_source": null,
-       "not_modelled": [
-        "ZZ crosstalk",
-        "measurement crosstalk",
-        "leakage",
-        "non-Markovian dephasing",
-        "a dynamical-decoupling gain beyond the XY4 pulses present as gates: Aer's relaxation on a delay is Markovian (the pulses' effect on the populations is modelled, prompts/33c R1)"
-       ],
-       "source": "data/hardware/K0_prep/ibm_kingston_full_20261006T0652Z.json through NoiseModel.from_backend on a target built from the record (no fake provider); qiskit_aer NoiseModel.from_backend docs (read 2026-10-06)",
-       "pta_rule": "p_X = p_Y = (1 - e^{-t/T1})/4, p_Z = (1 - e^{-t/T2})/2 - (1 - e^{-t/T1})/4 on delays; every gate error twirled numerically (sum_k |Tr P K_k|^2 / d^2)",
-       "rm_rule": null
-      },
-      "prereg_expected_hits_1e5": {
-       "f_gates_layout (no idle)": 1.3675207444775161,
-       "f_idle_aware_xy4 echo (2x2 transfer)": 0.09536743199740676,
-       "f_idle_aware echo": 0.09536743176718294,
-       "f_idle_aware_xy4 0.174 (2x2 transfer)": 0.095367431640625,
-       "f_idle_aware 0.174": 0.095367431640625
-      }
-     },
-     "B1_ref29_k1|echo": {
-      "structure": {
-       "shots": 1,
-       "n_bits": 20,
-       "mean_hamming_weight": 12.0,
-       "sd_hamming_weight": 0.0,
-       "se_mean_hamming_weight": 0.0,
-       "unital_limit": 10.0,
-       "deficit_vs_unital": -2.0,
-       "marginals_by_clbit": [
-        1.0,
-        0.0,
-        1.0,
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        0.0,
-        0.0,
-        1.0,
-        1.0,
-        0.0,
-        1.0,
-        1.0,
-        0.0,
-        1.0
-       ],
-       "se_marginals_by_clbit": [
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0
-       ],
-       "physical_by_clbit": [
-        92,
-        69,
-        54,
-        52,
-        53,
-        68,
-        73,
-        94,
-        50,
-        72,
-        71,
-        79,
-        51,
-        74,
-        70,
-        93,
-        75,
-        58,
-        95,
-        59
-       ],
-       "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
-      },
-      "accepted": 0,
-      "distinct_accepted": 0,
-      "reference_hits": 0,
-      "rejected": 1,
-      "rejections": {
-       "flag": 1,
-       "link": 0,
-       "sector": 0,
-       "unknown": 0
-      },
-      "roundtrip": {
-       "accepted_states": 0,
-       "mismatches": 0,
-       "ok": true
-      },
-      "chunks": [
-       {
-        "start": 0,
-        "shots": 1,
-        "index": 0,
-        "seed": 335051000000,
-        "seconds": 108.9159460067749
-       }
-      ],
-      "circuit": "B1_ref29_k1",
-      "family": "IBM-T3",
-      "shots": 1,
-      "t2_convention": "echo",
-      "representation": "pta",
-      "scaled_to_1e5": {
-       "accepted": 0.0,
-       "reference_hits": 0.0
-      },
-      "measured_K1": {
-       "accepted": 45,
-       "reference_hits": 0,
-       "shots": 100000,
-       "source": "validation/K1_2x3_fpilot.json data.circuits.B1_ref29_k1",
-       "mean_hamming_weight": 9.76885,
-       "se_mean_hamming_weight": 0.007165075725915364,
-       "marginals_by_clbit": [
-        0.50485,
-        0.49916,
-        0.48822,
-        0.48221,
-        0.4979,
-        0.49529,
-        0.44131,
-        0.49439,
-        0.49979,
-        0.49204,
-        0.46117,
-        0.47433,
-        0.49111,
-        0.48678,
-        0.47289,
-        0.50119,
-        0.50151,
-        0.47933,
-        0.50405,
-        0.50133
-       ],
-       "structure_source": "data/hardware/K1_2x3_ibm_kingston/counts/B1_ref29_k1.json"
-      },
-      "P_measured_accepted_under_model": null,
-      "P_measured_accepted_note": "no simulated accepted string: the scaled rate is 0",
-      "P_measured_hits_under_model": 1.0,
-      "z_vs_K1": {
-       "evaluated": true,
-       "n_sigma": 3.0,
-       "shots": [
-        1,
-        100000
-       ],
-       "mean_hamming_weight": [
-        12.0,
-        9.76885
-       ],
-       "delta_mean_hamming_weight": 2.2311499999999995,
-       "z_mean_hamming_weight": 311.39238234847295,
-       "z_marginals_by_clbit": [
-        313.1750903551812,
-        -315.69694888177827,
-        323.7679621812077,
-        327.6866308338014,
-        -314.90238685086786,
-        -313.2627996758563,
-        -281.05184155848514,
-        319.7959714866866,
-        316.360609581572,
-        321.30283115495,
-        341.8183393100919,
-        -300.3887754259888,
-        -310.6543435487009,
-        324.7023434107403,
-        333.86474589077403,
-        -316.98128585562716,
-        315.2741958801333,
-        329.5823697017314,
-        -318.79966931627285,
-        315.38771593986826
-       ],
-       "max_abs_z_marginal": 341.8183393100919,
-       "clbits_outside": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9,
-        10,
-        11,
-        12,
-        13,
-        14,
-        15,
-        16,
-        17,
-        18,
-        19
-       ],
-       "weight_ok": false,
-       "marginals_ok": false,
-       "pass": false,
-       "n_marginal_tests": 20,
-       "family_wise_false_alarm_marginals": 0.053995921265203826,
-       "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)"
-      },
-      "comparison_power": {
-       "counts": "underpowered",
-       "expected_accepted_at_device_rate": 0.00045,
-       "circuit": "like_for_like",
-       "rule": "counts underpowered when N_sim x (K1 accepted / K1 shots) < 5.0; like_for_like only for the T3 circuits the device flew (C2_XY4)"
-      },
-      "f0_twirled": {
-       "g0": 1.0486826785623507e-20,
-       "f0": 7.857960433725092e-21,
-       "readout_survival": 0.7493172715027244,
-       "noisy_sites": 25297,
-       "rule": "identity weight of the Pauli twirl of every gate error and delay window, x readout survival"
-      },
-      "seconds_per_shot": null,
-      "simulator_options": {
-       "method": "statevector",
-       "precision": "double",
-       "noise_model": "attached",
-       "max_parallel_threads": 5
-      },
-      "noise": {
-       "id": "I-XY4",
-       "class": "IBM Heron (ibm_kingston record)",
-       "representation": "pta",
-       "t2_convention": "echo",
-       "t2_star_ratio": null,
-       "t2_star_ratio_source": null,
-       "dt_s": 4e-09,
-       "record_fingerprint": "b948ddc86b1c4696121e377bd2c751b889705006bd1abb685eeee303398a44d9",
-       "record_stamp": "20261006T0652Z",
-       "channel_classes": [
-        "depolarizing gate error (cz, sx, x)",
-        "thermal relaxation T1/T2 on every gate for its duration",
-        "readout confusion per qubit",
-        "thermal relaxation on every explicit delay (idle-aware)"
-       ],
-       "coherent_eps_rad": null,
-       "coherent_eps_source": null,
-       "not_modelled": [
-        "ZZ crosstalk",
-        "measurement crosstalk",
-        "leakage",
-        "non-Markovian dephasing",
-        "a dynamical-decoupling gain beyond the XY4 pulses present as gates: Aer's relaxation on a delay is Markovian (the pulses' effect on the populations is modelled, prompts/33c R1)"
-       ],
-       "source": "data/hardware/K0_prep/ibm_kingston_full_20261006T0652Z.json through NoiseModel.from_backend on a target built from the record (no fake provider); qiskit_aer NoiseModel.from_backend docs (read 2026-10-06)",
-       "pta_rule": "p_X = p_Y = (1 - e^{-t/T1})/4, p_Z = (1 - e^{-t/T2})/2 - (1 - e^{-t/T1})/4 on delays; every gate error twirled numerically (sum_k |Tr P K_k|^2 / d^2)",
-       "rm_rule": null
-      },
-      "prereg_expected_hits_1e5": {
-       "f_gates_layout (no idle)": 1.369858905168166,
-       "f_idle_aware_xy4 echo (2x2 transfer)": 0.09536743200398612,
-       "f_idle_aware echo": 0.0953674317695168,
-       "f_idle_aware_xy4 0.174 (2x2 transfer)": 0.095367431640625,
-       "f_idle_aware 0.174": 0.095367431640625
-      }
-     }
-    },
-    "calls": 2,
-    "stopped": null,
-    "warmup": null,
-    "seconds": 181.04800271987915,
-    "seconds_per_shot": 87.0499358177185
-   },
    "production": {
     "representation": "pta",
     "planned_representation": "rm",
     "mode": "cpu",
     "target_shots_per_run": 1,
     "chunk": 1,
-    "rule": "equal shots per run = 0.95 x the window left / (rate None s/shot x 2 runs), capped at 100000; chunks <= 4096 at the gate_CV prefix points; deadline-stopped at a round boundary (equal shots kept)",
+    "rule": "equal shots per run = 0.95 x the window left / (rate 0.4172244002111256 s/shot x 2 runs), capped at 100000; chunks <= 4096 at the gate_CV prefix points; deadline-stopped at a round boundary (equal shots kept)",
     "shots_per_circuit": {
      "B0_ref117_k1|echo": 1,
      "B1_ref29_k1|echo": 1
@@ -794,7 +259,7 @@
         "shots": 1,
         "index": 0,
         "seed": 335000000000,
-        "seconds": 124.68017983436584
+        "seconds": 58.722588300704956
        }
       ],
       "circuit": "B0_ref117_k1",
@@ -912,8 +377,8 @@
        "rule": "counts underpowered when N_sim x (K1 accepted / K1 shots) < 5.0; like_for_like only for the T3 circuits the device flew (C2_XY4)"
       },
       "f0_twirled": {
-       "g0": 1.0141375125694863e-20,
-       "f0": 7.599107538471273e-21,
+       "g0": 1.0141375125700051e-20,
+       "f0": 7.599107538475161e-21,
        "readout_survival": 0.7493172715027244,
        "noisy_sites": 25312,
        "rule": "identity weight of the Pauli twirl of every gate error and delay window, x readout survival"
@@ -923,7 +388,7 @@
        "method": "statevector",
        "precision": "double",
        "noise_model": "attached",
-       "max_parallel_threads": 5
+       "max_parallel_threads": 6
       },
       "noise": {
        "id": "I-XY4",
@@ -1060,7 +525,7 @@
         "shots": 1,
         "index": 0,
         "seed": 335001000000,
-        "seconds": 126.68551087379456
+        "seconds": 59.59414076805115
        }
       ],
       "circuit": "B1_ref29_k1",
@@ -1178,8 +643,8 @@
        "rule": "counts underpowered when N_sim x (K1 accepted / K1 shots) < 5.0; like_for_like only for the T3 circuits the device flew (C2_XY4)"
       },
       "f0_twirled": {
-       "g0": 1.0486826785623507e-20,
-       "f0": 7.857960433725092e-21,
+       "g0": 1.048682678562902e-20,
+       "f0": 7.857960433729224e-21,
        "readout_survival": 0.7493172715027244,
        "noisy_sites": 25297,
        "rule": "identity weight of the Pauli twirl of every gate error and delay window, x readout survival"
@@ -1189,7 +654,7 @@
        "method": "statevector",
        "precision": "double",
        "noise_model": "attached",
-       "max_parallel_threads": 5
+       "max_parallel_threads": 6
       },
       "noise": {
        "id": "I-XY4",
@@ -1232,16 +697,16 @@
     "calls": 2,
     "stopped": null,
     "warmup": null,
-    "seconds": 257.69408774375916,
-    "seconds_per_shot": 125.68285822868347
+    "seconds": 124.0128059387207,
+    "seconds_per_shot": 59.158382058143616
    }
   },
   "reference_arm": {
-   "name": "kraus_reference",
-   "representation": "kraus",
-   "gpu_mode": "cpu",
-   "validated_kraus_gpu_path": "kraus_gpu_native",
-   "rule": "prompts/33d R3: a Kraus reference arm on C2_KCHK's validated Kraus GPU path; none (production RM at 100 %) when no path was validated"
+   "name": null,
+   "representation": null,
+   "gpu_mode": null,
+   "validated_kraus_gpu_path": "none",
+   "rule": "prompts/33d R3 / 33f R2: a Kraus reference arm on a validated Kraus GPU path; none (production RM at 100 %) when the decision file names none"
   },
   "per_run": {
    "B0_ref117_k1|echo": {
@@ -1342,7 +807,7 @@
       "shots": 1,
       "index": 0,
       "seed": 335000000000,
-      "seconds": 124.68017983436584
+      "seconds": 58.722588300704956
      }
     ],
     "circuit": "B0_ref117_k1",
@@ -1460,8 +925,8 @@
      "rule": "counts underpowered when N_sim x (K1 accepted / K1 shots) < 5.0; like_for_like only for the T3 circuits the device flew (C2_XY4)"
     },
     "f0_twirled": {
-     "g0": 1.0141375125694863e-20,
-     "f0": 7.599107538471273e-21,
+     "g0": 1.0141375125700051e-20,
+     "f0": 7.599107538475161e-21,
      "readout_survival": 0.7493172715027244,
      "noisy_sites": 25312,
      "rule": "identity weight of the Pauli twirl of every gate error and delay window, x readout survival"
@@ -1471,7 +936,7 @@
      "method": "statevector",
      "precision": "double",
      "noise_model": "attached",
-     "max_parallel_threads": 5
+     "max_parallel_threads": 6
     },
     "noise": {
      "id": "I-XY4",
@@ -1608,7 +1073,7 @@
       "shots": 1,
       "index": 0,
       "seed": 335001000000,
-      "seconds": 126.68551087379456
+      "seconds": 59.59414076805115
      }
     ],
     "circuit": "B1_ref29_k1",
@@ -1726,8 +1191,8 @@
      "rule": "counts underpowered when N_sim x (K1 accepted / K1 shots) < 5.0; like_for_like only for the T3 circuits the device flew (C2_XY4)"
     },
     "f0_twirled": {
-     "g0": 1.0486826785623507e-20,
-     "f0": 7.857960433725092e-21,
+     "g0": 1.048682678562902e-20,
+     "f0": 7.857960433729224e-21,
      "readout_survival": 0.7493172715027244,
      "noisy_sites": 25297,
      "rule": "identity weight of the Pauli twirl of every gate error and delay window, x readout survival"
@@ -1737,7 +1202,7 @@
      "method": "statevector",
      "precision": "double",
      "noise_model": "attached",
-     "max_parallel_threads": 5
+     "max_parallel_threads": 6
     },
     "noise": {
      "id": "I-XY4",
@@ -1782,123 +1247,14 @@
    "B1_ref29_k1|echo": 1
   },
   "minimum_shots_per_circuit": 1000,
-  "rm_vs_kraus_in_cell": {
-   "B0_ref117_k1|echo": {
-    "evaluated": true,
-    "n_sigma": 3.0,
-    "shots": [
-     1,
-     1
-    ],
-    "mean_hamming_weight": [
-     13.0,
-     13.0
-    ],
-    "delta_mean_hamming_weight": 0.0,
-    "z_mean_hamming_weight": 0.0,
-    "z_marginals_by_clbit": [
-     0.0,
-     Infinity,
-     0.0,
-     0.0,
-     Infinity,
-     0.0,
-     Infinity,
-     0.0,
-     0.0,
-     Infinity,
-     Infinity,
-     0.0,
-     0.0,
-     Infinity,
-     0.0,
-     0.0,
-     0.0,
-     Infinity,
-     0.0,
-     Infinity
-    ],
-    "max_abs_z_marginal": Infinity,
-    "clbits_outside": [
-     1,
-     4,
-     6,
-     9,
-     10,
-     13,
-     17,
-     19
-    ],
-    "weight_ok": true,
-    "marginals_ok": false,
-    "pass": false,
-    "n_marginal_tests": 20,
-    "family_wise_false_alarm_marginals": 0.053995921265203826,
-    "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)"
-   },
-   "B1_ref29_k1|echo": {
-    "evaluated": true,
-    "n_sigma": 3.0,
-    "shots": [
-     1,
-     1
-    ],
-    "mean_hamming_weight": [
-     10.0,
-     12.0
-    ],
-    "delta_mean_hamming_weight": -2.0,
-    "z_mean_hamming_weight": Infinity,
-    "z_marginals_by_clbit": [
-     0.0,
-     Infinity,
-     0.0,
-     Infinity,
-     0.0,
-     Infinity,
-     Infinity,
-     0.0,
-     0.0,
-     0.0,
-     Infinity,
-     0.0,
-     0.0,
-     0.0,
-     Infinity,
-     0.0,
-     Infinity,
-     Infinity,
-     Infinity,
-     Infinity
-    ],
-    "max_abs_z_marginal": Infinity,
-    "clbits_outside": [
-     1,
-     3,
-     5,
-     6,
-     10,
-     14,
-     16,
-     17,
-     18,
-     19
-    ],
-    "weight_ok": false,
-    "marginals_ok": false,
-    "pass": false,
-    "n_marginal_tests": 20,
-    "family_wise_false_alarm_marginals": 0.053995921265203826,
-    "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)"
-   }
-  },
+  "rm_vs_kraus_in_cell": {},
   "rm_vs_kraus_in_cell_arms": {
    "rm": "production",
-   "kraus": "kraus_reference"
+   "kraus": null
   },
-  "rm_vs_kraus_in_cell_pass": false,
+  "rm_vs_kraus_in_cell_pass": null,
   "representation_decision_for_later_cells": "rm",
-  "representation_decision_rule": "C2_KCHK decision.production_representation (prompts/33d R1/R3); the in-cell RM-vs-Kraus statistic is information",
+  "representation_decision_rule": "data/campaign33/c2_representation_decision.json production_representation (prompts/33f R2); the in-cell RM-vs-Kraus statistic is information",
   "K1_device_structure": {
    "B0_ref117_k1": {
     "shots": 100000,
@@ -2061,7 +1417,7 @@
     "map_matches_circuit": true
    }
   },
-  "shots_total": 4,
+  "shots_total": 2,
   "information_only": false,
   "primary_class2_cell": true,
   "f_point_estimate_claimed": false,
@@ -2089,15 +1445,15 @@
    "gpus": null,
    "tasks": null,
    "rank": null,
-   "wall_seconds": 532.4005818367004,
+   "wall_seconds": 238.67335295677185,
    "gpu_node_hours": null,
    "node_hours_charged_shared_qos": null,
    "parallel_efficiency_Ep": null,
    "parallel_efficiency_note": "one task: E(p) needs T_1 and T_p from two task counts (not measured)",
    "phases_s": {
-    "preflight_s": 0.6967129707336426,
-    "noise_model_build_s": 91.21077394485474,
-    "sampling_and_decoding_s": 438.74219727516174
+    "preflight_s": 0.727851390838623,
+    "noise_model_build_s": 110.8836498260498,
+    "sampling_and_decoding_s": 124.01288914680481
    },
    "gpu_telemetry": {
     "source": "gpu_telemetry.csv",
@@ -2107,25 +1463,33 @@
     "max_utilization_pct": null
    },
    "versions": {
-    "qiskit": "2.5.2",
-    "qiskit_aer": "0.17.2",
-    "numpy": "2.5.2",
-    "scipy": "1.18.0",
+    "qiskit": "1.4.3",
+    "qiskit_aer": "0.15.1",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
     "threadpoolctl": "3.7.0",
     "python": "3.12.14"
    },
-   "seconds_per_shot": 125.68285822868347,
+   "seconds_per_shot": 59.158382058143616,
    "budget_minutes": 8.0,
    "shots_scale": 0.01,
    "max_shots_per_run": 16,
-   "oom_retries": []
+   "oom_retries": [],
+   "cpu_affinity": 12,
+   "cpu_affinity_source": "os.sched_getaffinity(0) at process start, before any OpenMP runtime loaded (SKQD_STEP_CPUS; prompts/33e part 2)",
+   "cpu_affinity_main_thread_now": 12,
+   "cpu_affinity_check": {
+    "applies": false,
+    "ok": true,
+    "affinity": 12,
+    "slurm_cpus_per_task": null,
+    "rule": "recorded only (not the CI)"
+   }
   },
   "physics_criteria_information_dry_run": [
    {
     "name": "P6 decoder round trip on every accepted string (both arms)",
     "value": {
-     "kraus_reference:B0_ref117_k1|echo": 0,
-     "kraus_reference:B1_ref29_k1|echo": 0,
      "production:B0_ref117_k1|echo": 0,
      "production:B1_ref29_k1|echo": 0
     },
@@ -2134,7 +1498,7 @@
     "gating": false
    },
    {
-    "name": "P7' K1 comparison per run: Poisson probabilities of the measured 58 / 45 accepted and 0 / 0 hits, the z table of the mean Hamming weight and every marginal, comparison_power; the kraus_reference arm present",
+    "name": "P7' K1 comparison per run: Poisson probabilities of the measured 58 / 45 accepted and 0 / 0 hits, the z table of the mean Hamming weight and every marginal, comparison_power; no reference arm (no validated Kraus GPU path)",
     "value": {
      "B0_ref117_k1|echo": "underpowered/like_for_like",
      "B1_ref29_k1|echo": "underpowered/like_for_like"
@@ -2142,37 +1506,20 @@
     "threshold": "fields present (no threshold)",
     "passed": true,
     "gating": false
-   },
-   {
-    "name": "P4a' in-cell RM vs Kraus (|z| <= 3 on the mean Hamming weight and every marginal, per run; information beside C2_KCHK, prompts/33d R1): evaluated on every run",
-    "value": {
-     "pass_by_run": {
-      "B0_ref117_k1|echo": false,
-      "B1_ref29_k1|echo": false
-     },
-     "z_w_by_run": {
-      "B0_ref117_k1|echo": 0.0,
-      "B1_ref29_k1|echo": Infinity
-     },
-     "kraus_gpu_path": "kraus_gpu_native"
-    },
-    "threshold": "evaluated",
-    "passed": true,
-    "gating": false
    }
   ],
   "notes": [
-   "dry run: PTA stands in for every arm (kraus reference, rm production), 1 shot per run -- a path check, not the CI's channels"
+   "dry run: PTA stands in for every arm (rm production), 1 shot per run -- a path check, not the CI's channels"
   ]
  },
- "runtime_s": 532.4005818367004,
+ "runtime_s": 238.67335295677185,
  "environment": {
   "python": "3.12.14",
-  "numpy": "2.5.2",
-  "scipy": "1.18.0",
+  "numpy": "2.5.3",
+  "scipy": "1.18.1",
   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
   "cpu_count": 12,
-  "git_commit": "a6e4c14",
-  "timestamp": "2026-10-13 14:59:04 MDT"
+  "git_commit": "6e2cdaf",
+  "timestamp": "2026-10-18 13:55:21 MDT"
  }
 }

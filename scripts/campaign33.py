@@ -311,6 +311,11 @@ def build_parser(ci: dict = None):
                     help="C2 cells: the class-2 representation decision (default "
                          "data/campaign33/c2_representation_decision.json, written by scripts/campaign33_c2_decide.py; "
                          "prompts/33f R2)")
+    ap.add_argument("--runs", default=None,
+                    help="--stage assemble: merge only these split runs (comma list, e.g. F1_B1,F4_B0a) and stop -- one "
+                         "chunk of the assembly under the 30-minute rule (prompts/33f R3)")
+    ap.add_argument("--reuse-merged", action="store_true",
+                    help="--stage assemble: keep a merged C33_<run>.json whose recorded inputs are byte-identical")
     ap.add_argument("--content", default=None, choices=("full", "cpu_only"),
                     help="C2_KCHK only: full = run 1 (prompts/33d R3), cpu_only = run 2 (prompts/33e R2; the default)")
     if ci:
@@ -533,7 +538,8 @@ def main(argv=None):
         return campaign33_freeze.main()
     if args.stage == "assemble":
         from skqd.campaign33 import assemble
-        return assemble.main(dry=args.dry_run)
+        return assemble.main(dry=args.dry_run, only=[r for r in args.runs.split(",") if r] if args.runs else None,
+                             reuse=args.reuse_merged)
     if args.stage == "exact-data":
         from skqd.campaign33 import tokens_run as TR
         return TR.write_exact_data()

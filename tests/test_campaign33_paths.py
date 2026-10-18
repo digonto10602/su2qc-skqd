@@ -225,6 +225,19 @@ def test_part_slot_and_assembly(sandbox, monkeypatch):
         assert m["data"]["bounds"][c] == [0] + [int(x) for x in np.cumsum([s for _a, s, _i in SM.chunk_plan(n, ch)])]
     assert m["data"]["frun"]["E_tol"]["value"] == p1["data"]["frun"]["E_tol"]["value"]
     assert len(m["data"]["parts"]) == 2 and any(c["name"].startswith("P13") for c in m["criteria"])
+    # prompts/33f R3, the chunked assembly: a merge records the sha256 of its inputs; a later pass reuses it while the
+    # inputs are byte-identical and merges again as soon as one changes; --runs merges only the runs named
+    info = AS.split_runs(True)["F4_B0a"]
+    assert m["data"]["merge_inputs_sha256"] == AS.merge_inputs(info) and len(m["data"]["merge_inputs_sha256"]) == 2
+    again, _P = AS.assemble_split_runs(True, reuse=True)
+    assert again["F4_B0a"].get("reused") is True and again["F4_B0a"]["status"] == m["status"]
+    part2 = tmp / "validation" / "dryrun" / "C33_F4_B0a_part2of2.json"
+    d2 = json.load(open(part2))
+    d2["data"]["changed_by_the_test"] = True
+    part2.write_text(json.dumps(d2))
+    assert AS.reusable_merge("F4_B0a", AS.split_runs(True)["F4_B0a"], True) is None
+    none, _P = AS.assemble_split_runs(True, only={"F1_B0_not_split"})
+    assert none == {}
 
 
 def test_slot_without_content_fails_honestly(sandbox):

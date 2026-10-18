@@ -268,6 +268,7 @@ def merge_run(run, info, dry, P, B=None):
     for name, value, thr, passed, _gating in crit:
         R.add(name, value, thr, passed)
     R.data = {"run": run, "token": info["token"], "parts": info["files"], "cv3_slot": cv3_src, "dry_run": dry,
+              "merge_inputs_sha256": merge_inputs(info), "merge_seconds": time.time() - t0,
               "scenario": spec["scenario"], "family": spec["family"], "sector": sec, "kind": spec["kind"],
               "plan_tier": fr[0]["plan_tier"], "plan_shots_by_circuit": plan, "shots_done": done,
               "bounds": pre.bounds, "frun": dict(rd, run=run, scenario=spec["scenario"], family=spec["family"],
@@ -299,18 +300,54 @@ def SM_rnd(x):
 PHI = (1 / 16, 1 / 8, 1 / 4, 1 / 2, 1.0)
 
 
-def assemble_split_runs(dry, P=None):
-    """Merge every split run whose parts are all present; {run: status} (pending when a part is missing)."""
+def _sha256(path) -> str:
+    import hashlib
+    with open(path if os.path.isabs(path) else os.path.join(ROOT, path), "rb") as fh:
+        return hashlib.sha256(fh.read()).hexdigest()
+
+
+def merge_inputs(info) -> dict:
+    """{relative path: sha256} of every JSON a merge reads (the parts and the cv3 parts): the merged JSON records it,
+    and a later assembly reuses that merge only while the inputs are byte-identical (prompts/33f R3: the merges run in
+    chunks under the 30-minute rule)."""
+    files = list(info["files"]) + list((info.get("cv3") or {}).get("files") or [])
+    return {f: _sha256(f) for f in files if os.path.exists(os.path.join(ROOT, f))}
+
+
+def reusable_merge(run, info, dry):
+    """The merged C33_<run>.json when it was built from exactly the current inputs, else None."""
+    m = load(vpath(f"C33_{run}", dry))
+    if not m or _g(m, "data", "merge_inputs_sha256") != merge_inputs(info):
+        return None
+    return m
+
+
+def assemble_split_runs(dry, P=None, only=None, reuse=False):
+    """Merge every split run whose parts are all present; {run: status} (pending when a part is missing).
+    only: merge just these runs (a chunk of the assembly; the others are not touched).  reuse: keep a merged JSON whose
+    recorded inputs are byte-identical to the current ones instead of merging again."""
     out = {}
     runs = split_runs(dry)
     for run, info in runs.items():
+        if only is not None and run not in only:
+            continue
         if not all(info["present"]):
             out[run] = {"status": "pending", "present": info["present"], "files": info["files"]}
             continue
+        if reuse:
+            m = reusable_merge(run, info, dry)
+            if m is not None:
+                out[run] = {"status": m["status"], "json": os.path.relpath(vpath(f"C33_{run}", dry), ROOT),
+                            "reused": True, "merged_at": _g(m, "data", "created")}
+                print(f"assemble: {run} reused ({m['status']}, merged {_g(m, 'data', 'created')})", flush=True)
+                continue
         if P is None:
             from .analysis import Physics
             P = Physics()
+        t_r = time.time()
+        print(f"assemble: merging {run} ({info['parts']} parts)", flush=True)
         out[run] = merge_run(run, info, dry, P)
+        print(f"assemble: {run} {out[run]['status']} in {time.time() - t_r:.0f} s", flush=True)
     return out, P
 
 
@@ -570,11 +607,55 @@ def comparisons(dry, merged):
     return rows
 
 
-def main(dry=False):
+# prompts/33f R3: how the first campaign report reads the tokens that are not plain PASS / pending (a label beside the
+# status; no status and no criterion is changed by it)
+RULINGS = {
+    "C2_CAL": ("calibration (prompts/33a step B); its production decision is superseded (prompts/33d R5): the class-2 "
+               "decision of record is data/campaign33/c2_representation_decision.json (prompts/33f R2)"),
+    "C2_KCHK": ("calibration (prompts/33d R3, 33e R2); FAIL on S3 / S6 as harvested and not edited; decision in "
+                "data/campaign33/c2_representation_decision.json (prompts/33f)"),
+    "C4_CF": "accepted as recorded (prompts/33c R4: S6 only, P16 / P17 PASS)",
+    "C2_XY4": "requested after prompts/33f (RM at 100 %, no reference arm)",
+    "C2_GATE": "after the maintenance (prompts/33f R3), RM", "C2_ECHO": "after the maintenance (prompts/33f R3), RM",
+    "C2_STAR": "after the maintenance (prompts/33f R3), RM", "C2_COH": "after the maintenance (prompts/33f R3), RM",
+    "C4_F3_B0": "deferred (prompts/33b section 2; owner's call)", "C4_F3_B1": "deferred (prompts/33b section 2; owner's call)",
+    "C4_F6_B0": "deferred (prompts/33b section 2; owner's call)", "C4_F6_B1": "deferred (prompts/33b section 2; owner's call)",
+}
+
+
+def split_run_headlines(split: dict, dry) -> list:
+    """One row per split run (prompts/33a D4): the merged JSON's status, shots, |B_all|, E_R - E0, certificate, width,
+    E0 inside, recall of S999 and the CV1-CV5 ok flags (plan runs) -- read from validation/C33_<run>.json."""
+    out = []
+    for run, v in split.items():
+        m = load(vpath(f"C33_{run}", dry)) if v.get("status") not in ("pending", None) else None
+        fr = _g(m, "data", "frun") or {}
+        cert = _g(fr, "at_N", "certificate") or {}
+        out.append({"run": run, "status": v.get("status"), "json": v.get("json"),
+                    "failing": [c["name"] for c in (m or {}).get("criteria", []) if not c.get("passed")],
+                    "kind": fr.get("kind"), "plan_tier": fr.get("plan_tier"), "shots": _g(fr, "at_N", "shots"),
+                    "B_all": _g(fr, "at_N", "B_all_size"), "E_R_minus_E0": cert.get("E_R_minus_E0"),
+                    "certificate": cert.get("type"), "width": cert.get("width"), "E0_inside": cert.get("E0_inside"),
+                    "recall_S999": cert.get("recall_S999"), "CV1_CV5": fr.get("CV1_CV5"), "cv3": fr.get("cv3_status"),
+                    "plan_prefix": fr.get("plan_prefix")})
+    return out
+
+
+def main(dry=False, only=None, reuse=False):
+    """The campaign assembly.  only = [run, ...]: merge just those split runs and stop (one chunk of the assembly under
+    the 30-minute rule, prompts/33f R3); reuse: the final pass keeps every merge whose inputs are unchanged."""
     from skqd.report import GateResult, md_table, write_report
     t0 = time.time()
+    if only:
+        split, _P = assemble_split_runs(dry, only=set(only), reuse=reuse)
+        missing = sorted(set(only) - set(split))
+        for run, v in split.items():
+            print(f"{run}: {v['status']}")
+        if missing:
+            print(f"not split runs (nothing merged): {missing}")
+        return 0 if not missing else 2
     tokens = list(TK.campaign_tokens())        # the 33 tokens; the C4_PART_NN slots are read through their runs
-    split, P0 = assemble_split_runs(dry)
+    split, P0 = assemble_split_runs(dry, reuse=reuse)
     present = {t: token_json(t, dry) is not None for t in tokens}
     statuses = {}
     for t in tokens:
@@ -588,6 +669,7 @@ def main(dry=False):
         statuses["C33_CF"] = cfm["status"]
     merged, P = merge_halves(tokens, dry, P0)
     rows = matrix_rows(tokens, dry)
+    heads = split_run_headlines(split, dry)
     comp = comparisons(dry, merged)
     gate = ("dryrun/" if dry else "") + GATE
     R = GateResult(gate, ("DRY RUN skeleton: " if dry else "") +
@@ -606,6 +688,8 @@ def main(dry=False):
     R.data = {"dry_run": dry, "tokens": tokens, "present": present, "statuses": statuses, "merged_s3_quota": merged,
               "split_runs": split, "cf_parts": cfm,
               "matrix": rows, "comparison": comp, "prompt": "prompts/33 A7 / section 6",
+              "split_run_headlines": heads, "rulings": {t: RULINGS[t] for t in tokens if t in RULINGS},
+              "rulings_source": "prompts/33f R3 (labels only: no status or criterion is changed by them)",
               "created": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())}
     R.runtime_s = time.time() - t0
     R.save()
@@ -622,12 +706,24 @@ def main(dry=False):
                             if isinstance(v, dict) and "verdict" in v) or "-"] for c in comp]
     merged_rows = [[k, v.get("status"), v.get("shots"), v.get("recall_S999"), v.get("E0_in_weinstein"),
                     _g(v, "P15_gate_S3_criterion", "pass")] for k, v in merged.items()]
+
+    def cvs(d):
+        return " ".join(f"{k}:{'ok' if v else ('-' if v is None else 'no')}" for k, v in sorted(d.items())) if d else "-"
+    head_rows = [[h["run"], h["status"], h["kind"], h["shots"], h["B_all"], h["E_R_minus_E0"], h["certificate"],
+                  h["width"], h["E0_inside"], h["recall_S999"], cvs(h["CV1_CV5"]),
+                  "; ".join(n[:40] for n in h["failing"]) or "-"] for h in heads]
+    rul_rows = [[t, statuses.get(t) or "pending", RULINGS[t]] for t in tokens if t in RULINGS]
     text = "\n".join([
         f"# {R.title}", "", f"**Status: {'PASS' if R.passed else 'FAIL'}** — `python scripts/campaign33.py --stage "
-        f"assemble{' --dry-run' if dry else ''}`; prompt prompts/33 (A7, section 6).", banner,
+        f"assemble{' --dry-run' if dry else ''}`; prompt prompts/33 (A7, section 6), prompts/33f R3.", banner,
         "## Campaign matrix", "", md_table(["token", "status", "scenario", "variant", "sector", "f_hit", "f_hat_ideal",
                                            "recall S999", "E_R - E0", "s/shot", "node-hours"],
                                           [[f(x) for x in r] for r in mat]), "",
+        "## How the non-PASS and pending tokens are read (prompts/33f R3; labels only, no status changed)", "",
+        md_table(["token", "status", "reading"], rul_rows), "",
+        "## Split runs, merged at assembly (prompts/33a D4)", "",
+        md_table(["run", "status", "kind", "shots", "|B_all|", "E_R - E0", "certificate", "width", "E0 inside",
+                  "recall S999", "CV1-CV5", "failing criteria"], [[f(x) for x in r] for r in head_rows]), "",
         "## S3-quota merges (a + b halves)", "",
         md_table(["run|sector", "status", "shots", "recall S999", "E0 in Weinstein", "P15"],
                  [[f(x) for x in r] for r in merged_rows]), "",

@@ -1,0 +1,175 @@
+{
+ "title": "prompts/33f: S3 with the OpenMP binding in place (laptop CI simulation)",
+ "created": "2026-10-18 19:51:25 UTC",
+ "git_commit": "6e2cdaf",
+ "command": "bash scratch/c33f/cisim.sh <TOKEN> <BIND>; python scripts/c33f_s3_check.py",
+ "runs": {
+  "C2_XY4|bind0": {
+   "token": "C2_XY4",
+   "omp_binding": false,
+   "env": "OMP_PROC_BIND / OMP_PLACES unset (R4), SLURM_CPU_BIND=cores, OMP/MKL/OPENBLAS_NUM_THREADS=12, CI_GATE set, SLURM_CPUS_PER_TASK=12",
+   "status": "FAIL",
+   "criteria": {
+    "S0": true,
+    "S1": false,
+    "S2": true,
+    "S3": true,
+    "S4": true,
+    "S5": true,
+    "S6": true
+   },
+   "failing": [
+    "S1"
+   ],
+   "S3_passed": true,
+   "S3_value": {
+    "engine": true,
+    "device": true,
+    "wall_seconds": true,
+    "seconds_per_shot": true,
+    "gpus": true,
+    "cpu_affinity": 12,
+    "slurm_cpus_per_task": 12
+   },
+   "cpu_affinity_recorded": 12,
+   "cpu_affinity_source": "os.sched_getaffinity(0) at process start, before any OpenMP runtime loaded (SKQD_STEP_CPUS; prompts/33e part 2)",
+   "cpu_affinity_main_thread_now": 12,
+   "cpu_affinity_check": {
+    "applies": true,
+    "ok": true,
+    "affinity": 12,
+    "slurm_cpus_per_task": 12,
+    "rule": "on the CI: the step's CPU count (os.sched_getaffinity(0) recorded at process start, before any OpenMP runtime pins the main thread) == SLURM_CPUS_PER_TASK (prompts/33e R1 + part 2)"
+   },
+   "ci": {
+    "CI_GATE": "C2_XY4",
+    "SLURM_JOB_ID": "laptop-sim"
+   },
+   "versions": {
+    "qiskit": "1.4.3",
+    "qiskit_aer": "0.15.1",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "threadpoolctl": "3.7.0",
+    "python": "3.12.14"
+   },
+   "wall_seconds": 227.3348081111908,
+   "preflight_modules": 17,
+   "git_commit": "6e2cdaf",
+   "json": "cisim_C2_XY4_bind0.json"
+  },
+  "C2_XY4|bind1": {
+   "token": "C2_XY4",
+   "omp_binding": true,
+   "env": "OMP_PROC_BIND=spread, OMP_PLACES=threads, SLURM_CPU_BIND=cores, OMP/MKL/OPENBLAS_NUM_THREADS=12, CI_GATE set, SLURM_CPUS_PER_TASK=12",
+   "status": "FAIL",
+   "criteria": {
+    "S0": true,
+    "S1": false,
+    "S2": true,
+    "S3": true,
+    "S4": true,
+    "S5": true,
+    "S6": true
+   },
+   "failing": [
+    "S1"
+   ],
+   "S3_passed": true,
+   "S3_value": {
+    "engine": true,
+    "device": true,
+    "wall_seconds": true,
+    "seconds_per_shot": true,
+    "gpus": true,
+    "cpu_affinity": 12,
+    "slurm_cpus_per_task": 12
+   },
+   "cpu_affinity_recorded": 12,
+   "cpu_affinity_source": "os.sched_getaffinity(0) at process start, before any OpenMP runtime loaded (SKQD_STEP_CPUS; prompts/33e part 2)",
+   "cpu_affinity_main_thread_now": 1,
+   "cpu_affinity_check": {
+    "applies": true,
+    "ok": true,
+    "affinity": 12,
+    "slurm_cpus_per_task": 12,
+    "rule": "on the CI: the step's CPU count (os.sched_getaffinity(0) recorded at process start, before any OpenMP runtime pins the main thread) == SLURM_CPUS_PER_TASK (prompts/33e R1 + part 2)"
+   },
+   "ci": {
+    "CI_GATE": "C2_XY4",
+    "SLURM_JOB_ID": "laptop-sim"
+   },
+   "versions": {
+    "qiskit": "1.4.3",
+    "qiskit_aer": "0.15.1",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "threadpoolctl": "3.7.0",
+    "python": "3.12.14"
+   },
+   "wall_seconds": 251.05964374542236,
+   "preflight_modules": 17,
+   "git_commit": "98f297e",
+   "json": "cisim_C2_XY4_bind1.json"
+  },
+  "C4_F7_B0|bind1": {
+   "token": "C4_F7_B0",
+   "omp_binding": true,
+   "env": "OMP_PROC_BIND=spread, OMP_PLACES=threads, SLURM_CPU_BIND=cores, OMP/MKL/OPENBLAS_NUM_THREADS=12, CI_GATE set, SLURM_CPUS_PER_TASK=12",
+   "status": "FAIL",
+   "criteria": {
+    "S1": false,
+    "S2": true,
+    "S3": true,
+    "S4": true,
+    "S5": true,
+    "S6": true
+   },
+   "failing": [
+    "S1"
+   ],
+   "S3_passed": true,
+   "S3_value": {
+    "engine": true,
+    "device": true,
+    "wall_seconds": true,
+    "seconds_per_shot": true,
+    "gpus": true,
+    "cpu_affinity": 12,
+    "slurm_cpus_per_task": 12
+   },
+   "cpu_affinity_recorded": 12,
+   "cpu_affinity_source": "os.sched_getaffinity(0) at process start, before any OpenMP runtime loaded (SKQD_STEP_CPUS; prompts/33e part 2)",
+   "cpu_affinity_main_thread_now": 1,
+   "cpu_affinity_check": {
+    "applies": true,
+    "ok": true,
+    "affinity": 12,
+    "slurm_cpus_per_task": 12,
+    "rule": "on the CI: the step's CPU count (os.sched_getaffinity(0) recorded at process start, before any OpenMP runtime pins the main thread) == SLURM_CPUS_PER_TASK (prompts/33e R1 + part 2)"
+   },
+   "ci": {
+    "CI_GATE": "C4_F7_B0",
+    "SLURM_JOB_ID": "laptop-sim"
+   },
+   "versions": {
+    "qiskit": "1.4.3",
+    "qiskit_aer": "0.15.1",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "threadpoolctl": "3.7.0",
+    "python": "3.12.14"
+   },
+   "wall_seconds": 219.79710745811462,
+   "preflight_modules": 17,
+   "git_commit": "98f297e",
+   "json": "cisim_C4_F7_B0_bind1.json"
+  }
+ },
+ "verdict": {
+  "S3_passes_with_binding": true,
+  "main_thread_pinned_with_binding": true,
+  "claim_supported": "33e executor"
+ },
+ "limits": "a laptop simulation: Slurm, srun --cpus-per-task and SLURM_CPU_BIND=cores are not exercised (no Slurm here); the CI's own start affinity under srun is first recorded by the next CI job.  S1 FAILs in the simulation by construction (no GPU)."
+}
