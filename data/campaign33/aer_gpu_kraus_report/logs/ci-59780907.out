@@ -1,0 +1,32 @@
+conda env: skqd
+preflight: 17 modules imported in 34.21 s (env skqd; threadpoolctl 3.7.0)
+[    0.0 s] C2_KCHK: device GPU (available ['CPU', 'GPU']), budget 50.0 min, shots x 1.0, chunk <= 476, s0 38300000
+/global/homes/d/digonto/.conda/envs/skqd/lib/python3.12/site-packages/qiskit/qpy/interface.py:346: UserWarning: The qiskit version used to generate the provided QPY file, 2.5.2, is newer than the current qiskit version 1.4.3. This may result in an error if the QPY file uses instructions not present in this current qiskit version
+  warnings.warn(
+[    7.0 s] C2_KCHK: CPU process 815592 started (1 threads), deadline 2245 s
+[  508.8 s] C2_KCHK: kraus_gpu_cusv (kraus, custatevec): 256/256 shots, 1.9195747850462794 s/shot, w 2.99609375
+[  722.4 s] C2_KCHK: rm_gpu_cusv (rm, custatevec): 512/512 shots, 0.4172244002111256 s/shot, w 7.43359375
+[ 1315.8 s] C2_KCHK: kraus_gpu_native (kraus, native): 256/256 shots, 2.2227095924317837 s/shot, w 3.56640625
+[ 1381.4 s] C2_KCHK: rate probe 1: 3 shots in 36.28 s (the 1-shot bound 939.8 s for round 0 exceeded the 906.6 s left)
+[ 2027.4 s] C2_KCHK: kraus_gpu_cusv_nofusion (kraus, custatevec_nofusion): 128/128 shots, 5.046831406652927 s/shot, w 1.140625
+[ 2312.2 s] C2_KCHK: kraus_cpu: 0 shots, w None
+[ 2312.2 s] C2_KCHK: rm_cpu: 0 shots, w None
+| check | value | criterion | result |
+|---|---|---|---|
+| K1 kraus_gpu_cusv vs kraus_cpu: bug_confirmed iff |z_w| > 3 (both outcomes PASS; the field is the decision) | {'z_w': None, 'w': None, 'bug_confirmed': None} | decided (both arms sampled) | FAIL |
+| K2 production representation: rm iff rm_gpu_cusv agrees with rm_cpu and kraus_cpu (|z_w| <= 3, no marginal beyond 3 sigma), else blocked | {'production_representation': 'blocked', 'z_w': {'rm_gpu_cusv~rm_cpu': None, 'rm_gpu_cusv~kraus_cpu': None}, 'clbits_outside': {'rm_gpu_cusv~rm_cpu': None, 'rm_gpu_cusv~kraus_cpu': None}} | decided (all three arms sampled) | FAIL |
+| K3 validated Kraus GPU path (reference arm of the cells): first of native / cuStateVec-no-fusion with |z_w| <= 3 against kraus_cpu, else none | {'validated_kraus_gpu_path': 'none', 'z_w': {'kraus_gpu_native': None, 'kraus_gpu_cusv_nofusion': None}} | recorded | PASS |
+| P0 raw counts of every arm stored (sum of counts = shots_done) | {'kraus_gpu_cusv': [256, 256], 'rm_gpu_cusv': [512, 512], 'kraus_gpu_native': [256, 256], 'kraus_gpu_cusv_nofusion': [128, 128], 'kraus_cpu': [0, 0], 'rm_cpu': [0, 0]} | equal | PASS |
+| S1 the run happened on the requested device (GPU under the CI) | GPU (available ['CPU', 'GPU']) | GPU | PASS |
+| S2 wall time inside the walltime budget | 2312 s | <= min(walltime 3600 s, 3600 s) and <= 1.1 x budget + 120 s | PASS |
+| S3 telemetry and run block present (policy fields non-null on the CI) | {'engine': True, 'device': True, 'wall_seconds': True, 'seconds_per_shot': True, 'gpus': True} | every policy field non-null on the CI; present on the laptop | PASS |
+| S4 every seed and every chunk recorded | True | true | PASS |
+| S5 no out-of-memory retry left unrecorded | 0 recorded | each OOM split recorded | PASS |
+| S6 shots >= the token's minimum | {'kraus_gpu_cusv': [256, 256], 'rm_gpu_cusv': [512, 512], 'kraus_gpu_native': [256, 64], 'kraus_gpu_cusv_nofusion': [128, 32], 'kraus_cpu': [0, 16], 'rm_cpu': [0, 16]} | no reduction below the minimum | FAIL |
+C2_KCHK: FAIL (2312 s)
+gate C2_KCHK: status FAIL, exit code 1, 2352 s
+srun: error: nid008541: task 0: Exited with exit code 1
+srun: Terminating StepId=59780907.0
+/var/spool/slurmd/job59780907/slurm_script: line 56: 814741 Terminated              ( while true; do
+    nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader,nounits | sed "s/^/$(date +%s),/"; sleep 10;
+done ) > "$SKQD_GPU_TELEMETRY" 2> /dev/null

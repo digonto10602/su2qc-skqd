@@ -1,0 +1,3128 @@
+{
+ "gate": "C2_KCHK",
+ "title": "Campaign 33 token C2_KCHK (class 2): prompts/33d R3 + 33e R2: the GPU Kraus check on IBM-T0 B0_ref117_k1 (I-ECHO); run 2 (default, --content cpu_only): Kraus and RM on the CPU in a separate process on the step's CPUs beside a 128-shot RM cuStateVec anchor, the four GPU arms read from run 1 (job 59780907, archived); raw counts; decides the class-2 representation",
+ "status": "FAIL",
+ "criteria": [
+  {
+   "name": "P0a run 1 archived byte-identically (sha256 of the archive = the harvested run 1's)",
+   "value": "30f6326b5dba109bdfd454e645057b099ffc9ad37a75e6587e244c2bfad712b4",
+   "threshold": "validation/archive/C2_KCHK_job59780907.json with sha256 30f6326b5dba109bdfd454e645057b099ffc9ad37a75e6587e244c2bfad712b4",
+   "passed": true
+  },
+  {
+   "name": "P0b run 1's GPU arms: the stored structure equals the one recomputed from their raw counts",
+   "value": {
+    "kraus_gpu_cusv": [
+     256,
+     0.0
+    ],
+    "rm_gpu_cusv": [
+     512,
+     0.0
+    ],
+    "kraus_gpu_native": [
+     256,
+     0.0
+    ],
+    "kraus_gpu_cusv_nofusion": [
+     128,
+     0.0
+    ]
+   },
+   "threshold": "sum of counts = shots_done and max |diff| <= 1e-12",
+   "passed": true
+  },
+  {
+   "name": "K1 kraus_gpu_cusv (run 1) vs kraus_cpu (run 2): bug_confirmed iff |z_w| > 3 (both outcomes PASS; the field is the decision)",
+   "value": {
+    "z_w": -6.649096451944512,
+    "w": [
+     2.99609375,
+     8.428571428571429
+    ],
+    "bug_confirmed": true
+   },
+   "threshold": "decided (both arms sampled)",
+   "passed": true
+  },
+  {
+   "name": "K2 production representation: rm iff rm_gpu_cusv (run 1) agrees with rm_cpu and kraus_cpu (run 2) (|z_w| <= 3, no marginal beyond 3 sigma), else blocked",
+   "value": {
+    "production_representation": "blocked",
+    "z_w": {
+     "rm_gpu_cusv~rm_cpu": 1.799454869423125,
+     "rm_gpu_cusv~kraus_cpu": -1.261413419278466
+    },
+    "clbits_outside": {
+     "rm_gpu_cusv~rm_cpu": [],
+     "rm_gpu_cusv~kraus_cpu": [
+      2,
+      3,
+      5,
+      8,
+      17
+     ]
+    }
+   },
+   "threshold": "decided (all three arms sampled)",
+   "passed": true
+  },
+  {
+   "name": "K3 validated Kraus GPU path (run 1's native / cuStateVec-no-fusion arms vs kraus_cpu of run 2): first with |z_w| <= 3, else none",
+   "value": {
+    "validated_kraus_gpu_path": "none",
+    "z_w": {
+     "kraus_gpu_native": -5.926638613263177,
+     "kraus_gpu_cusv_nofusion": -8.970356245556617
+    }
+   },
+   "threshold": "recorded",
+   "passed": true
+  },
+  {
+   "name": "K4 the two CPU references agree (CI CPU arms vs the laptop's c33c_diag summary): |z_w| <= 3 per representation; recorded -- a disagreement is a STOP for the planner, not a token failure (prompts/33e R3 (b), section 2)",
+   "value": {
+    "status": "agree",
+    "stop_planner": false,
+    "z_w": {
+     "kraus_cpu": 0.9057732720657067,
+     "rm_cpu": -0.3544398202895614
+    }
+   },
+   "threshold": "recorded (evaluated when the laptop summary is in the commit)",
+   "passed": true
+  },
+  {
+   "name": "P0 raw counts of every run-2 arm stored (sum of counts = shots_done)",
+   "value": {
+    "rm_gpu_cusv_anchor": [
+     128,
+     128
+    ],
+    "kraus_cpu": [
+     7,
+     7
+    ],
+    "rm_cpu": [
+     12,
+     12
+    ]
+   },
+   "threshold": "equal",
+   "passed": true
+  },
+  {
+   "name": "S1 the run happened on the requested device (GPU under the CI)",
+   "value": "GPU (available ['CPU', 'GPU'])",
+   "threshold": "GPU",
+   "passed": true
+  },
+  {
+   "name": "S2 wall time inside the walltime budget",
+   "value": "2760 s",
+   "threshold": "<= min(walltime 3600 s, 3600 s) and <= 1.1 x budget + 120 s",
+   "passed": true
+  },
+  {
+   "name": "S3 telemetry and run block present (policy fields non-null on the CI; run.cpu_affinity == SLURM_CPUS_PER_TASK)",
+   "value": {
+    "engine": true,
+    "device": true,
+    "wall_seconds": true,
+    "seconds_per_shot": true,
+    "gpus": true,
+    "cpu_affinity": 1,
+    "slurm_cpus_per_task": 32
+   },
+   "threshold": "every policy field non-null on the CI and cpu_affinity == SLURM_CPUS_PER_TASK there; present on the laptop",
+   "passed": false
+  },
+  {
+   "name": "S4 every seed and every chunk recorded",
+   "value": true,
+   "threshold": "true",
+   "passed": true
+  },
+  {
+   "name": "S5 no out-of-memory retry left unrecorded",
+   "value": "0 recorded",
+   "threshold": "each OOM split recorded",
+   "passed": true
+  },
+  {
+   "name": "S6 shots >= the token's minimum",
+   "value": {
+    "rm_gpu_cusv_anchor": [
+     128,
+     128
+    ],
+    "kraus_cpu": [
+     7,
+     8
+    ],
+    "rm_cpu": [
+     12,
+     8
+    ]
+   },
+   "threshold": "no reduction below the minimum",
+   "passed": false
+  }
+ ],
+ "data": {
+  "token": "C2_KCHK",
+  "class": 2,
+  "prompt": "prompts/33_2x3_four_class_perlmutter_campaign.md",
+  "content": "prompts/33d R3 + 33e R2: the GPU Kraus check on IBM-T0 B0_ref117_k1 (I-ECHO); run 2 (default, --content cpu_only): Kraus and RM on the CPU in a separate process on the step's CPUs beside a 128-shot RM cuStateVec anchor, the four GPU arms read from run 1 (job 59780907, archived); raw counts; decides the class-2 representation",
+  "dry_run": false,
+  "created": "2026-10-16 00:08:32 UTC",
+  "seeds": {
+   "s0": 38300000,
+   "rule": "aer seed of chunk i of circuit c = s0 * 1e4 + c * 1e6 + i * stride, stride = chunk size, s0 = 33 000 000 + 1e5 x token index (prompts/33 2.3 s0; the circuit/chunk offsets are widened from 1e3 c so that circuits, chunks, tokens and the a/b halves are disjoint for <= 1e6 shots per circuit: the literal s0 + 1e3 c + i stride overlaps above 1000 shots per circuit).  prompts/33b R4: every part of a split class-4 run (part 1 on the F token, parts >= 2 on any C4_PART slot) uses s0 of the run's OWN F token, i = the chunk's index in the UNSPLIT chunk plan and stride = the sizing's chunk, so the parts concatenate to the unsplit run seed for seed and a slot can be re-used; the run's CV3 equal-shots sample uses the same s0 with circuit offsets 100 (k <= 4) / 200 (k = 5); an f-cell slot uses the slot's own s0 with circuit offset 4 x the cell's global index"
+  },
+  "preflight": {
+   "ok": true,
+   "modules": [
+    "threadpoolctl",
+    "numpy",
+    "scipy",
+    "qiskit",
+    "qiskit_aer",
+    "skqd.campaign33.tokens",
+    "skqd.campaign33.stats",
+    "skqd.campaign33.sampling",
+    "skqd.campaign33.circuits",
+    "skqd.campaign33.noise",
+    "skqd.campaign33.analysis",
+    "skqd.campaign33.tokens_run",
+    "skqd.campaign33.assemble",
+    "skqd.campaign33.cf_gpu",
+    "skqd.campaign33.engines",
+    "skqd.campaign33.kchk_cpu",
+    "gate_CV"
+   ],
+   "env": "skqd",
+   "versions": {
+    "qiskit": "1.4.3",
+    "qiskit_aer": "0.15.1",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "threadpoolctl": "3.7.0",
+    "python": "3.12.14"
+   },
+   "seconds": 10.304929971694946
+  },
+  "calibration_run": 2,
+  "kchk_content": "cpu_only",
+  "supersedes": {
+   "token": "C2_KCHK",
+   "job": "59780907",
+   "calibration_run": 1,
+   "archived": "validation/archive/C2_KCHK_job59780907.json",
+   "sha256": "30f6326b5dba109bdfd454e645057b099ffc9ad37a75e6587e244c2bfad712b4",
+   "sha256_harvested": "30f6326b5dba109bdfd454e645057b099ffc9ad37a75e6587e244c2bfad712b4",
+   "why": "prompts/33e R2: run 1's GPU arms completed with raw counts (evidence of record, not repeated); its CPU arms drew 0 shots because the job step was bound to 1 CPU (R1: srun without --cpus-per-task); run 2 runs the CPU arms only"
+  },
+  "supersedes_decision_of": {
+   "token": "C2_CAL",
+   "job": "59736871",
+   "field": "decision.production_representation",
+   "why": "prompts/33d R5: C2_CAL run 3's P4a compared RM with the Kraus arm on the cuStateVec path, the execution under test; the C2_CAL JSON is not rewritten"
+  },
+  "circuit": "IBM-T0 B0_ref117_k1",
+  "model": "I-ECHO (record T2 echo)",
+  "seconds_per_shot": 0.4275288265198469,
+  "gpu_mode_used": "custatevec (the 128-shot RM anchor)",
+  "arms": {
+   "rm_gpu_cusv_anchor": {
+    "representation": "rm",
+    "planned_representation": "rm",
+    "engine": "GPU custatevec",
+    "gpu_mode": "custatevec",
+    "simulator_options": {
+     "method": "statevector",
+     "precision": "double",
+     "noise_model": "attached",
+     "device": "GPU",
+     "cuStateVec_enable": true,
+     "batched_shots_gpu": false
+    },
+    "target_shots": 128,
+    "minimum_shots": 128,
+    "deadline_stopped": false,
+    "chunk": 128,
+    "shots_done": 128,
+    "seconds": 54.72759699821472,
+    "seconds_per_shot": 0.4275288265198469,
+    "calls": 1,
+    "stopped": null,
+    "warmup": null,
+    "seed_circuit_offset": 620,
+    "run": 2,
+    "purpose": "same-job anchor that the GPU side is unchanged (information; prompts/33e R2)",
+    "raw_counts": {
+     "chunks": [
+      {
+       "index": 0,
+       "seed": 383620000000,
+       "shots": 128,
+       "counts": {
+        "960": 1,
+        "2625": 1,
+        "3280": 1,
+        "8265": 1,
+        "9032": 1,
+        "13460": 1,
+        "13627": 1,
+        "13888": 1,
+        "16457": 1,
+        "16768": 1,
+        "16984": 1,
+        "18688": 1,
+        "19456": 1,
+        "20736": 1,
+        "29264": 1,
+        "31424": 1,
+        "37056": 1,
+        "50642": 1,
+        "53088": 1,
+        "58898": 1,
+        "63312": 1,
+        "65628": 1,
+        "76288": 2,
+        "77904": 1,
+        "79560": 1,
+        "83993": 1,
+        "84248": 1,
+        "84560": 1,
+        "91409": 1,
+        "91984": 1,
+        "99017": 1,
+        "110720": 1,
+        "131600": 1,
+        "138240": 1,
+        "139345": 1,
+        "139394": 1,
+        "139537": 1,
+        "147732": 1,
+        "149521": 1,
+        "152080": 1,
+        "165888": 1,
+        "172352": 1,
+        "178304": 1,
+        "204105": 1,
+        "206857": 1,
+        "207168": 1,
+        "215792": 1,
+        "216208": 1,
+        "219664": 1,
+        "225192": 1,
+        "244352": 1,
+        "262803": 1,
+        "264008": 1,
+        "277760": 1,
+        "293778": 1,
+        "295760": 1,
+        "299682": 1,
+        "313937": 1,
+        "323924": 1,
+        "336448": 1,
+        "339216": 1,
+        "342593": 1,
+        "369173": 1,
+        "369297": 1,
+        "393792": 1,
+        "402504": 1,
+        "407507": 1,
+        "414720": 1,
+        "414859": 1,
+        "424720": 1,
+        "440798": 1,
+        "443216": 1,
+        "458195": 1,
+        "461520": 1,
+        "477216": 1,
+        "480784": 1,
+        "485123": 1,
+        "490434": 1,
+        "498832": 1,
+        "500144": 1,
+        "509072": 1,
+        "524416": 1,
+        "527584": 1,
+        "532595": 1,
+        "594251": 1,
+        "594689": 1,
+        "601600": 1,
+        "602628": 1,
+        "602704": 1,
+        "602708": 1,
+        "608064": 1,
+        "612368": 1,
+        "612449": 1,
+        "613992": 1,
+        "618648": 1,
+        "635920": 1,
+        "644816": 1,
+        "680000": 1,
+        "689612": 1,
+        "700592": 1,
+        "702800": 1,
+        "714432": 1,
+        "725760": 1,
+        "732480": 1,
+        "744768": 1,
+        "755536": 1,
+        "770112": 1,
+        "774144": 1,
+        "781633": 1,
+        "786961": 1,
+        "840897": 1,
+        "869134": 1,
+        "888000": 1,
+        "921024": 1,
+        "923146": 1,
+        "943120": 1,
+        "948416": 1,
+        "964608": 1,
+        "970884": 1,
+        "979412": 1,
+        "982672": 1,
+        "999448": 1,
+        "1024976": 1,
+        "1025104": 1,
+        "1028225": 1,
+        "1032392": 1,
+        "1034881": 1
+       }
+      }
+     ],
+     "total": {
+      "960": 1,
+      "2625": 1,
+      "3280": 1,
+      "8265": 1,
+      "9032": 1,
+      "13460": 1,
+      "13627": 1,
+      "13888": 1,
+      "16457": 1,
+      "16768": 1,
+      "16984": 1,
+      "18688": 1,
+      "19456": 1,
+      "20736": 1,
+      "29264": 1,
+      "31424": 1,
+      "37056": 1,
+      "50642": 1,
+      "53088": 1,
+      "58898": 1,
+      "63312": 1,
+      "65628": 1,
+      "76288": 2,
+      "77904": 1,
+      "79560": 1,
+      "83993": 1,
+      "84248": 1,
+      "84560": 1,
+      "91409": 1,
+      "91984": 1,
+      "99017": 1,
+      "110720": 1,
+      "131600": 1,
+      "138240": 1,
+      "139345": 1,
+      "139394": 1,
+      "139537": 1,
+      "147732": 1,
+      "149521": 1,
+      "152080": 1,
+      "165888": 1,
+      "172352": 1,
+      "178304": 1,
+      "204105": 1,
+      "206857": 1,
+      "207168": 1,
+      "215792": 1,
+      "216208": 1,
+      "219664": 1,
+      "225192": 1,
+      "244352": 1,
+      "262803": 1,
+      "264008": 1,
+      "277760": 1,
+      "293778": 1,
+      "295760": 1,
+      "299682": 1,
+      "313937": 1,
+      "323924": 1,
+      "336448": 1,
+      "339216": 1,
+      "342593": 1,
+      "369173": 1,
+      "369297": 1,
+      "393792": 1,
+      "402504": 1,
+      "407507": 1,
+      "414720": 1,
+      "414859": 1,
+      "424720": 1,
+      "440798": 1,
+      "443216": 1,
+      "458195": 1,
+      "461520": 1,
+      "477216": 1,
+      "480784": 1,
+      "485123": 1,
+      "490434": 1,
+      "498832": 1,
+      "500144": 1,
+      "509072": 1,
+      "524416": 1,
+      "527584": 1,
+      "532595": 1,
+      "594251": 1,
+      "594689": 1,
+      "601600": 1,
+      "602628": 1,
+      "602704": 1,
+      "602708": 1,
+      "608064": 1,
+      "612368": 1,
+      "612449": 1,
+      "613992": 1,
+      "618648": 1,
+      "635920": 1,
+      "644816": 1,
+      "680000": 1,
+      "689612": 1,
+      "700592": 1,
+      "702800": 1,
+      "714432": 1,
+      "725760": 1,
+      "732480": 1,
+      "744768": 1,
+      "755536": 1,
+      "770112": 1,
+      "774144": 1,
+      "781633": 1,
+      "786961": 1,
+      "840897": 1,
+      "869134": 1,
+      "888000": 1,
+      "921024": 1,
+      "923146": 1,
+      "943120": 1,
+      "948416": 1,
+      "964608": 1,
+      "970884": 1,
+      "979412": 1,
+      "982672": 1,
+      "999448": 1,
+      "1024976": 1,
+      "1025104": 1,
+      "1028225": 1,
+      "1032392": 1,
+      "1034881": 1
+     },
+     "sum_counts": 128
+    },
+    "structure": {
+     "shots": 128,
+     "n_bits": 20,
+     "mean_hamming_weight": 7.0625,
+     "sd_hamming_weight": 2.316493412959222,
+     "se_mean_hamming_weight": 0.2047510251096794,
+     "unital_limit": 10.0,
+     "deficit_vs_unital": 2.9375,
+     "marginals_by_clbit": [
+      0.234375,
+      0.1328125,
+      0.09375,
+      0.1953125,
+      0.4609375,
+      0.09375,
+      0.5078125,
+      0.3671875,
+      0.359375,
+      0.4453125,
+      0.3671875,
+      0.390625,
+      0.4296875,
+      0.484375,
+      0.4609375,
+      0.34375,
+      0.4765625,
+      0.484375,
+      0.375,
+      0.359375
+     ],
+     "se_marginals_by_clbit": [
+      0.037441971704454714,
+      0.029996528424624355,
+      0.025763488199751796,
+      0.035040771714861634,
+      0.044059097483322575,
+      0.025763488199751796,
+      0.04418877869823737,
+      0.0426065612468232,
+      0.04241025537228216,
+      0.0439290334431347,
+      0.0426065612468232,
+      0.04312383235511644,
+      0.043755013314882525,
+      0.04417258936679157,
+      0.044059097483322575,
+      0.04198083058633726,
+      0.0441455939542801,
+      0.04417258936679157,
+      0.0427908248050911,
+      0.04241025537228216
+     ],
+     "physical_by_clbit": [
+      92,
+      69,
+      54,
+      52,
+      53,
+      68,
+      73,
+      94,
+      50,
+      72,
+      71,
+      79,
+      51,
+      74,
+      70,
+      93,
+      75,
+      58,
+      95,
+      59
+     ],
+     "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
+    },
+    "accepted": 1,
+    "distinct_accepted": 1,
+    "reference_hits": 0,
+    "rejected": 127,
+    "rejections": {
+     "flag": 75,
+     "link": 52,
+     "sector": 0,
+     "unknown": 0
+    },
+    "roundtrip": {
+     "accepted_states": 1,
+     "mismatches": 0,
+     "ok": true
+    },
+    "chunks": [
+     {
+      "start": 0,
+      "shots": 128,
+      "index": 0,
+      "seed": 383620000000,
+      "seconds": 54.72368144989014
+     }
+    ]
+   },
+   "kraus_cpu": {
+    "representation": "kraus",
+    "planned_representation": "kraus",
+    "engine": "CPU statevector (separate process)",
+    "simulator_options": {
+     "method": "statevector",
+     "precision": "double",
+     "noise_model": "attached",
+     "max_parallel_threads": 1
+    },
+    "seed_circuit_offset": 610,
+    "chunk": 1,
+    "shots_done": 7,
+    "stopped": null,
+    "run": 2,
+    "minimum_shots": 8,
+    "seconds_per_shot": 213.6838402066912,
+    "raw_counts": {
+     "chunks": [
+      {
+       "index": 0,
+       "seed": 383610000000,
+       "shots": 1,
+       "counts": {
+        "226067": 1
+       }
+      },
+      {
+       "index": 1,
+       "seed": 383610000001,
+       "shots": 1,
+       "counts": {
+        "144064": 1
+       }
+      },
+      {
+       "index": 2,
+       "seed": 383610000002,
+       "shots": 1,
+       "counts": {
+        "120656": 1
+       }
+      },
+      {
+       "index": 3,
+       "seed": 383610000003,
+       "shots": 1,
+       "counts": {
+        "406913": 1
+       }
+      },
+      {
+       "index": 4,
+       "seed": 383610000004,
+       "shots": 1,
+       "counts": {
+        "724736": 1
+       }
+      },
+      {
+       "index": 5,
+       "seed": 383610000005,
+       "shots": 1,
+       "counts": {
+        "1027969": 1
+       }
+      },
+      {
+       "index": 6,
+       "seed": 383610000006,
+       "shots": 1,
+       "counts": {
+        "721744": 1
+       }
+      }
+     ],
+     "total": {
+      "120656": 1,
+      "144064": 1,
+      "226067": 1,
+      "406913": 1,
+      "721744": 1,
+      "724736": 1,
+      "1027969": 1
+     },
+     "sum_counts": 7
+    },
+    "structure": {
+     "shots": 7,
+     "n_bits": 20,
+     "mean_hamming_weight": 8.428571428571429,
+     "sd_hamming_weight": 2.0701966780270626,
+     "se_mean_hamming_weight": 0.7824607964359517,
+     "unital_limit": 10.0,
+     "deficit_vs_unital": 1.5714285714285712,
+     "marginals_by_clbit": [
+      0.42857142857142855,
+      0.14285714285714285,
+      0.0,
+      0.0,
+      0.42857142857142855,
+      0.0,
+      0.42857142857142855,
+      0.42857142857142855,
+      0.8571428571428571,
+      0.8571428571428571,
+      0.5714285714285714,
+      0.2857142857142857,
+      0.5714285714285714,
+      0.5714285714285714,
+      0.2857142857142857,
+      0.2857142857142857,
+      0.7142857142857143,
+      0.8571428571428571,
+      0.2857142857142857,
+      0.42857142857142855
+     ],
+     "se_marginals_by_clbit": [
+      0.1870439059165649,
+      0.13226001425322165,
+      0.0,
+      0.0,
+      0.1870439059165649,
+      0.0,
+      0.1870439059165649,
+      0.1870439059165649,
+      0.13226001425322165,
+      0.13226001425322165,
+      0.1870439059165649,
+      0.17074694419062766,
+      0.1870439059165649,
+      0.1870439059165649,
+      0.17074694419062766,
+      0.17074694419062766,
+      0.17074694419062766,
+      0.13226001425322165,
+      0.17074694419062766,
+      0.1870439059165649
+     ],
+     "physical_by_clbit": [
+      92,
+      69,
+      54,
+      52,
+      53,
+      68,
+      73,
+      94,
+      50,
+      72,
+      71,
+      79,
+      51,
+      74,
+      70,
+      93,
+      75,
+      58,
+      95,
+      59
+     ],
+     "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
+    },
+    "accepted": 0,
+    "distinct_accepted": 0,
+    "reference_hits": 0,
+    "rejected": 7,
+    "rejections": {
+     "flag": 5,
+     "link": 2,
+     "sector": 0,
+     "unknown": 0
+    },
+    "roundtrip": {
+     "accepted_states": 0,
+     "mismatches": 0,
+     "ok": true
+    },
+    "chunks": [
+     {
+      "start": 0,
+      "shots": 1,
+      "index": 0,
+      "seed": 383610000000,
+      "seconds": 223.57651448249817
+     },
+     {
+      "start": 1,
+      "shots": 1,
+      "index": 1,
+      "seed": 383610000001,
+      "seconds": 211.98117685317993
+     },
+     {
+      "start": 2,
+      "shots": 1,
+      "index": 2,
+      "seed": 383610000002,
+      "seconds": 212.91153621673584
+     },
+     {
+      "start": 3,
+      "shots": 1,
+      "index": 3,
+      "seed": 383610000003,
+      "seconds": 213.2190978527069
+     },
+     {
+      "start": 4,
+      "shots": 1,
+      "index": 4,
+      "seed": 383610000004,
+      "seconds": 212.66252827644348
+     },
+     {
+      "start": 5,
+      "shots": 1,
+      "index": 5,
+      "seed": 383610000005,
+      "seconds": 210.55874133110046
+     },
+     {
+      "start": 6,
+      "shots": 1,
+      "index": 6,
+      "seed": 383610000006,
+      "seconds": 210.87728643417358
+     }
+    ]
+   },
+   "rm_cpu": {
+    "representation": "rm",
+    "planned_representation": "rm",
+    "engine": "CPU statevector (separate process)",
+    "simulator_options": {
+     "method": "statevector",
+     "precision": "double",
+     "noise_model": "attached",
+     "max_parallel_threads": 1
+    },
+    "seed_circuit_offset": 611,
+    "chunk": 1,
+    "shots_done": 12,
+    "stopped": null,
+    "run": 2,
+    "minimum_shots": 8,
+    "seconds_per_shot": 93.89864705006282,
+    "raw_counts": {
+     "chunks": [
+      {
+       "index": 0,
+       "seed": 383611000000,
+       "shots": 1,
+       "counts": {
+        "42848": 1
+       }
+      },
+      {
+       "index": 1,
+       "seed": 383611000001,
+       "shots": 1,
+       "counts": {
+        "38144": 1
+       }
+      },
+      {
+       "index": 2,
+       "seed": 383611000002,
+       "shots": 1,
+       "counts": {
+        "398664": 1
+       }
+      },
+      {
+       "index": 3,
+       "seed": 383611000003,
+       "shots": 1,
+       "counts": {
+        "271074": 1
+       }
+      },
+      {
+       "index": 4,
+       "seed": 383611000004,
+       "shots": 1,
+       "counts": {
+        "262929": 1
+       }
+      },
+      {
+       "index": 5,
+       "seed": 383611000005,
+       "shots": 1,
+       "counts": {
+        "868634": 1
+       }
+      },
+      {
+       "index": 6,
+       "seed": 383611000006,
+       "shots": 1,
+       "counts": {
+        "168768": 1
+       }
+      },
+      {
+       "index": 7,
+       "seed": 383611000007,
+       "shots": 1,
+       "counts": {
+        "858449": 1
+       }
+      },
+      {
+       "index": 8,
+       "seed": 383611000008,
+       "shots": 1,
+       "counts": {
+        "499856": 1
+       }
+      },
+      {
+       "index": 9,
+       "seed": 383611000009,
+       "shots": 1,
+       "counts": {
+        "67672": 1
+       }
+      },
+      {
+       "index": 10,
+       "seed": 383611000010,
+       "shots": 1,
+       "counts": {
+        "492688": 1
+       }
+      },
+      {
+       "index": 11,
+       "seed": 383611000011,
+       "shots": 1,
+       "counts": {
+        "451204": 1
+       }
+      }
+     ],
+     "total": {
+      "38144": 1,
+      "42848": 1,
+      "67672": 1,
+      "168768": 1,
+      "262929": 1,
+      "271074": 1,
+      "398664": 1,
+      "451204": 1,
+      "492688": 1,
+      "499856": 1,
+      "858449": 1,
+      "868634": 1
+     },
+     "sum_counts": 12
+    },
+    "structure": {
+     "shots": 12,
+     "n_bits": 20,
+     "mean_hamming_weight": 6.666666666666667,
+     "sd_hamming_weight": 1.4354811251305468,
+     "se_mean_hamming_weight": 0.41438770700537403,
+     "unital_limit": 10.0,
+     "deficit_vs_unital": 3.333333333333333,
+     "marginals_by_clbit": [
+      0.16666666666666666,
+      0.16666666666666666,
+      0.08333333333333333,
+      0.25,
+      0.5,
+      0.16666666666666666,
+      0.5,
+      0.3333333333333333,
+      0.5833333333333334,
+      0.4166666666666667,
+      0.3333333333333333,
+      0.16666666666666666,
+      0.3333333333333333,
+      0.3333333333333333,
+      0.16666666666666666,
+      0.5,
+      0.4166666666666667,
+      0.4166666666666667,
+      0.6666666666666666,
+      0.16666666666666666
+     ],
+     "se_marginals_by_clbit": [
+      0.10758287072798381,
+      0.10758287072798381,
+      0.07978559231302818,
+      0.125,
+      0.14433756729740643,
+      0.10758287072798381,
+      0.14433756729740643,
+      0.13608276348795434,
+      0.14231876063832777,
+      0.14231876063832774,
+      0.13608276348795434,
+      0.10758287072798381,
+      0.13608276348795434,
+      0.13608276348795434,
+      0.10758287072798381,
+      0.14433756729740643,
+      0.14231876063832774,
+      0.14231876063832774,
+      0.13608276348795434,
+      0.10758287072798381
+     ],
+     "physical_by_clbit": [
+      92,
+      69,
+      54,
+      52,
+      53,
+      68,
+      73,
+      94,
+      50,
+      72,
+      71,
+      79,
+      51,
+      74,
+      70,
+      93,
+      75,
+      58,
+      95,
+      59
+     ],
+     "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
+    },
+    "accepted": 0,
+    "distinct_accepted": 0,
+    "reference_hits": 0,
+    "rejected": 12,
+    "rejections": {
+     "flag": 7,
+     "link": 5,
+     "sector": 0,
+     "unknown": 0
+    },
+    "roundtrip": {
+     "accepted_states": 0,
+     "mismatches": 0,
+     "ok": true
+    },
+    "chunks": [
+     {
+      "start": 0,
+      "shots": 1,
+      "index": 0,
+      "seed": 383611000000,
+      "seconds": 93.70328855514526
+     },
+     {
+      "start": 1,
+      "shots": 1,
+      "index": 1,
+      "seed": 383611000001,
+      "seconds": 94.8101704120636
+     },
+     {
+      "start": 2,
+      "shots": 1,
+      "index": 2,
+      "seed": 383611000002,
+      "seconds": 95.89317965507507
+     },
+     {
+      "start": 3,
+      "shots": 1,
+      "index": 3,
+      "seed": 383611000003,
+      "seconds": 93.94115567207336
+     },
+     {
+      "start": 4,
+      "shots": 1,
+      "index": 4,
+      "seed": 383611000004,
+      "seconds": 94.61903667449951
+     },
+     {
+      "start": 5,
+      "shots": 1,
+      "index": 5,
+      "seed": 383611000005,
+      "seconds": 94.76101565361023
+     },
+     {
+      "start": 6,
+      "shots": 1,
+      "index": 6,
+      "seed": 383611000006,
+      "seconds": 94.86424922943115
+     },
+     {
+      "start": 7,
+      "shots": 1,
+      "index": 7,
+      "seed": 383611000007,
+      "seconds": 94.52724027633667
+     },
+     {
+      "start": 8,
+      "shots": 1,
+      "index": 8,
+      "seed": 383611000008,
+      "seconds": 92.96956515312195
+     },
+     {
+      "start": 9,
+      "shots": 1,
+      "index": 9,
+      "seed": 383611000009,
+      "seconds": 86.97419095039368
+     },
+     {
+      "start": 10,
+      "shots": 1,
+      "index": 10,
+      "seed": 383611000010,
+      "seconds": 95.19313454627991
+     },
+     {
+      "start": 11,
+      "shots": 1,
+      "index": 11,
+      "seed": 383611000011,
+      "seconds": 94.52753782272339
+     }
+    ]
+   }
+  },
+  "run1_gpu_arms": {
+   "kraus_gpu_cusv": {
+    "source": "validation/archive/C2_KCHK_job59780907.json data.arms.kraus_gpu_cusv",
+    "job": "59780907",
+    "run": 1,
+    "engine": "GPU custatevec",
+    "gpu_mode": "custatevec",
+    "planned_representation": "kraus",
+    "representation": "kraus",
+    "shots_done": 256,
+    "minimum_shots": 256,
+    "seconds_per_shot": 1.9195747850462794,
+    "seed_circuit_offset": 600,
+    "raw_counts_sum": 256,
+    "structure_recomputed_max_abs_diff": 0.0,
+    "structure": {
+     "shots": 256,
+     "n_bits": 20,
+     "mean_hamming_weight": 2.99609375,
+     "sd_hamming_weight": 3.7620374609834943,
+     "se_mean_hamming_weight": 0.2351273413114684,
+     "unital_limit": 10.0,
+     "deficit_vs_unital": 7.00390625,
+     "marginals_by_clbit": [
+      0.10546875,
+      0.07421875,
+      0.08203125,
+      0.12109375,
+      0.21875,
+      0.02734375,
+      0.140625,
+      0.1484375,
+      0.1328125,
+      0.21875,
+      0.19140625,
+      0.15625,
+      0.19140625,
+      0.22265625,
+      0.1484375,
+      0.13671875,
+      0.18359375,
+      0.16796875,
+      0.16796875,
+      0.16015625
+     ],
+     "se_marginals_by_clbit": [
+      0.019197278938595446,
+      0.016382909247859002,
+      0.017150770302425275,
+      0.020389762070910724,
+      0.025837415147115142,
+      0.010192688352123096,
+      0.021727144005163075,
+      0.02222082080660694,
+      0.021210748661106907,
+      0.025837415147115142,
+      0.02458800341542166,
+      0.022693261794184082,
+      0.02458800341542166,
+      0.026001836198377527,
+      0.02222082080660694,
+      0.02147188690678224,
+      0.024197033405536764,
+      0.023364908334889797,
+      0.023364908334889797,
+      0.022921931500095458
+     ],
+     "physical_by_clbit": [
+      92,
+      69,
+      54,
+      52,
+      53,
+      68,
+      73,
+      94,
+      50,
+      72,
+      71,
+      79,
+      51,
+      74,
+      70,
+      93,
+      75,
+      58,
+      95,
+      59
+     ],
+     "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
+    },
+    "accepted": 1,
+    "reference_hits": 0
+   },
+   "rm_gpu_cusv": {
+    "source": "validation/archive/C2_KCHK_job59780907.json data.arms.rm_gpu_cusv",
+    "job": "59780907",
+    "run": 1,
+    "engine": "GPU custatevec",
+    "gpu_mode": "custatevec",
+    "planned_representation": "rm",
+    "representation": "rm",
+    "shots_done": 512,
+    "minimum_shots": 512,
+    "seconds_per_shot": 0.4172244002111256,
+    "seed_circuit_offset": 601,
+    "raw_counts_sum": 512,
+    "structure_recomputed_max_abs_diff": 0.0,
+    "structure": {
+     "shots": 512,
+     "n_bits": 20,
+     "mean_hamming_weight": 7.43359375,
+     "sd_hamming_weight": 2.2546938156973844,
+     "se_mean_hamming_weight": 0.09964433041118702,
+     "unital_limit": 10.0,
+     "deficit_vs_unital": 2.56640625,
+     "marginals_by_clbit": [
+      0.26171875,
+      0.13671875,
+      0.146484375,
+      0.212890625,
+      0.505859375,
+      0.087890625,
+      0.48046875,
+      0.380859375,
+      0.4140625,
+      0.486328125,
+      0.427734375,
+      0.3984375,
+      0.484375,
+      0.4609375,
+      0.400390625,
+      0.37890625,
+      0.455078125,
+      0.421875,
+      0.4375,
+      0.455078125
+     ],
+     "se_marginals_by_clbit": [
+      0.019426446108215104,
+      0.015182916836656362,
+      0.01562666884093275,
+      0.018090927391404592,
+      0.02209556957343774,
+      0.012512951340285561,
+      0.02208022173666532,
+      0.021460606692236043,
+      0.021768255005037852,
+      0.022088824585087156,
+      0.021865072722559404,
+      0.02163642484482864,
+      0.022086294683395784,
+      0.022029548741661287,
+      0.021654151792841046,
+      0.021439244813785414,
+      0.022007723482092085,
+      0.02182568031115919,
+      0.021923773750628563,
+      0.022007723482092085
+     ],
+     "physical_by_clbit": [
+      92,
+      69,
+      54,
+      52,
+      53,
+      68,
+      73,
+      94,
+      50,
+      72,
+      71,
+      79,
+      51,
+      74,
+      70,
+      93,
+      75,
+      58,
+      95,
+      59
+     ],
+     "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
+    },
+    "accepted": 0,
+    "reference_hits": 0
+   },
+   "kraus_gpu_native": {
+    "source": "validation/archive/C2_KCHK_job59780907.json data.arms.kraus_gpu_native",
+    "job": "59780907",
+    "run": 1,
+    "engine": "GPU native",
+    "gpu_mode": "native",
+    "planned_representation": "kraus",
+    "representation": "kraus",
+    "shots_done": 256,
+    "minimum_shots": 64,
+    "seconds_per_shot": 2.2227095924317837,
+    "seed_circuit_offset": 602,
+    "raw_counts_sum": 256,
+    "structure_recomputed_max_abs_diff": 0.0,
+    "structure": {
+     "shots": 256,
+     "n_bits": 20,
+     "mean_hamming_weight": 3.56640625,
+     "sd_hamming_weight": 3.945148966470982,
+     "se_mean_hamming_weight": 0.24657181040443638,
+     "unital_limit": 10.0,
+     "deficit_vs_unital": 6.43359375,
+     "marginals_by_clbit": [
+      0.13671875,
+      0.06640625,
+      0.0859375,
+      0.1171875,
+      0.2421875,
+      0.03515625,
+      0.21484375,
+      0.1796875,
+      0.18359375,
+      0.25390625,
+      0.21875,
+      0.22265625,
+      0.21484375,
+      0.2109375,
+      0.23828125,
+      0.16015625,
+      0.19140625,
+      0.203125,
+      0.19140625,
+      0.19921875
+     ],
+     "se_marginals_by_clbit": [
+      0.02147188690678224,
+      0.015561930205550085,
+      0.01751698351040244,
+      0.020102723486561426,
+      0.026775448966514053,
+      0.01151091331457645,
+      0.025669619163360087,
+      0.023995434326768778,
+      0.024197033405536764,
+      0.02720278781460596,
+      0.025837415147115142,
+      0.026001836198377527,
+      0.025669619163360087,
+      0.025498381619427555,
+      0.026627002264679955,
+      0.022921931500095458,
+      0.02458800341542166,
+      0.02514529919840573,
+      0.02458800341542166,
+      0.024963304291033047
+     ],
+     "physical_by_clbit": [
+      92,
+      69,
+      54,
+      52,
+      53,
+      68,
+      73,
+      94,
+      50,
+      72,
+      71,
+      79,
+      51,
+      74,
+      70,
+      93,
+      75,
+      58,
+      95,
+      59
+     ],
+     "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
+    },
+    "accepted": 1,
+    "reference_hits": 0
+   },
+   "kraus_gpu_cusv_nofusion": {
+    "source": "validation/archive/C2_KCHK_job59780907.json data.arms.kraus_gpu_cusv_nofusion",
+    "job": "59780907",
+    "run": 1,
+    "engine": "GPU custatevec_nofusion",
+    "gpu_mode": "custatevec_nofusion",
+    "planned_representation": "kraus",
+    "representation": "kraus",
+    "shots_done": 128,
+    "minimum_shots": 32,
+    "seconds_per_shot": 5.046831406652927,
+    "seed_circuit_offset": 603,
+    "raw_counts_sum": 128,
+    "structure_recomputed_max_abs_diff": 0.0,
+    "structure": {
+     "shots": 128,
+     "n_bits": 20,
+     "mean_hamming_weight": 1.140625,
+     "sd_hamming_weight": 2.4742273907428887,
+     "se_mean_hamming_weight": 0.21869287077397426,
+     "unital_limit": 10.0,
+     "deficit_vs_unital": 8.859375,
+     "marginals_by_clbit": [
+      0.03125,
+      0.0234375,
+      0.0390625,
+      0.0625,
+      0.0546875,
+      0.0234375,
+      0.0546875,
+      0.0625,
+      0.0546875,
+      0.0859375,
+      0.0390625,
+      0.0546875,
+      0.0625,
+      0.0703125,
+      0.0859375,
+      0.0390625,
+      0.078125,
+      0.1015625,
+      0.0546875,
+      0.0625
+     ],
+     "se_marginals_by_clbit": [
+      0.015378921628929319,
+      0.01337213275159097,
+      0.01712468546557635,
+      0.02139541240254555,
+      0.02009679260474285,
+      0.01337213275159097,
+      0.02009679260474285,
+      0.02139541240254555,
+      0.02009679260474285,
+      0.024772755652276997,
+      0.01712468546557635,
+      0.02009679260474285,
+      0.02139541240254555,
+      0.022598508721496356,
+      0.024772755652276997,
+      0.01712468546557635,
+      0.02372062070603734,
+      0.026699654520492805,
+      0.02009679260474285,
+      0.02139541240254555
+     ],
+     "physical_by_clbit": [
+      92,
+      69,
+      54,
+      52,
+      53,
+      68,
+      73,
+      94,
+      50,
+      72,
+      71,
+      79,
+      51,
+      74,
+      70,
+      93,
+      75,
+      58,
+      95,
+      59
+     ],
+     "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
+    },
+    "accepted": 0,
+    "reference_hits": 0
+   }
+  },
+  "comparisons": {
+   "kraus_gpu_cusv~kraus_cpu": {
+    "evaluated": true,
+    "n_sigma": 3.0,
+    "shots": [
+     256,
+     7
+    ],
+    "mean_hamming_weight": [
+     2.99609375,
+     8.428571428571429
+    ],
+    "delta_mean_hamming_weight": -5.432477678571429,
+    "z_mean_hamming_weight": -6.649096451944512,
+    "z_marginals_by_clbit": [
+     -1.718389205847775,
+     -0.5150294234486351,
+     4.782948436339331,
+     5.938948653685357,
+     -1.1112245610692657,
+     2.6826828266857,
+     -1.5291767716029563,
+     -1.4872325374442843,
+     -5.407467425823913,
+     -4.737254406433094,
+     -2.0143974241102054,
+     -0.7516139694256718,
+     -2.0143974241102054,
+     -1.8468945415034446,
+     -0.797255129209082,
+     -0.8657914148285465,
+     -3.0773147413103934,
+     -5.131297245986471,
+     -0.683223858561261,
+     -1.4243824447418967
+    ],
+    "max_abs_z_marginal": 5.938948653685357,
+    "clbits_outside": [
+     2,
+     3,
+     8,
+     9,
+     16,
+     17
+    ],
+    "weight_ok": false,
+    "marginals_ok": false,
+    "pass": false,
+    "n_marginal_tests": 20,
+    "family_wise_false_alarm_marginals": 0.053995921265203826,
+    "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)",
+    "arms": [
+     "kraus_gpu_cusv",
+     "kraus_cpu"
+    ],
+    "power": {
+     "evaluated": true,
+     "min_visible_marginal_diff": 0.5746456594533464,
+     "min_visible_weight_diff": 2.4510748420483717,
+     "note": "at N = 256 / 7 shots a marginal difference below 0.575 (p = 1/2, 3 sigma) and a mean-weight difference below 2.451 bits are invisible to this comparison"
+    },
+    "z_marginals_pooled_information": [
+     -2.6530708469893325,
+     -0.6759208580026723,
+     0.7899668662630025,
+     0.980265608248865,
+     -1.312972490989308,
+     0.443441106178078,
+     -2.1149604991746473,
+     -2.0157848327469625,
+     -5.265033476095307,
+     -3.92591617629895,
+     -2.472910515611705,
+     -0.9225206034877432,
+     -2.472910515611705,
+     -2.1569907699224657,
+     -0.9978414754387099,
+     -1.118574852318039,
+     -3.4781354356299645,
+     -4.620307733311636,
+     -0.8161252660511995,
+     -1.8771784172455264
+    ]
+   },
+   "rm_gpu_cusv~rm_cpu": {
+    "evaluated": true,
+    "n_sigma": 3.0,
+    "shots": [
+     512,
+     12
+    ],
+    "mean_hamming_weight": [
+     7.43359375,
+     6.666666666666667
+    ],
+    "delta_mean_hamming_weight": 0.766927083333333,
+    "z_mean_hamming_weight": 1.799454869423125,
+    "z_marginals_by_clbit": [
+     0.8694630752382427,
+     -0.27563925630800784,
+     0.7767512714230265,
+     -0.29381383071381856,
+     0.04012748419345113,
+     -0.7273327656536089,
+     -0.1337604073820305,
+     0.34498015276599947,
+     -1.1757049188338538,
+     0.48368379031390163,
+     0.684918423440372,
+     2.112057331629159,
+     1.0955891363139938,
+     0.9256448876184435,
+     2.129787706518402,
+     -0.8298575719086433,
+     0.2667271406276725,
+     0.03617335168847315,
+     -1.6625860382481525,
+     2.6264395886277723
+    ],
+    "max_abs_z_marginal": 2.6264395886277723,
+    "clbits_outside": [],
+    "weight_ok": true,
+    "marginals_ok": true,
+    "pass": true,
+    "n_marginal_tests": 20,
+    "family_wise_false_alarm_marginals": 0.053995921265203826,
+    "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)",
+    "arms": [
+     "rm_gpu_cusv",
+     "rm_cpu"
+    ],
+    "power": {
+     "evaluated": true,
+     "min_visible_marginal_diff": 0.4380576802773808,
+     "min_visible_weight_diff": 1.2785990296814673,
+     "note": "at N = 512 / 12 shots a marginal difference below 0.438 (p = 1/2, 3 sigma) and a mean-weight difference below 1.279 bits are invisible to this comparison"
+    },
+    "z_marginals_pooled_information": [
+     0.7424506129190093,
+     -0.2978670040982199,
+     0.6140814272354543,
+     -0.30996829013528104,
+     0.040130051930794185,
+     -0.9440114961027879,
+     -0.13385560570731325,
+     0.3353163056994537,
+     -1.175171910461682,
+     0.47729300392647844,
+     0.6537810890266217,
+     1.6248110318603997,
+     1.0351500174698893,
+     0.8769832766074501,
+     1.6371168407795367,
+     -0.853543132846624,
+     0.26416820661106444,
+     0.03611374833040574,
+     -1.5798187961761239,
+     1.9857332368704455
+    ]
+   },
+   "rm_gpu_cusv~kraus_cpu": {
+    "evaluated": true,
+    "n_sigma": 3.0,
+    "shots": [
+     512,
+     7
+    ],
+    "mean_hamming_weight": [
+     7.43359375,
+     8.428571428571429
+    ],
+    "delta_mean_hamming_weight": -0.9949776785714288,
+    "z_mean_hamming_weight": -1.261413419278466,
+    "z_marginals_by_clbit": [
+     -0.8872781810259739,
+     -0.04610873574736474,
+     9.373998802374082,
+     11.767811588318526,
+     0.4103542253791805,
+     7.023972411451432,
+     0.27554734777675394,
+     -0.2534221744672604,
+     -3.3055971909883763,
+     -2.765378343719599,
+     -0.7630419326093102,
+     0.6549397993207615,
+     -0.462206706901817,
+     -0.5866676754876108,
+     0.6662791358229666,
+     0.5415377738698413,
+     -1.5056255424186904,
+     -3.247085891397405,
+     0.8817128726515886,
+     0.14074288957362008
+    ],
+    "max_abs_z_marginal": 11.767811588318526,
+    "clbits_outside": [
+     2,
+     3,
+     5,
+     8,
+     17
+    ],
+    "weight_ok": true,
+    "marginals_ok": false,
+    "pass": false,
+    "n_marginal_tests": 20,
+    "family_wise_false_alarm_marginals": 0.053995921265203826,
+    "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)",
+    "arms": [
+     "rm_gpu_cusv",
+     "kraus_cpu"
+    ],
+    "power": {
+     "evaluated": true,
+     "min_visible_marginal_diff": 0.5708091648515916,
+     "min_visible_weight_diff": 2.3663400040739067,
+     "note": "at N = 512 / 7 shots a marginal difference below 0.571 (p = 1/2, 3 sigma) and a mean-weight difference below 2.366 bits are invisible to this comparison"
+    },
+    "z_marginals_pooled_information": [
+     -0.9947384320637209,
+     -0.046941198943881,
+     1.0948052342058812,
+     1.3734695612465286,
+     0.4062208776853689,
+     0.8207573951786887,
+     0.2729801493395594,
+     -0.2581134748193106,
+     -2.359058343858836,
+     -1.949182958431737,
+     -0.7627963748497111,
+     0.6054457912977194,
+     -0.4577184002356031,
+     -0.5823541059557339,
+     0.6154305212666252,
+     0.505145918603539,
+     -1.3670164917309449,
+     -2.311902767720651,
+     0.8044712877436596,
+     0.13988593965311794
+    ]
+   },
+   "kraus_gpu_native~kraus_cpu": {
+    "evaluated": true,
+    "n_sigma": 3.0,
+    "shots": [
+     256,
+     7
+    ],
+    "mean_hamming_weight": [
+     3.56640625,
+     8.428571428571429
+    ],
+    "delta_mean_hamming_weight": -4.862165178571429,
+    "z_mean_hamming_weight": -5.926638613263177,
+    "z_marginals_by_clbit": [
+     -1.5501624775440743,
+     -0.5740746543220188,
+     4.905953125374932,
+     5.829434010687123,
+     -0.9864159264362746,
+     3.0541668622837332,
+     -1.1320494712309337,
+     -1.3198015300921986,
+     -5.009467666176029,
+     -4.467475293412353,
+     -1.867802985627064,
+     -0.36509790318887536,
+     -1.888719613881375,
+     -1.909644536254989,
+     -0.27447983865818326,
+     -0.7288078606547018,
+     -3.031040717097846,
+     -4.857923029035484,
+     -0.5466871730944887,
+     -1.2154201504002349
+    ],
+    "max_abs_z_marginal": 5.829434010687123,
+    "clbits_outside": [
+     2,
+     3,
+     5,
+     8,
+     9,
+     16,
+     17
+    ],
+    "weight_ok": false,
+    "marginals_ok": false,
+    "pass": false,
+    "n_marginal_tests": 20,
+    "family_wise_false_alarm_marginals": 0.053995921265203826,
+    "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)",
+    "arms": [
+     "kraus_gpu_native",
+     "kraus_cpu"
+    ],
+    "power": {
+     "evaluated": true,
+     "min_visible_marginal_diff": 0.5746456594533464,
+     "min_visible_weight_diff": 2.46117512599322,
+     "note": "at N = 256 / 7 shots a marginal difference below 0.575 (p = 1/2, 3 sigma) and a mean-weight difference below 2.461 bits are invisible to this comparison"
+    },
+    "z_marginals_pooled_information": [
+     -2.1668432879380175,
+     -0.7903330508002538,
+     0.8102326326970156,
+     0.9622536750738513,
+     -1.127888230807628,
+     0.5047906568900266,
+     -1.3456022921281159,
+     -1.6685483798032303,
+     -4.382970620181098,
+     -3.54694763472954,
+     -2.1938266391268955,
+     -0.394590136919659,
+     -2.2313548450589566,
+     -2.2696059548688323,
+     -0.29009652380960577,
+     -0.8862287228452156,
+     -3.3789241239308727,
+     -4.117613280350266,
+     -0.6226479429927788,
+     -1.482110795021973
+    ]
+   },
+   "kraus_gpu_cusv_nofusion~kraus_cpu": {
+    "evaluated": true,
+    "n_sigma": 3.0,
+    "shots": [
+     128,
+     7
+    ],
+    "mean_hamming_weight": [
+     1.140625,
+     8.428571428571429
+    ],
+    "delta_mean_hamming_weight": -7.287946428571429,
+    "z_mean_hamming_weight": -8.970356245556617,
+    "z_marginals_by_clbit": [
+     -2.1170708335832926,
+     -0.8983358874135372,
+     2.281063794048804,
+     2.9211869733608857,
+     -1.98747094223451,
+     1.7527121840165314,
+     -1.98747094223451,
+     -1.9444619745286005,
+     -5.998403917103146,
+     -5.7313109687871835,
+     -2.8343548461445796,
+     -1.343760511906,
+     -2.7032764036129326,
+     -2.6597934850367078,
+     -1.1578936515533709,
+     -1.4373350950646817,
+     -3.6903112648286327,
+     -5.599875408071019,
+     -1.343760511906,
+     -1.9444619745286005
+    ],
+    "max_abs_z_marginal": 5.998403917103146,
+    "clbits_outside": [
+     8,
+     9,
+     16,
+     17
+    ],
+    "weight_ok": false,
+    "marginals_ok": false,
+    "pass": false,
+    "n_marginal_tests": 20,
+    "family_wise_false_alarm_marginals": 0.053995921265203826,
+    "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)",
+    "arms": [
+     "kraus_gpu_cusv_nofusion",
+     "kraus_cpu"
+    ],
+    "power": {
+     "evaluated": true,
+     "min_visible_marginal_diff": 0.5822428156951114,
+     "min_visible_weight_diff": 2.437343477472741,
+     "note": "at N = 128 / 7 shots a marginal difference below 0.582 (p = 1/2, 3 sigma) and a mean-weight difference below 2.437 bits are invisible to this comparison"
+    },
+    "z_marginals_pooled_information": [
+     -4.616457827845448,
+     -1.8143915457899442,
+     0.5328736500551298,
+     0.6819523847880512,
+     -3.677923399924784,
+     0.4096232332056108,
+     -3.677923399924784,
+     -3.447303640228787,
+     -7.00793682821966,
+     -5.98860215769309,
+     -5.4982531432766,
+     -2.3860343829313546,
+     -4.6071732435591395,
+     -4.376305474089885,
+     -1.74467411996011,
+     -2.8658347751512467,
+     -5.2149660148187245,
+     -5.597521276232247,
+     -2.3860343829313546,
+     -3.447303640228787
+    ]
+   },
+   "rm_cpu~kraus_cpu": {
+    "evaluated": true,
+    "n_sigma": 3.0,
+    "shots": [
+     12,
+     7
+    ],
+    "mean_hamming_weight": [
+     6.666666666666667,
+     8.428571428571429
+    ],
+    "delta_mean_hamming_weight": -1.7619047619047619,
+    "z_mean_hamming_weight": -1.9899167328644416,
+    "z_marginals_by_clbit": [
+     -1.2137779837215752,
+     0.13965362305475457,
+     1.044465935734187,
+     2.0,
+     0.3023304478109313,
+     1.5491933384829666,
+     0.3023304478109313,
+     -0.4117350259381127,
+     -1.409306216857308,
+     -2.2671447836400174,
+     -1.0293375648452816,
+     -0.589889967693202,
+     -1.0293375648452816,
+     -1.0293375648452816,
+     -0.589889967693202,
+     0.958431282084812,
+     -1.338927425915818,
+     -2.2671447836400174,
+     1.744754312337134,
+     -1.2137779837215752
+    ],
+    "max_abs_z_marginal": 2.2671447836400174,
+    "clbits_outside": [],
+    "weight_ok": true,
+    "marginals_ok": true,
+    "pass": true,
+    "n_marginal_tests": 20,
+    "family_wise_false_alarm_marginals": 0.053995921265203826,
+    "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)",
+    "arms": [
+     "rm_cpu",
+     "kraus_cpu"
+    ],
+    "power": {
+     "evaluated": true,
+     "min_visible_marginal_diff": 0.7133922984085064,
+     "min_visible_weight_diff": 2.6562489768632753,
+     "note": "at N = 12 / 7 shots a marginal difference below 0.713 (p = 1/2, 3 sigma) and a mean-weight difference below 2.656 bits are invisible to this comparison"
+    },
+    "z_marginals_pooled_information": [
+     -1.2505780976137764,
+     0.13729241184131902,
+     0.7846914939903075,
+     1.4415703243338498,
+     0.30079260375911926,
+     1.1418938517337989,
+     0.30079260375911926,
+     -0.4151332327181594,
+     -1.238561830929489,
+     -1.875847571780317,
+     -1.013971660421793,
+     -0.6139903313441727,
+     -1.013971660421793,
+     -1.013971660421793,
+     -0.6139903313441727,
+     0.9125744943796139,
+     -1.2533025156629967,
+     -1.875847571780317,
+     1.6042272200486356,
+     -1.2505780976137764
+    ]
+   },
+   "kraus_gpu_cusv~rm_gpu_cusv": {
+    "evaluated": true,
+    "n_sigma": 3.0,
+    "shots": [
+     256,
+     512
+    ],
+    "mean_hamming_weight": [
+     2.99609375,
+     7.43359375
+    ],
+    "delta_mean_hamming_weight": -4.4375,
+    "z_mean_hamming_weight": -17.37674449142003,
+    "z_marginals_by_clbit": [
+     -5.721016794376033,
+     -2.798106658458606,
+     -2.7778895094360454,
+     -3.3676462168768238,
+     -8.445174318528883,
+     -3.751605585129505,
+     -10.970667208146192,
+     -7.523664395199547,
+     -9.253683700068093,
+     -7.871687599724567,
+     -7.182425088210253,
+     -7.724114038147405,
+     -8.864118557787625,
+     -6.991970907561311,
+     -8.120479406715301,
+     -7.981722557969119,
+     -8.300154390393006,
+     -7.941245382726485,
+     -8.412298459510719,
+     -9.281090666524278
+    ],
+    "max_abs_z_marginal": 10.970667208146192,
+    "clbits_outside": [
+     0,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19
+    ],
+    "weight_ok": false,
+    "marginals_ok": false,
+    "pass": false,
+    "n_marginal_tests": 20,
+    "family_wise_false_alarm_marginals": 0.053995921265203826,
+    "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)",
+    "arms": [
+     "kraus_gpu_cusv",
+     "rm_gpu_cusv"
+    ],
+    "power": {
+     "evaluated": true,
+     "min_visible_marginal_diff": 0.11481983169296146,
+     "min_visible_weight_diff": 0.7661101310762325,
+     "note": "at N = 256 / 512 shots a marginal difference below 0.115 (p = 1/2, 3 sigma) and a mean-weight difference below 0.766 bits are invisible to this comparison"
+    },
+    "z_marginals_pooled_information": [
+     -5.0147387831355585,
+     -2.550854574922245,
+     -2.5460052743745165,
+     -3.1061300159634584,
+     -7.62567986329635,
+     -3.1482493549367208,
+     -9.210265968579732,
+     -6.6047703560699,
+     -7.874541918672596,
+     -7.144071034580868,
+     -6.477368177544232,
+     -6.795583304360436,
+     -7.859016363213606,
+     -6.408329410009756,
+     -7.077380318261283,
+     -6.916321510501526,
+     -7.368710353356464,
+     -7.0161714208967245,
+     -7.393842666182903,
+     -8.042735819125772
+    ]
+   },
+   "rm_gpu_cusv_anchor~rm_gpu_cusv": {
+    "evaluated": true,
+    "n_sigma": 3.0,
+    "shots": [
+     128,
+     512
+    ],
+    "mean_hamming_weight": [
+     7.0625,
+     7.43359375
+    ],
+    "delta_mean_hamming_weight": -0.37109375,
+    "z_mean_hamming_weight": -1.629674946489997,
+    "z_marginals_by_clbit": [
+     -0.6482386825945459,
+     -0.11618785515968734,
+     -1.7500997872002657,
+     -0.4457467387238579,
+     -0.911395182878999,
+     0.20457693091246226,
+     0.5535371272883641,
+     -0.28658517069611417,
+     -1.1471953991118415,
+     -0.8341617479010595,
+     -1.2643047937260576,
+     -0.16192623473346035,
+     -1.1157681065731764,
+     0.4748171679927925,
+     1.2333139061565197,
+     -0.7458087128349374,
+     0.43554817455191785,
+     1.2685086215560737,
+     -1.29991114192382,
+     -2.0029774029119465
+    ],
+    "max_abs_z_marginal": 2.0029774029119465,
+    "clbits_outside": [],
+    "weight_ok": true,
+    "marginals_ok": true,
+    "pass": true,
+    "n_marginal_tests": 20,
+    "family_wise_false_alarm_marginals": 0.053995921265203826,
+    "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)",
+    "arms": [
+     "rm_gpu_cusv_anchor",
+     "rm_gpu_cusv"
+    ],
+    "power": {
+     "evaluated": true,
+     "min_visible_marginal_diff": 0.14823176532039278,
+     "min_visible_weight_diff": 0.6831308614014049,
+     "note": "at N = 128 / 512 shots a marginal difference below 0.148 (p = 1/2, 3 sigma) and a mean-weight difference below 0.683 bits are invisible to this comparison"
+    },
+    "z_marginals_pooled_information": [
+     -0.6338151657032721,
+     -0.11533677270314827,
+     -1.5570464314925017,
+     -0.4371946543942691,
+     -0.9091725847488692,
+     0.2081658771496836,
+     0.5536175939303491,
+     -0.28530462523959477,
+     -1.1281750430302127,
+     -0.8308934576745326,
+     -1.243211634383378,
+     -0.16158813631136765,
+     -1.108362332613251,
+     0.4754666413348613,
+     1.244588544357261,
+     -0.7360901247586564,
+     0.43625554681553896,
+     1.2759489134736182,
+     -1.2793860420144028,
+     -1.952991570393416
+    ]
+   },
+   "rm_gpu_cusv_anchor~rm_cpu": {
+    "evaluated": true,
+    "n_sigma": 3.0,
+    "shots": [
+     128,
+     12
+    ],
+    "mean_hamming_weight": [
+     7.0625,
+     6.666666666666667
+    ],
+    "delta_mean_hamming_weight": 0.39583333333333304,
+    "z_mean_hamming_weight": 0.856388688623336,
+    "z_marginals_by_clbit": [
+     0.59439085393972,
+     -0.30311790761197166,
+     0.12424147797195347,
+     -0.4212610631701395,
+     -0.2588423013839271,
+     -0.6591353049644095,
+     0.05175545847965165,
+     0.237411883133465,
+     -1.508102410261232,
+     0.19232587584151126,
+     0.237411883133465,
+     1.932274283346327,
+     0.6740687952382747,
+     1.0557003039917257,
+     2.5312481616732057,
+     -1.0394578908302294,
+     0.4019631612823145,
+     0.45436874466369603,
+     -2.044603715781586,
+     1.6664446069116023
+    ],
+    "max_abs_z_marginal": 2.5312481616732057,
+    "clbits_outside": [],
+    "weight_ok": true,
+    "marginals_ok": true,
+    "pass": true,
+    "n_marginal_tests": 20,
+    "family_wise_false_alarm_marginals": 0.053995921265203826,
+    "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)",
+    "arms": [
+     "rm_gpu_cusv_anchor",
+     "rm_cpu"
+    ],
+    "power": {
+     "evaluated": true,
+     "min_visible_marginal_diff": 0.45285552331841994,
+     "min_visible_weight_diff": 1.3866367173869754,
+     "note": "at N = 128 / 12 shots a marginal difference below 0.453 (p = 1/2, 3 sigma) and a mean-weight difference below 1.387 bits are invisible to this comparison"
+    },
+    "z_marginals_pooled_information": [
+     0.5340905359742709,
+     -0.3274177863885148,
+     0.11888165871368923,
+     -0.45285552331841994,
+     -0.2594372608313854,
+     -0.805076485899413,
+     0.051760198873122394,
+     0.2330191760414273,
+     -1.529428896898673,
+     0.19101960399251383,
+     0.2330191760414273,
+     1.5352667513070808,
+     0.6463408575589983,
+     1.0022326972666475,
+     1.9657504404723747,
+     -1.0801234497346432,
+     0.397437104088498,
+     0.44895510878279793,
+     -1.9720265943665385,
+     1.3447624963158307
+    ]
+   },
+   "kraus_gpu_cusv_nofusion~kraus_gpu_cusv": {
+    "evaluated": true,
+    "n_sigma": 3.0,
+    "shots": [
+     128,
+     256
+    ],
+    "mean_hamming_weight": [
+     1.140625,
+     2.99609375
+    ],
+    "delta_mean_hamming_weight": -1.85546875,
+    "z_mean_hamming_weight": -5.77830180672821,
+    "z_marginals_by_clbit": [
+     -3.017304703232759,
+     -2.4012969084634856,
+     -1.7729004632987984,
+     -1.9825234377345546,
+     -5.0121348073553245,
+     -0.23232364899681715,
+     -2.903642148156501,
+     -2.7859402887369855,
+     -2.6737316817205796,
+     -3.7103943757396807,
+     -5.084272879283107,
+     -3.3504834712974585,
+     -3.954972963612424,
+     -4.422196672943567,
+     -1.878093071309157,
+     -3.555731151553171,
+     -3.1125890443653086,
+     -1.8716827119095993,
+     -3.6757159822854395,
+     -3.1144677014463533
+    ],
+    "max_abs_z_marginal": 5.084272879283107,
+    "clbits_outside": [
+     0,
+     4,
+     9,
+     10,
+     11,
+     12,
+     13,
+     15,
+     16,
+     18,
+     19
+    ],
+    "weight_ok": false,
+    "marginals_ok": false,
+    "pass": false,
+    "n_marginal_tests": 20,
+    "family_wise_false_alarm_marginals": 0.053995921265203826,
+    "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)",
+    "arms": [
+     "kraus_gpu_cusv_nofusion",
+     "kraus_gpu_cusv"
+    ],
+    "power": {
+     "evaluated": true,
+     "min_visible_marginal_diff": 0.16237976320958225,
+     "min_visible_weight_diff": 0.9633290949805563,
+     "note": "at N = 128 / 256 shots a marginal difference below 0.162 (p = 1/2, 3 sigma) and a mean-weight difference below 0.963 bits are invisible to this comparison"
+    },
+    "z_marginals_pooled_information": [
+     -2.5167264630707282,
+     -2.0184980815630547,
+     -1.5798472996878206,
+     -1.791843280294659,
+     -4.09239093335447,
+     -0.2265764736148083,
+     -2.5174559372706056,
+     -2.4447588626648513,
+     -2.3369080340262753,
+     -3.2326783818100795,
+     -4.04819450963992,
+     -2.862596150481687,
+     -3.349293835068262,
+     -3.7301791788987213,
+     -1.7304145313184323,
+     -2.9531221160930916,
+     -2.7403313196013053,
+     -1.738075350307042,
+     -3.109498679197041,
+     -2.7037727051850506
+    ]
+   },
+   "kraus_gpu_native~kraus_gpu_cusv": {
+    "evaluated": true,
+    "n_sigma": 3.0,
+    "shots": [
+     256,
+     256
+    ],
+    "mean_hamming_weight": [
+     3.56640625,
+     2.99609375
+    ],
+    "delta_mean_hamming_weight": 0.5703125,
+    "z_mean_hamming_weight": 1.6738998430551308,
+    "z_marginals_by_clbit": [
+     1.084979552526579,
+     -0.3457490084420554,
+     0.15934010501674087,
+     -0.1364236564209498,
+     0.6298908857758369,
+     0.5081285807389624,
+     2.2069001862675086,
+     0.9555432288693558,
+     1.5781596120833956,
+     0.9370624111082942,
+     0.7666379087775477,
+     1.9241483817381921,
+     0.6593618096594327,
+     -0.3217855000603297,
+     2.5905859064540726,
+     0.7462291913630129,
+     0.22646674859672877,
+     1.0242173088586572,
+     0.6909873191944516,
+     1.1526013537400897
+    ],
+    "max_abs_z_marginal": 2.5905859064540726,
+    "clbits_outside": [],
+    "weight_ok": true,
+    "marginals_ok": true,
+    "pass": true,
+    "n_marginal_tests": 20,
+    "family_wise_false_alarm_marginals": 0.053995921265203826,
+    "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)",
+    "arms": [
+     "kraus_gpu_native",
+     "kraus_gpu_cusv"
+    ],
+    "power": {
+     "evaluated": true,
+     "min_visible_marginal_diff": 0.13258252147247768,
+     "min_visible_weight_diff": 1.0221265669499495,
+     "note": "at N = 256 / 256 shots a marginal difference below 0.133 (p = 1/2, 3 sigma) and a mean-weight difference below 1.022 bits are invisible to this comparison"
+    },
+    "z_marginals_pooled_information": [
+     1.0837344170682923,
+     -0.34570865256115435,
+     0.1593361544519488,
+     -0.13642117696007666,
+     0.6296469678624256,
+     0.508000508000762,
+     2.1964778970675134,
+     0.9546923442581571,
+     1.5743351364928413,
+     0.9362599067155439,
+     0.7661982687658508,
+     1.9172289861849168,
+     0.6590820436573077,
+     -0.3217529663505766,
+     2.5737727199845217,
+     0.7458237176878765,
+     0.22645540682891913,
+     1.0231696747186731,
+     0.690665355682745,
+     1.1511089261379084
+    ]
+   },
+   "kraus_gpu_native~kraus_gpu_cusv_nofusion": {
+    "evaluated": true,
+    "n_sigma": 3.0,
+    "shots": [
+     256,
+     128
+    ],
+    "mean_hamming_weight": [
+     3.56640625,
+     1.140625
+    ],
+    "delta_mean_hamming_weight": 2.42578125,
+    "z_mean_hamming_weight": 7.360177373923927,
+    "z_marginals_by_clbit": [
+     3.9933294803177435,
+     2.0941995632807417,
+     1.9135051052564949,
+     1.8627898885116796,
+     5.600619894580751,
+     0.6641730119298666,
+     4.912651869738758,
+     3.6451607964305097,
+     4.098198217293866,
+     4.565310385305971,
+     5.796893152657297,
+     5.1111817653629075,
+     4.558875593536401,
+     4.127362371766538,
+     4.188862964453915,
+     4.232211321326653,
+     3.31572396773617,
+     2.7691519938379976,
+     4.305272863723384,
+     4.158428580638388
+    ],
+    "max_abs_z_marginal": 5.796893152657297,
+    "clbits_outside": [
+     0,
+     4,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     18,
+     19
+    ],
+    "weight_ok": false,
+    "marginals_ok": false,
+    "pass": false,
+    "n_marginal_tests": 20,
+    "family_wise_false_alarm_marginals": 0.053995921265203826,
+    "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)",
+    "arms": [
+     "kraus_gpu_native",
+     "kraus_gpu_cusv_nofusion"
+    ],
+    "power": {
+     "evaluated": true,
+     "min_visible_marginal_diff": 0.16237976320958225,
+     "min_visible_weight_diff": 0.9887457027574642,
+     "note": "at N = 256 / 128 shots a marginal difference below 0.162 (p = 1/2, 3 sigma) and a mean-weight difference below 0.989 bits are invisible to this comparison"
+    },
+    "z_marginals_pooled_information": [
+     3.225317904530386,
+     1.7863954744705304,
+     1.6936195968798822,
+     1.6917991496157887,
+     4.5114072118415445,
+     0.6221710168382552,
+     4.020783513210851,
+     3.113995776646092,
+     3.425395354310701,
+     3.894367350524845,
+     4.5409034443321525,
+     4.163457097172973,
+     3.800077295257722,
+     3.5077636571609743,
+     3.605551275463989,
+     3.444887488300472,
+     2.901889866606579,
+     2.501911494942746,
+     3.578390427102734,
+     3.502280873490699
+    ]
+   }
+  },
+  "bug_confirmed": true,
+  "decision": {
+   "bug_confirmed": true,
+   "k1_evaluated": true,
+   "production_representation": "blocked",
+   "k2_evaluated": true,
+   "validated_kraus_gpu_path": "none",
+   "c2_cal_decision_reinstated": false,
+   "rules": {
+    "K1": "bug_confirmed iff |z_w(kraus_gpu_cusv, kraus_cpu)| > 3",
+    "K2": "rm iff rm_gpu_cusv agrees with rm_cpu AND kraus_cpu: |z_w| <= 3 and no marginal beyond 3 sigma (Bonferroni expectation 20 x 0.0027 = 0.054 < 1), else blocked",
+    "K3": "the first of ['kraus_gpu_native', 'kraus_gpu_cusv_nofusion'] with |z_w| <= 3 against kraus_cpu, else none"
+   },
+   "k4": {
+    "evaluated": true,
+    "status": "agree",
+    "stop_planner": false
+   },
+   "seconds_per_shot": {
+    "kraus_gpu_cusv": 1.9195747850462794,
+    "rm_gpu_cusv": 0.4172244002111256,
+    "kraus_gpu_native": 2.2227095924317837,
+    "kraus_gpu_cusv_nofusion": 5.046831406652927,
+    "rm_gpu_cusv_anchor": 0.4275288265198469,
+    "kraus_cpu": 213.6838402066912,
+    "rm_cpu": 93.89864705006282
+   },
+   "production_seconds_per_shot": 0.4172244002111256,
+   "production_seconds_per_shot_source": "run 1 (validation/archive/C2_KCHK_job59780907.json) rm_gpu_cusv, 512 shots",
+   "anchor_seconds_per_shot": 0.4275288265198469,
+   "validated_path_seconds_per_shot": null,
+   "validated_path_gpu_mode": null,
+   "evidence": {
+    "gpu_arms": "run 1, job 59780907 (validation/archive/C2_KCHK_job59780907.json)",
+    "cpu_arms": "run 2 (this job)"
+   }
+  },
+  "k4": {
+   "evaluated": true,
+   "status": "agree",
+   "per_representation": {
+    "kraus_cpu": {
+     "evaluated": true,
+     "laptop_arm": "cpu_kraus",
+     "shots": [
+      7,
+      29
+     ],
+     "mean_hamming_weight": [
+      8.428571428571429,
+      7.620689655172414
+     ],
+     "se_mean_hamming_weight": [
+      0.7824607964359517,
+      0.4281182134507901
+     ],
+     "z_mean_hamming_weight": 0.9057732720657067,
+     "agree": true,
+     "power": {
+      "evaluated": true,
+      "min_visible_marginal_diff": 0.6316761657092368,
+      "min_visible_weight_diff": 2.6757748268169577,
+      "note": "at N = 7 / 29 shots a marginal difference below 0.632 (p = 1/2, 3 sigma) and a mean-weight difference below 2.676 bits are invisible to this comparison"
+     },
+     "marginals_information": {
+      "z_marginals_by_clbit": [
+       0.40490553300465476,
+       -0.1974265617183077,
+       -1.8292495308606331,
+       -3.6124783736376886,
+       0.07097925238191943,
+       -2.4579802006254377,
+       -0.4246722011812729,
+       -0.2595219007218891,
+       3.9908125976421993,
+       1.8933566928426138,
+       0.7571120254071414,
+       -0.8374240561678915,
+       0.4246722011812724,
+       0.09446048255965729,
+       -0.3075444293182034,
+       0.8103982908678147,
+       0.4847979545286014,
+       3.722713840583733,
+       -1.1913992339756017,
+       -0.4246722011812729
+      ],
+      "max_abs_z_marginal": 3.9908125976421993,
+      "clbits_outside": [
+       3,
+       8,
+       17
+      ],
+      "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)"
+     }
+    },
+    "rm_cpu": {
+     "evaluated": true,
+     "laptop_arm": "cpu_rm",
+     "shots": [
+      12,
+      24
+     ],
+     "mean_hamming_weight": [
+      6.666666666666667,
+      6.916666666666667
+     ],
+     "se_mean_hamming_weight": [
+      0.41438770700537403,
+      0.5707758090131267
+     ],
+     "z_mean_hamming_weight": -0.3544398202895614,
+     "agree": true,
+     "power": {
+      "evaluated": true,
+      "min_visible_marginal_diff": 0.5303300858899107,
+      "min_visible_weight_diff": 2.11601506678139,
+      "note": "at N = 12 / 24 shots a marginal difference below 0.530 (p = 1/2, 3 sigma) and a mean-weight difference below 2.116 bits are invisible to this comparison"
+     },
+     "marginals_information": {
+      "z_marginals_by_clbit": [
+       0.0,
+       1.5491933384829666,
+       1.044465935734187,
+       0.5694947974514994,
+       -0.9607689228305225,
+       0.3280599310882848,
+       -0.9607689228305225,
+       0.0,
+       1.2024072240843036,
+       0.0,
+       -0.4923659639173312,
+       -0.3067859955389483,
+       -0.9797958971132713,
+       -0.9797958971132713,
+       -1.1547005383792512,
+       0.0,
+       0.48507125007266616,
+       0.48507125007266616,
+       0.979795897113271,
+       -1.426148065624585
+      ],
+      "max_abs_z_marginal": 1.5491933384829666,
+      "clbits_outside": [],
+      "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)"
+     }
+    }
+   },
+   "stop_planner": false,
+   "rule": "K4: |z_w(CI CPU arm, laptop CPU arm)| <= 3 for kraus and rm; a disagreement is a STOP for the planner (prompts/33e R3 (b)); the laptop alone decides nothing of record",
+   "laptop": {
+    "path": "data/campaign33/c33c_diag/summary.json",
+    "sha256": "45cddc96e55b79197cfab96458dce909465bb2d582d13a43d897cfb6d892c397",
+    "git_commit": "6753767-dirty",
+    "created": "2026-10-15 18:48:24 UTC",
+    "versions": {
+     "python": "3.12.14",
+     "qiskit": "1.4.3",
+     "qiskit_aer": "0.15.1",
+     "numpy": "2.5.3"
+    },
+    "aer": {
+     "distributions": [
+      "qiskit-aer"
+     ],
+     "versions": {
+      "qiskit-aer": "0.15.1"
+     }
+    }
+   }
+  },
+  "laptop_reference": {
+   "present": true,
+   "path": "data/campaign33/c33c_diag/summary.json",
+   "sha256": "45cddc96e55b79197cfab96458dce909465bb2d582d13a43d897cfb6d892c397",
+   "git_commit": "6753767-dirty",
+   "created": "2026-10-15 18:48:24 UTC",
+   "versions": {
+    "python": "3.12.14",
+    "qiskit": "1.4.3",
+    "qiskit_aer": "0.15.1",
+    "numpy": "2.5.3"
+   },
+   "machine": {
+    "host": "pichkaCommander",
+    "processor": "x86_64",
+    "cpu_count": 12
+   },
+   "aer": {
+    "distributions": [
+     "qiskit-aer"
+    ],
+    "versions": {
+     "qiskit-aer": "0.15.1"
+    }
+   },
+   "arms": {
+    "cpu_kraus": {
+     "shots": 29,
+     "mean_hamming_weight": 7.620689655172414,
+     "se_mean_hamming_weight": 0.4281182134507901,
+     "sd_hamming_weight": 2.3054871363684923,
+     "seconds_per_shot": 207.58503758496252,
+     "versions": {
+      "python": "3.12.14",
+      "qiskit": "1.4.3",
+      "qiskit_aer": "0.15.1",
+      "numpy": "2.5.3"
+     },
+     "source": "data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg2.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg3.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg4.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_kraus_cpu_seg5.json",
+     "status": "done",
+     "aer": {
+      "distributions": [
+       "qiskit-aer"
+      ],
+      "versions": {
+       "qiskit-aer": "0.15.1"
+      }
+     },
+     "structure": {
+      "shots": 29,
+      "n_bits": 20,
+      "mean_hamming_weight": 7.620689655172414,
+      "sd_hamming_weight": 2.3054871363684923,
+      "se_mean_hamming_weight": 0.4281182134507901,
+      "unital_limit": 10.0,
+      "deficit_vs_unital": 2.3793103448275863,
+      "marginals_by_clbit": [
+       0.3448275862068966,
+       0.1724137931034483,
+       0.10344827586206896,
+       0.3103448275862069,
+       0.41379310344827586,
+       0.1724137931034483,
+       0.5172413793103449,
+       0.4827586206896552,
+       0.2413793103448276,
+       0.5517241379310345,
+       0.41379310344827586,
+       0.4482758620689655,
+       0.4827586206896552,
+       0.5517241379310345,
+       0.3448275862068966,
+       0.13793103448275862,
+       0.6206896551724138,
+       0.27586206896551724,
+       0.5172413793103449,
+       0.5172413793103449
+      ],
+      "se_marginals_by_clbit": [
+       0.0882632273954608,
+       0.0701445003745666,
+       0.056552304164538,
+       0.08590911709007583,
+       0.09145723911072252,
+       0.0701445003745666,
+       0.09279245191499011,
+       0.09279245191499011,
+       0.07946270842617656,
+       0.09234952598786016,
+       0.09145723911072252,
+       0.09234952598786016,
+       0.09279245191499011,
+       0.09234952598786016,
+       0.0882632273954608,
+       0.06403287523346615,
+       0.0901022421425571,
+       0.08299609211231937,
+       0.09279245191499011,
+       0.09279245191499011
+      ],
+      "physical_by_clbit": [
+       92,
+       69,
+       54,
+       52,
+       53,
+       68,
+       73,
+       94,
+       50,
+       72,
+       71,
+       79,
+       51,
+       74,
+       70,
+       93,
+       75,
+       58,
+       95,
+       59
+      ],
+      "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
+     }
+    },
+    "cpu_rm": {
+     "shots": 24,
+     "mean_hamming_weight": 6.916666666666667,
+     "se_mean_hamming_weight": 0.5707758090131267,
+     "sd_hamming_weight": 2.7962189792128487,
+     "seconds_per_shot": 84.03293083111446,
+     "versions": {
+      "python": "3.12.14",
+      "qiskit": "1.4.3",
+      "qiskit_aer": "0.15.1",
+      "numpy": "2.5.3"
+     },
+     "source": "data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_rm_cpu.json, data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_rm_cpu_seg2.json",
+     "status": "done",
+     "aer": {
+      "distributions": [
+       "qiskit-aer"
+      ],
+      "versions": {
+       "qiskit-aer": "0.15.1"
+      }
+     },
+     "structure": {
+      "shots": 24,
+      "n_bits": 20,
+      "mean_hamming_weight": 6.916666666666667,
+      "sd_hamming_weight": 2.7962189792128487,
+      "se_mean_hamming_weight": 0.5707758090131267,
+      "unital_limit": 10.0,
+      "deficit_vs_unital": 3.083333333333333,
+      "marginals_by_clbit": [
+       0.16666666666666666,
+       0.0,
+       0.0,
+       0.16666666666666666,
+       0.6666666666666666,
+       0.125,
+       0.6666666666666666,
+       0.3333333333333333,
+       0.375,
+       0.4166666666666667,
+       0.4166666666666667,
+       0.20833333333333334,
+       0.5,
+       0.5,
+       0.3333333333333333,
+       0.5,
+       0.3333333333333333,
+       0.3333333333333333,
+       0.5,
+       0.375
+      ],
+      "se_marginals_by_clbit": [
+       0.07607257743127308,
+       0.0,
+       0.0,
+       0.07607257743127308,
+       0.09622504486493763,
+       0.06750771560841522,
+       0.09622504486493763,
+       0.09622504486493763,
+       0.09882117688026186,
+       0.10063456073742665,
+       0.10063456073742665,
+       0.08289816934939807,
+       0.10206207261596575,
+       0.10206207261596575,
+       0.09622504486493763,
+       0.10206207261596575,
+       0.09622504486493763,
+       0.09622504486493763,
+       0.10206207261596575,
+       0.09882117688026186
+      ],
+      "physical_by_clbit": [
+       92,
+       69,
+       54,
+       52,
+       53,
+       68,
+       73,
+       94,
+       50,
+       72,
+       71,
+       79,
+       51,
+       74,
+       70,
+       93,
+       75,
+       58,
+       95,
+       59
+      ],
+      "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
+     }
+    }
+   }
+  },
+  "cpu_process": {
+   "pid": 784957,
+   "threads": 1,
+   "cpu_affinity": 1,
+   "deadline": 1792112013.0346498,
+   "min_shots": 8,
+   "chunk": 1,
+   "ratio": {
+    "kraus_cpu": 1,
+    "rm_cpu": 2
+   },
+   "cycle": [
+    "kraus_cpu",
+    "rm_cpu",
+    "rm_cpu"
+   ],
+   "sequence": [
+    "kraus_cpu",
+    "rm_cpu",
+    "rm_cpu",
+    "kraus_cpu",
+    "rm_cpu",
+    "rm_cpu",
+    "kraus_cpu",
+    "rm_cpu",
+    "rm_cpu",
+    "kraus_cpu",
+    "rm_cpu",
+    "rm_cpu",
+    "kraus_cpu",
+    "rm_cpu",
+    "rm_cpu",
+    "kraus_cpu",
+    "rm_cpu",
+    "rm_cpu",
+    "kraus_cpu"
+   ],
+   "stand_in": null,
+   "build_s": 25.288438081741333,
+   "status": "running",
+   "wall_s": 2666.072536468506,
+   "rule": "alternating chunks in the cycle order; an arm runs regardless of the deadline until min_shots, then only while its slowest chunk so far would end before the deadline",
+   "aer": {
+    "distributions": [
+     "qiskit-aer-gpu"
+    ],
+    "versions": {
+     "qiskit-aer-gpu": "0.15.1"
+    }
+   },
+   "returncode": -9,
+   "killed_after_grace": true,
+   "grace_s": 60.0,
+   "window_share": 0.9,
+   "parent_cpu_affinity": 1,
+   "threads_rule": "the step's CPUs (sched_getaffinity) minus 4 (prompts/33d R3, 33e R1)",
+   "aer_wheel_note": "the CPU statevector code is the same source on every stack; the wheel is qiskit-aer-gpu on the CI and qiskit-aer on the laptop (prompts/33e R3 (a))",
+   "log_tail": "/global/homes/d/digonto/.conda/envs/skqd/lib/python3.12/site-packages/qiskit/qpy/interface.py:346: UserWarning: The qiskit version used to generate the provided QPY file, 2.5.2, is newer than the current qiskit version 1.4.3. This may result in an error if the QPY file uses instructions not present in this current qiskit version\n  warnings.warn(\n",
+   "command": "/global/homes/d/digonto/.conda/envs/skqd/bin/python -m skqd.campaign33.kchk_cpu --out results/campaign33/C2_KCHK/cpu_arms.json --deadline 1792112013.0346498 --s0 38300000 --offsets 610,611 --chunk 1 --min-shots 8 --ratio 1,2 --threads 1"
+  },
+  "minimum_shots": {
+   "rm_gpu_cusv_anchor": [
+    128,
+    128
+   ],
+   "kraus_cpu": [
+    7,
+    8
+   ],
+   "rm_cpu": [
+    12,
+    8
+   ]
+  },
+  "design": {
+   "content": "cpu_only",
+   "anchor": [
+    "rm_gpu_cusv_anchor",
+    "rm",
+    "custatevec",
+    128,
+    128
+   ],
+   "anchor_seed_offset": 620,
+   "cpu_arms": [
+    [
+     "kraus_cpu",
+     "kraus"
+    ],
+    [
+     "rm_cpu",
+     "rm"
+    ]
+   ],
+   "cpu": {
+    "chunk": 1,
+    "min": 8,
+    "ratio": [
+     1,
+     2
+    ]
+   },
+   "window_share": 0.9,
+   "sigma": 3.0,
+   "dry": null,
+   "source": "prompts/33e R1-R3 (33d R3 otherwise)"
+  },
+  "record": {
+   "path": "data/hardware/K0_prep/ibm_kingston_full_20261006T0652Z.json",
+   "fingerprint": "b948ddc86b1c4696121e377bd2c751b889705006bd1abb685eeee303398a44d9"
+  },
+  "raw_counts_npz": {
+   "rm_gpu_cusv_anchor": "results/campaign33/C2_KCHK/rm_gpu_cusv_anchor.npz",
+   "kraus_cpu": "results/campaign33/C2_KCHK/kraus_cpu.npz",
+   "rm_cpu": "results/campaign33/C2_KCHK/rm_cpu.npz"
+  },
+  "counts_convention": "keys: int with bit k = clbit k (skqd.reference_sim); physical_by_clbit in each structure",
+  "run": {
+   "engine": "Qiskit Aer statevector (double precision)",
+   "device": "GPU",
+   "device_requested": "GPU",
+   "available_devices": [
+    "CPU",
+    "GPU"
+   ],
+   "gpu_mode": "custatevec (the 128-shot RM anchor)",
+   "ci": {
+    "CI_GATE": "C2_KCHK",
+    "SLURM_JOB_ID": "59828887",
+    "SLURM_JOB_NODELIST": "nid008277"
+   },
+   "slurm": {
+    "gpus_per_task": null,
+    "gpus": 1,
+    "gpus_on_node": 1,
+    "cuda_visible_devices": "0",
+    "tasks": 1,
+    "rank": 0,
+    "cpus_per_task": 32,
+    "nodelist": "nid008277"
+   },
+   "gpus": 1,
+   "tasks": 1,
+   "rank": 0,
+   "wall_seconds": 2760.4853937625885,
+   "gpu_node_hours": 0.7668014982673856,
+   "node_hours_charged_shared_qos": 0.1917003745668464,
+   "parallel_efficiency_Ep": null,
+   "parallel_efficiency_note": "one task: E(p) needs T_1 and T_p from two task counts (not measured)",
+   "phases_s": {
+    "preflight_s": 10.304929971694946,
+    "gpu_anchor_s": 54.72773718833923,
+    "cpu_process_s": 2757.4695110321045
+   },
+   "gpu_telemetry": {
+    "source": "/pscratch/sd/d/digonto/skqd-ci-runs/1c6af3139426-20261015220728-C2_KCHK/gpu_telemetry.csv",
+    "samples": 277,
+    "peak_memory_mib": 2295.0,
+    "mean_utilization_pct": 0.7220216606498195,
+    "max_utilization_pct": 100.0
+   },
+   "versions": {
+    "qiskit": "1.4.3",
+    "qiskit_aer": "0.15.1",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "threadpoolctl": "3.7.0",
+    "python": "3.12.14"
+   },
+   "seconds_per_shot": 0.4275288265198469,
+   "budget_minutes": 50.0,
+   "shots_scale": 1.0,
+   "max_shots_per_run": 476,
+   "oom_retries": [],
+   "cpu_affinity": 1,
+   "calibration_run": 2,
+   "cpu_affinity_check": {
+    "applies": true,
+    "ok": false,
+    "affinity": 1,
+    "slurm_cpus_per_task": 32,
+    "rule": "on the CI: len(os.sched_getaffinity(0)) == SLURM_CPUS_PER_TASK (prompts/33e R1)"
+   }
+  },
+  "physics_criteria_information_dry_run": null,
+  "notes": []
+ },
+ "runtime_s": 2760.4853937625885,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.3",
+  "scipy": "1.18.1",
+  "platform": "Linux-6.4.0-150600.23.125_15.0.29-cray_shasta_c-x86_64-with-glibc2.38",
+  "cpu_count": 128,
+  "git_commit": "n/a",
+  "timestamp": "2026-10-15 17:54:33 PDT"
+ }
+}
