@@ -40,8 +40,13 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 
+# prompts/33e part 2: the step's CPU set is captured before any OpenMP runtime loads (qiskit_aer's pins the main
+# thread to one CPU under the OMP_PROC_BIND / OMP_PLACES of jobs/gate.sbatch); skqd.hpc imports only os
+from skqd.hpc import record_step_cpus  # noqa: E402
+record_step_cpus()
 from skqd.campaign33 import tokens as TK  # noqa: E402
-from skqd.hpc import ci_context, cpu_affinity, cpu_affinity_check, gpu_count, gpu_telemetry, slurm_layout  # noqa: E402
+from skqd.hpc import (ci_context, cpu_affinity, cpu_affinity_check, gpu_count, gpu_telemetry, slurm_layout,  # noqa: E402
+                      step_cpu_count, step_cpus)
 
 PROMPT = "prompts/33_2x3_four_class_perlmutter_campaign.md"
 DATA = os.path.join(ROOT, "data", "campaign33")
@@ -154,7 +159,9 @@ def preflight(token, dry=False, root=None, write=True):
 
 
 def _affinity_or_none():
-    """run.cpu_affinity (prompts/33e R1) for the preflight-failure JSON: os only, no skqd import needed."""
+    """run.cpu_affinity (prompts/33e R1) for the preflight-failure JSON: the step's CPU set recorded at start."""
+    if step_cpus():
+        return len(step_cpus())
     try:
         return len(os.sched_getaffinity(0))
     except AttributeError:
@@ -375,7 +382,11 @@ def finish(ctx, extra_run=None):
            "phases_s": ctx.phases, "gpu_telemetry": tele, "versions": versions(),
            "seconds_per_shot": ctx.data.get("seconds_per_shot"), "budget_minutes": ctx.args.budget_minutes,
            "shots_scale": ctx.args.shots_scale, "max_shots_per_run": chunk_bound(ctx),
-           "oom_retries": ctx.oom, "cpu_affinity": cpu_affinity()}
+           "oom_retries": ctx.oom, "cpu_affinity": step_cpu_count(),
+           "cpu_affinity_source": ("os.sched_getaffinity(0) at process start, before any OpenMP runtime loaded "
+                                   "(SKQD_STEP_CPUS; prompts/33e part 2)" if step_cpus() else
+                                   "os.sched_getaffinity(0) now (no start record)"),
+           "cpu_affinity_main_thread_now": cpu_affinity()}
     if extra_run:
         run.update(extra_run)
     ctx.data["run"] = run
