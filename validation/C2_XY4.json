@@ -1,0 +1,1565 @@
+{
+ "gate": "C2_XY4",
+ "title": "Campaign 33 token C2_XY4 (class 2): I-XY4 on IBM-T3, echo and star halves (information)",
+ "status": "PASS",
+ "criteria": [
+  {
+   "name": "S0 representation decided (prompts/33f R2: data/campaign33/c2_representation_decision.json production_representation = rm; never a silent default)",
+   "value": {
+    "file": "data/campaign33/c2_representation_decision.json",
+    "sha256": "3cad544f32abcfdc6335e3aaab9bef7d2f6f6685afbe19bbccebfa6edb54f7ee",
+    "production_representation": "rm",
+    "reference_arm": "none",
+    "stub": false
+   },
+   "threshold": "the decision file present with production_representation rm",
+   "passed": true
+  },
+  {
+   "name": "P6 decoder round trip on every accepted string (both arms)",
+   "value": {
+    "production:B0_ref117_k1|echo": 0,
+    "production:B1_ref29_k1|echo": 0
+   },
+   "threshold": "0 mismatches",
+   "passed": true
+  },
+  {
+   "name": "P7' K1 comparison per run: Poisson probabilities of the measured 58 / 45 accepted and 0 / 0 hits, the z table of the mean Hamming weight and every marginal, comparison_power; no reference arm (no validated Kraus GPU path)",
+   "value": {
+    "B0_ref117_k1|echo": "underpowered/like_for_like",
+    "B1_ref29_k1|echo": "underpowered/like_for_like"
+   },
+   "threshold": "fields present (no threshold)",
+   "passed": true
+  },
+  {
+   "name": "S1 the run happened on the requested device (GPU under the CI)",
+   "value": "GPU (available ['CPU', 'GPU'])",
+   "threshold": "GPU",
+   "passed": true
+  },
+  {
+   "name": "S2 wall time inside the walltime budget",
+   "value": "1765 s",
+   "threshold": "<= min(walltime 3600 s, 3600 s) and <= 1.1 x budget + 120 s",
+   "passed": true
+  },
+  {
+   "name": "S3 telemetry and run block present (policy fields non-null on the CI; run.cpu_affinity == SLURM_CPUS_PER_TASK)",
+   "value": {
+    "engine": true,
+    "device": true,
+    "wall_seconds": true,
+    "seconds_per_shot": true,
+    "gpus": true,
+    "cpu_affinity": 32,
+    "slurm_cpus_per_task": 32
+   },
+   "threshold": "every policy field non-null on the CI and cpu_affinity == SLURM_CPUS_PER_TASK there; present on the laptop",
+   "passed": true
+  },
+  {
+   "name": "S4 every seed and every chunk recorded",
+   "value": true,
+   "threshold": "true",
+   "passed": true
+  },
+  {
+   "name": "S5 no out-of-memory retry left unrecorded",
+   "value": "0 recorded",
+   "threshold": "each OOM split recorded",
+   "passed": true
+  },
+  {
+   "name": "S6 shots >= the token's minimum",
+   "value": "full",
+   "threshold": "no reduction below the minimum",
+   "passed": true
+  }
+ ],
+ "data": {
+  "token": "C2_XY4",
+  "class": 2,
+  "prompt": "prompts/33_2x3_four_class_perlmutter_campaign.md",
+  "content": "I-XY4 on IBM-T3, echo and star halves (information)",
+  "dry_run": false,
+  "created": "2026-10-18 22:24:04 UTC",
+  "seeds": {
+   "s0": 33500000,
+   "rule": "aer seed of chunk i of circuit c = s0 * 1e4 + c * 1e6 + i * stride, stride = chunk size, s0 = 33 000 000 + 1e5 x token index (prompts/33 2.3 s0; the circuit/chunk offsets are widened from 1e3 c so that circuits, chunks, tokens and the a/b halves are disjoint for <= 1e6 shots per circuit: the literal s0 + 1e3 c + i stride overlaps above 1000 shots per circuit).  prompts/33b R4: every part of a split class-4 run (part 1 on the F token, parts >= 2 on any C4_PART slot) uses s0 of the run's OWN F token, i = the chunk's index in the UNSPLIT chunk plan and stride = the sizing's chunk, so the parts concatenate to the unsplit run seed for seed and a slot can be re-used; the run's CV3 equal-shots sample uses the same s0 with circuit offsets 100 (k <= 4) / 200 (k = 5); an f-cell slot uses the slot's own s0 with circuit offset 4 x the cell's global index"
+  },
+  "preflight": {
+   "ok": true,
+   "modules": [
+    "threadpoolctl",
+    "numpy",
+    "scipy",
+    "qiskit",
+    "qiskit_aer",
+    "skqd.campaign33.tokens",
+    "skqd.campaign33.stats",
+    "skqd.campaign33.sampling",
+    "skqd.campaign33.circuits",
+    "skqd.campaign33.noise",
+    "skqd.campaign33.analysis",
+    "skqd.campaign33.tokens_run",
+    "skqd.campaign33.assemble",
+    "skqd.campaign33.cf_gpu",
+    "skqd.campaign33.engines",
+    "skqd.campaign33.kchk_cpu",
+    "gate_CV"
+   ],
+   "env": "skqd",
+   "versions": {
+    "qiskit": "1.4.3",
+    "qiskit_aer": "0.15.1",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "threadpoolctl": "3.7.0",
+    "python": "3.12.14"
+   },
+   "seconds": 39.38484048843384
+  },
+  "representation_decision": {
+   "path": "data/campaign33/c2_representation_decision.json",
+   "sha256": "3cad544f32abcfdc6335e3aaab9bef7d2f6f6685afbe19bbccebfa6edb54f7ee",
+   "git_commit": "136e5fc",
+   "production_representation": "rm",
+   "reference_arm": "none",
+   "validated_kraus_gpu_path": "none",
+   "production_seconds_per_shot": 0.4172244002111256,
+   "production_seconds_per_shot_source": "validation/archive/C2_KCHK_job59780907.json data.arms.rm_gpu_cusv.seconds_per_shot (job 59780907, 512 shots)",
+   "validated_path_seconds_per_shot": null,
+   "representation_reason": "class-2 production is RM -- the Kraus channel of the record with T2 := min(T2, T1) on the four qubits with T2 > T1 (identical super-operators on the other 17), no Kraus instruction -- because aer 0.15.1's GPU Kraus path is unusable (C2_KCHK K1 bug_confirmed; GPU Kraus arms mutually inconsistent across fusion / kernel options; prompts/33f R2, data/campaign33/aer_gpu_kraus_report)",
+   "kraus_gpu": "unusable (aer 0.15.1 GPU Kraus path, see data/campaign33/aer_gpu_kraus_report)",
+   "bug_confirmed": true,
+   "fisher_min_p_by_reference": {
+    "ci_kraus_cpu": 0.04526888480298333,
+    "ci_rm_cpu": 0.0744849389767584,
+    "laptop_kraus_cpu": 0.018857516888080753,
+    "laptop_rm_cpu": 0.06024394300003938
+   },
+   "stub": false
+  },
+  "noise": {
+   "representation": "rm",
+   "representation_reason": "class-2 production is RM -- the Kraus channel of the record with T2 := min(T2, T1) on the four qubits with T2 > T1 (identical super-operators on the other 17), no Kraus instruction -- because aer 0.15.1's GPU Kraus path is unusable (C2_KCHK K1 bug_confirmed; GPU Kraus arms mutually inconsistent across fusion / kernel options; prompts/33f R2, data/campaign33/aer_gpu_kraus_report)",
+   "kraus_gpu": "unusable (aer 0.15.1 GPU Kraus path, see data/campaign33/aer_gpu_kraus_report)",
+   "decision_file": "data/campaign33/c2_representation_decision.json"
+  },
+  "gpu_mode_used": "custatevec",
+  "seconds_per_shot": 0.3399327220688076,
+  "cell": "I-XY4",
+  "family": "IBM-T3",
+  "conventions": [
+   "echo"
+  ],
+  "representation_used": "rm",
+  "representation_source": "data/campaign33/c2_representation_decision.json decision: rm, validated Kraus GPU path none",
+  "arms": {
+   "production": {
+    "representation": "rm",
+    "planned_representation": "rm",
+    "mode": "custatevec",
+    "target_shots_per_run": 2544,
+    "chunk": 4096,
+    "rule": "equal shots per run = 0.95 x the window left / (rate 0.4172244002111256 s/shot x 2 runs), capped at 100000; chunks <= 4096 at the gate_CV prefix points; deadline-stopped at a round boundary (equal shots kept)",
+    "shots_per_circuit": {
+     "B0_ref117_k1|echo": 2544,
+     "B1_ref29_k1|echo": 2544
+    },
+    "equal_shots": true,
+    "per_run": {
+     "B0_ref117_k1|echo": {
+      "structure": {
+       "shots": 2544,
+       "n_bits": 20,
+       "mean_hamming_weight": 9.78694968553459,
+       "sd_hamming_weight": 2.2250960849639645,
+       "se_mean_hamming_weight": 0.04411539946389766,
+       "unital_limit": 10.0,
+       "deficit_vs_unital": 0.21305031446540923,
+       "marginals_by_clbit": [
+        0.4803459119496855,
+        0.5137578616352201,
+        0.47602201257861637,
+        0.4933176100628931,
+        0.4988207547169811,
+        0.48977987421383645,
+        0.47523584905660377,
+        0.4791666666666667,
+        0.4854559748427673,
+        0.5011792452830188,
+        0.4485062893081761,
+        0.48742138364779874,
+        0.5031446540880503,
+        0.4925314465408805,
+        0.4606918238993711,
+        0.5055031446540881,
+        0.4693396226415094,
+        0.46855345911949686,
+        0.5117924528301887,
+        0.5463836477987422
+       ],
+       "se_marginals_by_clbit": [
+        0.009905483298662154,
+        0.009909391415447196,
+        0.0099017392562335,
+        0.00991225945215455,
+        0.009913117250614709,
+        0.009911073729920459,
+        0.00990097862253944,
+        0.009904535922917226,
+        0.009908950105351238,
+        0.00991311725061471,
+        0.00986043324470407,
+        0.009910007377928987,
+        0.009912948760346842,
+        0.009912038863408884,
+        0.009882463092042515,
+        0.009912544372019069,
+        0.009894489390903208,
+        0.009893519475926595,
+        0.009910387355589752,
+        0.00987039752662881
+       ],
+       "physical_by_clbit": [
+        92,
+        69,
+        54,
+        52,
+        53,
+        68,
+        73,
+        94,
+        50,
+        72,
+        71,
+        79,
+        51,
+        74,
+        70,
+        93,
+        75,
+        58,
+        95,
+        59
+       ],
+       "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
+      },
+      "accepted": 4,
+      "distinct_accepted": 4,
+      "reference_hits": 0,
+      "rejected": 2540,
+      "rejections": {
+       "flag": 2020,
+       "link": 515,
+       "sector": 5,
+       "unknown": 0
+      },
+      "roundtrip": {
+       "accepted_states": 4,
+       "mismatches": 0,
+       "ok": true
+      },
+      "chunks": [
+       {
+        "start": 0,
+        "shots": 159,
+        "index": 0,
+        "seed": 335000000000,
+        "seconds": 61.84927272796631
+       },
+       {
+        "start": 159,
+        "shots": 159,
+        "index": 1,
+        "seed": 335000001272,
+        "seconds": 61.678743839263916
+       },
+       {
+        "start": 318,
+        "shots": 318,
+        "index": 2,
+        "seed": 335000002544,
+        "seconds": 110.54539179801941
+       },
+       {
+        "start": 636,
+        "shots": 636,
+        "index": 3,
+        "seed": 335000003816,
+        "seconds": 217.7693498134613
+       },
+       {
+        "start": 1272,
+        "shots": 1272,
+        "index": 4,
+        "seed": 335000005088,
+        "seconds": 419.927365064621
+       }
+      ],
+      "circuit": "B0_ref117_k1",
+      "family": "IBM-T3",
+      "shots": 2544,
+      "t2_convention": "echo",
+      "representation": "rm",
+      "scaled_to_1e5": {
+       "accepted": 157.23270440251574,
+       "reference_hits": 0.0
+      },
+      "measured_K1": {
+       "accepted": 58,
+       "reference_hits": 0,
+       "shots": 100000,
+       "source": "validation/K1_2x3_fpilot.json data.circuits.B0_ref117_k1",
+       "mean_hamming_weight": 9.77099,
+       "se_mean_hamming_weight": 0.00714756987209994,
+       "marginals_by_clbit": [
+        0.50707,
+        0.49856,
+        0.47731,
+        0.48498,
+        0.49821,
+        0.49634,
+        0.44523,
+        0.49545,
+        0.49939,
+        0.4922,
+        0.45983,
+        0.47248,
+        0.49226,
+        0.48605,
+        0.47336,
+        0.50373,
+        0.50188,
+        0.4789,
+        0.50544,
+        0.50232
+       ],
+       "structure_source": "data/hardware/K1_2x3_ibm_kingston/counts/B0_ref117_k1.json"
+      },
+      "P_measured_accepted_under_model": 1.5804698376632017e-19,
+      "P_measured_accepted_note": null,
+      "P_measured_hits_under_model": 1.0,
+      "z_vs_K1": {
+       "evaluated": true,
+       "n_sigma": 3.0,
+       "shots": [
+        2544,
+        100000
+       ],
+       "mean_hamming_weight": [
+        9.78694968553459,
+        9.77099
+       ],
+       "delta_mean_hamming_weight": 0.015959685534591372,
+       "z_mean_hamming_weight": 0.3571144620599007,
+       "z_marginals_by_clbit": [
+        -2.6641878227056255,
+        1.514524624825442,
+        -0.12845283996227422,
+        0.8306492774478473,
+        0.06084172219949449,
+        -0.6536336012079625,
+        2.993120687397796,
+        -1.6234732337800837,
+        -1.3886387101112585,
+        0.8944905282289732,
+        -1.1340051715649049,
+        1.4889312027213937,
+        1.0843206315451166,
+        0.6457386957294938,
+        -1.2658307741339845,
+        0.1766458922284507,
+        -3.247534807295674,
+        -1.0327078450477636,
+        0.6329848738580314,
+        4.408024856875581
+       ],
+       "max_abs_z_marginal": 4.408024856875581,
+       "clbits_outside": [
+        16,
+        19
+       ],
+       "weight_ok": true,
+       "marginals_ok": false,
+       "pass": false,
+       "n_marginal_tests": 20,
+       "family_wise_false_alarm_marginals": 0.053995921265203826,
+       "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)"
+      },
+      "comparison_power": {
+       "counts": "underpowered",
+       "expected_accepted_at_device_rate": 1.47552,
+       "circuit": "like_for_like",
+       "rule": "counts underpowered when N_sim x (K1 accepted / K1 shots) < 5.0; like_for_like only for the T3 circuits the device flew (C2_XY4)"
+      },
+      "f0_twirled": {
+       "g0": 1.014137512579243e-20,
+       "f0": 7.599107538544382e-21,
+       "readout_survival": 0.7493172715027244,
+       "noisy_sites": 25312,
+       "rule": "identity weight of the Pauli twirl of every gate error and delay window, x readout survival"
+      },
+      "seconds_per_shot": null,
+      "simulator_options": {
+       "method": "statevector",
+       "precision": "double",
+       "noise_model": "attached",
+       "device": "GPU",
+       "cuStateVec_enable": true,
+       "batched_shots_gpu": false
+      },
+      "noise": {
+       "id": "I-XY4",
+       "class": "IBM Heron (ibm_kingston record)",
+       "representation": "rm",
+       "t2_convention": "echo",
+       "t2_star_ratio": null,
+       "t2_star_ratio_source": null,
+       "dt_s": 4e-09,
+       "record_fingerprint": "b948ddc86b1c4696121e377bd2c751b889705006bd1abb685eeee303398a44d9",
+       "record_stamp": "20261006T0652Z",
+       "channel_classes": [
+        "depolarizing gate error (cz, sx, x)",
+        "thermal relaxation T1/T2 on every gate for its duration",
+        "readout confusion per qubit",
+        "thermal relaxation on every explicit delay (idle-aware)"
+       ],
+       "coherent_eps_rad": null,
+       "coherent_eps_source": null,
+       "not_modelled": [
+        "ZZ crosstalk",
+        "measurement crosstalk",
+        "leakage",
+        "non-Markovian dephasing",
+        "a dynamical-decoupling gain beyond the XY4 pulses present as gates: Aer's relaxation on a delay is Markovian (the pulses' effect on the populations is modelled, prompts/33c R1)"
+       ],
+       "source": "data/hardware/K0_prep/ibm_kingston_full_20261006T0652Z.json through NoiseModel.from_backend on a target built from the record (no fake provider); qiskit_aer NoiseModel.from_backend docs (read 2026-10-06)",
+       "pta_rule": null,
+       "rm_rule": "T2 := min(T2, T1) per qubit on the target and on the delays (after the T2 convention and Aer's 2 T1 clip), so thermal_relaxation_error is Aer's reset mixture {I, Z, reset0, reset1} everywhere (no Kraus); non-unital like Kraus; overstates dephasing where T2 > T1 (prompts/33a R2)"
+      },
+      "prereg_expected_hits_1e5": {
+       "f_gates_layout (no idle)": 1.3675207444775161,
+       "f_idle_aware_xy4 echo (2x2 transfer)": 0.09536743199740676,
+       "f_idle_aware echo": 0.09536743176718294,
+       "f_idle_aware_xy4 0.174 (2x2 transfer)": 0.095367431640625,
+       "f_idle_aware 0.174": 0.095367431640625
+      }
+     },
+     "B1_ref29_k1|echo": {
+      "structure": {
+       "shots": 2544,
+       "n_bits": 20,
+       "mean_hamming_weight": 9.735849056603774,
+       "sd_hamming_weight": 2.2702308947308376,
+       "se_mean_hamming_weight": 0.045010255275315304,
+       "unital_limit": 10.0,
+       "deficit_vs_unital": 0.2641509433962259,
+       "marginals_by_clbit": [
+        0.4783805031446541,
+        0.5003930817610063,
+        0.47091194968553457,
+        0.4815251572327044,
+        0.49292452830188677,
+        0.5051100628930818,
+        0.47955974842767296,
+        0.4834905660377358,
+        0.5,
+        0.4937106918238994,
+        0.4367138364779874,
+        0.47955974842767296,
+        0.4964622641509434,
+        0.4716981132075472,
+        0.48388364779874216,
+        0.4956761006289308,
+        0.4913522012578616,
+        0.46462264150943394,
+        0.47995283018867924,
+        0.5499213836477987
+       ],
+       "se_marginals_by_clbit": [
+        0.009903873625862782,
+        0.009913141758051467,
+        0.009896355289026578,
+        0.009906375404632977,
+        0.009912152222127456,
+        0.009912627089155482,
+        0.009904857856878143,
+        0.00990773946632852,
+        0.009913144821476802,
+        0.009912360553689065,
+        0.009833417176116254,
+        0.009904857856878143,
+        0.009912896680957378,
+        0.009897251286111474,
+        0.009907993866044601,
+        0.00991277414013816,
+        0.009911662012944671,
+        0.009888299946296157,
+        0.0099051736485973,
+        0.009863611087478023
+       ],
+       "physical_by_clbit": [
+        92,
+        69,
+        54,
+        52,
+        53,
+        68,
+        73,
+        94,
+        50,
+        72,
+        71,
+        79,
+        51,
+        74,
+        70,
+        93,
+        75,
+        58,
+        95,
+        59
+       ],
+       "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
+      },
+      "accepted": 1,
+      "distinct_accepted": 1,
+      "reference_hits": 0,
+      "rejected": 2543,
+      "rejections": {
+       "flag": 2032,
+       "link": 509,
+       "sector": 2,
+       "unknown": 0
+      },
+      "roundtrip": {
+       "accepted_states": 1,
+       "mismatches": 0,
+       "ok": true
+      },
+      "chunks": [
+       {
+        "start": 0,
+        "shots": 159,
+        "index": 0,
+        "seed": 335001000000,
+        "seconds": 61.6448872089386
+       },
+       {
+        "start": 159,
+        "shots": 159,
+        "index": 1,
+        "seed": 335001001272,
+        "seconds": 60.80455732345581
+       },
+       {
+        "start": 318,
+        "shots": 318,
+        "index": 2,
+        "seed": 335001002544,
+        "seconds": 113.13508868217468
+       },
+       {
+        "start": 636,
+        "shots": 636,
+        "index": 3,
+        "seed": 335001003816,
+        "seconds": 206.88389778137207
+       },
+       {
+        "start": 1272,
+        "shots": 1272,
+        "index": 4,
+        "seed": 335001005088,
+        "seconds": 415.3388547897339
+       }
+      ],
+      "circuit": "B1_ref29_k1",
+      "family": "IBM-T3",
+      "shots": 2544,
+      "t2_convention": "echo",
+      "representation": "rm",
+      "scaled_to_1e5": {
+       "accepted": 39.308176100628934,
+       "reference_hits": 0.0
+      },
+      "measured_K1": {
+       "accepted": 45,
+       "reference_hits": 0,
+       "shots": 100000,
+       "source": "validation/K1_2x3_fpilot.json data.circuits.B1_ref29_k1",
+       "mean_hamming_weight": 9.76885,
+       "se_mean_hamming_weight": 0.007165075725915364,
+       "marginals_by_clbit": [
+        0.50485,
+        0.49916,
+        0.48822,
+        0.48221,
+        0.4979,
+        0.49529,
+        0.44131,
+        0.49439,
+        0.49979,
+        0.49204,
+        0.46117,
+        0.47433,
+        0.49111,
+        0.48678,
+        0.47289,
+        0.50119,
+        0.50151,
+        0.47933,
+        0.50405,
+        0.50133
+       ],
+       "structure_source": "data/hardware/K1_2x3_ibm_kingston/counts/B1_ref29_k1.json"
+      },
+      "P_measured_accepted_under_model": 0.3386904704212118,
+      "P_measured_accepted_note": null,
+      "P_measured_hits_under_model": 1.0,
+      "z_vs_K1": {
+       "evaluated": true,
+       "n_sigma": 3.0,
+       "shots": [
+        2544,
+        100000
+       ],
+       "mean_hamming_weight": [
+        9.735849056603774,
+        9.76885
+       ],
+       "delta_mean_hamming_weight": -0.03300094339622639,
+       "z_mean_hamming_weight": -0.7240703780466285,
+       "z_marginals_by_clbit": [
+        -2.6392217776803317,
+        0.12283593674284798,
+        -1.7270402123178548,
+        -0.06826851071901328,
+        -0.4956900326625724,
+        0.9782960253111093,
+        3.814086597229406,
+        -1.0863481738686749,
+        0.020919568281129168,
+        0.16644265793360558,
+        -2.455692895944265,
+        0.5214139289013904,
+        0.5331915593056166,
+        -1.5047779376442998,
+        1.0957493316994749,
+        -0.5492981361876011,
+        -1.012037091139546,
+        -1.468723582985449,
+        -2.4023733275323838,
+        4.864228865993251
+       ],
+       "max_abs_z_marginal": 4.864228865993251,
+       "clbits_outside": [
+        6,
+        19
+       ],
+       "weight_ok": true,
+       "marginals_ok": false,
+       "pass": false,
+       "n_marginal_tests": 20,
+       "family_wise_false_alarm_marginals": 0.053995921265203826,
+       "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)"
+      },
+      "comparison_power": {
+       "counts": "underpowered",
+       "expected_accepted_at_device_rate": 1.1448,
+       "circuit": "like_for_like",
+       "rule": "counts underpowered when N_sim x (K1 accepted / K1 shots) < 5.0; like_for_like only for the T3 circuits the device flew (C2_XY4)"
+      },
+      "f0_twirled": {
+       "g0": 1.0486826785723877e-20,
+       "f0": 7.857960433800301e-21,
+       "readout_survival": 0.7493172715027244,
+       "noisy_sites": 25297,
+       "rule": "identity weight of the Pauli twirl of every gate error and delay window, x readout survival"
+      },
+      "seconds_per_shot": null,
+      "simulator_options": {
+       "method": "statevector",
+       "precision": "double",
+       "noise_model": "attached",
+       "device": "GPU",
+       "cuStateVec_enable": true,
+       "batched_shots_gpu": false
+      },
+      "noise": {
+       "id": "I-XY4",
+       "class": "IBM Heron (ibm_kingston record)",
+       "representation": "rm",
+       "t2_convention": "echo",
+       "t2_star_ratio": null,
+       "t2_star_ratio_source": null,
+       "dt_s": 4e-09,
+       "record_fingerprint": "b948ddc86b1c4696121e377bd2c751b889705006bd1abb685eeee303398a44d9",
+       "record_stamp": "20261006T0652Z",
+       "channel_classes": [
+        "depolarizing gate error (cz, sx, x)",
+        "thermal relaxation T1/T2 on every gate for its duration",
+        "readout confusion per qubit",
+        "thermal relaxation on every explicit delay (idle-aware)"
+       ],
+       "coherent_eps_rad": null,
+       "coherent_eps_source": null,
+       "not_modelled": [
+        "ZZ crosstalk",
+        "measurement crosstalk",
+        "leakage",
+        "non-Markovian dephasing",
+        "a dynamical-decoupling gain beyond the XY4 pulses present as gates: Aer's relaxation on a delay is Markovian (the pulses' effect on the populations is modelled, prompts/33c R1)"
+       ],
+       "source": "data/hardware/K0_prep/ibm_kingston_full_20261006T0652Z.json through NoiseModel.from_backend on a target built from the record (no fake provider); qiskit_aer NoiseModel.from_backend docs (read 2026-10-06)",
+       "pta_rule": null,
+       "rm_rule": "T2 := min(T2, T1) per qubit on the target and on the delays (after the T2 convention and Aer's 2 T1 clip), so thermal_relaxation_error is Aer's reset mixture {I, Z, reset0, reset1} everywhere (no Kraus); non-unital like Kraus; overstates dephasing where T2 > T1 (prompts/33a R2)"
+      },
+      "prereg_expected_hits_1e5": {
+       "f_gates_layout (no idle)": 1.369858905168166,
+       "f_idle_aware_xy4 echo (2x2 transfer)": 0.09536743200398612,
+       "f_idle_aware echo": 0.0953674317695168,
+       "f_idle_aware_xy4 0.174 (2x2 transfer)": 0.095367431640625,
+       "f_idle_aware 0.174": 0.095367431640625
+      }
+     }
+    },
+    "calls": 10,
+    "stopped": null,
+    "warmup": null,
+    "seconds": 1745.4021308422089,
+    "seconds_per_shot": 0.3399327220688076
+   }
+  },
+  "reference_arm": {
+   "name": null,
+   "representation": null,
+   "gpu_mode": null,
+   "validated_kraus_gpu_path": "none",
+   "rule": "prompts/33d R3 / 33f R2: a Kraus reference arm on a validated Kraus GPU path; none (production RM at 100 %) when the decision file names none"
+  },
+  "per_run": {
+   "B0_ref117_k1|echo": {
+    "structure": {
+     "shots": 2544,
+     "n_bits": 20,
+     "mean_hamming_weight": 9.78694968553459,
+     "sd_hamming_weight": 2.2250960849639645,
+     "se_mean_hamming_weight": 0.04411539946389766,
+     "unital_limit": 10.0,
+     "deficit_vs_unital": 0.21305031446540923,
+     "marginals_by_clbit": [
+      0.4803459119496855,
+      0.5137578616352201,
+      0.47602201257861637,
+      0.4933176100628931,
+      0.4988207547169811,
+      0.48977987421383645,
+      0.47523584905660377,
+      0.4791666666666667,
+      0.4854559748427673,
+      0.5011792452830188,
+      0.4485062893081761,
+      0.48742138364779874,
+      0.5031446540880503,
+      0.4925314465408805,
+      0.4606918238993711,
+      0.5055031446540881,
+      0.4693396226415094,
+      0.46855345911949686,
+      0.5117924528301887,
+      0.5463836477987422
+     ],
+     "se_marginals_by_clbit": [
+      0.009905483298662154,
+      0.009909391415447196,
+      0.0099017392562335,
+      0.00991225945215455,
+      0.009913117250614709,
+      0.009911073729920459,
+      0.00990097862253944,
+      0.009904535922917226,
+      0.009908950105351238,
+      0.00991311725061471,
+      0.00986043324470407,
+      0.009910007377928987,
+      0.009912948760346842,
+      0.009912038863408884,
+      0.009882463092042515,
+      0.009912544372019069,
+      0.009894489390903208,
+      0.009893519475926595,
+      0.009910387355589752,
+      0.00987039752662881
+     ],
+     "physical_by_clbit": [
+      92,
+      69,
+      54,
+      52,
+      53,
+      68,
+      73,
+      94,
+      50,
+      72,
+      71,
+      79,
+      51,
+      74,
+      70,
+      93,
+      75,
+      58,
+      95,
+      59
+     ],
+     "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
+    },
+    "accepted": 4,
+    "distinct_accepted": 4,
+    "reference_hits": 0,
+    "rejected": 2540,
+    "rejections": {
+     "flag": 2020,
+     "link": 515,
+     "sector": 5,
+     "unknown": 0
+    },
+    "roundtrip": {
+     "accepted_states": 4,
+     "mismatches": 0,
+     "ok": true
+    },
+    "chunks": [
+     {
+      "start": 0,
+      "shots": 159,
+      "index": 0,
+      "seed": 335000000000,
+      "seconds": 61.84927272796631
+     },
+     {
+      "start": 159,
+      "shots": 159,
+      "index": 1,
+      "seed": 335000001272,
+      "seconds": 61.678743839263916
+     },
+     {
+      "start": 318,
+      "shots": 318,
+      "index": 2,
+      "seed": 335000002544,
+      "seconds": 110.54539179801941
+     },
+     {
+      "start": 636,
+      "shots": 636,
+      "index": 3,
+      "seed": 335000003816,
+      "seconds": 217.7693498134613
+     },
+     {
+      "start": 1272,
+      "shots": 1272,
+      "index": 4,
+      "seed": 335000005088,
+      "seconds": 419.927365064621
+     }
+    ],
+    "circuit": "B0_ref117_k1",
+    "family": "IBM-T3",
+    "shots": 2544,
+    "t2_convention": "echo",
+    "representation": "rm",
+    "scaled_to_1e5": {
+     "accepted": 157.23270440251574,
+     "reference_hits": 0.0
+    },
+    "measured_K1": {
+     "accepted": 58,
+     "reference_hits": 0,
+     "shots": 100000,
+     "source": "validation/K1_2x3_fpilot.json data.circuits.B0_ref117_k1",
+     "mean_hamming_weight": 9.77099,
+     "se_mean_hamming_weight": 0.00714756987209994,
+     "marginals_by_clbit": [
+      0.50707,
+      0.49856,
+      0.47731,
+      0.48498,
+      0.49821,
+      0.49634,
+      0.44523,
+      0.49545,
+      0.49939,
+      0.4922,
+      0.45983,
+      0.47248,
+      0.49226,
+      0.48605,
+      0.47336,
+      0.50373,
+      0.50188,
+      0.4789,
+      0.50544,
+      0.50232
+     ],
+     "structure_source": "data/hardware/K1_2x3_ibm_kingston/counts/B0_ref117_k1.json"
+    },
+    "P_measured_accepted_under_model": 1.5804698376632017e-19,
+    "P_measured_accepted_note": null,
+    "P_measured_hits_under_model": 1.0,
+    "z_vs_K1": {
+     "evaluated": true,
+     "n_sigma": 3.0,
+     "shots": [
+      2544,
+      100000
+     ],
+     "mean_hamming_weight": [
+      9.78694968553459,
+      9.77099
+     ],
+     "delta_mean_hamming_weight": 0.015959685534591372,
+     "z_mean_hamming_weight": 0.3571144620599007,
+     "z_marginals_by_clbit": [
+      -2.6641878227056255,
+      1.514524624825442,
+      -0.12845283996227422,
+      0.8306492774478473,
+      0.06084172219949449,
+      -0.6536336012079625,
+      2.993120687397796,
+      -1.6234732337800837,
+      -1.3886387101112585,
+      0.8944905282289732,
+      -1.1340051715649049,
+      1.4889312027213937,
+      1.0843206315451166,
+      0.6457386957294938,
+      -1.2658307741339845,
+      0.1766458922284507,
+      -3.247534807295674,
+      -1.0327078450477636,
+      0.6329848738580314,
+      4.408024856875581
+     ],
+     "max_abs_z_marginal": 4.408024856875581,
+     "clbits_outside": [
+      16,
+      19
+     ],
+     "weight_ok": true,
+     "marginals_ok": false,
+     "pass": false,
+     "n_marginal_tests": 20,
+     "family_wise_false_alarm_marginals": 0.053995921265203826,
+     "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)"
+    },
+    "comparison_power": {
+     "counts": "underpowered",
+     "expected_accepted_at_device_rate": 1.47552,
+     "circuit": "like_for_like",
+     "rule": "counts underpowered when N_sim x (K1 accepted / K1 shots) < 5.0; like_for_like only for the T3 circuits the device flew (C2_XY4)"
+    },
+    "f0_twirled": {
+     "g0": 1.014137512579243e-20,
+     "f0": 7.599107538544382e-21,
+     "readout_survival": 0.7493172715027244,
+     "noisy_sites": 25312,
+     "rule": "identity weight of the Pauli twirl of every gate error and delay window, x readout survival"
+    },
+    "seconds_per_shot": null,
+    "simulator_options": {
+     "method": "statevector",
+     "precision": "double",
+     "noise_model": "attached",
+     "device": "GPU",
+     "cuStateVec_enable": true,
+     "batched_shots_gpu": false
+    },
+    "noise": {
+     "id": "I-XY4",
+     "class": "IBM Heron (ibm_kingston record)",
+     "representation": "rm",
+     "t2_convention": "echo",
+     "t2_star_ratio": null,
+     "t2_star_ratio_source": null,
+     "dt_s": 4e-09,
+     "record_fingerprint": "b948ddc86b1c4696121e377bd2c751b889705006bd1abb685eeee303398a44d9",
+     "record_stamp": "20261006T0652Z",
+     "channel_classes": [
+      "depolarizing gate error (cz, sx, x)",
+      "thermal relaxation T1/T2 on every gate for its duration",
+      "readout confusion per qubit",
+      "thermal relaxation on every explicit delay (idle-aware)"
+     ],
+     "coherent_eps_rad": null,
+     "coherent_eps_source": null,
+     "not_modelled": [
+      "ZZ crosstalk",
+      "measurement crosstalk",
+      "leakage",
+      "non-Markovian dephasing",
+      "a dynamical-decoupling gain beyond the XY4 pulses present as gates: Aer's relaxation on a delay is Markovian (the pulses' effect on the populations is modelled, prompts/33c R1)"
+     ],
+     "source": "data/hardware/K0_prep/ibm_kingston_full_20261006T0652Z.json through NoiseModel.from_backend on a target built from the record (no fake provider); qiskit_aer NoiseModel.from_backend docs (read 2026-10-06)",
+     "pta_rule": null,
+     "rm_rule": "T2 := min(T2, T1) per qubit on the target and on the delays (after the T2 convention and Aer's 2 T1 clip), so thermal_relaxation_error is Aer's reset mixture {I, Z, reset0, reset1} everywhere (no Kraus); non-unital like Kraus; overstates dephasing where T2 > T1 (prompts/33a R2)"
+    },
+    "prereg_expected_hits_1e5": {
+     "f_gates_layout (no idle)": 1.3675207444775161,
+     "f_idle_aware_xy4 echo (2x2 transfer)": 0.09536743199740676,
+     "f_idle_aware echo": 0.09536743176718294,
+     "f_idle_aware_xy4 0.174 (2x2 transfer)": 0.095367431640625,
+     "f_idle_aware 0.174": 0.095367431640625
+    }
+   },
+   "B1_ref29_k1|echo": {
+    "structure": {
+     "shots": 2544,
+     "n_bits": 20,
+     "mean_hamming_weight": 9.735849056603774,
+     "sd_hamming_weight": 2.2702308947308376,
+     "se_mean_hamming_weight": 0.045010255275315304,
+     "unital_limit": 10.0,
+     "deficit_vs_unital": 0.2641509433962259,
+     "marginals_by_clbit": [
+      0.4783805031446541,
+      0.5003930817610063,
+      0.47091194968553457,
+      0.4815251572327044,
+      0.49292452830188677,
+      0.5051100628930818,
+      0.47955974842767296,
+      0.4834905660377358,
+      0.5,
+      0.4937106918238994,
+      0.4367138364779874,
+      0.47955974842767296,
+      0.4964622641509434,
+      0.4716981132075472,
+      0.48388364779874216,
+      0.4956761006289308,
+      0.4913522012578616,
+      0.46462264150943394,
+      0.47995283018867924,
+      0.5499213836477987
+     ],
+     "se_marginals_by_clbit": [
+      0.009903873625862782,
+      0.009913141758051467,
+      0.009896355289026578,
+      0.009906375404632977,
+      0.009912152222127456,
+      0.009912627089155482,
+      0.009904857856878143,
+      0.00990773946632852,
+      0.009913144821476802,
+      0.009912360553689065,
+      0.009833417176116254,
+      0.009904857856878143,
+      0.009912896680957378,
+      0.009897251286111474,
+      0.009907993866044601,
+      0.00991277414013816,
+      0.009911662012944671,
+      0.009888299946296157,
+      0.0099051736485973,
+      0.009863611087478023
+     ],
+     "physical_by_clbit": [
+      92,
+      69,
+      54,
+      52,
+      53,
+      68,
+      73,
+      94,
+      50,
+      72,
+      71,
+      79,
+      51,
+      74,
+      70,
+      93,
+      75,
+      58,
+      95,
+      59
+     ],
+     "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
+    },
+    "accepted": 1,
+    "distinct_accepted": 1,
+    "reference_hits": 0,
+    "rejected": 2543,
+    "rejections": {
+     "flag": 2032,
+     "link": 509,
+     "sector": 2,
+     "unknown": 0
+    },
+    "roundtrip": {
+     "accepted_states": 1,
+     "mismatches": 0,
+     "ok": true
+    },
+    "chunks": [
+     {
+      "start": 0,
+      "shots": 159,
+      "index": 0,
+      "seed": 335001000000,
+      "seconds": 61.6448872089386
+     },
+     {
+      "start": 159,
+      "shots": 159,
+      "index": 1,
+      "seed": 335001001272,
+      "seconds": 60.80455732345581
+     },
+     {
+      "start": 318,
+      "shots": 318,
+      "index": 2,
+      "seed": 335001002544,
+      "seconds": 113.13508868217468
+     },
+     {
+      "start": 636,
+      "shots": 636,
+      "index": 3,
+      "seed": 335001003816,
+      "seconds": 206.88389778137207
+     },
+     {
+      "start": 1272,
+      "shots": 1272,
+      "index": 4,
+      "seed": 335001005088,
+      "seconds": 415.3388547897339
+     }
+    ],
+    "circuit": "B1_ref29_k1",
+    "family": "IBM-T3",
+    "shots": 2544,
+    "t2_convention": "echo",
+    "representation": "rm",
+    "scaled_to_1e5": {
+     "accepted": 39.308176100628934,
+     "reference_hits": 0.0
+    },
+    "measured_K1": {
+     "accepted": 45,
+     "reference_hits": 0,
+     "shots": 100000,
+     "source": "validation/K1_2x3_fpilot.json data.circuits.B1_ref29_k1",
+     "mean_hamming_weight": 9.76885,
+     "se_mean_hamming_weight": 0.007165075725915364,
+     "marginals_by_clbit": [
+      0.50485,
+      0.49916,
+      0.48822,
+      0.48221,
+      0.4979,
+      0.49529,
+      0.44131,
+      0.49439,
+      0.49979,
+      0.49204,
+      0.46117,
+      0.47433,
+      0.49111,
+      0.48678,
+      0.47289,
+      0.50119,
+      0.50151,
+      0.47933,
+      0.50405,
+      0.50133
+     ],
+     "structure_source": "data/hardware/K1_2x3_ibm_kingston/counts/B1_ref29_k1.json"
+    },
+    "P_measured_accepted_under_model": 0.3386904704212118,
+    "P_measured_accepted_note": null,
+    "P_measured_hits_under_model": 1.0,
+    "z_vs_K1": {
+     "evaluated": true,
+     "n_sigma": 3.0,
+     "shots": [
+      2544,
+      100000
+     ],
+     "mean_hamming_weight": [
+      9.735849056603774,
+      9.76885
+     ],
+     "delta_mean_hamming_weight": -0.03300094339622639,
+     "z_mean_hamming_weight": -0.7240703780466285,
+     "z_marginals_by_clbit": [
+      -2.6392217776803317,
+      0.12283593674284798,
+      -1.7270402123178548,
+      -0.06826851071901328,
+      -0.4956900326625724,
+      0.9782960253111093,
+      3.814086597229406,
+      -1.0863481738686749,
+      0.020919568281129168,
+      0.16644265793360558,
+      -2.455692895944265,
+      0.5214139289013904,
+      0.5331915593056166,
+      -1.5047779376442998,
+      1.0957493316994749,
+      -0.5492981361876011,
+      -1.012037091139546,
+      -1.468723582985449,
+      -2.4023733275323838,
+      4.864228865993251
+     ],
+     "max_abs_z_marginal": 4.864228865993251,
+     "clbits_outside": [
+      6,
+      19
+     ],
+     "weight_ok": true,
+     "marginals_ok": false,
+     "pass": false,
+     "n_marginal_tests": 20,
+     "family_wise_false_alarm_marginals": 0.053995921265203826,
+     "family_wise_rule": "20 marginal tests x P(|Z| > 3) = 20 x 0.0027 (Bonferroni bound)"
+    },
+    "comparison_power": {
+     "counts": "underpowered",
+     "expected_accepted_at_device_rate": 1.1448,
+     "circuit": "like_for_like",
+     "rule": "counts underpowered when N_sim x (K1 accepted / K1 shots) < 5.0; like_for_like only for the T3 circuits the device flew (C2_XY4)"
+    },
+    "f0_twirled": {
+     "g0": 1.0486826785723877e-20,
+     "f0": 7.857960433800301e-21,
+     "readout_survival": 0.7493172715027244,
+     "noisy_sites": 25297,
+     "rule": "identity weight of the Pauli twirl of every gate error and delay window, x readout survival"
+    },
+    "seconds_per_shot": null,
+    "simulator_options": {
+     "method": "statevector",
+     "precision": "double",
+     "noise_model": "attached",
+     "device": "GPU",
+     "cuStateVec_enable": true,
+     "batched_shots_gpu": false
+    },
+    "noise": {
+     "id": "I-XY4",
+     "class": "IBM Heron (ibm_kingston record)",
+     "representation": "rm",
+     "t2_convention": "echo",
+     "t2_star_ratio": null,
+     "t2_star_ratio_source": null,
+     "dt_s": 4e-09,
+     "record_fingerprint": "b948ddc86b1c4696121e377bd2c751b889705006bd1abb685eeee303398a44d9",
+     "record_stamp": "20261006T0652Z",
+     "channel_classes": [
+      "depolarizing gate error (cz, sx, x)",
+      "thermal relaxation T1/T2 on every gate for its duration",
+      "readout confusion per qubit",
+      "thermal relaxation on every explicit delay (idle-aware)"
+     ],
+     "coherent_eps_rad": null,
+     "coherent_eps_source": null,
+     "not_modelled": [
+      "ZZ crosstalk",
+      "measurement crosstalk",
+      "leakage",
+      "non-Markovian dephasing",
+      "a dynamical-decoupling gain beyond the XY4 pulses present as gates: Aer's relaxation on a delay is Markovian (the pulses' effect on the populations is modelled, prompts/33c R1)"
+     ],
+     "source": "data/hardware/K0_prep/ibm_kingston_full_20261006T0652Z.json through NoiseModel.from_backend on a target built from the record (no fake provider); qiskit_aer NoiseModel.from_backend docs (read 2026-10-06)",
+     "pta_rule": null,
+     "rm_rule": "T2 := min(T2, T1) per qubit on the target and on the delays (after the T2 convention and Aer's 2 T1 clip), so thermal_relaxation_error is Aer's reset mixture {I, Z, reset0, reset1} everywhere (no Kraus); non-unital like Kraus; overstates dephasing where T2 > T1 (prompts/33a R2)"
+    },
+    "prereg_expected_hits_1e5": {
+     "f_gates_layout (no idle)": 1.369858905168166,
+     "f_idle_aware_xy4 echo (2x2 transfer)": 0.09536743200398612,
+     "f_idle_aware echo": 0.0953674317695168,
+     "f_idle_aware_xy4 0.174 (2x2 transfer)": 0.095367431640625,
+     "f_idle_aware 0.174": 0.095367431640625
+    }
+   }
+  },
+  "shots_per_circuit": {
+   "B0_ref117_k1|echo": 2544,
+   "B1_ref29_k1|echo": 2544
+  },
+  "minimum_shots_per_circuit": 1000,
+  "rm_vs_kraus_in_cell": {},
+  "rm_vs_kraus_in_cell_arms": {
+   "rm": "production",
+   "kraus": null
+  },
+  "rm_vs_kraus_in_cell_pass": null,
+  "representation_decision_for_later_cells": "rm",
+  "representation_decision_rule": "data/campaign33/c2_representation_decision.json production_representation (prompts/33f R2); the in-cell RM-vs-Kraus statistic is information",
+  "K1_device_structure": {
+   "B0_ref117_k1": {
+    "shots": 100000,
+    "n_bits": 20,
+    "mean_hamming_weight": 9.77099,
+    "sd_hamming_weight": 2.26026005310342,
+    "se_mean_hamming_weight": 0.00714756987209994,
+    "unital_limit": 10.0,
+    "deficit_vs_unital": 0.2290100000000006,
+    "marginals_by_clbit": [
+     0.50707,
+     0.49856,
+     0.47731,
+     0.48498,
+     0.49821,
+     0.49634,
+     0.44523,
+     0.49545,
+     0.49939,
+     0.4922,
+     0.45983,
+     0.47248,
+     0.49226,
+     0.48605,
+     0.47336,
+     0.50373,
+     0.50188,
+     0.4789,
+     0.50544,
+     0.50232
+    ],
+    "se_marginals_by_clbit": [
+     0.0015809807560498643,
+     0.0015811322727716363,
+     0.0015795099363410158,
+     0.0015804252579606542,
+     0.0015811286977978737,
+     0.0015810964689101043,
+     0.0015716241506797991,
+     0.0015810733616755423,
+     0.0015811376534002343,
+     0.001580946425404732,
+     0.0015760278268482446,
+     0.0015787420612627004,
+     0.0015809493742685123,
+     0.0015805233231433189,
+     0.0015788929995411342,
+     0.0015810948330191963,
+     0.0015811276532905242,
+     0.001579730325087165,
+     0.0015810452441343988,
+     0.0015811218093492985
+    ],
+    "physical_by_clbit": [
+     92,
+     69,
+     54,
+     52,
+     53,
+     68,
+     73,
+     94,
+     50,
+     72,
+     71,
+     79,
+     51,
+     74,
+     70,
+     93,
+     75,
+     58,
+     95,
+     59
+    ],
+    "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j",
+    "source": "data/hardware/K1_2x3_ibm_kingston/counts/B0_ref117_k1.json",
+    "job_id": "db2avbe8v0ts73c2i8b0",
+    "family_flown": "IBM-T3 (XY4 in the delays)",
+    "map_matches_circuit": true
+   },
+   "B1_ref29_k1": {
+    "shots": 100000,
+    "n_bits": 20,
+    "mean_hamming_weight": 9.76885,
+    "sd_hamming_weight": 2.265795890147689,
+    "se_mean_hamming_weight": 0.007165075725915364,
+    "unital_limit": 10.0,
+    "deficit_vs_unital": 0.23114999999999952,
+    "marginals_by_clbit": [
+     0.50485,
+     0.49916,
+     0.48822,
+     0.48221,
+     0.4979,
+     0.49529,
+     0.44131,
+     0.49439,
+     0.49979,
+     0.49204,
+     0.46117,
+     0.47433,
+     0.49111,
+     0.48678,
+     0.47289,
+     0.50119,
+     0.50151,
+     0.47933,
+     0.50405,
+     0.50133
+    ],
+    "se_marginals_by_clbit": [
+     0.0015810644436581324,
+     0.0015811365987794981,
+     0.0015806999449610923,
+     0.001580137702543674,
+     0.0015811248843782075,
+     0.0015810686762440145,
+     0.0015702085336031007,
+     0.0015810393034330298,
+     0.0015811386906277388,
+     0.001580938450414816,
+     0.001576363635396351,
+     0.0015790536757817957,
+     0.0015808888888849842,
+     0.0015805860672548015,
+     0.0015788129968428812,
+     0.0015811343519764535,
+     0.0015811316197584565,
+     0.001579787172691309,
+     0.0015810869599740553,
+     0.0015811332363213418
+    ],
+    "physical_by_clbit": [
+     92,
+     69,
+     54,
+     52,
+     53,
+     68,
+     73,
+     94,
+     50,
+     72,
+     71,
+     79,
+     51,
+     74,
+     70,
+     93,
+     75,
+     58,
+     95,
+     59
+    ],
+    "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j",
+    "source": "data/hardware/K1_2x3_ibm_kingston/counts/B1_ref29_k1.json",
+    "job_id": "db2avbe8v0ts73c2i8b0",
+    "family_flown": "IBM-T3 (XY4 in the delays)",
+    "map_matches_circuit": true
+   }
+  },
+  "shots_total": 5088,
+  "information_only": false,
+  "primary_class2_cell": true,
+  "f_point_estimate_claimed": false,
+  "class2_channels": "depolarizing + T1/T2 relaxation (gates; delays in idle-aware cells) + readout",
+  "note": "prompts/33a R3: the 1e5-per-circuit target is withdrawn; the cell reports the simulated garbage structure against the K1 strings (like-for-like only in C2_XY4) and underpowered count comparisons; no f point value is claimed",
+  "run": {
+   "engine": "Qiskit Aer statevector (double precision)",
+   "device": "GPU",
+   "device_requested": "GPU",
+   "available_devices": [
+    "CPU",
+    "GPU"
+   ],
+   "gpu_mode": "custatevec",
+   "ci": {
+    "CI_GATE": "C2_XY4",
+    "SLURM_JOB_ID": "59965088",
+    "SLURM_JOB_NODELIST": "nid003973"
+   },
+   "slurm": {
+    "gpus_per_task": null,
+    "gpus": 1,
+    "gpus_on_node": 1,
+    "cuda_visible_devices": "0",
+    "tasks": 1,
+    "rank": 0,
+    "cpus_per_task": 32,
+    "nodelist": "nid003973"
+   },
+   "gpus": 1,
+   "tasks": 1,
+   "rank": 0,
+   "wall_seconds": 1764.8831284046173,
+   "gpu_node_hours": 0.490245313445727,
+   "node_hours_charged_shared_qos": 0.12256132836143176,
+   "parallel_efficiency_Ep": null,
+   "parallel_efficiency_note": "one task: E(p) needs T_1 and T_p from two task counts (not measured)",
+   "phases_s": {
+    "preflight_s": 39.38484048843384,
+    "noise_model_build_s": 10.221166849136353,
+    "sampling_and_decoding_s": 1745.40216755867
+   },
+   "gpu_telemetry": {
+    "source": "/pscratch/sd/d/digonto/skqd-ci-runs/5ad930e593f9-20261018220717-C2_XY4/gpu_telemetry.csv",
+    "samples": 180,
+    "peak_memory_mib": 2295.0,
+    "mean_utilization_pct": 85.74444444444444,
+    "max_utilization_pct": 100.0
+   },
+   "versions": {
+    "qiskit": "1.4.3",
+    "qiskit_aer": "0.15.1",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "threadpoolctl": "3.7.0",
+    "python": "3.12.14"
+   },
+   "seconds_per_shot": 0.3399327220688076,
+   "budget_minutes": 50.0,
+   "shots_scale": 1.0,
+   "max_shots_per_run": 476,
+   "oom_retries": [],
+   "cpu_affinity": 32,
+   "cpu_affinity_source": "os.sched_getaffinity(0) at process start, before any OpenMP runtime loaded (SKQD_STEP_CPUS; prompts/33e part 2)",
+   "cpu_affinity_main_thread_now": 1,
+   "cpu_affinity_check": {
+    "applies": true,
+    "ok": true,
+    "affinity": 32,
+    "slurm_cpus_per_task": 32,
+    "rule": "on the CI: the step's CPU count (os.sched_getaffinity(0) recorded at process start, before any OpenMP runtime pins the main thread) == SLURM_CPUS_PER_TASK (prompts/33e R1 + part 2)"
+   }
+  },
+  "physics_criteria_information_dry_run": null,
+  "notes": []
+ },
+ "runtime_s": 1764.8831284046173,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.3",
+  "scipy": "1.18.1",
+  "platform": "Linux-6.4.0-150600.23.125_15.0.29-cray_shasta_c-x86_64-with-glibc2.38",
+  "cpu_count": 128,
+  "git_commit": "n/a",
+  "timestamp": "2026-10-18 15:53:29 PDT"
+ }
+}
