@@ -412,3 +412,19 @@ def test_gate_sbatch_srun_step_gets_the_allocations_cpus():
     # the thread variables of the job still follow the same allocation value
     s = open(path).read()
     assert 'export OMP_NUM_THREADS="${SLURM_CPUS_PER_TASK:-1}"' in s
+
+
+def test_gate_sbatch_sets_no_openmp_binding():
+    """prompts/33f R4: OMP_PROC_BIND / OMP_PLACES made qiskit_aer's OpenMP runtime pin the driver's main thread (and so
+    every subprocess) to one CPU on import (C2_KCHK job 59828887); jobs/gate.sbatch exports neither, keeps
+    SLURM_CPU_BIND=cores and the thread counts, and RUNBOOK says so."""
+    import re
+    root = os.path.join(os.path.dirname(__file__), "..")
+    s = open(os.path.join(root, "jobs", "gate.sbatch")).read()
+    code = [ln.split("#", 1)[0] for ln in s.splitlines()]
+    assert not any(re.search(r"\bOMP_PROC_BIND\b|\bOMP_PLACES\b", ln) for ln in code), "an OpenMP binding is set"
+    assert "export SLURM_CPU_BIND=cores" in s
+    for v in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS"):
+        assert f'export {v}="${{SLURM_CPUS_PER_TASK:-1}}"' in s, v
+    rb = open(os.path.join(root, "RUNBOOK.md")).read()
+    assert "no OpenMP binding" in rb and "pins the master thread on Aer import" in rb

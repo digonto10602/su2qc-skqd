@@ -359,7 +359,10 @@ physics itself is never split.
   to 1 per worker when using a process pool (`concurrent.futures`, workers =
   `SLURM_CPUS_PER_TASK // 2`).  Never oversubscribe.  Keep sparse matrices sparse; use
   `expm_multiply` / Lanczos, never a dense `expm` at 2×3 and above.
-- The sbatch file exports `SLURM_CPU_BIND=cores`, `OMP_PROC_BIND=spread`, `OMP_PLACES=threads`.
+- The sbatch file exports `SLURM_CPU_BIND=cores` and the thread counts above; **no OpenMP binding**
+  (`OMP_PROC_BIND` / `OMP_PLACES` are not set): it pins the master thread on Aer import, and every process started
+  after it inherits one CPU (prompts/33f R4, C2_KCHK job 59828887; amended from `OMP_PROC_BIND=spread`,
+  `OMP_PLACES=threads`).
 
 ### Measure before scaling
 

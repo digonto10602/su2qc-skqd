@@ -18,9 +18,11 @@ echo "conda env: $CI_ENV"
 conda activate "$CI_ENV"
 
 # --- CPU binding and threading: one threaded process per task, never oversubscribed -----------
+# prompts/33f R4 (owner policy amended in RUNBOOK.md): no OpenMP binding.  Under OMP_PROC_BIND=spread +
+# OMP_PLACES=threads, qiskit_aer's OpenMP runtime binds the initial thread to the first place when it is imported,
+# so the driver's main thread and every subprocess it starts ran on one CPU (C2_KCHK job 59828887).  The arithmetic
+# depends on the thread COUNT, fixed by the exports below and threadpool_limits, not on placement.
 export SLURM_CPU_BIND=cores
-export OMP_PROC_BIND=spread
-export OMP_PLACES=threads
 export OMP_NUM_THREADS="${SLURM_CPUS_PER_TASK:-1}"
 export MKL_NUM_THREADS="${SLURM_CPUS_PER_TASK:-1}"
 export OPENBLAS_NUM_THREADS="${SLURM_CPUS_PER_TASK:-1}"
