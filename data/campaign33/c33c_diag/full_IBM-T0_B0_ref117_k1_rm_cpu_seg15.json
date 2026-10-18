@@ -1,0 +1,196 @@
+{
+ "title": "prompts/33c R2 diagnostic: IBM-T0 B0_ref117_k1 under I-ECHO (rm) on the CPU",
+ "prompt": "prompts/33c R2 (coordinator's resume order 2026-10-13: Kraus and RM on one CPU engine)",
+ "git_commit": "78cf8de",
+ "command": "python scripts/c33c_diag_full.py --rep rm --shots-per-call 2 --max-shots 1000 --max-seconds 1700 --threads 10 --seed 34533000 --out data/campaign33/c33c_diag/full_IBM-T0_B0_ref117_k1_rm_cpu_seg15.json",
+ "versions": {
+  "python": "3.12.14",
+  "qiskit": "1.4.3",
+  "qiskit_aer": "0.15.1",
+  "numpy": "2.5.3"
+ },
+ "machine": {
+  "host": "pichkaCommander",
+  "processor": "x86_64",
+  "cpu_count": 12
+ },
+ "created": "2026-10-15 22:14:14 UTC",
+ "representation": "rm",
+ "family": "IBM-T0",
+ "circuit": "B0_ref117_k1",
+ "model": "I-ECHO (echo T2)",
+ "record": {
+  "path": "data/hardware/K0_prep/ibm_kingston_full_20261006T0652Z.json",
+  "fingerprint": "b948ddc86b1c4696121e377bd2c751b889705006bd1abb685eeee303398a44d9"
+ },
+ "simulator_options": {
+  "method": "statevector",
+  "precision": "double",
+  "noise_model": "attached",
+  "max_parallel_threads": 10
+ },
+ "noise_model_build_s": 9.623675107955933,
+ "plan": {
+  "shots_per_call": 2,
+  "max_shots": 1000,
+  "max_seconds": 1700.0,
+  "seed0": 34533000,
+  "seed_rule": "seed0 + 1000 x call index"
+ },
+ "calls": [
+  {
+   "index": 0,
+   "seed": 34533000,
+   "shots": 2,
+   "seconds": 189.7870101928711
+  },
+  {
+   "index": 1,
+   "seed": 34534000,
+   "shots": 2,
+   "seconds": 189.28897309303284
+  },
+  {
+   "index": 2,
+   "seed": 34535000,
+   "shots": 2,
+   "seconds": 196.96222639083862
+  },
+  {
+   "index": 3,
+   "seed": 34536000,
+   "shots": 2,
+   "seconds": 187.2509319782257
+  },
+  {
+   "index": 4,
+   "seed": 34537000,
+   "shots": 2,
+   "seconds": 184.30848860740662
+  },
+  {
+   "index": 5,
+   "seed": 34538000,
+   "shots": 2,
+   "seconds": 182.27688908576965
+  },
+  {
+   "index": 6,
+   "seed": 34539000,
+   "shots": 2,
+   "seconds": 182.00434947013855
+  },
+  {
+   "index": 7,
+   "seed": 34540000,
+   "shots": 2,
+   "seconds": 181.57826447486877
+  },
+  {
+   "index": 8,
+   "seed": 34541000,
+   "shots": 2,
+   "seconds": 181.42089891433716
+  }
+ ],
+ "counts": {
+  "70464": 1,
+  "91929": 1,
+  "160321": 1,
+  "226588": 1,
+  "252681": 1,
+  "264912": 1,
+  "294371": 1,
+  "308640": 1,
+  "341506": 1,
+  "373904": 1,
+  "492737": 1,
+  "544200": 1,
+  "557064": 1,
+  "591700": 1,
+  "607360": 1,
+  "733457": 1,
+  "861632": 1,
+  "893104": 1
+ },
+ "status": "done",
+ "structure": {
+  "shots": 18,
+  "n_bits": 20,
+  "mean_hamming_weight": 7.666666666666667,
+  "sd_hamming_weight": 2.0579830217101063,
+  "se_mean_hamming_weight": 0.48507125007266594,
+  "unital_limit": 10.0,
+  "deficit_vs_unital": 2.333333333333333,
+  "marginals_by_clbit": [
+   0.3333333333333333,
+   0.1111111111111111,
+   0.1111111111111111,
+   0.2777777777777778,
+   0.3888888888888889,
+   0.16666666666666666,
+   0.4444444444444444,
+   0.5,
+   0.5555555555555556,
+   0.3888888888888889,
+   0.6111111111111112,
+   0.2222222222222222,
+   0.5,
+   0.5555555555555556,
+   0.3888888888888889,
+   0.3333333333333333,
+   0.6666666666666666,
+   0.2777777777777778,
+   0.4444444444444444,
+   0.3888888888888889
+  ],
+  "se_marginals_by_clbit": [
+   0.11111111111111112,
+   0.07407407407407407,
+   0.07407407407407407,
+   0.10557179862029056,
+   0.11490438561102646,
+   0.08784104611578832,
+   0.11712139482105108,
+   0.11785113019775792,
+   0.11712139482105108,
+   0.11490438561102646,
+   0.11490438561102645,
+   0.09799078929868854,
+   0.11785113019775792,
+   0.11712139482105108,
+   0.11490438561102646,
+   0.11111111111111112,
+   0.11111111111111112,
+   0.10557179862029056,
+   0.11712139482105108,
+   0.11490438561102646
+  ],
+  "physical_by_clbit": [
+   92,
+   69,
+   54,
+   52,
+   53,
+   68,
+   73,
+   94,
+   50,
+   72,
+   71,
+   79,
+   51,
+   74,
+   70,
+   93,
+   75,
+   58,
+   95,
+   59
+  ],
+  "convention": "bit k = clbit k; qiskit counts-key string position j = clbit n_bits - 1 - j"
+ },
+ "wall_s": 1674.8854234218597,
+ "stop": "time cap: the next call (predicted 181 s) would pass 1700 s",
+ "seconds_per_shot": 93.04877956708272
+}
