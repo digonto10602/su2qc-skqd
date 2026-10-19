@@ -187,11 +187,18 @@ class Phys:
         self.n = int(self.emb.n)
         self.int_to_idx = {int(x): i for i, x in enumerate(self.emb.ints)}
         self.sector = {}
+        acc_file = os.path.join(ROOT, "data", "cv", f"acceptance_2x{lat}.json")      # prompts/36 3.1 (c)
+        acc = load_json(acc_file) if os.path.exists(acc_file) else None
         for tb in (0, 2):
             ref = self.M.reference(G2, tb)
             idx = np.asarray(ref.indices, dtype=int)
+            sec = "B=0" if tb == 0 else "B=1"
+            if acc is not None and sec in acc:
+                a, a_src = float(acc[sec]["fraction"]), rel(acc_file)
+            else:
+                a, a_src = float(len(idx)) / float(2 ** self.n), "assumed"
             self.sector[tb] = {"indices": idx, "dim": int(len(idx)), "ints": set(int(self.emb.ints[i]) for i in idx),
-                               "a": float(len(idx)) / float(2 ** self.n)}
+                               "a": a, "a_source": a_src}
 
     def exact(self, man):
         """{string int: p} over the sector codewords (krylov.ideal_sector_distribution, repetitions 1)."""
@@ -1445,6 +1452,204 @@ def tier_slots(args):
     return 0
 
 
+IRL0_DIR_REL = "data/quantinuum/circuits_2x4_qpy"
+IRL0_ROUTE = ("gate_S2_2x4.preload_factory(4, 'exact', thetas) (the frozen term IR of S2_2x4, data/S2_2x4/cache) -> "
+              "CircuitFactory.coarse_step(reference, k, dt) (ONE coarse step at angle k dt) -> "
+              "circuits_qiskit.ir_to_qiskit(ir, 28, measure=True: barrier, measure q[k] -> c[k]) -> "
+              "campaign33.circuits.dump_qpy13 (QPY v13, gzip mtime 0)")
+
+
+def ir_text_sha256(gates):
+    """sha256 of the IR gate list as text: one line per gate, name, qubits and the parameter (a matrix as the repr of
+    its complex entries) -- prompts/36 3.3 `ir_sha256`."""
+    lines = []
+    for name, qs, p in gates:
+        if p is None:
+            ps = "None"
+        elif np.ndim(p) == 0:
+            ps = repr(float(p))
+        else:
+            ps = ",".join(repr(complex(x)) for x in np.asarray(p).ravel())
+        lines.append(f"{name} {list(int(q) for q in qs)} {ps}")
+    return sha256_text("\n".join(lines))
+
+
+def irl0_family_2x4():
+    """[(cid, twoB, reference, k, dt, circuit_index)] of the 60 family circuits (index order of the structured entries,
+    gate_CV.circuits_L) and the 15 k = 5 circuits (B0 refs then B1 refs, references order), circuit index global."""
+    import gate_CV as CV
+    import gate_S2_2x4 as S4
+    from skqd.krylov import references
+    mans = CV.circuits_L(4)
+    dts = {tb: float(S4.dt_of(4, tb)) for tb in (0, 2)}
+    out = []
+    for c, m in mans.items():
+        if abs(float(m["dt"]) - dts[int(m["twoB"])]) > 0.0:
+            raise SystemExit(f"{c}: manifest dt {m['dt']!r} != gate_S2_2x4.dt_of {dts[int(m['twoB'])]!r}")
+        out.append((c, int(m["twoB"]), int(m["reference"]), int(m["k"]), dts[int(m["twoB"])], int(m["family_index"])))
+    M = S4.model(4)
+    n = len(out)
+    for tb in (0, 2):
+        for r in references(M.basis, tb):
+            out.append((f"B{tb // 2}_ref{int(r)}_k5", tb, int(r), 5, dts[tb], n))
+            n += 1
+    return out, mans
+
+
+def tier_bundles_2x4(args):
+    """prompts/36 3.3 / A7 (coding env: qiskit 2.5.2 writes QPY v13): the IR-L0 bundles of the 60 family circuits and the
+    15 k = 5 circuits -> data/quantinuum/circuits_2x4_qpy/<id>.irl0.qpy.gz + index.json["irl0"].  One k = 4 bundle is
+    written first and the total projected (STOP above 60 MB).  --part check143 (the qiskit 1.4.3 twin): every bundle
+    loaded back (sha256, instruction count, op histogram) -> irl0_check_qiskit143.json.  --part sparse-k5: the two
+    k = 5 term sets (B0_ref102_k5, B1_ref230_k5) on the sparse simulator against krylov.coarse_states (information)."""
+    if args.part == "check143":
+        return bundles_check143()
+    if args.part == "sparse-k5":
+        return bundles_sparse_k5()
+    import qiskit
+
+    import gate_S2_2x4 as S4
+
+    from skqd import circuits_qiskit as cq
+    from skqd import quantinuum_native as qn
+    from skqd.campaign33.circuits import dump_qpy13, load_qpy, roundtrip, structure_diff, unitary_part
+    t0 = time.time()
+    fam, mans = irl0_family_2x4()
+    if args.only:
+        fam = [f for f in fam if f[0] in set(args.only)]
+    thetas = sorted({k * dt for _c, _tb, _r, k, dt, _i in fam})
+    F = S4.preload_factory(4, "exact", thetas)
+    out_dir = qpy_dir(4)
+    os.makedirs(out_dir, exist_ok=True)
+    ip = os.path.join(out_dir, "index.json")
+    index = load_json(ip) if os.path.exists(ip) else {}
+    irl0 = index.get("irl0", {})
+    first = [f for f in fam if f[3] == 4][:1]
+    order = first + [f for f in fam if f not in first]
+    proj = None
+    for i, (cid, tb, r, k, dt, ci) in enumerate(order):
+        gates = F.coarse_step(r, k, dt)
+        qc = cq.ir_to_qiskit(gates, 28, measure=True)
+        path = os.path.join(out_dir, cid + ".irl0.qpy.gz")
+        rec = dump_qpy13(qc, path)
+        rt = roundtrip(qc, path)
+        n_unit = sum(1 for inst in qc.data if inst.operation.name not in ("barrier", "measure"))
+        irc = qn.ir_counts(gates)
+        man_ok = None
+        if cid in mans and mans[cid].get("id"):
+            mf = load_json(os.path.join(circ_dir(4), mans[cid]["id"] + ".manifest.json"))
+            man_ok = (irc == {kk: int(v) for kk, v in mf["original_ir_counts"].items()})
+        irl0[cid] = {"file": rel(path), "gz_sha256": rec["gz_sha256"], "bytes_gz": os.path.getsize(path),
+                     "bytes_uncompressed": rec["bytes_uncompressed"], "qpy_version": rec["header"]["qpy_version"],
+                     "qpy_header": rec["header"], "qiskit_version": qiskit.__version__,
+                     "n_instructions": int(len(qc.data)), "n_unitary_instructions": int(n_unit),
+                     "ops": {kk: int(v) for kk, v in qc.count_ops().items()}, "ir_counts": irc,
+                     "ir_sha256": ir_text_sha256(gates), "ir_gates": len(gates),
+                     "matches_manifest_original_ir_counts": man_ok, "roundtrip_identical_laptop": rt["identical"],
+                     "twoB": tb, "reference": r, "k": k, "dt": dt, "theta": k * dt, "circuit_index": ci,
+                     "family": "IR-L0" if k <= 4 else "IR-L0 k = 5 (CV3)"}
+        if i == 0:
+            proj = {"measured_on": cid, "bytes_gz": os.path.getsize(path), "n_bundles": len(fam) if not args.only else 75,
+                    "projected_total_bytes": os.path.getsize(path) * 75, "cap_bytes": 60_000_000}
+            print(f"  projection from {cid}: {proj['projected_total_bytes'] / 1e6:.1f} MB for 75 bundles", flush=True)
+            if proj["projected_total_bytes"] > 60_000_000:
+                raise SystemExit("STOP (prompts/36 A7): the projected bundle total exceeds 60 MB -- ask before writing")
+        print(f"  {cid}: {len(qc.data)} instructions, {os.path.getsize(path)} B, roundtrip {rt['identical']}, "
+              f"manifest counts {man_ok} [{time.time() - t0:.0f} s]", flush=True)
+    index["irl0"] = dict(sorted(irl0.items(), key=lambda kv: kv[1]["circuit_index"]))
+    # the two slot-01 structured sources against the new k = 1 bundles
+    same = {}
+    p01 = load_json(os.path.join(PARTS_DIR, "QV_2x4_01.json"))
+    for r in p01["runs"]:
+        if r["kind"] == "source" and r["source"] == "structured" and r["base_id"] in irl0:
+            e = irl0[r["base_id"]]
+            byte = r["gz_sha256"] == e["gz_sha256"]
+            old = load_qpy(os.path.join(ROOT, r["qpy"]))[0]
+            new = load_qpy(os.path.join(ROOT, e["file"]))[0]
+            sd = structure_diff(unitary_part(new), old, tol=0.0)
+            same[r["base_id"]] = {"slot01_file": r["qpy"], "irl0_file": e["file"], "byte_identical": bool(byte),
+                                  "gate_for_gate_identical_unitary_part": bool(sd["structure_equal"] and sd["max_param_diff"] == 0.0),
+                                  "max_param_diff": sd["max_param_diff"], "n_slot01": sd["n_a"] if False else len(old.data),
+                                  "n_irl0_unitary": len(unitary_part(new).data),
+                                  "difference": ("the irl0 bundle adds the terminal barrier and the 28 measurements "
+                                                 "(prompts/36 3.3 measure=True); slot 01 dumped the source with measure=False")}
+    index["irl0_vs_slot01_sources"] = same
+    tot = sum(v["bytes_gz"] for v in index["irl0"].values())
+    index["irl0_summary"] = {"n_bundles": len(index["irl0"]), "total_bytes_gz": tot, "cap_bytes": 60_000_000,
+                             "projection": proj or index.get("irl0_summary", {}).get("projection"),
+                             "route": IRL0_ROUTE, "produced_by": "scripts/quantinuum_lattice_tests.py --lattice 4 --tier bundles-2x4",
+                             "prompt": "prompts/36_2x4_full_pipeline.md section 3.3", "created": now(),
+                             "git_commit": git_commit_short(), "versions": versions(("qiskit", "qiskit-aer", "numpy"))}
+    with open(ip, "w") as fh:
+        json.dump(index, fh, indent=1)
+    print(f"{rel(ip)}: {len(index['irl0'])} irl0 bundles, {tot / 1e6:.2f} MB; slot-01 sources {same} "
+          f"({time.time() - t0:.0f} s)")
+    return 0
+
+
+def bundles_check143():
+    """qiskit 1.4.3 twin: every irl0 bundle loads (sha256), with the index's instruction count and op histogram."""
+    import qiskit
+
+    from skqd.campaign33.circuits import load_qpy, sha256_file
+    t0 = time.time()
+    index = load_json(os.path.join(qpy_dir(4), "index.json"))
+    rows, ok = {}, True
+    for cid, e in index["irl0"].items():
+        p = os.path.join(ROOT, e["file"])
+        sha_ok = sha256_file(p) == e["gz_sha256"]
+        qc = load_qpy(p)[0]
+        ops = {k: int(v) for k, v in qc.count_ops().items()}
+        r = {"sha256_ok": sha_ok, "n_instructions": len(qc.data), "n_ok": len(qc.data) == e["n_instructions"],
+             "ops_ok": ops == e["ops"], "num_qubits": qc.num_qubits, "num_clbits": qc.num_clbits}
+        r["ok"] = bool(sha_ok and r["n_ok"] and r["ops_ok"] and qc.num_qubits == 28 and qc.num_clbits == 28)
+        ok &= r["ok"]
+        rows[cid] = r
+    out = {"ok": bool(ok and len(rows) == len(index["irl0"])), "n_checked": len(rows), "qiskit": qiskit.__version__,
+           "python": sys.executable, "per_bundle": rows, "seconds": time.time() - t0, "created": now(),
+           "rule": "load -> sha256 of the .gz, instruction count and op histogram equal to the index (prompts/36 3.3)"}
+    with open(os.path.join(qpy_dir(4), "irl0_check_qiskit143.json"), "w") as fh:
+        json.dump(out, fh, indent=1)
+    print(f"irl0 check on qiskit {qiskit.__version__}: {out['n_checked']} bundles, ok {out['ok']} ({out['seconds']:.0f} s)")
+    return 0 if out["ok"] else 1
+
+
+def bundles_sparse_k5():
+    """Information: the k = 5 term IR (synthesised for prompts/36) on the sparse simulator against coarse_states, for one
+    reference per sector (the term IR is shared by the references of a sector)."""
+    import gate_S2_2x4 as S4
+
+    from skqd.exact import mass_default
+    from skqd.krylov import basis_vector, coarse_states, term_groups
+    from skqd.reference_sim import CodewordEmbedding
+    from skqd.sparse_sim import run_sparse
+    t0 = time.time()
+    M = S4.model(4)
+    E = CodewordEmbedding(M)
+    groups = term_groups(M.terms, G2, mass_default(G2))
+    out = {}
+    for tb, r in ((0, 102), (2, 230)):
+        dt = float(S4.dt_of(4, tb))
+        F = S4.preload_factory(4, "exact", [5 * dt])
+        gates = F.coarse_step(r, 5, dt)
+        t = time.time()
+        st = run_sparse(gates, E.n)
+        got = st.dense_on(E.ints)
+        exact = coarse_states(groups, basis_vector(M.basis.dim, r), dt, 5)[5]
+        out[f"B{tb // 2}_ref{r}_k5"] = {"max_deviation_vs_coarse_states": float(np.abs(got - exact).max()),
+                                         "leakage": float(1.0 - np.sum(np.abs(got) ** 2)), "ir_gates": len(gates),
+                                         "sparse_wall_s": time.time() - t}
+        print(f"  B{tb // 2}_ref{r}_k5: {out[f'B{tb // 2}_ref{r}_k5']}", flush=True)
+    ip = os.path.join(qpy_dir(4), "index.json")
+    index = load_json(ip)
+    index["irl0_sparse_check_k5"] = {"rows": out, "seconds": time.time() - t0, "created": now(),
+                                     "rule": "information (prompts/36 3.3): skqd.sparse_sim.run_sparse of the k = 5 IR vs "
+                                             "krylov.coarse_states (no phase removal), as gate_S2_2x4 C5"}
+    with open(ip, "w") as fh:
+        json.dump(index, fh, indent=1)
+    return 0
+
+
 def git_commit_short():
     r = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, capture_output=True, text=True)
     return r.stdout.strip() or "n/a"
@@ -1728,7 +1933,8 @@ def tier_qsc(args):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--lattice", type=int, choices=(2, 3, 4), required=True)
-    ap.add_argument("--tier", required=True, choices=("export", "noiseless", "noise", "pecos", "hugr", "gpu-verify", "qsc", "qv-tokens", "slots", "assemble"))
+    ap.add_argument("--tier", required=True, choices=("export", "noiseless", "noise", "pecos", "hugr", "gpu-verify", "qsc", "qv-tokens", "slots", "assemble",
+                                                        "bundles-2x4", "slots-2x4", "assemble-2x4"))
     ap.add_argument("--part", default=None)
     ap.add_argument("--only", nargs="*", default=None)
     ap.add_argument("--scenarios", nargs="*", default=None)
@@ -1758,6 +1964,12 @@ def main(argv=None):
         return tier_slots(args)
     if args.tier == "gpu-verify":
         return tier_gpu_verify(args)
+    if args.tier == "bundles-2x4":
+        return tier_bundles_2x4(args)
+    if args.tier == "slots-2x4":
+        return tier_slots_2x4(args)
+    if args.tier == "assemble-2x4":
+        return tier_assemble_2x4(args)
     if args.lattice == 2:
         return assemble_QN_2x2()
     return assemble_QN_2x4()
