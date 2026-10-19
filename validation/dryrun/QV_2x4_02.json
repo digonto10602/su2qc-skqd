@@ -1,0 +1,2005 @@
+{
+ "gate": "dryrun/QV_2x4_02",
+ "title": "DRY RUN (laptop CPU at 2x2): QV_2x4_02: DRY RUN (2x2) of: SK-B1: the 16 B=1 circuits (refs 103, 110, 118, 230; k = 1..4), sampled (prompts/36 section 4)",
+ "status": "PASS",
+ "criteria": [
+  {
+   "name": "K1 every sampled circuit: max abs(dpsi) < 1e-10 (phase removed, on the codeword amplitudes) and leakage < 1e-9 against krylov.coarse_states (save_amplitudes route; a failure is a STOP)",
+   "value": {
+    "n": 8,
+    "max_dpsi": 1.0907482145598721e-14,
+    "max_leakage": 2.3092638912203256e-14,
+    "max_dry_amplitudes_vs_statevector": 0.0
+   },
+   "threshold": "< 1e-10; < 1e-9; dry: amplitudes = statevector route to 1e-12",
+   "passed": true
+  },
+  {
+   "name": "K2 per-state test on the full sequence (|n/N - p| <= 5 sigma for p >= 1e-3), 0 failures; fraction outside the exact support 0; rejected 0",
+   "value": {
+    "failures": 0,
+    "max_z": 2.6546063307470185,
+    "outside": 0.0,
+    "rejected": 0
+   },
+   "threshold": "0; 0; 0",
+   "passed": true
+  },
+  {
+   "name": "K3 decoder round trip: every accepted state re-encodes to its string (0 mismatches)",
+   "value": 0,
+   "threshold": "0",
+   "passed": true
+  },
+  {
+   "name": "M measure_sampling true on every sampled run (Aer metadata; false would re-simulate per shot: STOP the design)",
+   "value": {
+    "B1_ref14_k1:irl0:sample": true,
+    "B1_ref14_k2:irl0:sample": true,
+    "B1_ref14_k3:irl0:sample": true,
+    "B1_ref14_k4:irl0:sample": true,
+    "B1_ref07_k1:irl0:sample": true,
+    "B1_ref07_k2:irl0:sample": true,
+    "B1_ref07_k3:irl0:sample": true,
+    "B1_ref07_k4:irl0:sample": true
+   },
+   "threshold": "all true",
+   "passed": true
+  },
+  {
+   "name": "S1 (dry run) the run happened on the CPU",
+   "value": "CPU (available ['CPU'])",
+   "threshold": "CPU",
+   "passed": true
+  },
+  {
+   "name": "S2 wall <= min(walltime, 3600 s) and <= 1.1 x predicted + 120 s",
+   "value": "5 s (predicted None)",
+   "threshold": "inside",
+   "passed": true
+  },
+  {
+   "name": "S3 policy telemetry non-null (wall, phases, GPUs, s per circuit, s per shot, peak GPU MiB, mean utilisation) -- dry run: present",
+   "value": {
+    "wall_s": 4.859513282775879,
+    "gpus": 0,
+    "seconds_per_circuit": 0.19638487696647644,
+    "seconds_per_shot": 9.98972148e-07,
+    "peak_gpu_memory_mib": null,
+    "mean_gpu_utilization": null
+   },
+   "threshold": "non-null",
+   "passed": true
+  },
+  {
+   "name": "S4 every seed recorded (chunk_seed(s0, circuit index, 0, shots))",
+   "value": true,
+   "threshold": "true",
+   "passed": true
+  },
+  {
+   "name": "S5 OOM retries recorded",
+   "value": "0 recorded",
+   "threshold": "each split recorded",
+   "passed": true
+  },
+  {
+   "name": "S6 shots >= the part's shots on every sampled run",
+   "value": {
+    "B1_ref14_k1:irl0:sample": 31250,
+    "B1_ref14_k2:irl0:sample": 31250,
+    "B1_ref14_k3:irl0:sample": 31250,
+    "B1_ref14_k4:irl0:sample": 31250,
+    "B1_ref07_k1:irl0:sample": 31250,
+    "B1_ref07_k2:irl0:sample": 31250,
+    "B1_ref07_k3:irl0:sample": 31250,
+    "B1_ref07_k4:irl0:sample": 31250
+   },
+   "threshold": ">= shots",
+   "passed": true
+  }
+ ],
+ "data": {
+  "prompt": "prompts/36_2x4_full_pipeline.md section 4",
+  "schema": "prompts/36",
+  "token": "QV_2x4_02",
+  "dry_run": true,
+  "lattice": "2x2",
+  "qpu_seconds": 0,
+  "hqc": 0,
+  "per_run": {
+   "B1_ref14_k1:irl0:sample": {
+    "label": "B1_ref14_k1:irl0:sample",
+    "base_id": "B1_ref14_k1",
+    "kind": "sample",
+    "twoB": 2,
+    "reference": 14,
+    "k": 1,
+    "n_instructions": 538,
+    "qpy_gz_sha256": "91d01dfc8c87a2c9a3d4fe92cfdde401b40a834d538f85286afea3ba800c9c4c",
+    "load_s": 0.033803701400756836,
+    "seconds": 0.18839693069458008,
+    "measure_sampling": true,
+    "sample_measure_time_s": 0.014187588,
+    "max_abs_dpsi": 1.0907482145598721e-14,
+    "max_abs_dpsi_raw_phase": 1.0988544207186962e-14,
+    "leakage": 2.3092638912203256e-14,
+    "meets_bar": true,
+    "dry_amplitudes_vs_statevector_route": 0.0,
+    "per_state": {
+     "n_shots": 31250,
+     "n_sigma": 5.0,
+     "p_min": 0.001,
+     "tested_states": 5,
+     "max_z": 1.1695751572012028,
+     "failures": [],
+     "ok": true,
+     "fraction_outside_exact_support": 0.0
+    },
+    "accepted": 31250,
+    "rejected": 0,
+    "roundtrip": {
+     "accepted_states": 8,
+     "mismatches": 0
+    },
+    "shots": 31250,
+    "shots_required": 31250,
+    "plan_shots": 267,
+    "prefix_lengths": [
+     17,
+     33,
+     67,
+     134,
+     267,
+     300,
+     600,
+     2136
+    ],
+    "uniform_shots": 25000,
+    "seed": 385020000000,
+    "circuit_index": 20,
+    "aer_calls": [
+     {
+      "shots": 31250,
+      "seed": 385020000000,
+      "seconds": 0.09158563613891602
+     }
+    ],
+    "segments": [
+     {
+      "start": 0,
+      "shots": 17,
+      "counts": {
+       "292": 14,
+       "788": 3
+      },
+      "uniform": false
+     },
+     {
+      "start": 17,
+      "shots": 16,
+      "counts": {
+       "292": 15,
+       "1188": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 33,
+      "shots": 34,
+      "counts": {
+       "292": 25,
+       "788": 3,
+       "1188": 5,
+       "2047": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 67,
+      "shots": 67,
+      "counts": {
+       "292": 65,
+       "1188": 2
+      },
+      "uniform": false
+     },
+     {
+      "start": 134,
+      "shots": 133,
+      "counts": {
+       "292": 118,
+       "788": 9,
+       "1188": 5,
+       "3732": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 267,
+      "shots": 33,
+      "counts": {
+       "292": 28,
+       "788": 3,
+       "1188": 2
+      },
+      "uniform": false
+     },
+     {
+      "start": 300,
+      "shots": 300,
+      "counts": {
+       "292": 272,
+       "788": 12,
+       "1188": 11,
+       "2047": 2,
+       "3732": 3
+      },
+      "uniform": false
+     },
+     {
+      "start": 600,
+      "shots": 1536,
+      "counts": {
+       "292": 1366,
+       "788": 80,
+       "1188": 77,
+       "1487": 1,
+       "2047": 8,
+       "2084": 1,
+       "2308": 2,
+       "3732": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 2136,
+      "shots": 4114,
+      "counts": {
+       "292": 3686,
+       "788": 213,
+       "1188": 177,
+       "2047": 27,
+       "2084": 1,
+       "2308": 3,
+       "3732": 7
+      },
+      "uniform": false
+     },
+     {
+      "start": 6250,
+      "shots": 25000,
+      "counts": {
+       "292": 22197,
+       "788": 1334,
+       "1188": 1244,
+       "2047": 152,
+       "2084": 15,
+       "2308": 19,
+       "3732": 39
+      },
+      "uniform": true
+     }
+    ],
+    "n_distinct": 8,
+    "seconds_per_shot": 4.5400281599999996e-07,
+    "npz": "results/qv_2x4/dryrun/QV_2x4_02/B1_ref14_k1.npz",
+    "aer_success": true
+   },
+   "B1_ref14_k2:irl0:sample": {
+    "label": "B1_ref14_k2:irl0:sample",
+    "base_id": "B1_ref14_k2",
+    "kind": "sample",
+    "twoB": 2,
+    "reference": 14,
+    "k": 2,
+    "n_instructions": 538,
+    "qpy_gz_sha256": "028d106c4bb48e47cb55b515da31e448b7840c87872b2a976c1dd74c53dadcae",
+    "load_s": 0.03531002998352051,
+    "seconds": 0.1839461326599121,
+    "measure_sampling": true,
+    "sample_measure_time_s": 0.017035597,
+    "max_abs_dpsi": 7.084580093039169e-15,
+    "max_abs_dpsi_raw_phase": 7.036791118270712e-15,
+    "leakage": 1.8318679906315083e-14,
+    "meets_bar": true,
+    "dry_amplitudes_vs_statevector_route": 0.0,
+    "per_state": {
+     "n_shots": 31250,
+     "n_sigma": 5.0,
+     "p_min": 0.001,
+     "tested_states": 9,
+     "max_z": 1.8042942390669883,
+     "failures": [],
+     "ok": true,
+     "fraction_outside_exact_support": 0.0
+    },
+    "accepted": 31250,
+    "rejected": 0,
+    "roundtrip": {
+     "accepted_states": 12,
+     "mismatches": 0
+    },
+    "shots": 31250,
+    "shots_required": 31250,
+    "plan_shots": 267,
+    "prefix_lengths": [
+     17,
+     33,
+     67,
+     134,
+     267,
+     300,
+     600,
+     2136
+    ],
+    "uniform_shots": 25000,
+    "seed": 385021000000,
+    "circuit_index": 21,
+    "aer_calls": [
+     {
+      "shots": 31250,
+      "seed": 385021000000,
+      "seconds": 0.09139442443847656
+     }
+    ],
+    "segments": [
+     {
+      "start": 0,
+      "shots": 17,
+      "counts": {
+       "292": 9,
+       "788": 2,
+       "1188": 6
+      },
+      "uniform": false
+     },
+     {
+      "start": 17,
+      "shots": 16,
+      "counts": {
+       "292": 11,
+       "788": 2,
+       "1188": 2,
+       "2047": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 33,
+      "shots": 34,
+      "counts": {
+       "292": 21,
+       "788": 4,
+       "1188": 6,
+       "2047": 1,
+       "2308": 1,
+       "3732": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 67,
+      "shots": 67,
+      "counts": {
+       "292": 39,
+       "788": 11,
+       "1188": 15,
+       "3732": 2
+      },
+      "uniform": false
+     },
+     {
+      "start": 134,
+      "shots": 133,
+      "counts": {
+       "292": 76,
+       "788": 25,
+       "1188": 22,
+       "2047": 6,
+       "2308": 4
+      },
+      "uniform": false
+     },
+     {
+      "start": 267,
+      "shots": 33,
+      "counts": {
+       "292": 24,
+       "788": 5,
+       "1188": 2,
+       "3732": 2
+      },
+      "uniform": false
+     },
+     {
+      "start": 300,
+      "shots": 300,
+      "counts": {
+       "292": 174,
+       "788": 53,
+       "1188": 55,
+       "2047": 4,
+       "2084": 2,
+       "2308": 5,
+       "3732": 6,
+       "4063": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 600,
+      "shots": 1536,
+      "counts": {
+       "292": 960,
+       "788": 258,
+       "1188": 227,
+       "2047": 34,
+       "2084": 10,
+       "2308": 14,
+       "3732": 31,
+       "4063": 2
+      },
+      "uniform": false
+     },
+     {
+      "start": 2136,
+      "shots": 4114,
+      "counts": {
+       "292": 2520,
+       "639": 2,
+       "788": 711,
+       "1188": 644,
+       "1487": 4,
+       "2047": 73,
+       "2084": 37,
+       "2127": 1,
+       "2308": 50,
+       "3732": 71,
+       "4063": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 6250,
+      "shots": 25000,
+      "counts": {
+       "292": 15411,
+       "639": 38,
+       "788": 4263,
+       "1188": 3801,
+       "1487": 30,
+       "2047": 458,
+       "2084": 231,
+       "2127": 4,
+       "2308": 254,
+       "3732": 492,
+       "3839": 7,
+       "4063": 11
+      },
+      "uniform": true
+     }
+    ],
+    "n_distinct": 12,
+    "seconds_per_shot": 5.45139104e-07,
+    "npz": "results/qv_2x4/dryrun/QV_2x4_02/B1_ref14_k2.npz",
+    "aer_success": true
+   },
+   "B1_ref14_k3:irl0:sample": {
+    "label": "B1_ref14_k3:irl0:sample",
+    "base_id": "B1_ref14_k3",
+    "kind": "sample",
+    "twoB": 2,
+    "reference": 14,
+    "k": 3,
+    "n_instructions": 538,
+    "qpy_gz_sha256": "7803ca5c41cf3ace75a4db38061e0d0952bd890bd1d21b8bd4499be0d529a957",
+    "load_s": 0.035016536712646484,
+    "seconds": 0.19454169273376465,
+    "measure_sampling": true,
+    "sample_measure_time_s": 0.023372261,
+    "max_abs_dpsi": 4.3443073147829775e-15,
+    "max_abs_dpsi_raw_phase": 4.341114218040999e-15,
+    "leakage": 1.8762769116165146e-14,
+    "meets_bar": true,
+    "dry_amplitudes_vs_statevector_route": 0.0,
+    "per_state": {
+     "n_shots": 31250,
+     "n_sigma": 5.0,
+     "p_min": 0.001,
+     "tested_states": 12,
+     "max_z": 2.4554249219736097,
+     "failures": [],
+     "ok": true,
+     "fraction_outside_exact_support": 0.0
+    },
+    "accepted": 31250,
+    "rejected": 0,
+    "roundtrip": {
+     "accepted_states": 12,
+     "mismatches": 0
+    },
+    "shots": 31250,
+    "shots_required": 31250,
+    "plan_shots": 267,
+    "prefix_lengths": [
+     17,
+     33,
+     67,
+     134,
+     267,
+     300,
+     600,
+     2136
+    ],
+    "uniform_shots": 25000,
+    "seed": 385022000000,
+    "circuit_index": 22,
+    "aer_calls": [
+     {
+      "shots": 31250,
+      "seed": 385022000000,
+      "seconds": 0.09896159172058105
+     }
+    ],
+    "segments": [
+     {
+      "start": 0,
+      "shots": 17,
+      "counts": {
+       "292": 5,
+       "788": 5,
+       "1188": 3,
+       "2047": 1,
+       "2308": 2,
+       "3732": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 17,
+      "shots": 16,
+      "counts": {
+       "292": 5,
+       "639": 1,
+       "788": 6,
+       "1188": 2,
+       "2308": 1,
+       "3732": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 33,
+      "shots": 34,
+      "counts": {
+       "292": 12,
+       "788": 2,
+       "1188": 10,
+       "2084": 3,
+       "2308": 1,
+       "3732": 4,
+       "4063": 2
+      },
+      "uniform": false
+     },
+     {
+      "start": 67,
+      "shots": 67,
+      "counts": {
+       "292": 24,
+       "788": 19,
+       "1188": 17,
+       "2084": 1,
+       "2308": 2,
+       "3732": 4
+      },
+      "uniform": false
+     },
+     {
+      "start": 134,
+      "shots": 133,
+      "counts": {
+       "292": 47,
+       "788": 24,
+       "1188": 34,
+       "2047": 2,
+       "2084": 4,
+       "2127": 1,
+       "2308": 8,
+       "3732": 12,
+       "4063": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 267,
+      "shots": 33,
+      "counts": {
+       "292": 11,
+       "788": 12,
+       "1188": 7,
+       "2084": 1,
+       "3732": 2
+      },
+      "uniform": false
+     },
+     {
+      "start": 300,
+      "shots": 300,
+      "counts": {
+       "292": 100,
+       "788": 74,
+       "1188": 65,
+       "2047": 10,
+       "2084": 7,
+       "2127": 1,
+       "2308": 10,
+       "3732": 33
+      },
+      "uniform": false
+     },
+     {
+      "start": 600,
+      "shots": 1536,
+      "counts": {
+       "292": 507,
+       "639": 9,
+       "788": 379,
+       "1188": 333,
+       "1487": 5,
+       "2047": 40,
+       "2084": 43,
+       "2308": 69,
+       "3732": 141,
+       "3839": 4,
+       "4063": 6
+      },
+      "uniform": false
+     },
+     {
+      "start": 2136,
+      "shots": 4114,
+      "counts": {
+       "292": 1347,
+       "639": 14,
+       "788": 1140,
+       "1188": 816,
+       "1487": 16,
+       "2047": 107,
+       "2084": 119,
+       "2127": 5,
+       "2308": 223,
+       "3732": 309,
+       "3839": 5,
+       "4063": 13
+      },
+      "uniform": false
+     },
+     {
+      "start": 6250,
+      "shots": 25000,
+      "counts": {
+       "292": 8399,
+       "639": 88,
+       "788": 6621,
+       "1188": 5177,
+       "1487": 107,
+       "2047": 503,
+       "2084": 727,
+       "2127": 35,
+       "2308": 1251,
+       "3732": 1997,
+       "3839": 31,
+       "4063": 64
+      },
+      "uniform": true
+     }
+    ],
+    "n_distinct": 12,
+    "seconds_per_shot": 7.47912352e-07,
+    "npz": "results/qv_2x4/dryrun/QV_2x4_02/B1_ref14_k3.npz",
+    "aer_success": true
+   },
+   "B1_ref14_k4:irl0:sample": {
+    "label": "B1_ref14_k4:irl0:sample",
+    "base_id": "B1_ref14_k4",
+    "kind": "sample",
+    "twoB": 2,
+    "reference": 14,
+    "k": 4,
+    "n_instructions": 538,
+    "qpy_gz_sha256": "565aac67e034bd96c9122d33fc35efdb14968c36eeddc87a980480df5b7e3f82",
+    "load_s": 0.03286242485046387,
+    "seconds": 0.19812893867492676,
+    "measure_sampling": true,
+    "sample_measure_time_s": 0.032064292,
+    "max_abs_dpsi": 7.735046195875875e-15,
+    "max_abs_dpsi_raw_phase": 8.475454858929704e-15,
+    "leakage": 2.19824158875781e-14,
+    "meets_bar": true,
+    "dry_amplitudes_vs_statevector_route": 0.0,
+    "per_state": {
+     "n_shots": 31250,
+     "n_sigma": 5.0,
+     "p_min": 0.001,
+     "tested_states": 12,
+     "max_z": 1.9037161139886347,
+     "failures": [],
+     "ok": true,
+     "fraction_outside_exact_support": 0.0
+    },
+    "accepted": 31250,
+    "rejected": 0,
+    "roundtrip": {
+     "accepted_states": 12,
+     "mismatches": 0
+    },
+    "shots": 31250,
+    "shots_required": 31250,
+    "plan_shots": 267,
+    "prefix_lengths": [
+     17,
+     33,
+     67,
+     134,
+     267,
+     300,
+     600,
+     2136
+    ],
+    "uniform_shots": 25000,
+    "seed": 385023000000,
+    "circuit_index": 23,
+    "aer_calls": [
+     {
+      "shots": 31250,
+      "seed": 385023000000,
+      "seconds": 0.10442519187927246
+     }
+    ],
+    "segments": [
+     {
+      "start": 0,
+      "shots": 17,
+      "counts": {
+       "292": 2,
+       "788": 2,
+       "1188": 6,
+       "2308": 4,
+       "3732": 3
+      },
+      "uniform": false
+     },
+     {
+      "start": 17,
+      "shots": 16,
+      "counts": {
+       "292": 2,
+       "788": 2,
+       "1188": 7,
+       "2308": 2,
+       "3732": 1,
+       "4063": 2
+      },
+      "uniform": false
+     },
+     {
+      "start": 33,
+      "shots": 34,
+      "counts": {
+       "292": 4,
+       "788": 11,
+       "1188": 5,
+       "2047": 1,
+       "2084": 2,
+       "2308": 5,
+       "3732": 5,
+       "4063": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 67,
+      "shots": 67,
+      "counts": {
+       "292": 6,
+       "788": 25,
+       "1188": 15,
+       "2047": 1,
+       "2084": 2,
+       "2127": 1,
+       "2308": 6,
+       "3732": 11
+      },
+      "uniform": false
+     },
+     {
+      "start": 134,
+      "shots": 133,
+      "counts": {
+       "292": 14,
+       "639": 1,
+       "788": 32,
+       "1188": 23,
+       "1487": 3,
+       "2047": 2,
+       "2084": 3,
+       "2308": 22,
+       "3732": 29,
+       "3839": 3,
+       "4063": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 267,
+      "shots": 33,
+      "counts": {
+       "292": 1,
+       "639": 1,
+       "788": 5,
+       "1188": 9,
+       "1487": 1,
+       "2084": 2,
+       "2308": 9,
+       "3732": 5
+      },
+      "uniform": false
+     },
+     {
+      "start": 300,
+      "shots": 300,
+      "counts": {
+       "292": 47,
+       "639": 3,
+       "788": 90,
+       "1188": 53,
+       "1487": 3,
+       "2047": 3,
+       "2084": 17,
+       "2308": 41,
+       "3732": 36,
+       "3839": 3,
+       "4063": 4
+      },
+      "uniform": false
+     },
+     {
+      "start": 600,
+      "shots": 1536,
+      "counts": {
+       "292": 232,
+       "639": 7,
+       "788": 407,
+       "1188": 275,
+       "1487": 10,
+       "2047": 25,
+       "2084": 65,
+       "2127": 7,
+       "2308": 202,
+       "3732": 261,
+       "3839": 14,
+       "4063": 31
+      },
+      "uniform": false
+     },
+     {
+      "start": 2136,
+      "shots": 4114,
+      "counts": {
+       "292": 556,
+       "639": 16,
+       "788": 1106,
+       "1188": 709,
+       "1487": 39,
+       "2047": 69,
+       "2084": 231,
+       "2127": 25,
+       "2308": 552,
+       "3732": 732,
+       "3839": 22,
+       "4063": 57
+      },
+      "uniform": false
+     },
+     {
+      "start": 6250,
+      "shots": 25000,
+      "counts": {
+       "292": 3307,
+       "639": 129,
+       "788": 7070,
+       "1188": 4406,
+       "1487": 187,
+       "2047": 357,
+       "2084": 1255,
+       "2127": 124,
+       "2308": 3161,
+       "3732": 4481,
+       "3839": 124,
+       "4063": 399
+      },
+      "uniform": true
+     }
+    ],
+    "n_distinct": 12,
+    "seconds_per_shot": 1.026057344e-06,
+    "npz": "results/qv_2x4/dryrun/QV_2x4_02/B1_ref14_k4.npz",
+    "aer_success": true
+   },
+   "B1_ref07_k1:irl0:sample": {
+    "label": "B1_ref07_k1:irl0:sample",
+    "base_id": "B1_ref07_k1",
+    "kind": "sample",
+    "twoB": 2,
+    "reference": 7,
+    "k": 1,
+    "n_instructions": 538,
+    "qpy_gz_sha256": "29589a01e15041515358de85866f37b5736cff2acf2d72e83c5e8b880bcb9eb5",
+    "load_s": 0.03385329246520996,
+    "seconds": 0.20443272590637207,
+    "measure_sampling": true,
+    "sample_measure_time_s": 0.04143138,
+    "max_abs_dpsi": 9.737738238312552e-15,
+    "max_abs_dpsi_raw_phase": 9.762547802696001e-15,
+    "leakage": 2.0650148258027912e-14,
+    "meets_bar": true,
+    "dry_amplitudes_vs_statevector_route": 0.0,
+    "per_state": {
+     "n_shots": 31250,
+     "n_sigma": 5.0,
+     "p_min": 0.001,
+     "tested_states": 7,
+     "max_z": 1.3296220029101804,
+     "failures": [],
+     "ok": true,
+     "fraction_outside_exact_support": 0.0
+    },
+    "accepted": 31250,
+    "rejected": 0,
+    "roundtrip": {
+     "accepted_states": 13,
+     "mismatches": 0
+    },
+    "shots": 31250,
+    "shots_required": 31250,
+    "plan_shots": 267,
+    "prefix_lengths": [
+     17,
+     33,
+     67,
+     134,
+     267,
+     300,
+     600,
+     2136
+    ],
+    "uniform_shots": 25000,
+    "seed": 385024000000,
+    "circuit_index": 24,
+    "aer_calls": [
+     {
+      "shots": 31250,
+      "seed": 385024000000,
+      "seconds": 0.11229777336120605
+     }
+    ],
+    "segments": [
+     {
+      "start": 0,
+      "shots": 17,
+      "counts": {
+       "2145": 1,
+       "2314": 1,
+       "2336": 15
+      },
+      "uniform": false
+     },
+     {
+      "start": 17,
+      "shots": 16,
+      "counts": {
+       "2314": 1,
+       "2336": 15
+      },
+      "uniform": false
+     },
+     {
+      "start": 33,
+      "shots": 34,
+      "counts": {
+       "2084": 1,
+       "2145": 1,
+       "2314": 2,
+       "2336": 29,
+       "4091": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 67,
+      "shots": 67,
+      "counts": {
+       "826": 1,
+       "2145": 3,
+       "2314": 3,
+       "2336": 60
+      },
+      "uniform": false
+     },
+     {
+      "start": 134,
+      "shots": 133,
+      "counts": {
+       "2145": 10,
+       "2314": 8,
+       "2336": 115
+      },
+      "uniform": false
+     },
+     {
+      "start": 267,
+      "shots": 33,
+      "counts": {
+       "2145": 3,
+       "2336": 30
+      },
+      "uniform": false
+     },
+     {
+      "start": 300,
+      "shots": 300,
+      "counts": {
+       "826": 1,
+       "2127": 1,
+       "2145": 12,
+       "2314": 16,
+       "2336": 268,
+       "4091": 2
+      },
+      "uniform": false
+     },
+     {
+      "start": 600,
+      "shots": 1536,
+      "counts": {
+       "826": 2,
+       "1505": 3,
+       "2084": 1,
+       "2127": 2,
+       "2145": 58,
+       "2308": 2,
+       "2314": 70,
+       "2336": 1390,
+       "4091": 8
+      },
+      "uniform": false
+     },
+     {
+      "start": 2136,
+      "shots": 4114,
+      "counts": {
+       "826": 2,
+       "1505": 3,
+       "2084": 6,
+       "2127": 8,
+       "2145": 208,
+       "2308": 2,
+       "2314": 200,
+       "2336": 3664,
+       "3770": 1,
+       "4091": 20
+      },
+      "uniform": false
+     },
+     {
+      "start": 6250,
+      "shots": 25000,
+      "counts": {
+       "639": 1,
+       "788": 1,
+       "826": 33,
+       "1505": 40,
+       "2084": 19,
+       "2127": 26,
+       "2145": 1220,
+       "2308": 23,
+       "2314": 1244,
+       "2336": 22237,
+       "3770": 3,
+       "4049": 3,
+       "4091": 150
+      },
+      "uniform": true
+     }
+    ],
+    "n_distinct": 13,
+    "seconds_per_shot": 1.32580416e-06,
+    "npz": "results/qv_2x4/dryrun/QV_2x4_02/B1_ref07_k1.npz",
+    "aer_success": true
+   },
+   "B1_ref07_k2:irl0:sample": {
+    "label": "B1_ref07_k2:irl0:sample",
+    "base_id": "B1_ref07_k2",
+    "kind": "sample",
+    "twoB": 2,
+    "reference": 7,
+    "k": 2,
+    "n_instructions": 538,
+    "qpy_gz_sha256": "d8db902e26b51733b7bc46eb69f9cd51baa547fdae38696ed9c98ba069c3691c",
+    "load_s": 0.03297567367553711,
+    "seconds": 0.20113897323608398,
+    "measure_sampling": true,
+    "sample_measure_time_s": 0.040825337,
+    "max_abs_dpsi": 6.749799905510122e-15,
+    "max_abs_dpsi_raw_phase": 6.775999547977531e-15,
+    "leakage": 1.6653345369377348e-14,
+    "meets_bar": true,
+    "dry_amplitudes_vs_statevector_route": 0.0,
+    "per_state": {
+     "n_shots": 31250,
+     "n_sigma": 5.0,
+     "p_min": 0.001,
+     "tested_states": 14,
+     "max_z": 2.5319417996455136,
+     "failures": [],
+     "ok": true,
+     "fraction_outside_exact_support": 0.0
+    },
+    "accepted": 31250,
+    "rejected": 0,
+    "roundtrip": {
+     "accepted_states": 20,
+     "mismatches": 0
+    },
+    "shots": 31250,
+    "shots_required": 31250,
+    "plan_shots": 267,
+    "prefix_lengths": [
+     17,
+     33,
+     67,
+     134,
+     267,
+     300,
+     600,
+     2136
+    ],
+    "uniform_shots": 25000,
+    "seed": 385025000000,
+    "circuit_index": 25,
+    "aer_calls": [
+     {
+      "shots": 31250,
+      "seed": 385025000000,
+      "seconds": 0.10904908180236816
+     }
+    ],
+    "segments": [
+     {
+      "start": 0,
+      "shots": 17,
+      "counts": {
+       "1505": 1,
+       "2084": 1,
+       "2145": 1,
+       "2314": 2,
+       "2336": 11,
+       "4091": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 17,
+      "shots": 16,
+      "counts": {
+       "2145": 5,
+       "2314": 3,
+       "2336": 8
+      },
+      "uniform": false
+     },
+     {
+      "start": 33,
+      "shots": 34,
+      "counts": {
+       "826": 2,
+       "2145": 5,
+       "2314": 2,
+       "2336": 25
+      },
+      "uniform": false
+     },
+     {
+      "start": 67,
+      "shots": 67,
+      "counts": {
+       "639": 1,
+       "826": 2,
+       "1487": 1,
+       "1505": 2,
+       "2127": 2,
+       "2145": 5,
+       "2308": 1,
+       "2314": 8,
+       "2336": 42,
+       "3770": 1,
+       "4063": 1,
+       "4091": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 134,
+      "shots": 133,
+      "counts": {
+       "639": 1,
+       "826": 3,
+       "1505": 3,
+       "2084": 1,
+       "2127": 3,
+       "2145": 28,
+       "2308": 1,
+       "2314": 19,
+       "2336": 72,
+       "4091": 2
+      },
+      "uniform": false
+     },
+     {
+      "start": 267,
+      "shots": 33,
+      "counts": {
+       "1487": 1,
+       "2084": 1,
+       "2127": 1,
+       "2145": 3,
+       "2314": 5,
+       "2336": 22
+      },
+      "uniform": false
+     },
+     {
+      "start": 300,
+      "shots": 300,
+      "counts": {
+       "292": 1,
+       "826": 7,
+       "1505": 7,
+       "2084": 4,
+       "2127": 8,
+       "2145": 51,
+       "2308": 2,
+       "2314": 34,
+       "2336": 184,
+       "4091": 2
+      },
+      "uniform": false
+     },
+     {
+      "start": 600,
+      "shots": 1536,
+      "counts": {
+       "639": 8,
+       "788": 1,
+       "826": 19,
+       "1188": 1,
+       "1487": 1,
+       "1505": 22,
+       "2084": 13,
+       "2127": 21,
+       "2145": 230,
+       "2308": 13,
+       "2314": 195,
+       "2336": 974,
+       "3732": 2,
+       "3770": 7,
+       "4049": 3,
+       "4091": 26
+      },
+      "uniform": false
+     },
+     {
+      "start": 2136,
+      "shots": 4114,
+      "counts": {
+       "292": 3,
+       "639": 7,
+       "788": 7,
+       "826": 78,
+       "1188": 13,
+       "1487": 7,
+       "1505": 72,
+       "2047": 1,
+       "2084": 42,
+       "2127": 63,
+       "2145": 605,
+       "2308": 30,
+       "2314": 561,
+       "2336": 2527,
+       "3732": 2,
+       "3770": 11,
+       "3839": 1,
+       "4049": 6,
+       "4091": 78
+      },
+      "uniform": false
+     },
+     {
+      "start": 6250,
+      "shots": 25000,
+      "counts": {
+       "292": 10,
+       "639": 49,
+       "788": 31,
+       "826": 393,
+       "1188": 47,
+       "1487": 52,
+       "1505": 425,
+       "2047": 5,
+       "2084": 217,
+       "2127": 409,
+       "2145": 3774,
+       "2308": 179,
+       "2314": 3367,
+       "2336": 15505,
+       "3732": 8,
+       "3770": 75,
+       "3839": 8,
+       "4049": 20,
+       "4063": 4,
+       "4091": 422
+      },
+      "uniform": true
+     }
+    ],
+    "n_distinct": 20,
+    "seconds_per_shot": 1.306410784e-06,
+    "npz": "results/qv_2x4/dryrun/QV_2x4_02/B1_ref07_k2.npz",
+    "aer_success": true
+   },
+   "B1_ref07_k3:irl0:sample": {
+    "label": "B1_ref07_k3:irl0:sample",
+    "base_id": "B1_ref07_k3",
+    "kind": "sample",
+    "twoB": 2,
+    "reference": 7,
+    "k": 3,
+    "n_instructions": 538,
+    "qpy_gz_sha256": "d3000efff8cc0932542b9e2e696859306f821a222cc339cfea38e10b576d2713",
+    "load_s": 0.03227400779724121,
+    "seconds": 0.20914053916931152,
+    "measure_sampling": true,
+    "sample_measure_time_s": 0.042967053,
+    "max_abs_dpsi": 5.2330164189979225e-15,
+    "max_abs_dpsi_raw_phase": 5.345308810812644e-15,
+    "leakage": 2.19824158875781e-14,
+    "meets_bar": true,
+    "dry_amplitudes_vs_statevector_route": 0.0,
+    "per_state": {
+     "n_shots": 31250,
+     "n_sigma": 5.0,
+     "p_min": 0.001,
+     "tested_states": 20,
+     "max_z": 2.1084047543021556,
+     "failures": [],
+     "ok": true,
+     "fraction_outside_exact_support": 0.0
+    },
+    "accepted": 31250,
+    "rejected": 0,
+    "roundtrip": {
+     "accepted_states": 20,
+     "mismatches": 0
+    },
+    "shots": 31250,
+    "shots_required": 31250,
+    "plan_shots": 267,
+    "prefix_lengths": [
+     17,
+     33,
+     67,
+     134,
+     267,
+     300,
+     600,
+     2136
+    ],
+    "uniform_shots": 25000,
+    "seed": 385026000000,
+    "circuit_index": 26,
+    "aer_calls": [
+     {
+      "shots": 31250,
+      "seed": 385026000000,
+      "seconds": 0.11233854293823242
+     }
+    ],
+    "segments": [
+     {
+      "start": 0,
+      "shots": 17,
+      "counts": {
+       "292": 1,
+       "826": 2,
+       "1505": 1,
+       "2047": 1,
+       "2145": 2,
+       "2308": 1,
+       "2314": 3,
+       "2336": 6
+      },
+      "uniform": false
+     },
+     {
+      "start": 17,
+      "shots": 16,
+      "counts": {
+       "826": 1,
+       "1188": 1,
+       "1505": 1,
+       "2127": 2,
+       "2145": 4,
+       "2308": 1,
+       "2336": 6
+      },
+      "uniform": false
+     },
+     {
+      "start": 33,
+      "shots": 34,
+      "counts": {
+       "826": 1,
+       "1487": 1,
+       "1505": 4,
+       "2084": 1,
+       "2145": 8,
+       "2314": 5,
+       "2336": 13,
+       "3770": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 67,
+      "shots": 67,
+      "counts": {
+       "292": 1,
+       "639": 2,
+       "788": 1,
+       "826": 1,
+       "1188": 1,
+       "1487": 1,
+       "1505": 6,
+       "2084": 1,
+       "2127": 3,
+       "2145": 12,
+       "2308": 3,
+       "2314": 8,
+       "2336": 25,
+       "3770": 1,
+       "4091": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 134,
+      "shots": 133,
+      "counts": {
+       "292": 1,
+       "639": 2,
+       "788": 3,
+       "826": 5,
+       "1188": 2,
+       "1487": 2,
+       "1505": 4,
+       "2084": 1,
+       "2127": 7,
+       "2145": 24,
+       "2308": 1,
+       "2314": 20,
+       "2336": 55,
+       "3770": 1,
+       "3839": 1,
+       "4091": 4
+      },
+      "uniform": false
+     },
+     {
+      "start": 267,
+      "shots": 33,
+      "counts": {
+       "639": 1,
+       "788": 1,
+       "826": 3,
+       "2084": 1,
+       "2127": 2,
+       "2145": 7,
+       "2314": 4,
+       "2336": 14
+      },
+      "uniform": false
+     },
+     {
+      "start": 300,
+      "shots": 300,
+      "counts": {
+       "292": 1,
+       "639": 2,
+       "788": 3,
+       "826": 15,
+       "1188": 4,
+       "1487": 6,
+       "1505": 11,
+       "2047": 2,
+       "2084": 7,
+       "2127": 23,
+       "2145": 55,
+       "2308": 7,
+       "2314": 47,
+       "2336": 103,
+       "3732": 1,
+       "3770": 3,
+       "3839": 1,
+       "4049": 1,
+       "4091": 8
+      },
+      "uniform": false
+     },
+     {
+      "start": 600,
+      "shots": 1536,
+      "counts": {
+       "292": 12,
+       "639": 15,
+       "788": 7,
+       "826": 64,
+       "1188": 19,
+       "1487": 25,
+       "1505": 116,
+       "2047": 2,
+       "2084": 51,
+       "2127": 73,
+       "2145": 301,
+       "2308": 28,
+       "2314": 239,
+       "2336": 519,
+       "3732": 7,
+       "3770": 21,
+       "3839": 8,
+       "4049": 1,
+       "4063": 2,
+       "4091": 26
+      },
+      "uniform": false
+     },
+     {
+      "start": 2136,
+      "shots": 4114,
+      "counts": {
+       "292": 26,
+       "639": 56,
+       "788": 33,
+       "826": 162,
+       "1188": 45,
+       "1487": 69,
+       "1505": 263,
+       "2047": 7,
+       "2084": 151,
+       "2127": 202,
+       "2145": 810,
+       "2308": 69,
+       "2314": 652,
+       "2336": 1364,
+       "3732": 8,
+       "3770": 61,
+       "3839": 24,
+       "4049": 14,
+       "4063": 5,
+       "4091": 93
+      },
+      "uniform": false
+     },
+     {
+      "start": 6250,
+      "shots": 25000,
+      "counts": {
+       "292": 162,
+       "639": 354,
+       "788": 221,
+       "826": 908,
+       "1188": 351,
+       "1487": 328,
+       "1505": 1589,
+       "2047": 67,
+       "2084": 864,
+       "2127": 1194,
+       "2145": 5176,
+       "2308": 471,
+       "2314": 3982,
+       "2336": 8231,
+       "3732": 77,
+       "3770": 325,
+       "3839": 94,
+       "4049": 62,
+       "4063": 32,
+       "4091": 512
+      },
+      "uniform": true
+     }
+    ],
+    "n_distinct": 20,
+    "seconds_per_shot": 1.374945696e-06,
+    "npz": "results/qv_2x4/dryrun/QV_2x4_02/B1_ref07_k3.npz",
+    "aer_success": true
+   },
+   "B1_ref07_k4:irl0:sample": {
+    "label": "B1_ref07_k4:irl0:sample",
+    "base_id": "B1_ref07_k4",
+    "kind": "sample",
+    "twoB": 2,
+    "reference": 7,
+    "k": 4,
+    "n_instructions": 538,
+    "qpy_gz_sha256": "b79bff9b7450fbb98a45681d554fe05d868e8473625d2623049e45aea69bce1d",
+    "load_s": 0.0347287654876709,
+    "seconds": 0.19135308265686035,
+    "measure_sampling": true,
+    "sample_measure_time_s": 0.037859529,
+    "max_abs_dpsi": 6.342923343242402e-15,
+    "max_abs_dpsi_raw_phase": 6.837398881888914e-15,
+    "leakage": 2.0539125955565396e-14,
+    "meets_bar": true,
+    "dry_amplitudes_vs_statevector_route": 0.0,
+    "per_state": {
+     "n_shots": 31250,
+     "n_sigma": 5.0,
+     "p_min": 0.001,
+     "tested_states": 20,
+     "max_z": 2.6546063307470185,
+     "failures": [],
+     "ok": true,
+     "fraction_outside_exact_support": 0.0
+    },
+    "accepted": 31250,
+    "rejected": 0,
+    "roundtrip": {
+     "accepted_states": 20,
+     "mismatches": 0
+    },
+    "shots": 31250,
+    "shots_required": 31250,
+    "plan_shots": 267,
+    "prefix_lengths": [
+     17,
+     33,
+     67,
+     134,
+     267,
+     300,
+     600,
+     2136
+    ],
+    "uniform_shots": 25000,
+    "seed": 385027000000,
+    "circuit_index": 27,
+    "aer_calls": [
+     {
+      "shots": 31250,
+      "seed": 385027000000,
+      "seconds": 0.0986027717590332
+     }
+    ],
+    "segments": [
+     {
+      "start": 0,
+      "shots": 17,
+      "counts": {
+       "639": 1,
+       "826": 1,
+       "1188": 1,
+       "2127": 3,
+       "2145": 4,
+       "2314": 2,
+       "2336": 3,
+       "3770": 1,
+       "4091": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 17,
+      "shots": 16,
+      "counts": {
+       "639": 1,
+       "826": 2,
+       "1188": 2,
+       "1505": 3,
+       "2145": 3,
+       "2314": 2,
+       "2336": 2,
+       "4091": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 33,
+      "shots": 34,
+      "counts": {
+       "292": 1,
+       "639": 2,
+       "788": 1,
+       "1188": 1,
+       "1487": 2,
+       "1505": 8,
+       "2084": 3,
+       "2145": 2,
+       "2314": 4,
+       "2336": 4,
+       "3732": 2,
+       "3770": 3,
+       "3839": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 67,
+      "shots": 67,
+      "counts": {
+       "292": 1,
+       "639": 3,
+       "788": 2,
+       "826": 2,
+       "1188": 4,
+       "1487": 3,
+       "1505": 10,
+       "2084": 6,
+       "2127": 1,
+       "2145": 11,
+       "2308": 1,
+       "2314": 5,
+       "2336": 11,
+       "3732": 1,
+       "3770": 3,
+       "3839": 1,
+       "4063": 1,
+       "4091": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 134,
+      "shots": 133,
+      "counts": {
+       "292": 11,
+       "639": 4,
+       "788": 1,
+       "826": 5,
+       "1188": 5,
+       "1487": 6,
+       "1505": 22,
+       "2047": 4,
+       "2084": 7,
+       "2127": 8,
+       "2145": 18,
+       "2308": 4,
+       "2314": 8,
+       "2336": 23,
+       "3732": 2,
+       "3770": 2,
+       "3839": 2,
+       "4063": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 267,
+      "shots": 33,
+      "counts": {
+       "292": 3,
+       "639": 2,
+       "788": 2,
+       "826": 1,
+       "1188": 1,
+       "1487": 1,
+       "1505": 1,
+       "2084": 1,
+       "2127": 2,
+       "2145": 7,
+       "2308": 1,
+       "2314": 4,
+       "2336": 4,
+       "3770": 1,
+       "3839": 1,
+       "4091": 1
+      },
+      "uniform": false
+     },
+     {
+      "start": 300,
+      "shots": 300,
+      "counts": {
+       "292": 10,
+       "639": 14,
+       "788": 6,
+       "826": 13,
+       "1188": 14,
+       "1487": 12,
+       "1505": 30,
+       "2047": 5,
+       "2084": 21,
+       "2127": 20,
+       "2145": 40,
+       "2308": 10,
+       "2314": 34,
+       "2336": 46,
+       "3732": 4,
+       "3770": 7,
+       "3839": 6,
+       "4049": 1,
+       "4063": 1,
+       "4091": 6
+      },
+      "uniform": false
+     },
+     {
+      "start": 600,
+      "shots": 1536,
+      "counts": {
+       "292": 53,
+       "639": 71,
+       "788": 27,
+       "826": 72,
+       "1188": 65,
+       "1487": 51,
+       "1505": 178,
+       "2047": 30,
+       "2084": 109,
+       "2127": 102,
+       "2145": 258,
+       "2308": 23,
+       "2314": 183,
+       "2336": 194,
+       "3732": 19,
+       "3770": 49,
+       "3839": 27,
+       "4049": 2,
+       "4063": 4,
+       "4091": 19
+      },
+      "uniform": false
+     },
+     {
+      "start": 2136,
+      "shots": 4114,
+      "counts": {
+       "292": 169,
+       "639": 181,
+       "788": 74,
+       "826": 183,
+       "1188": 145,
+       "1487": 176,
+       "1505": 446,
+       "2047": 68,
+       "2084": 298,
+       "2127": 252,
+       "2145": 706,
+       "2308": 66,
+       "2314": 473,
+       "2336": 549,
+       "3732": 53,
+       "3770": 99,
+       "3839": 97,
+       "4049": 11,
+       "4063": 12,
+       "4091": 56
+      },
+      "uniform": false
+     },
+     {
+      "start": 6250,
+      "shots": 25000,
+      "counts": {
+       "292": 925,
+       "639": 1094,
+       "788": 429,
+       "826": 1110,
+       "1188": 944,
+       "1487": 1013,
+       "1505": 2710,
+       "2047": 388,
+       "2084": 1662,
+       "2127": 1665,
+       "2145": 4522,
+       "2308": 427,
+       "2314": 2703,
+       "2336": 3295,
+       "3732": 289,
+       "3770": 761,
+       "3839": 510,
+       "4049": 85,
+       "4063": 52,
+       "4091": 416
+      },
+      "uniform": true
+     }
+    ],
+    "n_distinct": 20,
+    "seconds_per_shot": 1.211504928e-06,
+    "npz": "results/qv_2x4/dryrun/QV_2x4_02/B1_ref07_k4.npz",
+    "aer_success": true
+   }
+  },
+  "run": {
+   "engine": "AerSimulator statevector double, device CPU",
+   "device": "CPU",
+   "available_devices": [
+    "CPU"
+   ],
+   "gpus": 0,
+   "slurm": {
+    "gpus_per_task": null,
+    "gpus": null,
+    "gpus_on_node": null,
+    "cuda_visible_devices": null,
+    "tasks": null,
+    "rank": null,
+    "cpus_per_task": null,
+    "nodelist": null
+   },
+   "wall_s": 4.859513282775879,
+   "phases": {
+    "load_s": 0.2003037929534912,
+    "statevector_and_sampling_s": 1.5710790157318115,
+    "sampling_s_aer": 0.24974303700000003,
+    "compare_s": 0.5182342529296875
+   },
+   "seconds_per_circuit": 0.19638487696647644,
+   "seconds_per_shot": 9.98972148e-07,
+   "s_per_instruction": 0.00036502765235404543,
+   "peak_gpu_memory_mib": null,
+   "mean_gpu_utilization": null,
+   "gpu_telemetry": null,
+   "gpu_node_hours": null,
+   "E_p": null,
+   "E_p_note": "not measured: one task",
+   "oom_retries": [],
+   "prediction": null,
+   "ci": {},
+   "versions": {
+    "python": "3.12.14",
+    "qiskit": "1.4.3",
+    "qiskit-aer": "0.15.1",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1"
+   }
+  },
+  "s0": 38500000,
+  "part": {
+   "slot": "QV_2x4_02",
+   "schema": "prompts/36",
+   "content": "DRY RUN (2x2) of: SK-B1: the 16 B=1 circuits (refs 103, 110, 118, 230; k = 1..4), sampled",
+   "pairs": [],
+   "status": "ready",
+   "prediction": null,
+   "s0": 38500000,
+   "dry_plan_shots": 267
+  },
+  "stop": {
+   "K1": false,
+   "measure_sampling": false
+  },
+  "segments_rule": "per run, `segments` tile [0, shots) in shot order with boundaries at every prefix length, at shots - uniform_shots and at shots; counts at a prefix L = the sum of the segments that end at or before L; the last `uniform_shots` are the uniform 2e5-per-sector block"
+ },
+ "runtime_s": 4.859513282775879,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.3",
+  "scipy": "1.18.1",
+  "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+  "cpu_count": 12,
+  "git_commit": "f26f4cc",
+  "timestamp": "2026-10-19 14:57:38 MDT"
+ }
+}

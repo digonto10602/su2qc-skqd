@@ -1888,8 +1888,8 @@ def resize_2x4(s, seeds=SEEDS, quick=False):
 
 def gpu_plan(final, mans, n_eq):
     """prompts/36 R5: per circuit N_c^GPU = max(8 N_c^final, 6250) + U_c, U_c = ceil(2e5 / circuits of the sector);
-    prefix lengths {round(phi N_c^final)} u {8 N_c^final} u {N_eq, 2 N_eq} (the CV3 equal-shots prefixes), all inside
-    the first max(8 N_c^final, 6250) shots; the uniform block is the last U_c shots."""
+    prefix lengths {round(phi N_c^final)} u {8 N_c^final} u {N_eq} (the CV3 equal-shots prefix; 2 N_eq, information, where
+    it fits), all inside the first max(8 N_c^final, 6250) shots; the uniform block is the last U_c shots."""
     n_by_tb = {}
     for c in final:
         n_by_tb[int(mans[c]["twoB"])] = n_by_tb.get(int(mans[c]["twoB"]), 0) + 1
@@ -1899,9 +1899,12 @@ def gpu_plan(final, mans, n_eq):
         tb = int(mans[c]["twoB"])
         cv = max(GPU_MULT * int(N), GPU_MIN_SHOTS)
         ne = int(n_eq[tb])
-        pref = sorted({rnd(phi * int(N)) for phi in PHI} | {GPU_MULT * int(N), ne, 2 * ne})
+        pref = {rnd(phi * int(N)) for phi in PHI} | {GPU_MULT * int(N), ne}
         if max(pref) > cv:
             raise SystemExit(f"{c}: a prefix ({max(pref)}) exceeds the order-kept CV block ({cv})")
+        if 2 * ne <= cv:                               # the 2 N_eq CV3 point is information: kept where it fits
+            pref.add(2 * ne)
+        pref = sorted(pref)
         out[c] = {"shots": cv + U[tb], "plan_shots": int(N), "cv_block": cv, "uniform_shots": U[tb],
                   "prefix_lengths": pref}
     return out, U
@@ -1942,10 +1945,18 @@ def unchanged_files(paths, ref="HEAD"):
 BUNDLE_INDEX_2X4 = os.path.join(ROOT, "data", "quantinuum", "circuits_2x4_qpy", "index.json")
 CHECK143_2X4 = os.path.join(ROOT, "data", "quantinuum", "circuits_2x4_qpy", "irl0_check_qiskit143.json")
 REGRESSION_2X4 = os.path.join(CV4_DIR, "regression.json")
+# E_tol recomputed in another process differs by up to ~5e-9 at 2x4 B=0 (measured 2026-10-19): the sparse eigensolver's
+# round-off in the ground-state weights moves equal-weight states across the top-80 % boundary.  Consistency check only.
+TOL_ETOL_PROCESS = 1e-8
 SLOT01_COMMIT = "6b8f8fc"
 REGRESSION_FILES = ("validation/CV_2x3_plan.json", "validation/Q0P_2x3.json", "validation/C1_IDEAL.json",
                     "validation/QN_2x2.json", "validation/QN_2x4.json", "validation/Q0P_2x4.json",
                     "data/cv/acceptance_2x3.json")
+
+
+def _noansi(t):
+    import re
+    return None if t is None else re.sub(r"\x1b\[[0-9;]*m", "", t)
 
 
 def a6_slots(final_gpu, k5, mans):
@@ -2061,41 +2072,60 @@ def a7_bundles(mans, k5):
             "ok": bool(not bad_sha and len(ir) >= len(want) and total <= BUNDLE_CAP_BYTES and rule_ok and same_ok and rt_ok)}
 
 
-def stage_regression_2x4():
-    """A8 inputs: pytest -q tests (coding), the campaign-33 / ci_gpu_mode / prompts/36 tests on the qiskit 1.4.3 twin,
-    check_package.py, the Q0P_2x3 criterion-by-criterion reproduction in memory (Q7 of prompts/35, without rewriting
-    the file), and the git state of the 2x3 / 2x2 records -> data/cv/2x4/regression.json."""
+def stage_regression_2x4(part="all"):
+    """A8 inputs, one part per invocation so that each stays inside the 30-minute rule (the full suite takes ~16 min):
+    --part coding: pytest -q tests (coding env); venv: pytest -q tests in the quantinuum venv (Q7 of prompts/35 runs
+    both); twin: the campaign-33 / ci_gpu_mode / prompts/36 tests on the qiskit 1.4.3 twin; final: check_package.py,
+    the pins, the Q0P_2x3 criterion-by-criterion reproduction in memory from the coding / venv results (Q7 of
+    prompts/35, without rewriting validation/Q0P_2x3.json) and the git state of the 2x3 / 2x2 records.
+    -> data/cv/2x4/regression.json (merged)."""
     import subprocess
 
     import gate_Q0P_2x3 as Q
     t0 = time.time()
+    out = load_json(REGRESSION_2X4) if os.path.exists(REGRESSION_2X4) else {}
     twin = os.path.join(os.path.expanduser("~"), ".local", "share", "su2qc-qiskit143", "venv", "bin", "python")
     twin_tests = sorted(glob.glob(os.path.join(ROOT, "tests", "test_campaign33_*.py"))) + [
         os.path.join(ROOT, "tests", t) for t in ("test_ci_gpu_mode.py", "test_codec_acceptance.py", "test_qv_2x4_pipeline.py")]
-    out = {}
-    r = subprocess.run([Q.CODING_PY, "-m", "pytest", "-q", "tests", "-p", "no:cacheprovider"], cwd=ROOT,
-                       capture_output=True, text=True)
-    out["pytest_coding"] = {"python": Q.CODING_PY, "returncode": r.returncode,
-                            "summary": (r.stdout.strip().splitlines() or [""])[-1]}
-    r = subprocess.run([twin, "-m", "pytest", "-q", "-p", "no:cacheprovider"] + [rel(t) for t in twin_tests if os.path.exists(t)],
-                       cwd=ROOT, capture_output=True, text=True)
-    out["pytest_qiskit143"] = {"python": twin, "returncode": r.returncode, "files": [rel(t) for t in twin_tests],
-                               "summary": (r.stdout.strip().splitlines() or [""])[-1]}
-    c = subprocess.run([Q.CODING_PY, os.path.join("scripts", "check_package.py")], cwd=ROOT, capture_output=True, text=True)
-    out["check_package"] = {"returncode": c.returncode, "tail": "\n".join(c.stdout.strip().splitlines()[-3:]),
-                            "package_ok": "PACKAGE OK" in c.stdout}
-    ch = Q.run_tests()
-    out["q0p_2x3_reproduction"] = Q.reproduce_2x3(ch)
-    out["q0p_2x3_reproduction_tests"] = ch
-    out["unchanged_vs_HEAD"] = unchanged_files(REGRESSION_FILES, "HEAD")
-    out["unchanged_vs_prompt36_commit"] = unchanged_files(REGRESSION_FILES, "3c8afa6")
-    out["git_head"] = _git("rev-parse", "--short", "HEAD").stdout.decode().strip()
-    out["runtime_s"] = time.time() - t0
+    head = _git("rev-parse", "--short", "HEAD").stdout.decode().strip()
+
+    def pyt(py, args_):
+        t = time.time()
+        r = subprocess.run([py, "-m", "pytest", "-q", "-p", "no:cacheprovider"] + args_, cwd=ROOT, capture_output=True,
+                           text=True)
+        return {"python": py, "returncode": r.returncode, "summary": (r.stdout.strip().splitlines() or [""])[-1],
+                "seconds": time.time() - t, "git_head": head}
+    if part in ("coding", "all"):
+        out["pytest_coding"] = pyt(Q.CODING_PY, ["tests"])
+    if part in ("venv", "all"):
+        out["pytest_venv"] = pyt(Q.VENV_PY, ["tests"])
+    if part in ("twin", "all"):
+        out["pytest_qiskit143"] = dict(pyt(twin, [rel(t) for t in twin_tests if os.path.exists(t)]),
+                                       files=[rel(t) for t in twin_tests])
+    if part in ("final", "all"):
+        c = subprocess.run([Q.CODING_PY, os.path.join("scripts", "check_package.py")], cwd=ROOT, capture_output=True,
+                           text=True)
+        out["check_package"] = {"returncode": c.returncode, "tail": "\n".join(c.stdout.strip().splitlines()[-3:]),
+                                "package_ok": "PACKAGE OK" in c.stdout}
+        code = ("import sys,json,qiskit,qiskit_aer,qiskit_ibm_runtime,numpy,scipy;print(json.dumps({'python':"
+                "sys.version.split()[0],'qiskit':qiskit.__version__,'qiskit-aer':qiskit_aer.__version__,"
+                "'qiskit-ibm-runtime':qiskit_ibm_runtime.__version__,'numpy':numpy.__version__,'scipy':scipy.__version__}))")
+        pr = subprocess.run([Q.CODING_PY, "-c", code], capture_output=True, text=True)
+        ch = {"pytest_coding": out.get("pytest_coding"), "pytest_venv": out.get("pytest_venv"),
+              "check_package": {"python": Q.CODING_PY, "returncode": c.returncode, "tail": out["check_package"]["tail"]},
+              "pins_now": json.loads(pr.stdout.strip().splitlines()[-1]), "seconds": None,
+              "note": "pytest results from the --part coding / venv invocations of this stage (Q.run_tests' commands)"}
+        out["q0p_2x3_reproduction"] = Q.reproduce_2x3(ch)
+        out["unchanged_vs_HEAD"] = unchanged_files(REGRESSION_FILES, "HEAD")
+        out["unchanged_vs_prompt36_commit"] = unchanged_files(REGRESSION_FILES, "3c8afa6")
+        out["git_head_final"] = head
+    out.setdefault("parts_runtime_s", {})[part] = time.time() - t0
     os.makedirs(CV4_DIR, exist_ok=True)
     with open(REGRESSION_2X4, "w") as fh:
         json.dump(_j(out), fh, indent=1)
-    print(json.dumps({k: (v.get("summary") if isinstance(v, dict) and "summary" in v else v)
-                      for k, v in out.items() if k != "q0p_2x3_reproduction_tests"}, default=str)[:2000])
+    print(json.dumps({k: (v.get("summary") if isinstance(v, dict) and "summary" in v else
+                          (v.get("q0p_2x3_reproduced") if isinstance(v, dict) and "q0p_2x3_reproduced" in v else v))
+                      for k, v in out.items()}, default=str)[:2000])
     return 0
 
 
@@ -2115,7 +2145,12 @@ def noisy_information_2x4():
                    "expected_clean_shots": {f"N={n:.0e}": n * vals[best] for n in (1e2, 1e4, 1e6)},
                    "expected_clean_shots_B0_ref102_k1_opt3": ({f"N={n:.0e}": n * ref for n in (1e2, 1e4, 1e6)}
                                                               if ref is not None else None)}
+    sc = load_json(os.path.join(ROOT, "validation", "QN_2x4.json"))["data"]["analytic"].get("scenarios")
     return {"sampled_shots": 0, "statement": "no noisy 2x4 cell; information only", "scenarios": rows,
+            "scenario_definitions": sc,
+            "scenario_note": ("E1-E6c are the Quantinuum-based scenarios of prompts/33 section 1.2 / prompts/35; E7_0.10_lat "
+                              "is the matched-f scenario (error rates scaled so that a reference lattice's own counts give "
+                              "f = 0.10): a hypothetical device, not an existing one"),
             "n_circuits": len(q), "source": "validation/QN_2x4.json data.analytic.f0",
             "per_shot_cost_floor_s": spi * IR_L0_PER_STEP,
             "per_shot_cost_floor_rule": ("one noisy trajectory is at least one statevector pass of a k = 1 IR-L0 circuit: "
@@ -2165,11 +2200,13 @@ def assemble_2x4(seeds=SEEDS, quick=False):
     et_same = {sd: {sec: abs(ch["sectors"][sec]["E_tol"] - E_tol[sec]["value"]) for sec, _ in SECTORS}
                for sd, ch in chunks.items()}
     a2 = all(E_tol[sec]["value"] > 0 and E_tol[sec]["states_top"] and E_tol[sec]["n_top"] > 0 for sec, _ in SECTORS) \
-        and all(v <= 1e-15 for d in et_same.values() for v in d.values())
+        and all(v <= TOL_ETOL_PROCESS for d in et_same.values() for v in d.values())
     R.add("A2 E_tol per sector = E_R(R u top 80 % of S999) - E0 > 0 (h1_energy_tolerance(H, prob, refs, 0.8, 1e-3))",
           {sec: {"value": E_tol[sec]["value"], "n_top": E_tol[sec]["n_top"], "E_R": E_tol[sec]["E_R"],
-                 "references": len(E_tol[sec]["references"])} for sec, _ in SECTORS},
-          "> 0; chunk recomputation identical", a2)
+                 "references": len(E_tol[sec]["references"]),
+                 "max_abs_diff_chunk_recomputation": max(d[sec] for d in et_same.values()) if et_same else None}
+           for sec, _ in SECTORS},
+          f"> 0; chunk recomputation within {TOL_ETOL_PROCESS:g} (executor's consistency check)", a2)
     # ---- A3
     nl = pl["noiseless"]
     n_all = sum(len(v["shots"]) for v in nl.values())
@@ -2281,7 +2318,7 @@ def assemble_2x4(seeds=SEEDS, quick=False):
            "token_indices_unchanged": (a6.get("token_indices") or {}).get("ok")},
           "all ok", a6["ok"])
     # ---- A7
-    a7 = a7_bundles(mans, k5) if final else {"ok": False, "reason": "no final plan"}
+    a7 = a7_bundles(mans, {c: None for c in k5_ids_L(sectors)})
     R.add(f"A7 bundles: 75 IR-L0 qpy13 bundles (60 family + 15 k = 5) with gz sha256 and n_instructions in the index; "
           f"n_instructions == k x {IR_L0_PER_STEP} (as written in prompts/36 A7); the two slot-01 structured sources "
           f"byte- or gate-for-gate identical; total <= 60 MB; round trip on qiskit 1.4.3",
@@ -2296,13 +2333,15 @@ def assemble_2x4(seeds=SEEDS, quick=False):
         dry[s_] = load_json(p)["status"] if os.path.exists(p) else None
     unch = unchanged_files(REGRESSION_FILES, "HEAD")
     a8 = bool(reg and reg["pytest_coding"]["returncode"] == 0 and reg["pytest_qiskit143"]["returncode"] == 0
+              and reg.get("pytest_venv", {}).get("returncode") == 0
               and reg["check_package"]["package_ok"] and reg["q0p_2x3_reproduction"]["q0p_2x3_reproduced"]
               and all(unch.values()) and all(reg["unchanged_vs_prompt36_commit"].values())
               and all(v == "PASS" for v in dry.values()))
     R.add("A8 regression: pytest (coding) and the 1.4.3 twin tests pass, check_package PACKAGE OK, Q0P_2x3 reproduced "
           "criterion by criterion (in memory), the 2x3 / 2x2 records unchanged, dry runs QV_2x4_02..07 PASS",
-          {"pytest_coding": (reg or {}).get("pytest_coding", {}).get("summary"),
-           "pytest_qiskit143": (reg or {}).get("pytest_qiskit143", {}).get("summary"),
+          {"pytest_coding": _noansi((reg or {}).get("pytest_coding", {}).get("summary")),
+           "pytest_venv": _noansi((reg or {}).get("pytest_venv", {}).get("summary")),
+           "pytest_qiskit143": _noansi((reg or {}).get("pytest_qiskit143", {}).get("summary")),
            "check_package": (reg or {}).get("check_package", {}).get("package_ok"),
            "q0p_2x3_reproduced": ((reg or {}).get("q0p_2x3_reproduction") or {}).get("q0p_2x3_reproduced"),
            "unchanged_vs_HEAD": all(unch.values()), "dry_runs": dry},
@@ -2310,8 +2349,9 @@ def assemble_2x4(seeds=SEEDS, quick=False):
     # ---- A9
     noisy = noisy_information_2x4()
     R.add("A9 noisy information (R8): N x f0 for N in 1e2 / 1e4 / 1e6 per scenario, no shot sampled",
-          {"sampled_shots": noisy["sampled_shots"], "statement": noisy["statement"],
-           "max_expected_clean_at_1e6": max(v["expected_clean_shots"]["N=1e+06"] for v in noisy["scenarios"].values())},
+          {"sampled_shots": noisy["sampled_shots"], "statement": noisy["statement"], "scenarios": len(noisy["scenarios"]),
+           "E1_expected_clean_at_1e6_best_circuit": noisy["scenarios"]["E1"]["expected_clean_shots"]["N=1e+06"]
+           if "E1" in noisy["scenarios"] else None},
           "sampled_shots == 0", noisy["sampled_shots"] == 0 and bool(noisy["scenarios"]))
     if not complete:
         R.add("completeness: one emulation chunk per seed", sorted(chunks), str([str(s) for s in seeds]), False)
@@ -2337,7 +2377,17 @@ def assemble_2x4(seeds=SEEDS, quick=False):
         "criteria_by_seed_1x": crit1, "criteria_by_seed_final": crit_final, "certificates": cert,
         "cv0_by_seed": cv0_rows, "E_tol_chunk_vs_stage_abs_diff": et_same,
         "resize_ladder": {s_: {sec: {"ok_all_seeds": v["sectors"][sec]["ok_all_seeds"],
-                                     "shots_total": v["sectors"][sec]["shots_total"]} for sec, _ in SECTORS}
+                                     "shots_total": v["sectors"][sec]["shots_total"],
+                                     "criteria_ok": {k: all(x["criteria"][k]["ok"] for x in v["sectors"][sec]["seeds"].values())
+                                                     for k in ("CV1", "CV2", "CV4", "CV5")},
+                                     "width_half_max": max(x["criteria"]["CV2"]["width_half"]
+                                                           for x in v["sectors"][sec]["seeds"].values()),
+                                     "width_full_max": max(x["criteria"]["CV2"]["width_full"]
+                                                           for x in v["sectors"][sec]["seeds"].values()),
+                                     "B_all_full": [x["full"]["B_all_size"] for x in v["sectors"][sec]["seeds"].values()],
+                                     "capped_circuits": sorted({c for x in v["sectors"][sec]["seeds"].values()
+                                                                for c in x["capped_circuits"]})}
+                               for sec, _ in SECTORS}
                           for s_, v in ladder.items()},
         "curves": {sd: {sec: ch["sectors"][sec]["seed_result"]["curves"] for sec, _ in SECTORS} for sd, ch in chunks.items()},
         "sampling": {sd: {sec: ch["sectors"][sec]["seed_result"]["sampling"] for sec, _ in SECTORS} for sd, ch in chunks.items()},
@@ -2418,6 +2468,26 @@ def report_2x4(R, D):
                     f"{c['CV4']['n_below']}/{c['CV4']['n_points']}", fmt(c["CV5"]["W_at_N"], 6),
                     all(c[k]["ok"] for k in ("CV1", "CV2", "CV3", "CV4", "CV5"))]
                    for sd, d in D["criteria_by_seed_final"].items() for sec, c in d.items()]), "",
+         "## A4 re-sizing ladder (prefixes of the same 8 N samples; CV2 width = Kato-Temple (exact E1) at B=0, Weinstein "
+         "r_H at B=1)", "",
+         md_table(["s", "sector", "shots", "all seeds pass", "CV1 / CV2 / CV4 / CV5", "max width (sN/2)", "max width (sN)",
+                   "|B_all| at sN", "capped circuits"],
+                  [[s_, sec, fmt(v["shots_total"]), v["ok_all_seeds"],
+                    " / ".join(str(v["criteria_ok"][k]) for k in ("CV1", "CV2", "CV4", "CV5")),
+                    fmt(v["width_half_max"]), fmt(v["width_full_max"]), ", ".join(str(x) for x in v["B_all_full"]),
+                    len(v["capped_circuits"])]
+                   for s_, d in D["resize_ladder"].items() for sec, v in d.items()]) or "(no re-sizing needed)", "",
+         "## CV at the 1x plan per seed (the emulation; CV3 is evaluated here)", "",
+         md_table(["seed", "sector", "CV1 dE (/E_tol)", "CV2 width N/2 / N", "CV3 dE (/E_tol)", "CV3 at 2 N_c (information)",
+                   "CV4 margin (/E_tol)", "CV5 W", "pass CV1/2/4/5", "CV3 ok"],
+                  [[sd, sec, f"{fmt(c['CV1']['dE'])} ({fmt(c['CV1']['ratio'])})",
+                    f"{fmt(c['CV2']['width_half'])} / {fmt(c['CV2']['width_full'])}",
+                    f"{fmt(c['CV3']['dE_k4_k5'])} ({fmt(c['CV3']['ratio'])})",
+                    (f"{fmt(c['CV3_at_2Nc_information']['dE_k4_k5'])} ({fmt(c['CV3_at_2Nc_information']['ratio'])})"
+                     if c.get("CV3_at_2Nc_information") else "n/a"),
+                    f"{fmt(c['CV4']['margin_at_N'])} ({fmt(c['CV4']['margin_over_E_tol'])})", fmt(c["CV5"]["W_at_N"], 6),
+                    all(c[k]["ok"] for k in ("CV1", "CV2", "CV4", "CV5")), c["CV3"]["ok"]]
+                   for sd, d in D["criteria_by_seed_1x"].items() for sec, c in d.items()]), "",
          "## A5 certificates at the final plan", "",
          md_table(["seed", "sector", "shots", "|B_all|", "recall S999", "E_R - E0", "W", "certificate", "interval",
                    "E0 inside", "B=1 Kato-Temple (exact E1) information", "ok"],
@@ -2463,6 +2533,8 @@ def main():
     ap.add_argument("--seed", type=int, default=None, help="--lattice 4 --stage chunk: the emulation seed")
     ap.add_argument("--s", type=float, default=None, help="--lattice 4 --stage resize: the re-sizing factor")
     ap.add_argument("--monte-carlo", type=int, default=MC_STRINGS_2X4, help="--stage acceptance: Monte-Carlo strings")
+    ap.add_argument("--part", default=None, choices=("coding", "venv", "twin", "final", "all"),
+                    help="--lattice 4 --stage regression: which part (each inside the 30-minute rule)")
     a = ap.parse_args()
     if a.lattice == 4:
         st = a.stage or "assemble"
@@ -2481,7 +2553,7 @@ def main():
             resize_2x4(s, list(a.seeds), quick=a.quick)
             return 0
         if st == "regression":
-            return stage_regression_2x4()
+            return stage_regression_2x4(a.part or "all")
         return assemble_2x4(list(a.seeds) if not a.quick else [SEEDS[0]], quick=a.quick)
     if a.stage is not None:
         raise SystemExit("--stage is the --lattice 4 path (prompts/36); the 2x3 path keeps its flags")

@@ -1,0 +1,57 @@
+def stage_regression_2x4(part="all"):
+    """A8 inputs, one part per invocation so that each stays inside the 30-minute rule (the full suite takes ~16 min):
+    --part coding: pytest -q tests (coding env); venv: pytest -q tests in the quantinuum venv (Q7 of prompts/35 runs
+    both); twin: the campaign-33 / ci_gpu_mode / prompts/36 tests on the qiskit 1.4.3 twin; final: check_package.py,
+    the pins, the Q0P_2x3 criterion-by-criterion reproduction in memory from the coding / venv results (Q7 of
+    prompts/35, without rewriting validation/Q0P_2x3.json) and the git state of the 2x3 / 2x2 records.
+    -> data/cv/2x4/regression.json (merged)."""
+    import subprocess
+
+    import gate_Q0P_2x3 as Q
+    t0 = time.time()
+    out = load_json(REGRESSION_2X4) if os.path.exists(REGRESSION_2X4) else {}
+    twin = os.path.join(os.path.expanduser("~"), ".local", "share", "su2qc-qiskit143", "venv", "bin", "python")
+    twin_tests = sorted(glob.glob(os.path.join(ROOT, "tests", "test_campaign33_*.py"))) + [
+        os.path.join(ROOT, "tests", t) for t in ("test_ci_gpu_mode.py", "test_codec_acceptance.py", "test_qv_2x4_pipeline.py")]
+    head = _git("rev-parse", "--short", "HEAD").stdout.decode().strip()
+
+    def pyt(py, args_):
+        t = time.time()
+        r = subprocess.run([py, "-m", "pytest", "-q", "-p", "no:cacheprovider"] + args_, cwd=ROOT, capture_output=True,
+                           text=True)
+        return {"python": py, "returncode": r.returncode, "summary": (r.stdout.strip().splitlines() or [""])[-1],
+                "seconds": time.time() - t, "git_head": head}
+    if part in ("coding", "all"):
+        out["pytest_coding"] = pyt(Q.CODING_PY, ["tests"])
+    if part in ("venv", "all"):
+        out["pytest_venv"] = pyt(Q.VENV_PY, ["tests"])
+    if part in ("twin", "all"):
+        out["pytest_qiskit143"] = dict(pyt(twin, [rel(t) for t in twin_tests if os.path.exists(t)]),
+                                       files=[rel(t) for t in twin_tests])
+    if part in ("final", "all"):
+        c = subprocess.run([Q.CODING_PY, os.path.join("scripts", "check_package.py")], cwd=ROOT, capture_output=True,
+                           text=True)
+        out["check_package"] = {"returncode": c.returncode, "tail": "\n".join(c.stdout.strip().splitlines()[-3:]),
+                                "package_ok": "PACKAGE OK" in c.stdout}
+        code = ("import sys,json,qiskit,qiskit_aer,qiskit_ibm_runtime,numpy,scipy;print(json.dumps({'python':"
+                "sys.version.split()[0],'qiskit':qiskit.__version__,'qiskit-aer':qiskit_aer.__version__,"
+                "'qiskit-ibm-runtime':qiskit_ibm_runtime.__version__,'numpy':numpy.__version__,'scipy':scipy.__version__}))")
+        pr = subprocess.run([Q.CODING_PY, "-c", code], capture_output=True, text=True)
+        ch = {"pytest_coding": out.get("pytest_coding"), "pytest_venv": out.get("pytest_venv"),
+              "check_package": {"python": Q.CODING_PY, "returncode": c.returncode, "tail": out["check_package"]["tail"]},
+              "pins_now": json.loads(pr.stdout.strip().splitlines()[-1]), "seconds": None,
+              "note": "pytest results from the --part coding / venv invocations of this stage (Q.run_tests' commands)"}
+        out["q0p_2x3_reproduction"] = Q.reproduce_2x3(ch)
+        out["unchanged_vs_HEAD"] = unchanged_files(REGRESSION_FILES, "HEAD")
+        out["unchanged_vs_prompt36_commit"] = unchanged_files(REGRESSION_FILES, "3c8afa6")
+        out["git_head_final"] = head
+    out.setdefault("parts_runtime_s", {})[part] = time.time() - t0
+    os.makedirs(CV4_DIR, exist_ok=True)
+    with open(REGRESSION_2X4, "w") as fh:
+        json.dump(_j(out), fh, indent=1)
+    print(json.dumps({k: (v.get("summary") if isinstance(v, dict) and "summary" in v else
+                          (v.get("q0p_2x3_reproduced") if isinstance(v, dict) and "q0p_2x3_reproduced" in v else v))
+                      for k, v in out.items()}, default=str)[:2000])
+    return 0
+
+

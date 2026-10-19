@@ -59,6 +59,15 @@ GATES = [  # gate, description (manual Step 10), where it runs
     ("QEMU_2x3_laptop_smoke", "prompts/35 3.6: the C3_LE engine path (pytket-pecos H2-1LE) on the laptop pecos venv in dry mode; the token itself waits for the owner's skqd-pecos env", "laptop"),
     ("QSC_prepared", "prompts/35 T5: the four syntax-check job sets (H2-2SC x 2x2/2x3/2x4 k=1, Helios-1SC x 2x2 HUGR) as local job records; needs the owner's Nexus login", "laptop"),
     ("QV_2x4_01", "prompts/35b section 4: the 2x4 decision slot -- native and source statevectors of B0_ref0_k1 and B1_ref0_k1 for both sources on the Aer GPU vs the exact coarse states, the S2_2x4 reproduction, the frozen source (deferred GPU token; slots 02-08 follow)", "Perlmutter GPU"),
+    ("CV_2x4_plan", "prompts/36 2.1: the 2x4 decoder acceptance (exact, factorised), E_tol, the noiseless D3'-R plan at "
+                    "y = 1 with CV1-CV5 on the exact emulation (3 seeds, re-sizing), certificates, the 75 IR-L0 bundles, "
+                    "the GPU slot contents QV_2x4_02..07, regression, no noisy cell (A1-A9)", "laptop"),
+    ("SKQD_2x4", "prompts/36 2.2: the 2x4 noiseless SKQD pipeline assembled from the GPU samples of slots 02..06 "
+                 "(K1-K7, S1-S6)", "laptop (from Perlmutter GPU slots)"),
+] + [(f"QV_2x4_{k:02d}", "prompts/36 section 4: generic 2x4 GPU slot " + c, "Perlmutter GPU") for k, c in (
+    (2, "SK-B1 (16 B=1 IR-L0 circuits sampled)"), (3, "SK-B0a (24 B=0 IR-L0 circuits sampled)"),
+    (4, "SK-B0b (20 B=0 IR-L0 circuits sampled)"), (5, "CV3-B0 (11 k = 5 B=0 circuits)"),
+    (6, "CV3-B1 (4 k = 5 B=1 circuits) + NAT-a (6 native k = 1)"), (7, "NAT-b (7 native k = 1)"))] + [
     ("C2_KCHK", "prompts/33d R3 / 33e R2: the GPU Kraus check (calibration; the harvested JSON is not edited) -- decision in "
                 "data/campaign33/c2_representation_decision.json (prompts/33f): production RM, no reference arm", "Perlmutter GPU"),
 ]

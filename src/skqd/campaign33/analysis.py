@@ -28,15 +28,18 @@ def load_json(p):
 
 
 class Physics:
-    """Model(3), the codec, the codeword table and gate CV's two Sector objects (built once)."""
+    """Model(lat) (default 3, the 2x3 campaign), the codec, the codeword table and gate CV's two Sector objects
+    (built once).  prompts/36: lat = 4 (SKQD_2x4) and lat = 2 (its dry runs) use gate_CV.acceptance_L; the 2x3 path
+    is the one of prompts/33, unchanged."""
 
-    def __init__(self, with_sectors: bool = True):
+    def __init__(self, with_sectors: bool = True, lat: int = 3):
         import sys
         sys.path.insert(0, os.path.join(ROOT, "scripts"))
         from skqd.codec import Codec
         from skqd.exact import Model
         from skqd.reference_sim import CodewordEmbedding
-        self.M = Model(3)
+        self.lat = int(lat)
+        self.M = Model(self.lat)
         self.codec = Codec(self.M.basis)
         self.emb = CodewordEmbedding(self.M)
         self.n = int(self.emb.n)
@@ -48,9 +51,9 @@ class Physics:
         self.S = {}
         if with_sectors:
             import gate_CV as CV
-            acc = CV.acceptance_2x3(self.codec)
+            acc = CV.acceptance_2x3(self.codec) if self.lat == 3 else CV.acceptance_L(self.codec, self.lat)
             for sec, tb in SECTORS:
-                self.S[sec] = CV.Sector(self.M, "2x3", sec, tb, acc[sec]["fraction"])
+                self.S[sec] = CV.Sector(self.M, f"2x{self.lat}", sec, tb, acc[sec]["fraction"])
             self.CV = CV
 
     def sector(self, twoB):
@@ -219,13 +222,22 @@ def fcell_stats(P: Physics, per_circuit: dict, manifests: dict, kappa: float = 1
 # --------------------------------------------------------------------------- SKQD points and CV
 def e_tol(P: Physics, sec: str) -> dict:
     """E_tol recomputed (h1_energy_tolerance, as gate_CV.chunk_2x3) and asserted against
-    validation/CV_2x3_plan.json data.E_tol to 1e-12."""
+    validation/CV_2x3_plan.json data.E_tol to 1e-12 (2x4: validation/CV_2x4_plan.json; 2x2, which has no plan
+    file: recomputed only, ok = None)."""
     from skqd.skqd import h1_energy_tolerance
     S = P.S[sec]
     v = h1_energy_tolerance(S.H, S.prob, S.refs, 0.8, 1e-3, sector_idx=S.sector_idx, E0=S.E0)["E_tol"]
-    ref = float(load_json(CV_PLAN_JSON)["data"]["E_tol"][sec]["value"])
-    return {"value": float(v), "cv_2x3_plan": ref, "abs_diff": abs(float(v) - ref),
-            "ok": abs(float(v) - ref) <= E_TOL_ASSERT}
+    lat = getattr(P, "lat", 3)
+    if lat == 3:
+        ref = float(load_json(CV_PLAN_JSON)["data"]["E_tol"][sec]["value"])
+        return {"value": float(v), "cv_2x3_plan": ref, "abs_diff": abs(float(v) - ref),
+                "ok": abs(float(v) - ref) <= E_TOL_ASSERT}
+    pf = os.path.join(ROOT, "validation", f"CV_2x{lat}_plan.json")
+    if not os.path.exists(pf):
+        return {"value": float(v), "plan_file": None, "abs_diff": None, "ok": None}
+    ref = float(load_json(pf)["data"]["E_tol"][sec]["value"])
+    return {"value": float(v), "plan_file": os.path.relpath(pf, ROOT), "plan_value": ref,
+            "abs_diff": abs(float(v) - ref), "ok": abs(float(v) - ref) <= E_TOL_ASSERT}
 
 
 def skqd_point(P: Physics, sec: str, n_full, shots, with_random=False) -> dict:
@@ -254,9 +266,11 @@ def certificate_reading(sec: str, pt: dict) -> dict:
 
 
 def cv_reading(P: Physics, sec: str, prefixes: Prefixes, plan: dict, E_tol: float, eq=None,
-               with_random=True) -> dict:
+               with_random=True, k_of=None) -> dict:
     """CV0-CV5 on the order-kept chunks (gate_CV.run_seed's shots curve at the plan; CV3 only when the
-    equal-shots k <= 4 and k = 5 prefixes are given: eq = (Prefixes_eq, N_eq, Prefixes_k5))."""
+    equal-shots k <= 4 and k = 5 prefixes are given: eq = (Prefixes_eq, N_eq, Prefixes_k5)).  k_of = {cid: k}
+    (prompts/36 K5, default None = the 2x3 reading unchanged): the equal-shots points k = 1..4 are added to CV4's
+    points ("every prefix and every k") and returned under `krylov_equal`."""
     CV = P.CV
     S = P.S[sec]
     ids = [c for c in plan]
@@ -286,7 +300,18 @@ def cv_reading(P: Physics, sec: str, prefixes: Prefixes, plan: dict, E_tol: floa
         k_step = (p4, p5)
     else:
         cv3_reason = "not_evaluated: the equal-shots k <= 4 and k = 5 samples were not taken (budget)"
-    crit = CV.evaluate(S, pts[3], pts[4], pts, [], E_tol, "all", k_step=k_step) if with_random else None
+    kpts = []
+    if k_of is not None and eq is not None:
+        pe, N_eq, _pk5 = eq
+        for k in range(1, 5):
+            L = {c: N_eq for c in pe.ids if int(k_of[c]) <= k}
+            if not L:
+                continue
+            nk, sk = pe.counts(L)
+            q = S.point(nk, sk, with_random=with_random, crit="all", random_other=False)
+            q["k"] = k
+            kpts.append(q)
+    crit = CV.evaluate(S, pts[3], pts[4], pts, kpts, E_tol, "all", k_step=k_step) if with_random else None
     if crit is None:
         crit = {"CV1": {"dE": pts[3]["all"]["E_R"] - pts[4]["all"]["E_R"],
                         "ok": bool(pts[3]["all"]["E_R"] - pts[4]["all"]["E_R"] <= E_tol)},
@@ -297,7 +322,10 @@ def cv_reading(P: Physics, sec: str, prefixes: Prefixes, plan: dict, E_tol: floa
     if "CV3" not in crit or crit.get("CV3") is None:
         crit["CV3"] = {"ok": None, "status": cv3_reason}
     strip = [{k: v for k, v in p.items() if not k.startswith("_") and k != "B_sig_list"} for p in pts]
-    return {"cv0": cv0, "criteria": crit, "shots_curve": strip}
+    out = {"cv0": cv0, "criteria": crit, "shots_curve": strip}
+    if k_of is not None:
+        out["krylov_equal"] = [{k: v for k, v in p.items() if not k.startswith("_") and k != "B_sig_list"} for p in kpts]
+    return out
 
 
 def bootstrap_point(P: Physics, sec: str, per_circuit_counts: list, B: int, seed: int = 33) -> dict:
