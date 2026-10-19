@@ -1,0 +1,328 @@
+{
+ "gate": "QV_2x4_01",
+ "title": "QV_2x4_01: 2x4 native and source statevectors on the Aer GPU vs the exact coarse states (prompts/35b section 4)",
+ "status": "PASS",
+ "criteria": [
+  {
+   "name": "V1 every run completed on the GPU with the policy telemetry",
+   "value": {
+    "runs": 9,
+    "of": 9,
+    "device": "GPU",
+    "peak_gpu_memory_mib": 4557.0
+   },
+   "threshold": "all; GPU; telemetry",
+   "passed": true
+  },
+  {
+   "name": "V2 S2_2x4 reproduction: max abs(dpsi) phase-aligned of the committed CZ-basis circuit = the recorded value to 1e-12",
+   "value": {
+    "S2_2x4:B0_ref0_k1|all_to_all": [
+     1.5280627943036888e-09,
+     1.5280627943036888e-09
+    ]
+   },
+   "threshold": "|measured - recorded| <= 1e-12",
+   "passed": true
+  },
+  {
+   "name": "V3 native-vs-own-source max abs(dpsi) <= B + 1e-12 for both sources (else STOP: conversion or bound wrong)",
+   "value": [
+    {
+     "native": "B0_ref102_k1.opt3:native",
+     "max_abs_dpsi_native_vs_source": 3.4867727456985614e-10,
+     "B": 4.9555982662622195e-09
+    },
+    {
+     "native": "B0_ref102_k1.structured:native",
+     "max_abs_dpsi_native_vs_source": 1.178987278213808e-12,
+     "B": 6.5383582863666085e-12
+    },
+    {
+     "native": "B1_ref230_k1.opt3:native",
+     "max_abs_dpsi_native_vs_source": 3.4838571501609757e-10,
+     "B": 4.966496808957947e-09
+    },
+    {
+     "native": "B1_ref230_k1.structured:native",
+     "max_abs_dpsi_native_vs_source": 9.800576498322419e-13,
+     "B": 6.264909396122858e-12
+    }
+   ],
+   "threshold": "<= B + 1e-12",
+   "passed": true
+  },
+  {
+   "name": "V4 the frozen source: its native circuits meet max abs(dpsi) < 1e-10 and leakage < 1e-9 on both circuits (both -> the smaller maximum; neither -> STOP, the planner rules)",
+   "value": {
+    "max_abs_dpsi_by_source": {
+     "opt3": 1.4803707620184619e-12,
+     "structured": 9.849517543921063e-13
+    },
+    "meets_bar": {
+     "opt3": true,
+     "structured": true
+    },
+    "chosen": "structured"
+   },
+   "threshold": "a source meets the bar",
+   "passed": true
+  }
+ ],
+ "data": {
+  "prompt": "prompts/35b_2x4_exactness_ruling.md section 4",
+  "token": "QV_2x4_01",
+  "dry_run": false,
+  "lattice": "2x4",
+  "qpu_seconds": 0,
+  "hqc": 0,
+  "per_run": {
+   "B0_ref102_k1.opt3:native": {
+    "max_abs_dpsi": 1.4803707620184619e-12,
+    "leakage": 2.120081887824199e-12,
+    "meets_bar": true,
+    "label": "B0_ref102_k1.opt3:native",
+    "kind": "native",
+    "source": "opt3",
+    "n_instructions": 480509,
+    "seconds": 68.63752102851868,
+    "qpy_gz_sha256": "3d13df44fca2d0393b3b3a8ca103b8fa2712281e81dba0ad25cedd373061a18a",
+    "aer_success": true
+   },
+   "B0_ref102_k1.structured:native": {
+    "max_abs_dpsi": 9.849517543921063e-13,
+    "leakage": -1.3651302310790925e-12,
+    "meets_bar": true,
+    "label": "B0_ref102_k1.structured:native",
+    "kind": "native",
+    "source": "structured",
+    "n_instructions": 847670,
+    "seconds": 77.40513610839844,
+    "qpy_gz_sha256": "ea40f56bcd3fbc951b8e2b1a50da7bca59bcec023a5ef05f6f6488e1ae51715c",
+    "aer_success": true
+   },
+   "B0_ref102_k1.opt3:source": {
+    "max_abs_dpsi": 3.4967154143819275e-10,
+    "leakage": 1.1755041384731157e-12,
+    "meets_bar": false,
+    "label": "B0_ref102_k1.opt3:source",
+    "kind": "source",
+    "source": "opt3",
+    "n_instructions": 299465,
+    "seconds": 60.71168637275696,
+    "qpy_gz_sha256": "ed373137a2dbf42583998bea2fe2129ac848c7122112bcfaaa1491ab17f7a921",
+    "aer_success": true
+   },
+   "B0_ref102_k1.structured:source": {
+    "max_abs_dpsi": 4.920275598406107e-13,
+    "leakage": 1.0185186027911186e-12,
+    "meets_bar": true,
+    "label": "B0_ref102_k1.structured:source",
+    "kind": "source",
+    "source": "structured",
+    "n_instructions": 142288,
+    "seconds": 53.94847011566162,
+    "qpy_gz_sha256": "9c4892196bf097466db987423359e56a8d31b447e1107ae9e409cf02c4017010",
+    "aer_success": true
+   },
+   "B1_ref230_k1.opt3:native": {
+    "max_abs_dpsi": 1.4780854241202672e-12,
+    "leakage": 2.1522783555383285e-12,
+    "meets_bar": true,
+    "label": "B1_ref230_k1.opt3:native",
+    "kind": "native",
+    "source": "opt3",
+    "n_instructions": 479758,
+    "seconds": 70.78673601150513,
+    "qpy_gz_sha256": "6849496c4d5d45ba2f2c973956af7e877138ba52b5db095d9240c6f35d9712bb",
+    "aer_success": true
+   },
+   "B1_ref230_k1.structured:native": {
+    "max_abs_dpsi": 9.799886169921876e-13,
+    "leakage": -8.029132914089132e-13,
+    "meets_bar": true,
+    "label": "B1_ref230_k1.structured:native",
+    "kind": "native",
+    "source": "structured",
+    "n_instructions": 847673,
+    "seconds": 79.8472318649292,
+    "qpy_gz_sha256": "0959971206ddacce317ffbbec2cfa8b1c8322cf6361d60143c75bf959eea6bc4",
+    "aer_success": true
+   },
+   "B1_ref230_k1.opt3:source": {
+    "max_abs_dpsi": 3.493801626276849e-10,
+    "leakage": 1.190825216212943e-12,
+    "meets_bar": false,
+    "label": "B1_ref230_k1.opt3:source",
+    "kind": "source",
+    "source": "opt3",
+    "n_instructions": 299214,
+    "seconds": 64.09112882614136,
+    "qpy_gz_sha256": "35724bc682effabe20515c46ebb682d6c219b9f7dc5f1b7d5c4be6ba49485071",
+    "aer_success": true
+   },
+   "B1_ref230_k1.structured:source": {
+    "max_abs_dpsi": 4.564305091375591e-13,
+    "leakage": 9.392486788328824e-13,
+    "meets_bar": true,
+    "label": "B1_ref230_k1.structured:source",
+    "kind": "source",
+    "source": "structured",
+    "n_instructions": 142289,
+    "seconds": 56.614869117736816,
+    "qpy_gz_sha256": "e6d46942c9feb06f0690e4ade0f22a5a04ac1729e5709ab29162a1710cd0b739",
+    "aer_success": true
+   },
+   "S2_2x4:B0_ref0_k1|all_to_all": {
+    "max_abs_dpsi_raw": 5.801491342307989e-09,
+    "max_abs_dpsi_phase_aligned": 1.5280627943036888e-09,
+    "leakage": 1.1005640843109177e-12,
+    "reproduces": true,
+    "expected_phase_aligned": 1.5280627943036888e-09,
+    "label": "S2_2x4:B0_ref0_k1|all_to_all",
+    "kind": "reproduction",
+    "source": "S2_2x4-cz",
+    "n_instructions": 279083,
+    "seconds": 54.29058241844177,
+    "qpy_gz_sha256": "7b60ac24c2ae96dccb8fc77d0195002c9698a6f134f66fab17a81f6f3779099a",
+    "aer_success": true
+   }
+  },
+  "pairs": [
+   {
+    "native": "B0_ref102_k1.opt3:native",
+    "source": "B0_ref102_k1.opt3:source",
+    "max_abs_dpsi_native_vs_source": 3.4867727456985614e-10,
+    "B": 4.9555982662622195e-09,
+    "consistent": true
+   },
+   {
+    "native": "B0_ref102_k1.structured:native",
+    "source": "B0_ref102_k1.structured:source",
+    "max_abs_dpsi_native_vs_source": 1.178987278213808e-12,
+    "B": 6.5383582863666085e-12,
+    "consistent": true
+   },
+   {
+    "native": "B1_ref230_k1.opt3:native",
+    "source": "B1_ref230_k1.opt3:source",
+    "max_abs_dpsi_native_vs_source": 3.4838571501609757e-10,
+    "B": 4.966496808957947e-09,
+    "consistent": true
+   },
+   {
+    "native": "B1_ref230_k1.structured:native",
+    "source": "B1_ref230_k1.structured:source",
+    "max_abs_dpsi_native_vs_source": 9.800576498322419e-13,
+    "B": 6.264909396122858e-12,
+    "consistent": true
+   }
+  ],
+  "frozen_source": "structured",
+  "run": {
+   "engine": "AerSimulator statevector double, device GPU, cuStateVec",
+   "device": "GPU",
+   "available_devices": [
+    "CPU",
+    "GPU"
+   ],
+   "gpus": 1,
+   "wall_s": 639.641229391098,
+   "phases": {
+    "load_s": 36.95338225364685,
+    "statevector_s": 586.3329246044159,
+    "compare_s": 9.795497179031372
+   },
+   "seconds_per_shot": null,
+   "s_per_instruction": 0.00015357274929665533,
+   "peak_gpu_memory_mib": 4557.0,
+   "mean_gpu_utilization": 71.18181818181819,
+   "gpu_telemetry": {
+    "source": "/pscratch/sd/d/digonto/skqd-ci-runs/6b8f8fce1d87-20261019200506-QV_2x4_01/gpu_telemetry.csv",
+    "samples": 66,
+    "peak_memory_mib": 4557.0,
+    "mean_utilization_pct": 71.18181818181819,
+    "max_utilization_pct": 100.0
+   },
+   "E_p": null,
+   "prediction": {
+    "s_per_instruction": 0.00023246121228947717,
+    "source": "validation/S2_2x4.json data.gpu_validation.telemetry_summary.s_per_instruction",
+    "predicted_s": 887.5250529993971,
+    "budget_s": 2700.0,
+    "fits": true
+   },
+   "ci": {
+    "CI_GATE": "QV_2x4_01",
+    "SLURM_JOB_ID": "60009475",
+    "SLURM_JOB_NODELIST": "nid008552"
+   },
+   "versions": {
+    "python": "3.12.14",
+    "qiskit": "1.4.3",
+    "qiskit-aer": null,
+    "numpy": "2.5.3",
+    "scipy": "1.18.1"
+   }
+  },
+  "part": {
+   "slot": "QV_2x4_01",
+   "prompt": "prompts/35b_2x4_exactness_ruling.md section 4",
+   "lattice": "2x4",
+   "content": "the decision job: which 2x4 source is frozen",
+   "pairs": [
+    {
+     "native": "B0_ref102_k1.opt3:native",
+     "source": "B0_ref102_k1.opt3:source",
+     "B": 4.9555982662622195e-09,
+     "B_from": "data/quantinuum/q0p_stages_2x4/verify.json per_circuit Q1L.rounding"
+    },
+    {
+     "native": "B0_ref102_k1.structured:native",
+     "source": "B0_ref102_k1.structured:source",
+     "B": 6.5383582863666085e-12,
+     "B_from": "data/quantinuum/circuits_2x4/B0_ref102_k1.structured.manifest.json Q1L.rounding"
+    },
+    {
+     "native": "B1_ref230_k1.opt3:native",
+     "source": "B1_ref230_k1.opt3:source",
+     "B": 4.966496808957947e-09,
+     "B_from": "data/quantinuum/q0p_stages_2x4/verify.json per_circuit Q1L.rounding"
+    },
+    {
+     "native": "B1_ref230_k1.structured:native",
+     "source": "B1_ref230_k1.structured:source",
+     "B": 6.264909396122858e-12,
+     "B_from": "data/quantinuum/circuits_2x4/B1_ref230_k1.structured.manifest.json Q1L.rounding"
+    }
+   ],
+   "prediction": {
+    "s_per_instruction": 0.00023246121228947717,
+    "source": "validation/S2_2x4.json data.gpu_validation.telemetry_summary.s_per_instruction",
+    "predicted_s": 887.5250529993971,
+    "budget_s": 2700.0,
+    "fits": true
+   },
+   "criteria": {
+    "V1": "every run completed on the GPU with the policy telemetry",
+    "V2": "S2_2x4 reproduction: the committed CZ-basis circuit of S2_2x4 (data/S2_2x4/..._v13.qpy.gz) gives max abs(dpsi) phase-aligned = the recorded 1.528e-9 to 1e-12 (same qiskit 1.4.3 / Aer 0.15.1). Executor's note: prompts/35b section 4 names 'its opt-3 source' for this check, but the S2_2x4 number belongs to the CZ-basis transpile, not to the rz/rx/ry/rzz opt-3 source of the Quantinuum family; the S2_2x4 circuit is therefore run as its own reproduction run (the opt-3 source is run and recorded as well)",
+    "V3": "native-vs-own-source max abs(dpsi) (full vector, phase removed) <= B + 1e-12 for both sources, else STOP",
+    "V4": "the frozen source is the one whose native circuits meet max abs(dpsi) < 1e-10 and leakage < 1e-9 against krylov.coarse_states on both circuits; both -> the smaller maximum; neither -> STOP, the planner rules in writing with the measured numbers"
+   },
+   "run_count_note": "prompts/35b says 'six statevector runs' and lists four kinds per circuit for two circuits; this part carries the eight listed runs plus the S2_2x4 reproduction run (nine)",
+   "created": "2026-10-13 22:25:24 UTC",
+   "git_commit": "0265bf8"
+  },
+  "stop": false
+ },
+ "runtime_s": 0.0,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.3",
+  "scipy": "1.18.1",
+  "platform": "Linux-6.4.0-150600.23.125_15.0.29-cray_shasta_c-x86_64-with-glibc2.38",
+  "cpu_count": 128,
+  "git_commit": "n/a",
+  "timestamp": "2026-10-19 13:36:01 PDT"
+ }
+}
