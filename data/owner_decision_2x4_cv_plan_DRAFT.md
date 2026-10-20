@@ -12,7 +12,7 @@ OD2: UNSIGNED
 
 OD3: UNSIGNED
 
-  A7 corrected: n_instructions == the sector's coarse-step count for every k (2B=0: 142288, 2B=2: 142289); rule_corrected_holds = False (failures: 50 bundles).  Information: the count is per reference (2B=0 ref 102: [142288], 2B=0 ref 16833: [142289], 2B=0 ref 11026: [142289], 2B=0 ref 6930: [142289], 2B=0 ref 3166: [142289], 2B=0 ref 2086: [142289], 2B=0 ref 1338: [142289], 2B=0 ref 682: [142289], 2B=0 ref 474: [142289], 2B=0 ref 345: [142289], 2B=0 ref 281: [142289], 2B=2 ref 230: [142289], 2B=2 ref 118: [142289], 2B=2 ref 110: [142289], 2B=2 ref 103: [142289]); the coarse-step body without the reference's x gates is [142284] for all bundles -- the corrected rule needs the planner's wording before it is signed.
+  A7 corrected (prompts/36a addendum A1): n_unitary_instructions = C + n_x(bundle) for every bundle and every k = 1..5, with C one constant common to all 75 bundles (the coarse-step body, 142284 as computed: information_body_minus_prep_x) and n_x the reference's preparation x gates, equal to the 1-bits of its codeword (4 for the Dirac-sea reference 102, 5 for the other fourteen references: information_n_unitary_by_reference 142288 / 142289); replaces "k x 142288".  The per-sector wording of the first draft ("2B=0: 142288, 2B=2: 142289") was wrong and is withdrawn; rule_corrected_holds is re-evaluated by the gate under this wording (prompts/36a A3) before the owner signs.
 
 OD4: UNSIGNED
 
