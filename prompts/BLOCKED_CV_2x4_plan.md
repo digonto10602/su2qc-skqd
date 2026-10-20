@@ -61,3 +61,7 @@ is far below 2700 s (provisional tables below).
   for information: `data/cv/2x4/provisional_parts_s1/`, `..._s8/` (status PROVISIONAL, never requested).
 - Sampling run kind, `--tier assemble-2x4` (SKQD_2x4, K1-K7, S1-S6): dry runs PASS on the qiskit 1.4.3 / Aer
   0.15.1 twin (`validation/dryrun/QV_2x4_02..07.json`, `validation/dryrun/SKQD_2x4.json`).
+
+re-planned by prompts/36a; owner items OD1-OD4 open (data/owner_decision_2x4_cv_plan_DRAFT.md, UNSIGNED).
+
+Correction (executor, 2026-10-19, prompts/36a run): the A7 paragraph above says "142288 (B=0) / 142289 (B=1)". That attribution is wrong. The count is per reference, not per sector: 142288 for the Dirac-sea reference 102 (4 x gates) and 142289 for every other reference (5 x gates), at every k; the coarse-step body is 142284 for all 75 bundles (validation/CV_2x4_plan.json data.bundles.information_*). R12 as written (n_unit per sector from slot 01) therefore fails on the 50 bundles of the 10 B=0 references other than 102.

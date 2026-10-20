@@ -106,10 +106,14 @@ def test_dry_part_36_structure():
     pytest.importorskip("qiskit")
     import quantinuum_lattice_tests as QL
     from skqd.campaign33 import tokens as T
-    p = QL.dry_part_36("QV_2x4_05")
-    assert p["runs"] and all(r["kind"] == "sample" and r["k"] == 5 and r["twoB"] == 0 for r in p["runs"])
+    p = QL.dry_part_36("QV_2x4_02")
+    assert p["runs"] and all(r["kind"] == "sample" and r["twoB"] == 2 for r in p["runs"])
+    assert {r["k"] for r in p["runs"]} == {1, 2, 3, 4, 5}         # R14: the B=1 family and its k = 5 circuits
+    assert all("prefix_lengths_dropped" in r for r in p["runs"])
+    n5 = QL.dry_part_36("QV_2x4_05")
+    assert n5["runs"] and all(r["kind"] == "native" for r in n5["runs"])
     for r in p["runs"]:
-        assert r["seed"] == T.chunk_seed(T.base_seed("QV_2x4_05"), r["circuit_index"], 0, r["shots"])
+        assert r["seed"] == T.chunk_seed(T.base_seed("QV_2x4_02"), r["circuit_index"], 0, r["shots"])
         assert max(r["prefix_lengths"]) <= r["shots"]
 
 

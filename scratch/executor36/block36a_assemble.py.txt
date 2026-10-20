@@ -1,0 +1,211 @@
+
+
+def _sec_of(tb):
+    return "B=0" if int(tb) == 0 else "B=1"
+
+
+def replan_36a(chunks, ladder, seeds, quick, mans, sectors, nl, crit1, E_tol):
+    """prompts/36a: everything the re-plan adds to the record, computed whether or not the owner has signed (the
+    information blocks) -- the extended ladder (B=1), E1 / E2 / E3, s_star_information, the plan the signed set would
+    run (B=0 at its smallest passing s of the signed grid, B=1 at s*), CV3 at 1x / final / 2 N_eq with the bound, the
+    certificates at s*, the cluster diagnostic, the GPU cost model, R13 shots and the provisional R14 slots."""
+    sfx = "_quick" if quick else ""
+    out = {}
+    # ---- E1 (3.1)
+    e1p = os.path.join(CV4_DIR, "e1_reproduction.json")
+    e1 = load_json(e1p) if os.path.exists(e1p) else None
+    out["e1"] = {"file": rel(e1p) if e1 else None, "prefix_identical": (e1 or {}).get("prefix_identical"),
+                 "resize_ladder_reproduced": (e1 or {}).get("resize_ladder_reproduced"),
+                 "max_abs_diff": (e1 or {}).get("max_abs_diff"), "E1": bool(e1 and e1["E1"]),
+                 "extension": (e1 or {}).get("extension")}
+    # ---- the extended ladder (3.2), B=1, lazily up to the first passing s
+    ext, s_star = {}, None
+    for s in GRID_EXT_2X4:
+        p = os.path.join(CV4_DIR, f"resize_s{s:g}{sfx}.json")
+        if not os.path.exists(p):
+            break
+        d = load_json(p)
+        ext[f"{s:g}"] = d
+        if d["sectors"]["B=1"]["ok_all_seeds"]:
+            s_star = s
+            break
+    out["ext_ladder"] = ext
+    out["s_star_information"] = s_star
+    star = None
+    if s_star is not None:
+        z = ext[f"{s_star:g}"]["sectors"]["B=1"]
+        star = {"s": s_star, "shots_total": z["shots_total"],
+                "per_seed": {sd: {"rH_half": v["half"]["all"]["rH"], "rH_full": v["full"]["all"]["rH"],
+                                  "B_all_half": v["half"]["B_all_size"], "B_all_full": v["full"]["B_all_size"],
+                                  "E_R_minus_E0_full": v["full"]["all"]["err"], "W_full": v["full"]["all"]["W"],
+                                  "criteria_ok": {k: v["criteria"][k]["ok"] for k in ("CV1", "CV2", "CV4", "CV5")}}
+                             for sd, v in z["seeds"].items()}}
+    out["s_star_detail"] = star
+    # ---- E2 (nested-prefix identity), for the pairs the lazy ladder computed
+    e2 = {}
+    for s_hi, s_lo in ((12, 6), (16, 8)):
+        if f"{s_hi:g}" in ext and f"{s_lo:g}" in ladder:
+            hi = ext[f"{s_hi:g}"]["sectors"]["B=1"]["seeds"]
+            lo = ladder[f"{s_lo:g}"]["sectors"]["B=1"]["seeds"]
+            rows = {sd: {"rH_half_hi": hi[sd]["half"]["all"]["rH"], "rH_full_lo": lo[sd]["full"]["all"]["rH"],
+                         "abs_diff": abs(hi[sd]["half"]["all"]["rH"] - lo[sd]["full"]["all"]["rH"]),
+                         "shots_half_hi": hi[sd]["half"]["shots"], "shots_full_lo": lo[sd]["full"]["shots"],
+                         "B_all_equal": hi[sd]["half"]["B_all_size"] == lo[sd]["full"]["B_all_size"]} for sd in hi}
+            mx_hi = max(v["rH_half_hi"] for v in rows.values())
+            mx_lo = max(x["criteria"]["CV2"]["width_full"] for x in lo.values())
+            e2[f"{s_hi}N/2 vs {s_lo}N"] = {"per_seed": rows, "max_rH_half_hi": mx_hi, "width_full_max_lo": mx_lo,
+                                           "ok": bool(abs(mx_hi - mx_lo) <= TOL_E1)}
+        else:
+            e2[f"{s_hi}N/2 vs {s_lo}N"] = {"ok": None, "note": f"s = {s_hi} not evaluated (the lazy ladder stopped earlier)"}
+    out["e2"] = e2
+    out["nested_prefix_identity_ok"] = all(v["ok"] for v in e2.values() if v["ok"] is not None) and any(
+        v["ok"] is not None for v in e2.values())
+    out["e2_note"] = ("floor circuits are re-sized as ceil100(267 s), so 12N/2 gives them 1650 shots and 6N 1700: the two "
+                      "readings are on prefixes that differ by 50 shots on each of the 12 B=1 floor circuits; the identity "
+                      "is checked on the recorded values")
+    # ---- the plan the signed set would run (OD1 + OD4)
+    s_by_tb = {0: None, 2: s_star}
+    for s in (1,) + PHI_RESIZE:
+        ok0 = (all(ch["sectors"]["B=0"]["pass_1x"] for ch in chunks.values()) if s == 1
+               else (f"{s:g}" in ladder and ladder[f"{s:g}"]["sectors"]["B=0"]["ok_all_seeds"]))
+        if ok0:
+            s_by_tb[0] = s
+            break
+    final, plan1x = {}, {}
+    for sec, tb in SECTORS:
+        for c, v in nl[sec]["shots"].items():
+            plan1x[c] = int(v)
+            s = s_by_tb[tb]
+            if s is not None:
+                final[c] = int(v) if s == 1 else resized_shots(int(v), s)
+    proposed = {"s_by_sector": {_sec_of(tb): s for tb, s in s_by_tb.items()}, "complete": None not in s_by_tb.values()}
+    n_eq = {}
+    if proposed["complete"]:
+        for tb in (0, 2):
+            ids = [c for c in final if int(mans[c]["twoB"]) == tb]
+            n_eq[tb] = n_eq_of(sum(final[c] for c in ids), len(ids))
+        gpu, U = gpu_plan_r13(final, plan1x, s_by_tb, mans, n_eq)
+        k5 = k5_plan_r13(sectors, n_eq)
+        proposed.update({"shots_by_circuit": final, "shots_total": int(sum(final.values())),
+                         "by_sector": {_sec_of(tb): int(sum(v for c, v in final.items() if int(mans[c]["twoB"]) == tb))
+                                       for tb in (0, 2)},
+                         "N_eq_by_sector": {_sec_of(tb): v for tb, v in n_eq.items()}, "gpu": gpu, "k5": k5,
+                         "gpu_shots_total": int(sum(v["shots"] for v in gpu.values()) + sum(v["shots"] for v in k5.values())),
+                         "uniform_shots_by_sector": {_sec_of(tb): u for tb, u in U.items()},
+                         "gpu_rule": ("prompts/36a R13: L_c = max(2 N_final, 8 N_1x, N_eq, 6250) + U_c; prefixes = the "
+                                      "emulation ladder (s N_1x and s N_1x / 2 for s in the extended grid), phi N_final, "
+                                      "N_eq, 2 N_final, 2 N_eq where they fit; k = 5: max(N_eq, 6250), prefix N_eq")})
+    out["proposed"] = proposed
+    # ---- criteria and certificates at the proposed plan (A4 / A5 under OD1)
+    crit_p, cert_p = {}, {}
+    if proposed["complete"]:
+        for sd, ch in chunks.items():
+            for sec, tb in SECTORS:
+                s = s_by_tb[tb]
+                if s == 1:
+                    c = dict(crit1[sd][sec])
+                    pt = ch["sectors"][sec]["seed_result"]["curves"]["shots"][-1]
+                else:
+                    z = (ext[f"{s:g}"] if s in GRID_EXT_2X4 else ladder[f"{s:g}"])["sectors"][sec]["seeds"][sd]
+                    c = dict(z["criteria"])
+                    c["CV3"] = crit1[sd][sec]["CV3"]
+                    pt = z["full"]
+                crit_p.setdefault(sd, {})[sec] = c
+                a = pt["all"]
+                inside = a["E0_in_kt"] if sec == "B=0" else a["E0_in_weinstein"]
+                cert_p.setdefault(sd, {})[sec] = {
+                    "s": s, "shots": pt["shots"], "B_all_size": pt["B_all_size"], "recall_S999": a["recall_S999"],
+                    "E_R_minus_E0": a["err"], "W": a["W"], "type": CV2_TYPE[sec],
+                    "interval": a["kt_rigorous"] if sec == "B=0" else a["weinstein"], "E0_inside": bool(inside),
+                    "rH": a["rH"], "kt_width": a["kt_width"],
+                    "kt_exact_E1_information": {"interval": a["kt_rigorous"], "rigorous": a["E_R_below_E1"]},
+                    "ok": bool(a["recall_S999"] >= 0.9 and inside and a["err"] >= -TOL_VAR and a["W"] >= W_TARGET)}
+    out["criteria_by_seed_proposed"], out["certificates_proposed"] = crit_p, cert_p
+    # ---- CV3 readings (R11) and E3
+    cv3f = load_json(os.path.join(CV4_DIR, "cv3_final.json")) if os.path.exists(os.path.join(CV4_DIR, "cv3_final.json")) else {}
+    cv3 = {}
+    e3 = True
+    for sd, ch in chunks.items():
+        for sec, tb in SECTORS:
+            rs = ch["sectors"][sec]["seed_result"]
+            eq1, eq2 = rs["curves"]["krylov_equal"], rs["curves"]["krylov_equal_2x"]
+            b1 = dict(rs["criteria_1x"]["CV3"], bound=float(eq1[3]["all"]["err"]),
+                      N_eq_per_circuit=rs["N_eq_per_circuit"])
+            b2 = dict(rs["criteria_1x"].get("CV3_at_2Nc_information") or {}, bound=float(eq2[3]["all"]["err"]),
+                      N_eq_per_circuit=2 * rs["N_eq_per_circuit"])
+            row = {"at_1x": b1, "at_2N_eq_1x": b2}
+            if tb == 0 or s_star is None:
+                row["at_final"] = b1 if tb == 0 else None
+                row["at_2N_eq_final"] = b2 if tb == 0 else None
+            else:
+                f = (cv3f.get("seeds") or {}).get(sd)
+                row["at_final"] = f["at_final"] if f else None
+                row["at_2N_eq_final"] = f["at_2N_eq_final"] if f else None
+                row["replay_identical_final"] = f.get("replay_identical") if f else None
+            for k in ("at_1x", "at_2N_eq_1x", "at_final", "at_2N_eq_final"):
+                v = row.get(k)
+                if v and "dE_k4_k5" in v:
+                    v["E3_variational"] = bool(v["bound"] >= v["dE_k4_k5"] >= -TOL_VAR)
+                    e3 &= v["E3_variational"]
+            cv3.setdefault(sd, {})[sec] = row
+    out["cv3_readings"] = cv3
+    out["cv3_final_file"] = {k: v for k, v in cv3f.items() if k != "seeds"}
+    out["E3"] = bool(e3 and cv3)
+    out["cv3_final_ok"] = bool(cv3) and all((r["at_final"] or {}).get("ok") is True for d in cv3.values() for r in d.values())
+    # ---- cluster diagnostic, cost model
+    cp = os.path.join(CV4_DIR, "cluster_diag_B1.json")
+    out["cluster_diag"] = load_json(cp) if os.path.exists(cp) else None
+    out["gpu_cost_model"] = gpu_cost_model()
+    return out
+
+
+def bundles_corrected(a7):
+    """R12 (OD3): n_unitary_instructions == the slot-01 structured:source count of the sector for every k."""
+    import quantinuum_lattice_tests as QL
+    p01 = load_json(os.path.join(QL.PARTS_DIR, "QV_2x4_01.json"))
+    n_unit = {int(r["twoB"]): int(r["n_instructions"]) for r in p01["runs"]
+              if r["kind"] == "source" and r["source"] == "structured"}
+    idx = load_json(BUNDLE_INDEX_2X4)["irl0"]
+    bad = sorted(c for c, e in idx.items() if int(e["n_unitary_instructions"]) != n_unit[int(e["twoB"])])
+    ok = bool(not bad and len(idx) == 75)
+    return {"n_unit_by_twoB": {str(k): v for k, v in n_unit.items()},
+            "n_unit_source": "ci/parts/QV_2x4_01.json runs[*.structured:source].n_instructions",
+            "rule_corrected": "n_unitary_instructions == n_unit[twoB] for every k = 1..5 (prompts/36a R12)",
+            "rule_corrected_holds": ok, "rule_corrected_failures": bad,
+            "ok_corrected": bool(ok and a7.get("within_cap") and a7.get("slot01_sources_ok") and a7.get("roundtrip_ok")
+                                 and not a7.get("missing_or_bad_sha"))}
+
+
+def write_owner_draft(D):
+    """3.6: the owner's sign-off draft, rendered from the record (never typed)."""
+    rp = D["replan_36a"]
+    st = rp["s_star_detail"]
+    cm = D["gpu_cost_model"]["fit"]
+    lines = ["# Owner decision DRAFT -- CV_2x4_plan (prompts/36a section 6)", "",
+             "Generated by `scripts/gate_CV.py --lattice 4 --stage assemble` from `validation/CV_2x4_plan.json`.  The owner "
+             "copies this file to `data/owner_decision_<YYYYMMDD>_2x4_cv_plan.md`, changes each line to SIGNED or STRUCK, "
+             "and commits it; nothing below is applied until then.", "",
+             "OD1: UNSIGNED", "",
+             "  Re-sizing grid of the noiseless GPU-sampled 2x4 plan extended to {12, 16, 24, 32} (STOP at 32; hardware "
+             "plans keep <= 8).  s_star_information = " + str(rp["s_star_information"]) + ((
+                 "; per seed r_H(sN/2) / r_H(sN): " + "; ".join(f"{sd} {fmt(v['rH_half'])} / {fmt(v['rH_full'])}"
+                                                                 for sd, v in st["per_seed"].items())
+                 + f"; B=1 shots at s*: {fmt(st['shots_total'])}") if st else ""), "",
+             "OD2: UNSIGNED", "",
+             "  CV3 read at the final plan's N_eq (1x, 2 N_eq and the variational bound stay on record).  B=1 per seed, "
+             "dE / E_tol at 1x and at the final N_eq: " + "; ".join(
+                 f"{sd} {fmt(d['B=1']['at_1x']['ratio'])} / "
+                 + (fmt(d['B=1']['at_final']['ratio']) if d['B=1'].get('at_final') else 'n/a')
+                 for sd, d in rp["cv3_readings"].items()), "",
+             "OD3: UNSIGNED", "",
+             "  A7 corrected: n_instructions == the sector's coarse-step count for every k ("
+             + ", ".join(f"2B={k}: {v}" for k, v in D["bundles"]["n_unit_by_twoB"].items())
+             + f"); rule_corrected_holds = {D['bundles']['rule_corrected_holds']}.", "",
+             "OD4: UNSIGNED", "",
+             f"  GPU shots per R13 and four slots 02-05 per R14 on the slot-01 cost model t = {fmt(cm['a_s'])} s + "
+             f"{fmt(cm['b_s_per_instruction'])} s x n_instructions (rms {fmt(cm['rms_s'])} s); provisional slots: "
+             + "; ".join(f"{s_} predicted {fmt((v.get('prediction') or {}).get('predicted_s'))} s, fits "
+                         f"{(v.get('prediction') or {}).get('fits')}" for s_, v in D["slots_provisional"].items()), ""]
+    with open(OD_DRAFT, "w") as fh:
+        fh.write("\n".join(lines) + "\n")
+    return rel(OD_DRAFT)

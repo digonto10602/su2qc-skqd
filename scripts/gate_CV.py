@@ -1932,6 +1932,462 @@ def ensure_resize(s, seeds, quick):
     return _j(resize_2x4(s, seeds, quick))
 
 
+# =========================================================================== prompts/36a: the re-plan (information until OD1-OD4)
+PROMPT_36A = "prompts/36a_CV_2x4_plan_fix_20261019.md"
+GRID_EXT_2X4 = (12, 16, 24, 32)                   # R10 (OD1): beyond the signed grid, f = 1 only
+EXT_MULT = 32                                     # 3.1: the B=1 emulation extended from 8 N to 32 N
+EXT_SEED_OFFSET = 1_000_000                       # 3.1: block 1 drawn from default_rng(seed + 1e6)
+OD_ITEMS = ("OD1", "OD2", "OD3", "OD4")
+OD_DRAFT = os.path.join(ROOT, "data", "owner_decision_2x4_cv_plan_DRAFT.md")
+OD_GLOB = os.path.join(ROOT, "data", "owner_decision_[0-9]*_2x4_cv_plan.md")
+SLOTS_R14 = ("QV_2x4_02", "QV_2x4_03", "QV_2x4_04", "QV_2x4_05")
+LOAD_S, COMPARE_S = 4.1, 1.1                      # R14: slot 01's load (36.95 s / 9) and compare per circuit
+SAMPLE_S_ASSUMED, SAMPLE_S_SLOW = 1e-4, 1e-3      # R14: s per shot (assumed / ten times slower)
+SLOW_BUDGET_S = 3300.0                            # R14: the slow-sampling sum must stay <= 3300 s
+FIT_RMS_MAX = 10.0                                # 36a section 4: rms of the cost fit over the nine slot-01 runs
+TOL_E1 = 1e-12
+
+
+def extend_sequences(S, states, plan, mult_from, mult_to, f_proxy, seed, codec, cw, tag, p_ro=0.0, dtype=np.int32,
+                     cache_dir=CV4_DIR, seed_offset=EXT_SEED_OFFSET):
+    """prompts/36a 3.1: block 0 = the cached <tag>.npz (mult_from x plan per circuit, loaded, never redrawn); block 1 =
+    (mult_to - mult_from) x plan more outcomes per circuit from default_rng(seed + seed_offset), circuits in sorted id
+    order, the same measure_and_decode_sequence call.  Cached as <tag>_x<mult_to>.npz.  Returns (seqs, info) with
+    info["prefix_identical"] = the first block of every circuit equals the cache (criterion E1)."""
+    from skqd.noise import measure_and_decode_sequence
+
+    ids = sorted(states)
+    p0 = os.path.join(cache_dir, tag + ".npz")
+    if not os.path.exists(p0):
+        raise SystemExit(f"{rel(p0)} missing: block 0 must be the cached sample (run the chunk first)")
+    base, binfo = sample_sequences(S, states, plan, mult_from, f_proxy, seed, codec, cw, tag, p_ro=p_ro, dtype=dtype,
+                                   cache_dir=cache_dir)
+    if not binfo["hit"]:
+        raise SystemExit(f"{rel(p0)}: the cache did not match the plan (block 0 would be redrawn)")
+    path = os.path.join(cache_dir, f"{tag}_x{mult_to}.npz")
+    want = {c: int(mult_to * plan[c]) for c in ids}
+    blocks = [{"mult": int(mult_from), "seed": int(seed), "source": rel(p0)},
+              {"mult": int(mult_to - mult_from), "seed": int(seed) + int(seed_offset)}]
+    seqs, hit, dt = None, False, None
+    if os.path.exists(path):
+        z = np.load(path, allow_pickle=False)
+        meta = json.loads(str(z["__meta__"]))
+        if meta.get("want") == want and meta.get("blocks") == blocks and abs(meta.get("f_proxy", -1) - f_proxy) < 1e-15:
+            seqs, hit, dt = {c: z[c] for c in ids}, True, meta.get("sampling_s")
+    if seqs is None:
+        rng = np.random.default_rng(int(seed) + int(seed_offset))
+        t0 = time.time()
+        seqs = {}
+        for c in ids:
+            dec, _ = measure_and_decode_sequence(codec, cw, states[c], int((mult_to - mult_from) * plan[c]), f_proxy, p_ro,
+                                                 rng, S.twoB)
+            seqs[c] = np.concatenate([base[c], dec.astype(dtype)])
+        dt = time.time() - t0
+        meta = {"want": want, "blocks": blocks, "f_proxy": f_proxy, "p_ro": p_ro, "seed": int(seed), "sampling_s": dt,
+                "sector": S.sec, "rng": ("block 0: the cached sequence; block 1: numpy default_rng(seed + 1e6), circuits in "
+                                         "sorted id order")}
+        np.savez_compressed(path, __meta__=json.dumps(meta), **seqs)
+    same = all(np.array_equal(seqs[c][: len(base[c])], base[c]) and len(seqs[c]) == want[c] for c in ids)
+    return seqs, {"cache": rel(path), "hit": hit, "sampling_s": dt, "prefix_identical": bool(same), "blocks": blocks}
+
+
+def _ladder_point(S, seqs, ids, plan_sec, s, E_tol, rs):
+    ph, pf, Ns, capped = resize_points(S, seqs, ids, plan_sec, s)
+    crit = evaluate(S, ph, pf, rs["curves"]["shots"], rs["curves"]["krylov_equal"][:4], E_tol, BASIS_2X3, extra_cv4=(ph, pf))
+    return ph, pf, Ns, capped, crit
+
+
+def _ladder_summary(sec_block):
+    v = sec_block
+    return {"ok_all_seeds": v["ok_all_seeds"], "shots_total": v["shots_total"],
+            "criteria_ok": {k: all(x["criteria"][k]["ok"] for x in v["seeds"].values()) for k in ("CV1", "CV2", "CV4", "CV5")},
+            "width_half_max": max(x["criteria"]["CV2"]["width_half"] for x in v["seeds"].values()),
+            "width_full_max": max(x["criteria"]["CV2"]["width_full"] for x in v["seeds"].values()),
+            "B_all_full": [x["full"]["B_all_size"] for x in v["seeds"].values()],
+            "capped_circuits": sorted({c for x in v["seeds"].values() for c in x["capped_circuits"]})}
+
+
+def _b1_context(seeds, quick=False):
+    M, codec, acc, sectors = sectors_L(4)
+    cw = codec.all_codewords()
+    if quick:
+        from gate_H0_2x2 import RANDOM_SEEDS
+        del RANDOM_SEEDS[50:]
+    mans = circuits_L(4)
+    S = sectors["B=1"]
+    states, dt, _ = circuit_states_L(S, mans)
+    ids = sorted(states)
+    chunks = {str(sd): load_json(os.path.join(CV4_DIR, f"chunk_{int(sd)}{'_quick' if quick else ''}.json"))["sectors"]["B=1"]
+              for sd in seeds}
+    return M, codec, cw, sectors, mans, S, states, dt, ids, chunks
+
+
+def stage_extend_2x4(seeds=SEEDS, quick=False):
+    """3.1 + E1: the B=1 sequences extended to 32 N; the ladder s = 1.5..8 recomputed on their first 8 N entries and
+    compared with the FAIL record (resize_s<s>.json, B=1) -> data/cv/2x4/e1_reproduction.json."""
+    t0 = time.time()
+    M, codec, cw, sectors, mans, S, states, dt, ids, chunks = _b1_context(seeds, quick)
+    out = {"prompt": PROMPT_36A, "sector": "B=1", "seeds": [int(x) for x in seeds], "extension": {}, "ladder": {}}
+    seqs8 = {}
+    for sd in seeds:
+        ch = chunks[str(sd)]
+        plan_sec = {c: int(v) for c, v in ch["plan_1x"].items()}
+        sq, info = extend_sequences(S, states, plan_sec, SAMPLE_MULT, EXT_MULT, 1.0, int(sd), codec, cw,
+                                    f"B1_{1.0:.2f}_{int(sd)}")
+        out["extension"][str(sd)] = info
+        seqs8[str(sd)] = {c: sq[c][: SAMPLE_MULT * plan_sec[c]] for c in ids}
+    worst, flags_ok = 0.0, True
+    for s in PHI_RESIZE:
+        rec = load_json(os.path.join(CV4_DIR, f"resize_s{s:g}.json"))["sectors"]["B=1"]
+        rows = {}
+        for sd in seeds:
+            ch = chunks[str(sd)]
+            plan_sec = {c: int(v) for c, v in ch["plan_1x"].items()}
+            ph, pf, Ns, capped, crit = _ladder_point(S, seqs8[str(sd)], ids, plan_sec, s, ch["E_tol"], ch["seed_result"])
+            r = rec["seeds"][str(sd)]
+            d = {"rH_half": abs(ph["all"]["rH"] - r["half"]["all"]["rH"]), "rH_full": abs(pf["all"]["rH"] - r["full"]["all"]["rH"]),
+                 "E_R_half": abs(ph["all"]["E_R"] - r["half"]["all"]["E_R"]), "E_R_full": abs(pf["all"]["E_R"] - r["full"]["all"]["E_R"]),
+                 "CV1_dE": abs(crit["CV1"]["dE"] - r["criteria"]["CV1"]["dE"])}
+            fl = {"B_all_half": ph["B_all_size"] == r["half"]["B_all_size"], "B_all_full": pf["B_all_size"] == r["full"]["B_all_size"],
+                  "capped": sorted(capped) == sorted(r["capped_circuits"]),
+                  "criteria_ok": all(crit[k]["ok"] == r["criteria"][k]["ok"] for k in ("CV1", "CV2", "CV4", "CV5")),
+                  "shots": {k: int(v) for k, v in Ns.items()} == {k: int(v) for k, v in rec["shots_by_circuit"].items()}}
+            worst = max(worst, max(d.values()))
+            flags_ok &= all(fl.values())
+            rows[str(sd)] = {"abs_diff": d, "identical_fields": fl}
+        out["ladder"][f"{s:g}"] = rows
+        print(f"  E1 s={s:g}: max diff {max(max(v['abs_diff'].values()) for v in rows.values()):.1e}", flush=True)
+    out["max_abs_diff"] = worst
+    out["prefix_identical"] = all(v["prefix_identical"] for v in out["extension"].values())
+    out["resize_ladder_reproduced"] = bool(worst <= TOL_E1 and flags_ok)
+    out["E1"] = bool(out["prefix_identical"] and out["resize_ladder_reproduced"])
+    out["runtime_s"] = time.time() - t0
+    with open(os.path.join(CV4_DIR, "e1_reproduction.json"), "w") as fh:
+        json.dump(_j(out), fh, indent=1)
+    print(f"E1: prefix {out['prefix_identical']}, ladder reproduced {out['resize_ladder_reproduced']} "
+          f"(max {worst:.1e}) ({out['runtime_s']:.0f} s)")
+    return 0 if out["E1"] else 1
+
+
+def resize_ext_2x4(s, seeds=SEEDS, quick=False):
+    """3.2: the ladder point s > 8 at B=1 on the 32 N sequences -> data/cv/2x4/resize_s<s>.json (beyond_signed_grid)."""
+    t0 = time.time()
+    M, codec, cw, sectors, mans, S, states, dt, ids, chunks = _b1_context(seeds, quick)
+    res_s, ok_all, Ns = {}, True, None
+    for sd in seeds:
+        ch = chunks[str(sd)]
+        plan_sec = {c: int(v) for c, v in ch["plan_1x"].items()}
+        sq, info = extend_sequences(S, states, plan_sec, SAMPLE_MULT, EXT_MULT, 1.0, int(sd), codec, cw,
+                                    f"B1_{1.0:.2f}_{int(sd)}")
+        if not info["prefix_identical"]:
+            raise SystemExit("E1: the extended sequence does not start with the cached 8 N (STOP)")
+        ph, pf, Ns, capped, crit = _ladder_point(S, sq, ids, plan_sec, s, ch["E_tol"], ch["seed_result"])
+        ok = all(crit[k]["ok"] for k in ("CV1", "CV2", "CV4", "CV5"))
+        ok_all &= ok
+        res_s[str(sd)] = {"half": strip({k: v for k, v in ph.items() if k != "B_sig_list"}),
+                          "full": strip({k: v for k, v in pf.items() if k != "B_sig_list"}),
+                          "criteria": crit, "ok": ok, "capped_circuits": capped, "shots_by_circuit": Ns}
+    out = {"s": s, "seeds": [int(x) for x in seeds], "beyond_signed_grid": True, "prompt": PROMPT_36A,
+           "extension_seed": {str(sd): int(sd) + EXT_SEED_OFFSET for sd in seeds}, "extension_mult": EXT_MULT,
+           "sectors": {"B=1": {"shots_by_circuit": Ns, "shots_total": int(sum(Ns.values())), "seeds": res_s,
+                               "ok_all_seeds": ok_all}},
+           "runtime_s": time.time() - t0}
+    print(f"  [B=1] resize s={s} (beyond the signed grid): {'PASS' if ok_all else 'FAIL'} ({out['runtime_s']:.0f} s)",
+          flush=True)
+    with open(os.path.join(CV4_DIR, f"resize_s{s:g}{'_quick' if quick else ''}.json"), "w") as fh:
+        json.dump(_j(out), fh, indent=1)
+    return out
+
+
+def stage_ladder_ext_2x4(seeds=SEEDS, quick=False):
+    """3.2: s in {12, 16, 24, 32} lazily, in grid order, not beyond the first passing s."""
+    for s in GRID_EXT_2X4:
+        p = os.path.join(CV4_DIR, f"resize_s{s:g}{'_quick' if quick else ''}.json")
+        d = load_json(p) if os.path.exists(p) else _j(resize_ext_2x4(s, seeds, quick))
+        if d["sectors"]["B=1"]["ok_all_seeds"]:
+            return s
+    return None
+
+
+def n_eq_of(total, n_circ):
+    return int(math.ceil(total / n_circ / 100.0) * 100)
+
+
+def stage_cv3_final_2x4(s_star, seeds=SEEDS, quick=False):
+    """3.3 + E3: CV3 at the final plan's N_eq (B=1, s*) and at 2 N_eq; the variational bound E_R(k <= 4; N_eq) - E0;
+    the 1x readings from the chunks beside them -> data/cv/2x4/cv3_final.json."""
+    from skqd.skqd import h1_energy_tolerance
+    t0 = time.time()
+    M, codec, cw, sectors, mans, S, states, dt, ids, chunks = _b1_context(seeds, quick)
+    out = {"prompt": PROMPT_36A, "s_star": s_star, "seeds": {}}
+    if s_star is None:
+        out["note"] = "no passing s up to 32: CV3 at the final plan is not defined"
+    else:
+        rz = load_json(os.path.join(CV4_DIR, f"resize_s{s_star:g}{'_quick' if quick else ''}.json"))["sectors"]["B=1"]
+        N_eq = n_eq_of(rz["shots_total"], len(ids))
+        out["N_eq"], out["shots_total_final"] = N_eq, rz["shots_total"]
+        states_k5 = k_next_states(S, dt=dt)
+        E_tol = h1_energy_tolerance(S.H, S.prob, S.refs, 0.8, 1e-3, sector_idx=S.sector_idx, E0=S.E0)["E_tol"]
+        for sd in seeds:
+            tag = f"B1_{1.0:.2f}_{int(sd)}_eq_s{s_star:g}"
+            eq, ei = sample_sequences(S, states, {c: N_eq for c in ids}, 2, 1.0, int(sd), codec, cw, tag, p_ro=0.0,
+                                      dtype=np.int32, cache_dir=CV4_DIR)
+            k5, ki = sample_k_next(S, states, {c: 2 * N_eq for c in ids}, states_k5, {c: 2 * N_eq for c in states_k5}, 1.0,
+                                   int(sd), codec, cw, eq, f"B1_{1.0:.2f}_{int(sd)}_eq_k5_s{s_star:g}", p_ro=0.0,
+                                   dtype=np.int32, cache_dir=CV4_DIR)
+            rows = {}
+            for name, L in (("at_final", N_eq), ("at_2N_eq_final", 2 * N_eq)):
+                n4, s4 = counts_of(S, eq, {c: L for c in ids})
+                n5, s5 = counts_of(S, k5, {c: L for c in states_k5})
+                p4 = S.point(n4, s4, with_random=False, crit="all")
+                p5 = S.point(n4 + n5, s4 + s5, with_random=False, crit="all")
+                b = cv3_block(S, p4, p5, E_tol, "all")
+                b["bound"] = float(p4["all"]["err"])
+                b["E3_variational"] = bool(b["bound"] >= b["dE_k4_k5"] >= -TOL_VAR)
+                b["N_eq_per_circuit"] = int(L)
+                rows[name] = b
+            rows["replay_identical"] = bool(ki.get("replay_identical"))
+            rows["sampling"] = {"equal": ei, "k5": ki}
+            out["seeds"][str(sd)] = rows
+            print(f"  CV3 B=1 seed {sd}: final {rows['at_final']['dE_k4_k5']:.3e} ({rows['at_final']['ratio']:.3f} E_tol), "
+                  f"bound {rows['at_final']['bound']:.3e}", flush=True)
+        out["E_tol"] = E_tol
+    out["runtime_s"] = time.time() - t0
+    with open(os.path.join(CV4_DIR, "cv3_final.json"), "w") as fh:
+        json.dump(_j(out), fh, indent=1)
+    return 0
+
+
+def cluster_diag(S, seeds_B, n_states=4, oracle_ref=None, oracle_prob=None, oracle_threads=1):
+    """3.5 (D1 / D2) for any sector S: the lowest n_states eigenvectors of the sector H (Lanczos), the reference
+    overlap matrix o[i][j] = |<psi_j|r_i>|^2 and its rank at 1e-12, and per basis B (dict name -> list) the oracle
+    top-|B| set O of psi_0 weight with W_0 / W_j split over B \\ O and r_H(B), r_H(O).  oracle_prob / oracle_threads: the
+    ground-state weights that order O and the BLAS threads of its Ritz solve (the oracle set cuts through groups of
+    near-equal weights whose order depends on the BLAS thread count of the reference eigensolve, as the 2x3 oracle-width
+    table records); the one-thread O is recorded beside it."""
+    import scipy.sparse.linalg as spl
+    from threadpoolctl import threadpool_limits
+
+    from skqd.controls import oracle
+    from skqd.skqd import ritz
+    h = S.H[S.sector_idx][:, S.sector_idx]
+    with threadpool_limits(1):
+        if S.dim <= DENSE_CLUSTER_MAX:
+            w, v = np.linalg.eigh(h.toarray())
+        else:
+            w, v = spl.eigsh(h, k=n_states, which="SA", tol=1e-12, v0=np.ones(S.dim))
+    o_ = np.argsort(w)
+    w, v = w[o_][:n_states], v[:, o_][:, :n_states]
+    psi = np.zeros((n_states, S.H.shape[0]))
+    for j in range(n_states):
+        psi[j, S.sector_idx] = np.abs(v[:, j])
+    refs = [int(r) for r in S.refs]
+    o = np.array([[float(psi[j, r] ** 2) for j in range(n_states)] for r in refs])
+    pos = {int(b): i for i, b in enumerate(S.sector_idx)}
+    amp = np.array([[complex(v[pos[r], j]) for j in range(n_states)] for r in refs])
+    d1 = {"energies": [float(x) for x in w], "overlap": o.tolist(), "rank_overlap_1e-12": int(np.linalg.matrix_rank(o, tol=1e-12)),
+          "rank_amplitudes_1e-12": int(np.linalg.matrix_rank(amp, tol=1e-12)),
+          "cluster_weight_per_reference": [float(x) for x in o.sum(axis=1)],
+          "psi0_overlap_vs_ground_weight": [[float(o[i, 0]), float(S.prob[r])] for i, r in enumerate(refs)],
+          "references": refs}
+    d2 = {}
+    for name, B in seeds_B.items():
+        B = sorted(set(int(x) for x in B))
+        n = len(B)
+        O1 = sorted(set(int(x) for x in oracle(S.prob, S.sector_idx, n)) | set(refs))
+        O = (O1 if oracle_prob is None else sorted(set(int(x) for x in oracle(oracle_prob, S.sector_idx, n)) | set(refs)))
+        Bs, Os = set(B), set(O)
+        BmO, OmB = sorted(Bs - Os), sorted(Os - Bs)
+        rb = ritz(S.H, np.asarray(B))
+        with threadpool_limits(oracle_threads):
+            ro = ritz(S.H, np.asarray(O))
+        ro1 = ritz(S.H, np.asarray(O1))
+        row = {"size_B": n, "size_O": len(O), "size_B_and_O": len(Bs & Os),
+               "W0_B": float(S.prob[B].sum()), "W0_O": float(S.prob[O].sum()),
+               "W0_B_minus_O": float(S.prob[BmO].sum()), "W0_O_minus_B": float(S.prob[OmB].sum()),
+               "Wj_B_minus_O": {str(j): float((psi[j, BmO] ** 2).sum()) for j in range(1, n_states)},
+               "rH_B": float(rb.rH), "rH_O": float(ro.rH), "rH_O_one_thread_order": float(ro1.rH),
+               "O_equals_one_thread_O": O == O1, "oracle_blas_threads": int(oracle_threads),
+               "E_R_minus_E0_B": float(rb.ER - S.E0),
+               "E_R_minus_E0_O": float(ro.ER - S.E0)}
+        if oracle_ref is not None and str(n) in oracle_ref:
+            row["rH_O_oracle_b1_json"] = float(oracle_ref[str(n)]["rH"])
+            row["oracle_rH_reproduced_1e-9"] = bool(abs(row["rH_O"] - row["rH_O_oracle_b1_json"]) <= 1e-9)
+        d2[name] = row
+    return {"D1": d1, "D2": d2}
+
+
+def stage_cluster_2x4(seeds=SEEDS, quick=False):
+    """3.5 -> data/cv/2x4/cluster_diag_B1.json: D1 / D2 on B_all(8 N) of every seed (information)."""
+    t0 = time.time()
+    M, codec, cw, sectors, mans, S, states, dt, ids, chunks = _b1_context(seeds, quick)
+    Bs = {}
+    for sd in seeds:
+        plan_sec = {c: int(v) for c, v in chunks[str(sd)]["plan_1x"].items()}
+        sq, info = sample_sequences(S, states, plan_sec, SAMPLE_MULT, 1.0, int(sd), codec, cw, f"B1_{1.0:.2f}_{int(sd)}",
+                                    p_ro=0.0, dtype=np.int32, cache_dir=CV4_DIR)
+        if not info["hit"]:
+            raise SystemExit("the 8 N cache is missing")
+        acc = set()
+        for c in ids:
+            x = sq[c]
+            acc |= set(int(i) for i in np.unique(x[x >= 0]))
+        Bs[str(sd)] = sorted(acc | set(S.refs))
+    orc = os.path.join(ROOT, "scratch", "executor36", "oracle_b1.json")
+    oref = load_json(orc)["oracle_B1"] if os.path.exists(orc) else None
+    out = cluster_diag(S, Bs, 4, oref)
+    out["oracle_order_note"] = (
+        "O is ordered by the ground state of this process's sector reference (sparse eigensolver, one BLAS thread).  The "
+        "top-|B| boundary of O cuts groups of near-equal weights, and the reference eigensolve is not bit-reproducible "
+        "between processes (gate_S2_2x4.dt_of docstring); three gate runs on 2026-10-19 gave r_H(O) - oracle_b1.json of "
+        "(-9.3e-9, 1.7e-7, 1e-15), (-9.3e-9, 1.7e-7, 1e-15) and (3e-16, 1.7e-7, 1e-15) for seeds (20260914, 1, 2); the "
+        "scratch prototype ran with a 4-thread BLAS pool (scratch/executor36/oracle_threads.py reproduced it in one "
+        "4-thread run).  The differences are tie-order effects at the 1e-7 level, recorded per seed; D2 is information")
+    refj = load_json(os.path.join(ROOT, "data", "references.json"))["references"]["2x4|g2=4.0|2B=2"]["energies"]
+    out["D1"]["references_json_energies"] = [float(x) for x in refj[:4]]
+    out["D1"]["energies_match_1e-9"] = bool(all(abs(a - b) <= 1e-9 for a, b in zip(out["D1"]["energies"], refj[:4])))
+    rows = out["D2"]
+    tail_other = [sum(r["Wj_B_minus_O"].values()) for r in rows.values()]
+    tail_0 = [r["W0_B_minus_O"] for r in rows.values()]
+    out["reading"] = (("the planner's cluster-projection reading is " + ("supported" if all(a > b for a, b in zip(tail_other, tail_0))
+                                                                         else "not supported") + " by D2: ")
+                      + "; ".join(f"seed {sd}: W_1+W_2+W_3(B \\ O) {sum(r['Wj_B_minus_O'].values()):.4g} vs W_0(B \\ O) "
+                                  f"{r['W0_B_minus_O']:.4g}, |B n O| {r['size_B_and_O']} of {r['size_B']}, r_H(B) {r['rH_B']:.4f} "
+                                  f"vs r_H(O) {r['rH_O']:.4f}" for sd, r in rows.items()))
+    out.update({"prompt": PROMPT_36A, "sector": "B=1", "basis": "B_all(8 N) u refs per seed; O = refs u the oracle top-|B| "
+                "of psi_0 weight (controls.oracle on the sector reference's ground state)", "runtime_s": time.time() - t0,
+                "oracle_reference": rel(orc) if oref else None,
+                "oracle_rH_reproduced_1e-9": (all(r.get("oracle_rH_reproduced_1e-9", False) for r in rows.values())
+                                              if oref else None)})
+    with open(os.path.join(CV4_DIR, "cluster_diag_B1.json"), "w") as fh:
+        json.dump(_j(out), fh, indent=1)
+    print(out["reading"])
+    return 0
+
+
+def gpu_cost_model():
+    """1.4 / 3.7: the three GPU statevector models (slot 01 ratio of totals, the S2_2x4 rate, the least-squares fixed +
+    linear fit over slot 01's nine runs) and the per-content table."""
+    import quantinuum_lattice_tests as QL
+    q = load_json(os.path.join(ROOT, "validation", "QV_2x4_01.json"))["data"]
+    pts = [(int(v["n_instructions"]), float(v["seconds"]), k) for k, v in q["per_run"].items()]
+    x = np.array([p[0] for p in pts], float)
+    y = np.array([p[1] for p in pts], float)
+    A = np.vstack([np.ones_like(x), x]).T
+    (a, b), *_ = np.linalg.lstsq(A, y, rcond=None)
+    res = y - (a + b * x)
+    fit = {"a_s": float(a), "b_s_per_instruction": float(b), "rms_s": float(np.sqrt(np.mean(res ** 2))),
+           "max_abs_residual_s": float(np.max(np.abs(res))),
+           "points": [{"label": k, "n_instructions": n, "seconds": t, "residual_s": float(t - (a + b * n))} for n, t, k in pts],
+           "source": "validation/QV_2x4_01.json data.per_run[*].seconds, .n_instructions (least squares, numpy.linalg.lstsq)",
+           "rms_ok": bool(np.sqrt(np.mean(res ** 2)) <= FIT_RMS_MAX)}
+    ratio = float(q["run"]["s_per_instruction"])
+    s2 = float(QL.s_per_instruction())
+    models = {"ratio_of_totals": {"s_per_instruction": ratio, "source": "validation/QV_2x4_01.json data.run.s_per_instruction"},
+              "S2_2x4_rate": {"s_per_instruction": s2, "source": QL.S_PER_INSTRUCTION_SRC},
+              "fit": {"a_s": fit["a_s"], "b_s_per_instruction": fit["b_s_per_instruction"]}}
+    irl0 = load_json(BUNDLE_INDEX_2X4)
+    n_ir = sorted({int(v["n_unitary_instructions"]) for v in irl0["irl0"].values()})
+    nat = [int(sum(v["ops"].values())) for v in irl0.get("circuits", {}).values()]
+    rows = []
+    for name, n_list in (("one IR-L0 unit", [n_ir[0]]), ("signed family k = 1..4", [n_ir[0]] * 60),
+                         ("k = 5 set", [n_ir[0]] * 15), ("all sampled IR-L0", [n_ir[0]] * 75),
+                         ("structured native k = 1", nat[:1]), ("the 13 native k = 1 of the frozen source", nat)):
+        rows.append({"content": name, "circuits": len(n_list),
+                     "ratio_of_totals_s": ratio * sum(n_list), "S2_2x4_rate_s": s2 * sum(n_list),
+                     "fit_s": sum(fit["a_s"] + fit["b_s_per_instruction"] * n for n in n_list)})
+    return {"models": models, "fit": fit, "table": rows,
+            "overheads": {"load_s_per_circuit": LOAD_S, "compare_s_per_circuit": COMPARE_S,
+                          "sampling_s_per_shot_assumed": SAMPLE_S_ASSUMED, "sampling_s_per_shot_slow": SAMPLE_S_SLOW,
+                          "source": "slot 01: load 36.95 s / 9 runs, compare 9.8 s / 9 runs; sampling unmeasured (prompts/36a 1.4)"},
+            "prompt": "prompts/36a section 1.4 / 3.7"}
+
+
+def slot_prediction(runs, cost):
+    """R14: statevector under the three models, + load + compare per circuit + sampling; predicted_s = the max-model sum
+    at 1e-4 s/shot; fits iff predicted_s <= 2700 and the max-model sum at 1e-3 s/shot <= 3300."""
+    m = cost["models"]
+    n = [int(r["n_instructions"]) for r in runs]
+    shots = sum(int(r.get("shots", 0)) for r in runs)
+    sv = {"ratio_of_totals": m["ratio_of_totals"]["s_per_instruction"] * sum(n),
+          "S2_2x4_rate": m["S2_2x4_rate"]["s_per_instruction"] * sum(n),
+          "fit": sum(m["fit"]["a_s"] + m["fit"]["b_s_per_instruction"] * k for k in n)}
+    worst = max(sv.values())
+    over = (LOAD_S + COMPARE_S) * len(runs)
+    pred = worst + over + SAMPLE_S_ASSUMED * shots
+    slow = worst + over + SAMPLE_S_SLOW * shots
+    return {"statevector_s": sv, "statevector_max_model": max(sv, key=sv.get), "load_s": LOAD_S * len(runs),
+            "compare_s": COMPARE_S * len(runs), "shots": shots, "sampling_s_assumed": SAMPLE_S_ASSUMED * shots,
+            "sampling_s_slow": SAMPLE_S_SLOW * shots, "predicted_s": pred, "predicted_s_slow_sampling": slow,
+            "budget_s": SLOT_BUDGET_S, "slow_budget_s": SLOW_BUDGET_S,
+            "fits": bool(pred <= SLOT_BUDGET_S and slow <= SLOW_BUDGET_S), "rule": "prompts/36a R14"}
+
+
+def gpu_plan_r13(final, plan1x, s_by_tb, mans, n_eq, grid=GRID_2X4 + GRID_EXT_2X4):
+    """R13: L_c = max(2 N_c^final, 8 N_c^1x, N_eq, 6250) is the order-kept CV block; N_c^GPU = L_c + U_c.  Prefixes
+    {resized_shots(N_c^1x, s), round(resized / 2) : s in the extended grid, <= L_c} (the emulation ladder on real
+    samples, both of its reading points) u {round(phi N_c^final)} u {N_eq, 2 N_c^final} u {2 N_eq if <= L_c}; prefixes
+    beyond L_c are listed in `prefix_lengths_dropped`."""
+    n_by_tb = {}
+    for c in final:
+        n_by_tb[int(mans[c]["twoB"])] = n_by_tb.get(int(mans[c]["twoB"]), 0) + 1
+    U = {tb: int(math.ceil(UNIFORM_PER_SECTOR / n)) for tb, n in n_by_tb.items()}
+    out = {}
+    for c, N in final.items():
+        tb = int(mans[c]["twoB"])
+        N1, ne = int(plan1x[c]), int(n_eq[tb])
+        L = max(2 * int(N), GPU_MULT * N1, ne, GPU_MIN_SHOTS)
+        want = {rnd(phi * int(N)) for phi in PHI} | {ne, 2 * int(N), 2 * ne}
+        for s in grid:
+            r = N1 if s == 1 else resized_shots(N1, s)
+            want |= {r, rnd(r / 2.0)}
+        pref = sorted(x for x in want if x <= L)
+        drop = sorted(x for x in want if x > L)
+        out[c] = {"shots": L + U[tb], "plan_shots": int(N), "plan_shots_1x": N1, "s": s_by_tb[tb], "cv_block": L,
+                  "uniform_shots": U[tb], "prefix_lengths": pref, "prefix_lengths_dropped": drop}
+    return out, U
+
+
+def k5_plan_r13(sectors, n_eq):
+    """R13: k = 5 runs at max(N_eq, 6250) shots, prefix {N_eq} (2 N_eq kept where it fits, information)."""
+    out = {}
+    for sec, tb in SECTORS:
+        for r in sectors[sec].refs:
+            c = f"{sec.replace('=', '')}_ref{int(r)}_k{K_NEXT}"
+            ne = int(n_eq[tb])
+            L = max(ne, GPU_MIN_SHOTS)
+            out[c] = {"shots": L, "plan_shots": ne, "prefix_lengths": sorted(x for x in {ne, 2 * ne} if x <= L),
+                      "prefix_lengths_dropped": sorted(x for x in {2 * ne} if x > L), "uniform_shots": 0, "twoB": tb,
+                      "reference": int(r), "k": K_NEXT}
+    return out
+
+
+def owner_decision():
+    """3.6: data/owner_decision_<YYYYMMDD>_2x4_cv_plan.md (the owner commits it) -> {file, OD1..OD4}; every item
+    UNSIGNED when no such file exists.  Lines `OD<n>: SIGNED | UNSIGNED | STRUCK`."""
+    import re
+    files = sorted(glob.glob(OD_GLOB))
+    out = {"file": rel(files[-1]) if files else None, "draft": rel(OD_DRAFT) if os.path.exists(OD_DRAFT) else None}
+    states = {k: "UNSIGNED" for k in OD_ITEMS}
+    if files:
+        for line in open(files[-1]):
+            m = re.match(r"^\s*(OD[1-4])\s*:\s*(SIGNED|UNSIGNED|STRUCK)\b", line)
+            if m:
+                states[m.group(1)] = m.group(2)
+    out.update(states)
+    return out
+
+
+def parse_owner_lines(text):
+    import re
+    st = {k: "UNSIGNED" for k in OD_ITEMS}
+    for line in text.splitlines():
+        m = re.match(r"^\s*(OD[1-4])\s*:\s*(SIGNED|UNSIGNED|STRUCK)\b", line)
+        if m:
+            st[m.group(1)] = m.group(2)
+    return st
+
+
 def _git(*args):
     import subprocess
     return subprocess.run(["git", *args], cwd=ROOT, capture_output=True)
@@ -1959,8 +2415,9 @@ def _noansi(t):
     return None if t is None else re.sub(r"\x1b\[[0-9;]*m", "", t)
 
 
-def a6_slots(final_gpu, k5, mans):
-    """A6: the part files QV_2x4_02..07 against the plan, the bundles, the seed rule and the 2700 s budget."""
+def a6_slots(final_gpu, k5, mans, slots=None, parts_dir=None, r14=False):
+    """A6: the part files QV_2x4_02..07 against the plan, the bundles, the seed rule and the 2700 s budget.  r14 (prompts/36a
+    R14): slots 02..05, `fits` = predicted_s <= 2700 and the 1e-3 s/shot sum <= 3300 (the three-model prediction)."""
     from skqd.campaign33 import tokens as T
     from skqd.campaign33.circuits import sha256_file
     import gate_Q0P_2x3 as Q
@@ -1971,8 +2428,10 @@ def a6_slots(final_gpu, k5, mans):
     want = dict(final_gpu)
     want.update(k5)
     out, ok_all = {}, True
-    for slot in SLOTS_2X4:
-        p = os.path.join(QL.PARTS_DIR, slot + ".json")
+    slots = SLOTS_2X4 if slots is None else slots
+    parts_dir = QL.PARTS_DIR if parts_dir is None else parts_dir
+    for slot in slots:
+        p = os.path.join(parts_dir, slot + ".json")
         if not os.path.exists(p):
             out[slot] = {"exists": False, "ok": False}
             ok_all = False
@@ -2010,21 +2469,31 @@ def a6_slots(final_gpu, k5, mans):
                "s_per_instruction_equals_S2_2x4": (pred.get("s_per_instruction") == spi) if pred else None}
         if withheld:
             rec["ok"] = not bad and n_sample == 0
+        elif r14:
+            for r in part.get("runs", []):
+                if r.get("kind") == "native":
+                    path = os.path.join(ROOT, r["qpy"])
+                    if not os.path.exists(path) or sha256_file(path) != r["gz_sha256"]:
+                        bad.append(f"{r['label']}: gz sha256")
+            rec["mismatches"] = bad[:20]
+            rec["ok"] = bool(not bad and pred and pred.get("fits") and float(pred["predicted_s"]) <= SLOT_BUDGET_S
+                             and float(pred["predicted_s_slow_sampling"]) <= SLOW_BUDGET_S)
         else:
             rec["ok"] = bool(not bad and pred and pred.get("fits") and float(pred["predicted_s"]) <= SLOT_BUDGET_S
                              and rec["s_per_instruction_equals_S2_2x4"])
         ok_all &= rec["ok"]
         out[slot] = rec
-    covered = sorted(r["base_id"] for slot in SLOTS_2X4
-                     for r in (load_json(os.path.join(QL.PARTS_DIR, slot + ".json")).get("runs", [])
-                               if os.path.exists(os.path.join(QL.PARTS_DIR, slot + ".json")) else [])
+    covered = sorted(r["base_id"] for slot in slots
+                     for r in (load_json(os.path.join(parts_dir, slot + ".json")).get("runs", [])
+                               if os.path.exists(os.path.join(parts_dir, slot + ".json")) else [])
                      if r.get("kind") == "sample")
     cover_ok = covered == sorted(want)
     s01 = _git("show", f"{SLOT01_COMMIT}:ci/parts/QV_2x4_01.json")
     with open(os.path.join(QL.PARTS_DIR, "QV_2x4_01.json"), "rb") as fh:
         s01_same = s01.returncode == 0 and fh.read() == s01.stdout
     tk = Q.token_index_check()
-    return {"slots": out, "every_sampled_circuit_in_exactly_one_slot": cover_ok, "n_sampled_circuits": len(covered),
+    return {"slots": out, "parts_dir": rel(parts_dir), "every_sampled_circuit_in_exactly_one_slot": cover_ok,
+            "n_sampled_circuits": len(covered),
             "slot01_byte_identical_to": SLOT01_COMMIT, "slot01_byte_identical": bool(s01_same),
             "token_indices": tk, "ok": bool(ok_all and cover_ok and s01_same and tk.get("ok"))}
 
@@ -2086,7 +2555,8 @@ def stage_regression_2x4(part="all"):
     out = load_json(REGRESSION_2X4) if os.path.exists(REGRESSION_2X4) else {}
     twin = os.path.join(os.path.expanduser("~"), ".local", "share", "su2qc-qiskit143", "venv", "bin", "python")
     twin_tests = sorted(glob.glob(os.path.join(ROOT, "tests", "test_campaign33_*.py"))) + [
-        os.path.join(ROOT, "tests", t) for t in ("test_ci_gpu_mode.py", "test_codec_acceptance.py", "test_qv_2x4_pipeline.py")]
+        os.path.join(ROOT, "tests", t) for t in ("test_ci_gpu_mode.py", "test_codec_acceptance.py", "test_qv_2x4_pipeline.py",
+                                         "test_cv_2x4_replan.py")]
     head = _git("rev-parse", "--short", "HEAD").stdout.decode().strip()
 
     def pyt(py, args_):
@@ -2159,6 +2629,245 @@ def noisy_information_2x4():
             "ruling": "prompts/36 R8"}
 
 
+def _sec_of(tb):
+    return "B=0" if int(tb) == 0 else "B=1"
+
+
+def replan_36a(chunks, ladder, seeds, quick, mans, sectors, nl, crit1, E_tol):
+    """prompts/36a: everything the re-plan adds to the record, computed whether or not the owner has signed (the
+    information blocks) -- the extended ladder (B=1), E1 / E2 / E3, s_star_information, the plan the signed set would
+    run (B=0 at its smallest passing s of the signed grid, B=1 at s*), CV3 at 1x / final / 2 N_eq with the bound, the
+    certificates at s*, the cluster diagnostic, the GPU cost model, R13 shots and the provisional R14 slots."""
+    sfx = "_quick" if quick else ""
+    out = {}
+    # ---- E1 (3.1)
+    e1p = os.path.join(CV4_DIR, "e1_reproduction.json")
+    e1 = load_json(e1p) if os.path.exists(e1p) else None
+    out["e1"] = {"file": rel(e1p) if e1 else None, "prefix_identical": (e1 or {}).get("prefix_identical"),
+                 "resize_ladder_reproduced": (e1 or {}).get("resize_ladder_reproduced"),
+                 "max_abs_diff": (e1 or {}).get("max_abs_diff"), "E1": bool(e1 and e1["E1"]),
+                 "extension": (e1 or {}).get("extension")}
+    # ---- the extended ladder (3.2), B=1, lazily up to the first passing s
+    ext, s_star = {}, None
+    for s in GRID_EXT_2X4:
+        p = os.path.join(CV4_DIR, f"resize_s{s:g}{sfx}.json")
+        if not os.path.exists(p):
+            break
+        d = load_json(p)
+        ext[f"{s:g}"] = d
+        if d["sectors"]["B=1"]["ok_all_seeds"]:
+            s_star = s
+            break
+    out["ext_ladder"] = ext
+    out["s_star_information"] = s_star
+    star = None
+    if s_star is not None:
+        z = ext[f"{s_star:g}"]["sectors"]["B=1"]
+        star = {"s": s_star, "shots_total": z["shots_total"],
+                "per_seed": {sd: {"rH_half": v["half"]["all"]["rH"], "rH_full": v["full"]["all"]["rH"],
+                                  "B_all_half": v["half"]["B_all_size"], "B_all_full": v["full"]["B_all_size"],
+                                  "E_R_minus_E0_full": v["full"]["all"]["err"], "W_full": v["full"]["all"]["W"],
+                                  "criteria_ok": {k: v["criteria"][k]["ok"] for k in ("CV1", "CV2", "CV4", "CV5")}}
+                             for sd, v in z["seeds"].items()}}
+    out["s_star_detail"] = star
+    # ---- E2 (nested-prefix identity), for the pairs the lazy ladder computed
+    e2 = {}
+    for s_hi, s_lo in ((12, 6), (16, 8)):
+        if f"{s_hi:g}" in ext and f"{s_lo:g}" in ladder:
+            hi = ext[f"{s_hi:g}"]["sectors"]["B=1"]["seeds"]
+            lo = ladder[f"{s_lo:g}"]["sectors"]["B=1"]["seeds"]
+            rows = {sd: {"rH_half_hi": hi[sd]["half"]["all"]["rH"], "rH_full_lo": lo[sd]["full"]["all"]["rH"],
+                         "abs_diff": abs(hi[sd]["half"]["all"]["rH"] - lo[sd]["full"]["all"]["rH"]),
+                         "shots_half_hi": hi[sd]["half"]["shots"], "shots_full_lo": lo[sd]["full"]["shots"],
+                         "B_all_equal": hi[sd]["half"]["B_all_size"] == lo[sd]["full"]["B_all_size"]} for sd in hi}
+            mx_hi = max(v["rH_half_hi"] for v in rows.values())
+            mx_lo = max(x["criteria"]["CV2"]["width_full"] for x in lo.values())
+            e2[f"{s_hi}N/2 vs {s_lo}N"] = {"per_seed": rows, "max_rH_half_hi": mx_hi, "width_full_max_lo": mx_lo,
+                                           "ok": bool(abs(mx_hi - mx_lo) <= TOL_E1)}
+        else:
+            e2[f"{s_hi}N/2 vs {s_lo}N"] = {"ok": None, "note": f"s = {s_hi} not evaluated (the lazy ladder stopped earlier)"}
+    out["e2"] = e2
+    out["nested_prefix_identity_ok"] = all(v["ok"] for v in e2.values() if v["ok"] is not None) and any(
+        v["ok"] is not None for v in e2.values())
+    out["e2_note"] = ("floor circuits are re-sized as ceil100(267 s), so 12N/2 gives them 1650 shots and 6N 1700: the two "
+                      "readings are on prefixes that differ by 50 shots on each of the 12 B=1 floor circuits; the identity "
+                      "is checked on the recorded values")
+    # ---- the plan the signed set would run (OD1 + OD4)
+    s_by_tb = {0: None, 2: s_star}
+    for s in (1,) + PHI_RESIZE:
+        ok0 = (all(ch["sectors"]["B=0"]["pass_1x"] for ch in chunks.values()) if s == 1
+               else (f"{s:g}" in ladder and ladder[f"{s:g}"]["sectors"]["B=0"]["ok_all_seeds"]))
+        if ok0:
+            s_by_tb[0] = s
+            break
+    final, plan1x = {}, {}
+    for sec, tb in SECTORS:
+        for c, v in nl[sec]["shots"].items():
+            plan1x[c] = int(v)
+            s = s_by_tb[tb]
+            if s is not None:
+                final[c] = int(v) if s == 1 else resized_shots(int(v), s)
+    proposed = {"s_by_sector": {_sec_of(tb): s for tb, s in s_by_tb.items()}, "complete": None not in s_by_tb.values()}
+    n_eq = {}
+    if proposed["complete"]:
+        for tb in (0, 2):
+            ids = [c for c in final if int(mans[c]["twoB"]) == tb]
+            n_eq[tb] = n_eq_of(sum(final[c] for c in ids), len(ids))
+        gpu, U = gpu_plan_r13(final, plan1x, s_by_tb, mans, n_eq)
+        k5 = k5_plan_r13(sectors, n_eq)
+        proposed.update({"shots_by_circuit": final, "shots_total": int(sum(final.values())),
+                         "by_sector": {_sec_of(tb): int(sum(v for c, v in final.items() if int(mans[c]["twoB"]) == tb))
+                                       for tb in (0, 2)},
+                         "N_eq_by_sector": {_sec_of(tb): v for tb, v in n_eq.items()}, "gpu": gpu, "k5": k5,
+                         "gpu_shots_total": int(sum(v["shots"] for v in gpu.values()) + sum(v["shots"] for v in k5.values())),
+                         "uniform_shots_by_sector": {_sec_of(tb): u for tb, u in U.items()},
+                         "gpu_rule": ("prompts/36a R13: L_c = max(2 N_final, 8 N_1x, N_eq, 6250) + U_c; prefixes = the "
+                                      "emulation ladder (s N_1x and s N_1x / 2 for s in the extended grid), phi N_final, "
+                                      "N_eq, 2 N_final, 2 N_eq where they fit; k = 5: max(N_eq, 6250), prefix N_eq")})
+    out["proposed"] = proposed
+    # ---- criteria and certificates at the proposed plan (A4 / A5 under OD1)
+    crit_p, cert_p = {}, {}
+    if proposed["complete"]:
+        for sd, ch in chunks.items():
+            for sec, tb in SECTORS:
+                s = s_by_tb[tb]
+                if s == 1:
+                    c = dict(crit1[sd][sec])
+                    pt = ch["sectors"][sec]["seed_result"]["curves"]["shots"][-1]
+                else:
+                    z = (ext[f"{s:g}"] if s in GRID_EXT_2X4 else ladder[f"{s:g}"])["sectors"][sec]["seeds"][sd]
+                    c = dict(z["criteria"])
+                    c["CV3"] = crit1[sd][sec]["CV3"]
+                    pt = z["full"]
+                crit_p.setdefault(sd, {})[sec] = c
+                a = pt["all"]
+                inside = a["E0_in_kt"] if sec == "B=0" else a["E0_in_weinstein"]
+                cert_p.setdefault(sd, {})[sec] = {
+                    "s": s, "shots": pt["shots"], "B_all_size": pt["B_all_size"], "recall_S999": a["recall_S999"],
+                    "E_R_minus_E0": a["err"], "W": a["W"], "type": CV2_TYPE[sec],
+                    "interval": a["kt_rigorous"] if sec == "B=0" else a["weinstein"], "E0_inside": bool(inside),
+                    "rH": a["rH"], "kt_width": a["kt_width"],
+                    "kt_exact_E1_information": {"interval": a["kt_rigorous"], "rigorous": a["E_R_below_E1"]},
+                    "ok": bool(a["recall_S999"] >= 0.9 and inside and a["err"] >= -TOL_VAR and a["W"] >= W_TARGET)}
+    out["criteria_by_seed_proposed"], out["certificates_proposed"] = crit_p, cert_p
+    # ---- CV3 readings (R11) and E3
+    cv3f = load_json(os.path.join(CV4_DIR, "cv3_final.json")) if os.path.exists(os.path.join(CV4_DIR, "cv3_final.json")) else {}
+    cv3 = {}
+    e3 = True
+    for sd, ch in chunks.items():
+        for sec, tb in SECTORS:
+            rs = ch["sectors"][sec]["seed_result"]
+            eq1, eq2 = rs["curves"]["krylov_equal"], rs["curves"]["krylov_equal_2x"]
+            b1 = dict(rs["criteria_1x"]["CV3"], bound=float(eq1[3]["all"]["err"]),
+                      N_eq_per_circuit=rs["N_eq_per_circuit"])
+            b2 = dict(rs["criteria_1x"].get("CV3_at_2Nc_information") or {}, bound=float(eq2[3]["all"]["err"]),
+                      N_eq_per_circuit=2 * rs["N_eq_per_circuit"])
+            row = {"at_1x": b1, "at_2N_eq_1x": b2}
+            if tb == 0 or s_star is None:
+                row["at_final"] = b1 if tb == 0 else None
+                row["at_2N_eq_final"] = b2 if tb == 0 else None
+            else:
+                f = (cv3f.get("seeds") or {}).get(sd)
+                row["at_final"] = f["at_final"] if f else None
+                row["at_2N_eq_final"] = f["at_2N_eq_final"] if f else None
+                row["replay_identical_final"] = f.get("replay_identical") if f else None
+            for k in ("at_1x", "at_2N_eq_1x", "at_final", "at_2N_eq_final"):
+                v = row.get(k)
+                if v and "dE_k4_k5" in v:
+                    v["E3_variational"] = bool(v["bound"] >= v["dE_k4_k5"] >= -TOL_VAR)
+                    e3 &= v["E3_variational"]
+            cv3.setdefault(sd, {})[sec] = row
+    out["cv3_readings"] = cv3
+    out["cv3_final_file"] = {k: v for k, v in cv3f.items() if k != "seeds"}
+    out["E3"] = bool(e3 and cv3)
+    out["cv3_final_ok"] = bool(cv3) and all((r["at_final"] or {}).get("ok") is True for d in cv3.values() for r in d.values())
+    # ---- cluster diagnostic, cost model
+    cp = os.path.join(CV4_DIR, "cluster_diag_B1.json")
+    out["cluster_diag"] = load_json(cp) if os.path.exists(cp) else None
+    out["gpu_cost_model"] = gpu_cost_model()
+    return out
+
+
+def bundles_corrected(a7):
+    """R12 (OD3): n_unitary_instructions == the slot-01 structured:source count of the sector for every k."""
+    import quantinuum_lattice_tests as QL
+    p01 = load_json(os.path.join(QL.PARTS_DIR, "QV_2x4_01.json"))
+    n_unit = {int(r["twoB"]): int(r["n_instructions"]) for r in p01["runs"]
+              if r["kind"] == "source" and r["source"] == "structured"}
+    idx = load_json(BUNDLE_INDEX_2X4)["irl0"]
+    bad = sorted(c for c, e in idx.items() if int(e["n_unitary_instructions"]) != n_unit[int(e["twoB"])])
+    ok = bool(not bad and len(idx) == 75)
+    # information: the count is the coarse-step body (k-independent) plus the reference preparation (x gates: 4 for the
+    # Dirac sea, 5 for the one-meson / diquark references), so it is per reference, not per sector
+    body = sorted({int(e["n_unitary_instructions"]) - int(e["ir_counts"].get("x", 0)) for e in idx.values()})
+    by_ref = {}
+    for e in idx.values():
+        by_ref.setdefault(f"2B={e['twoB']} ref {e['reference']}", set()).add(int(e["n_unitary_instructions"]))
+    return {"n_unit_by_twoB": {str(k): v for k, v in n_unit.items()},
+            "information_body_minus_prep_x": body, "information_body_constant": len(body) == 1,
+            "information_n_unitary_by_reference": {k: sorted(v) for k, v in by_ref.items()},
+            "n_unit_source": "ci/parts/QV_2x4_01.json runs[*.structured:source].n_instructions",
+            "rule_corrected": "n_unitary_instructions == n_unit[twoB] for every k = 1..5 (prompts/36a R12)",
+            "rule_corrected_holds": ok, "rule_corrected_failures": bad,
+            "ok_corrected": bool(ok and a7.get("within_cap") and a7.get("slot01_sources_ok") and a7.get("roundtrip_ok")
+                                 and not a7.get("missing_or_bad_sha"))}
+
+
+def write_owner_draft(D):
+    """3.6: the owner's sign-off draft, rendered from the record (never typed)."""
+    rp = D["replan_36a"]
+    st = rp["s_star_detail"]
+    cm = D["gpu_cost_model"]["fit"]
+    lines = ["# Owner decision DRAFT -- CV_2x4_plan (prompts/36a section 6)", "",
+             "Generated by `scripts/gate_CV.py --lattice 4 --stage assemble` from `validation/CV_2x4_plan.json`.  The owner "
+             "copies this file to `data/owner_decision_<YYYYMMDD>_2x4_cv_plan.md`, changes each line to SIGNED or STRUCK, "
+             "and commits it; nothing below is applied until then.", "",
+             "OD1: UNSIGNED", "",
+             "  Re-sizing grid of the noiseless GPU-sampled 2x4 plan extended to {12, 16, 24, 32} (STOP at 32; hardware "
+             "plans keep <= 8).  s_star_information = " + str(rp["s_star_information"]) + ((
+                 "; per seed r_H(sN/2) / r_H(sN): " + "; ".join(f"{sd} {fmt(v['rH_half'])} / {fmt(v['rH_full'])}"
+                                                                 for sd, v in st["per_seed"].items())
+                 + f"; B=1 shots at s*: {fmt(st['shots_total'])}") if st else ""), "",
+             "OD2: UNSIGNED", "",
+             "  CV3 read at the final plan's N_eq (1x, 2 N_eq and the variational bound stay on record).  B=1 per seed, "
+             "dE / E_tol at 1x and at the final N_eq: " + "; ".join(
+                 f"{sd} {fmt(d['B=1']['at_1x']['ratio'])} / "
+                 + (fmt(d['B=1']['at_final']['ratio']) if d['B=1'].get('at_final') else 'n/a')
+                 for sd, d in D["cv3"]["readings"].items()), "",
+             "OD3: UNSIGNED", "",
+             "  A7 corrected: n_instructions == the sector's coarse-step count for every k ("
+             + ", ".join(f"2B={k}: {v}" for k, v in D["bundles"]["n_unit_by_twoB"].items())
+             + f"); rule_corrected_holds = {D['bundles']['rule_corrected_holds']} (failures: "
+             f"{len(D['bundles']['rule_corrected_failures'])} bundles).  Information: the count is per reference "
+             f"({', '.join(f'{k}: {v}' for k, v in D['bundles']['information_n_unitary_by_reference'].items())}); the "
+             f"coarse-step body without the reference's x gates is {D['bundles']['information_body_minus_prep_x']} for all "
+             f"bundles -- the corrected rule needs the planner's wording before it is signed.", "",
+             "OD4: UNSIGNED", "",
+             f"  GPU shots per R13 and four slots 02-05 per R14 on the slot-01 cost model t = {fmt(cm['a_s'])} s + "
+             f"{fmt(cm['b_s_per_instruction'])} s x n_instructions (rms {fmt(cm['rms_s'])} s); provisional slots: "
+             + "; ".join(f"{s_} predicted {fmt((v.get('prediction') or {}).get('predicted_s'))} s, fits "
+                         f"{(v.get('prediction') or {}).get('fits')}" for s_, v in D["slots_provisional"].items()), ""]
+    with open(OD_DRAFT, "w") as fh:
+        fh.write("\n".join(lines) + "\n")
+    return rel(OD_DRAFT)
+
+
+def proposed_conditions(rp):
+    """The STOP conditions that would hold if OD1-OD4 were signed (information; [] = none)."""
+    c = []
+    if rp["s_star_information"] is None:
+        c.append("s = 32 still fails at B=1")
+    if not rp["cv3_final_ok"]:
+        c.append("CV3 > E_tol at the final N_eq")
+    if not rp["E3"]:
+        c.append("E3")
+    if not rp["e1"]["E1"]:
+        c.append("E1")
+    if not rp["gpu_cost_model"]["fit"]["rms_ok"]:
+        c.append("cost fit rms > 10 s")
+    return c
+
+
 def assemble_2x4(seeds=SEEDS, quick=False):
     """validation/CV_2x4_plan.json + reports/CV_2x4_plan.md (prompts/36 section 2.1, criteria A1-A9)."""
     import quantinuum_lattice_tests as QL
@@ -2179,6 +2888,7 @@ def assemble_2x4(seeds=SEEDS, quick=False):
     M, codec, _acc, sectors = sectors_L(4)
     mans = circuits_L(4)
     stops = []
+    od = owner_decision()                          # prompts/36a 3.6
     # ---- A1
     P = QL.Phys(4)
     phys = {sec: {"a_phys": P.sector[tb]["a"], "a_file": acc[sec]["fraction"], "source": P.sector[tb].get("a_source")}
@@ -2235,8 +2945,6 @@ def assemble_2x4(seeds=SEEDS, quick=False):
                                                 "k5_replay": rs["cv0"].get("k5_stream_replay_identical")}
             crit1.setdefault(sd, {})[sec] = rs["criteria_1x"]
     cv3_ok = bool(chunks) and all(c["ok"] for d in cv3_by_seed.values() for c in d.values())
-    if chunks and not cv3_ok:
-        stops.append("CV3 (k = 4 -> 5 at equal shots) > E_tol in the emulation (prompts/36 A4: STOP, family question)")
     cv0_ok = bool(chunks) and all(v["cv0"] and v["histogram"] and v["k5_replay"] for d in cv0_rows.values() for v in d.values())
     R.add("A4.0 CV0 structural (prompts/30): nested prefixes, E_R(B_all) non-increasing, E_R >= E0 - 1e-9, the sequence "
           "histogram = measure_and_decode, the k = 5 stream replay = cache",
@@ -2252,8 +2960,6 @@ def assemble_2x4(seeds=SEEDS, quick=False):
                 if all(rz["sectors"][sec]["ok_all_seeds"] for sec, _ in SECTORS):
                     s_final = s
                     break
-            if s_final is None:
-                stops.append("re-sizing to s = 8 still fails CV1/CV2/CV4/CV5 (prompts/31 fix (g))")
     final, crit_final, cert = {}, {}, {}
     if s_final is not None:
         for sec, _ in SECTORS:
@@ -2281,13 +2987,39 @@ def assemble_2x4(seeds=SEEDS, quick=False):
                     "rH": a["rH"], "kt_width": a["kt_width"],
                     "kt_exact_E1_information": {"interval": a["kt_rigorous"], "rigorous": a["E_R_below_E1"]},
                     "ok": bool(a["recall_S999"] >= 0.9 and inside and a["err"] >= -TOL_VAR and a["W"] >= W_TARGET)}
+    # ---- prompts/36a: the re-plan (information unless the owner signed OD1-OD4)
+    rp = replan_36a(chunks, ladder, seeds, quick, mans, sectors, nl, crit1, E_tol)
+    prop = rp["proposed"]
+    od1, od2, od3, od4 = (od[k] == "SIGNED" for k in OD_ITEMS)
+    if od1 and prop["complete"]:
+        s_final = dict(prop["s_by_sector"])
+        final = dict(prop["shots_by_circuit"])
+        crit_final, cert = rp["criteria_by_seed_proposed"], rp["certificates_proposed"]
+    elif complete and s_final is None and not od1:
+        stops.append("re-sizing to s = 8 still fails CV1/CV2/CV4/CV5 (prompts/31 fix (g))")
+    if od1 and not prop["complete"]:
+        stops.append("re-sizing to s = 32 still fails at B=1 (prompts/36a R10)")
+    cv3_read = "final" if od2 else "1x"
+    cv3_ok_read = rp["cv3_final_ok"] if od2 else cv3_ok
+    if chunks and not cv3_ok_read:
+        stops.append(f"CV3 (k = 4 -> 5 at equal shots) > E_tol in the emulation at the {cv3_read} reading (prompts/36 A4 / "
+                     f"36a R11: STOP, family question)")
+    if not rp["e1"]["E1"]:
+        stops.append("E1: the extended sequences do not reproduce the 8 N cache / the ladder (prompts/36a 3.1)")
+    if not rp["E3"]:
+        stops.append("E3: CV3 outside [-1e-9, its variational bound] (prompts/36a 3.3: a bug)")
+    if not rp["gpu_cost_model"]["fit"]["rms_ok"]:
+        stops.append("GPU cost fit rms > 10 s (prompts/36a section 4: the slots are re-cut by hand)")
     n_eq = {}
     for sec, tb in SECTORS:
         ids = sorted(c for c in final if int(mans[c]["twoB"]) == tb)
         if ids:
             n_eq[tb] = int(math.ceil(sum(final[c] for c in ids) / len(ids) / 100.0) * 100)
-    gpu, U = gpu_plan(final, mans, n_eq) if final else ({}, {})
-    k5 = k5_plan(sectors, n_eq) if final else {}
+    if od4 and od1 and prop["complete"]:
+        gpu, k5, U = prop["gpu"], prop["k5"], {0 if k == "B=0" else 2: v for k, v in prop["uniform_shots_by_sector"].items()}
+    else:
+        gpu, U = gpu_plan(final, mans, n_eq) if final else ({}, {})
+        k5 = k5_plan(sectors, n_eq) if final else {}
     final_ok = bool(s_final is not None and all(all(c[k]["ok"] for k in ("CV1", "CV2", "CV4", "CV5"))
                                                  for d in crit_final.values() for c in d.values()))
     R.add("A4 CV on the exact emulation (3 seeds, prefixes of 8 N samples at f = 1, p_ro = 0): the smallest s in {1, 1.5, "
@@ -2298,7 +3030,7 @@ def assemble_2x4(seeds=SEEDS, quick=False):
                    for sd, d in cv3_by_seed.items()},
            "final_shots_total": int(sum(final.values())) if final else None,
            "gpu_shots_total": int(sum(v["shots"] for v in gpu.values())) if gpu else None},
-          "s in grid; CV3 ok", bool(complete and final_ok and cv3_ok))
+          "s in grid; CV3 ok", bool(complete and final_ok and cv3_ok_read))
     # ---- A5
     a5 = bool(cert) and all(v["ok"] for d in cert.values() for v in d.values()) and complete
     R.add("A5 certificates at the final plan (every seed): recall S999 >= 0.9; E0 inside Kato-Temple (exact E1) at B=0 / "
@@ -2307,7 +3039,14 @@ def assemble_2x4(seeds=SEEDS, quick=False):
                 for sec, v in d.items()} for sd, d in cert.items()},
           ">= 0.9; inside; >= -1e-9; >= 0.99", a5)
     # ---- A6
-    a6 = a6_slots(gpu, k5, mans) if gpu else {"ok": False, "reason": "no final plan"}
+    if od4 and gpu:
+        a6 = a6_slots(gpu, k5, mans, slots=SLOTS_R14, r14=True)
+    else:
+        a6 = a6_slots(gpu, k5, mans) if gpu else {"ok": False, "reason": "no final plan"}
+    prov_dir = os.path.join(CV4_DIR, f"provisional_parts_s{rp['s_star_information']:g}") if rp["s_star_information"] else None
+    a6p = (a6_slots(prop["gpu"], prop["k5"], mans, slots=SLOTS_R14, parts_dir=prov_dir, r14=True)
+           if (prov_dir and prop["complete"] and os.path.isdir(prov_dir)) else {"ok": False, "slots": {},
+                                                                                  "reason": "no provisional parts"})
     R.add("A6 slot contents ci/parts/QV_2x4_02..07: plan shots, seeds chunk_seed(s0(token), circuit index, 0, shots), QPY "
           "gz sha256, n_instructions, predicted_s <= 2700 at the S2_2x4 rate (06 native / 07 may be withheld, R7); token "
           "indices unchanged; slot 01 byte-identical to 6b8f8fc",
@@ -2319,18 +3058,24 @@ def assemble_2x4(seeds=SEEDS, quick=False):
           "all ok", a6["ok"])
     # ---- A7
     a7 = a7_bundles(mans, {c: None for c in k5_ids_L(sectors)})
+    a7.update(bundles_corrected(a7))
+    a7["rule_as_written_holds"] = a7["n_instructions_rule_holds"]
+    a7["reading"] = "corrected (OD3 signed)" if od3 else "as written (OD3 unsigned)"
+    a7_ok = a7["ok_corrected"] if od3 else a7["ok"]
     R.add(f"A7 bundles: 75 IR-L0 qpy13 bundles (60 family + 15 k = 5) with gz sha256 and n_instructions in the index; "
           f"n_instructions == k x {IR_L0_PER_STEP} (as written in prompts/36 A7); the two slot-01 structured sources "
           f"byte- or gate-for-gate identical; total <= 60 MB; round trip on qiskit 1.4.3",
           {k: a7.get(k) for k in ("n_bundles", "total_bytes", "within_cap", "n_instructions_rule_holds",
                                   "n_unitary_instructions_by_k", "slot01_sources_ok", "roundtrip_ok", "reason")},
-          "all hold", a7["ok"])
+          "all hold", a7_ok)
     # ---- A8
     reg = load_json(REGRESSION_2X4) if os.path.exists(REGRESSION_2X4) else None
     dry = {}
-    for s_ in SLOTS_2X4:
+    for s_ in SLOTS_R14:                          # the slot contents of prompts/36a R14
         p = os.path.join(ROOT, "validation", "dryrun", s_ + ".json")
-        dry[s_] = load_json(p)["status"] if os.path.exists(p) else None
+        dj = load_json(p) if os.path.exists(p) else None
+        dry[s_] = None if dj is None else (dj["status"] if dj["data"].get("segments_cumulative_check") is True
+                                            else f"{dj['status']} (segments_cumulative_check missing)")
     unch = unchanged_files(REGRESSION_FILES, "HEAD")
     a8 = bool(reg and reg["pytest_coding"]["returncode"] == 0 and reg["pytest_qiskit143"]["returncode"] == 0
               and reg.get("pytest_venv", {}).get("returncode") == 0
@@ -2338,7 +3083,8 @@ def assemble_2x4(seeds=SEEDS, quick=False):
               and all(unch.values()) and all(reg["unchanged_vs_prompt36_commit"].values())
               and all(v == "PASS" for v in dry.values()))
     R.add("A8 regression: pytest (coding) and the 1.4.3 twin tests pass, check_package PACKAGE OK, Q0P_2x3 reproduced "
-          "criterion by criterion (in memory), the 2x3 / 2x2 records unchanged, dry runs QV_2x4_02..07 PASS",
+          "criterion by criterion (in memory), the 2x3 / 2x2 records unchanged, dry runs QV_2x4_02..05 (R14) PASS with "
+          "segments_cumulative_check",
           {"pytest_coding": _noansi((reg or {}).get("pytest_coding", {}).get("summary")),
            "pytest_venv": _noansi((reg or {}).get("pytest_venv", {}).get("summary")),
            "pytest_qiskit143": _noansi((reg or {}).get("pytest_qiskit143", {}).get("summary")),
@@ -2373,7 +3119,18 @@ def assemble_2x4(seeds=SEEDS, quick=False):
                                         "the first N_c^final shots are the plan point, the first 8 N_c^final the CV "
                                         "sequence, the last U_c the uniform 2e5-per-sector point; k = 5 runs: "
                                         "max(2 N_eq, 6250) shots, prefixes N_eq / 2 N_eq (prompts/36 R5, section 4)")}},
-        "cv3": {"ok": cv3_ok, "by_seed": cv3_by_seed},
+        "cv3": {"ok": cv3_ok_read, "ok_1x": cv3_ok, "ok_final": rp["cv3_final_ok"], "reading_point": cv3_read,
+                "by_seed": cv3_by_seed, "readings": rp["cv3_readings"], "E3": rp["E3"],
+                "final_file": rp["cv3_final_file"],
+                "bound_rule": "0 <= CV3 <= E_R(k <= 4; N_eq) - E0 (variational; prompts/36a 1.2)"},
+        "owner_decision": od, "replan_prompt": PROMPT_36A,
+        "replan_36a": {k: v for k, v in rp.items() if k not in ("ext_ladder", "cv3_readings", "cluster_diag",
+                                                                "gpu_cost_model")},
+        "resize_ladder_reproduced": rp["e1"]["resize_ladder_reproduced"], "E1": rp["e1"]["E1"],
+        "nested_prefix_identity_ok": rp["nested_prefix_identity_ok"], "E2": rp["e2"],
+        "s_star_information": rp["s_star_information"], "s_star_detail": rp["s_star_detail"],
+        "cluster_diag": rp["cluster_diag"], "gpu_cost_model": rp["gpu_cost_model"],
+        "slots_provisional": a6p.get("slots", {}), "slots_provisional_check": {k: v for k, v in a6p.items() if k != "slots"},
         "criteria_by_seed_1x": crit1, "criteria_by_seed_final": crit_final, "certificates": cert,
         "cv0_by_seed": cv0_rows, "E_tol_chunk_vs_stage_abs_diff": et_same,
         "resize_ladder": {s_: {sec: {"ok_all_seeds": v["sectors"][sec]["ok_all_seeds"],
@@ -2388,16 +3145,24 @@ def assemble_2x4(seeds=SEEDS, quick=False):
                                      "capped_circuits": sorted({c for x in v["sectors"][sec]["seeds"].values()
                                                                 for c in x["capped_circuits"]})}
                                for sec, _ in SECTORS}
-                          for s_, v in ladder.items()},
+                          for s_, v in ladder.items()} | {
+            s_: {"B=1": dict(_ladder_summary(v["sectors"]["B=1"]), beyond_signed_grid=True,
+                             extension_seed=v.get("extension_seed"))} for s_, v in rp["ext_ladder"].items()},
         "curves": {sd: {sec: ch["sectors"][sec]["seed_result"]["curves"] for sec, _ in SECTORS} for sd, ch in chunks.items()},
         "sampling": {sd: {sec: ch["sectors"][sec]["seed_result"]["sampling"] for sec, _ in SECTORS} for sd, ch in chunks.items()},
         "chunks": {sd: {"runtime_s": ch["runtime_s"], "random_baseline_sizes_evaluated": ch.get("random_baseline_sizes_evaluated"),
                         "k5_ids": {sec: ch["sectors"][sec]["k5_ids"] for sec, _ in SECTORS}} for sd, ch in chunks.items()},
-        "slots": (a6 or {}).get("slots", {}), "slots_check": {k: v for k, v in a6.items() if k != "slots"},
+        "slots": (a6p.get("slots") if not od4 else (a6 or {}).get("slots", {})),
+        "slots_ci_parts_as_written": (a6 or {}).get("slots", {}),
+        "slots_check": {k: v for k, v in a6.items() if k != "slots"},
         "bundles": a7, "regression": reg, "regression_unchanged_vs_HEAD": unch,
         "noisy_information": noisy,
         "stop": {"fired": bool(stops), "conditions": stops,
-                 "rule": "prompts/36 section 9: D3'-R infeasible, CV3 failure in the emulation, or re-sizing to 8 failing"},
+                 "conditions_under_proposed_rules": proposed_conditions(rp),
+                 "signed_set": {k: od[k] for k in OD_ITEMS},
+                 "rule": ("prompts/36 section 9 under the signed set (prompts/36a 3.6): D3'-R infeasible, CV3 failure at "
+                          "the signed reading point, re-sizing failing at the end of the signed grid (8, or 32 under OD1), "
+                          "E1 / E3 failure, cost fit rms > 10 s")},
         "constants": {"seeds": list(seeds), "phi": list(PHI), "grid": list(GRID_2X4), "sample_mult": SAMPLE_MULT,
                       "f_proxy": 1.0, "p_ro": 0.0, "width": WIDTH, "cv2_type": CV2_TYPE, "W_target": W_TARGET,
                       "k_next": K_NEXT, "floor": FLOOR_2X4, "round_to": ROUND_TO_2X4, "gpu_mult": GPU_MULT,
@@ -2406,6 +3171,9 @@ def assemble_2x4(seeds=SEEDS, quick=False):
                       "slot_budget_s": SLOT_BUDGET_S, "bundle_cap_bytes": BUNDLE_CAP_BYTES,
                       "mc_strings": MC_STRINGS_2X4, "mc_seed": MC_SEED_2X4},
         "completed": complete}
+    for sec in data["E_tol"]:
+        data["E_tol"][sec]["source"] = "stage etol"
+    data["owner_decision"]["draft_written"] = write_owner_draft(data)
     R.data = data
     R.runtime_s = sum(ch["runtime_s"] for ch in chunks.values()) + time.time() - t0
     path = R.save()
@@ -2417,6 +3185,74 @@ def assemble_2x4(seeds=SEEDS, quick=False):
     return 0 if R.passed else 1
 
 
+def report_36a(D):
+    """The prompts/36a tables (owner items first; every number from the record)."""
+    od = D["owner_decision"]
+    rp = D["replan_36a"]
+    L = ["## Owner items (prompts/36a section 6)", "",
+         md_table(["item", "state", "what changes"],
+                  [["OD1", od["OD1"], "re-sizing grid of the noiseless GPU plan extended to 12, 16, 24, 32"],
+                   ["OD2", od["OD2"], "CV3 read at the final plan's N_eq"],
+                   ["OD3", od["OD3"], "A7: n_instructions == the sector's coarse-step count for every k"],
+                   ["OD4", od["OD4"], "GPU shots R13 and the four slots 02-05 of R14"]]),
+         "", f"Decision file: {od.get('file') or 'none (all items UNSIGNED)'}; draft `{od.get('draft_written')}`.", "",
+         "## Re-plan checks E1-E3 (prompts/36a)", "",
+         f"E1 (the 32 N extension starts with the cached 8 N; the ladder s = 1.5..8 recomputed): prefix identical "
+         f"{rp['e1']['prefix_identical']}, ladder reproduced {rp['e1']['resize_ladder_reproduced']} (max abs diff "
+         f"{fmt(rp['e1']['max_abs_diff'])}).  E2 (nested-prefix identity): "
+         + "; ".join(f"{k}: {v.get('ok')}" + (f" ({fmt(v['max_rH_half_hi'])} vs {fmt(v['width_full_max_lo'])})"
+                                              if v.get("ok") is not None else f" ({v.get('note')})")
+                     for k, v in rp["e2"].items()) + f".  E3 (0 <= CV3 <= bound): {D['cv3']['E3']}.", "",
+         "## The B=1 ladder (CV2 width = Weinstein r_H)", "",
+         md_table(["s", "beyond signed grid", "shots", "all seeds pass", "max r_H(sN/2)", "max r_H(sN)", "|B_all| at sN"],
+                  [[s_, v["B=1"].get("beyond_signed_grid", False), fmt(v["B=1"]["shots_total"]), v["B=1"]["ok_all_seeds"],
+                    fmt(v["B=1"]["width_half_max"]), fmt(v["B=1"]["width_full_max"]),
+                    ", ".join(str(x) for x in v["B=1"]["B_all_full"])] for s_, v in D["resize_ladder"].items()]), "",
+         f"s_star_information = {D['s_star_information']}.", ""]
+    st = D.get("s_star_detail")
+    if st:
+        L += [md_table(["seed", "r_H(sN/2)", "r_H(sN)", "|B_all|(sN)", "E_R - E0", "W"],
+                       [[sd, fmt(v["rH_half"]), fmt(v["rH_full"]), v["B_all_full"], fmt(v["E_R_minus_E0_full"]),
+                         fmt(v["W_full"], 7)] for sd, v in st["per_seed"].items()]), ""]
+    L += ["## CV3 readings (dE = E_R(k <= 4) - E_R(k <= 5) at equal shots; bound = E_R(k <= 4) - E0)", "",
+          md_table(["seed", "sector", "point", "N_eq per circuit", "dE", "/ E_tol", "bound", "ok", "E3"],
+                   [[sd, sec, k, v.get("N_eq_per_circuit"), fmt(v.get("dE_k4_k5")), fmt(v.get("ratio")), fmt(v.get("bound")),
+                     v.get("ok"), v.get("E3_variational")]
+                    for sd, d in D["cv3"]["readings"].items() for sec, row in d.items()
+                    for k, v in row.items() if isinstance(v, dict) and "dE_k4_k5" in v]), "",
+          f"Reading point: {D['cv3']['reading_point']} (OD2 {od['OD2']}).", ""]
+    cd = D.get("cluster_diag")
+    if cd:
+        L += ["## Cluster diagnostic (B=1; information)", "",
+              f"D1: energies {', '.join(fmt(x, 10) for x in cd['D1']['energies'])} (match references.json to 1e-9: "
+              f"{cd['D1']['energies_match_1e-9']}); overlap rank {cd['D1']['rank_overlap_1e-12']}, amplitude rank "
+              f"{cd['D1']['rank_amplitudes_1e-12']}; cluster weight per reference "
+              f"{', '.join(fmt(x) for x in cd['D1']['cluster_weight_per_reference'])}.", "",
+              md_table(["seed", "|B|", "|B n O|", "W0(B)", "W0(O)", "W0(B \\ O)", "W1+W2+W3 (B \\ O)", "r_H(B)", "r_H(O)",
+                        "r_H(O) - oracle_b1.json"],
+                       [[sd, r["size_B"], r["size_B_and_O"], fmt(r["W0_B"], 7), fmt(r["W0_O"], 7), fmt(r["W0_B_minus_O"]),
+                         fmt(sum(r["Wj_B_minus_O"].values())), fmt(r["rH_B"]), fmt(r["rH_O"]),
+                         fmt(r["rH_O"] - r["rH_O_oracle_b1_json"]) if "rH_O_oracle_b1_json" in r else "n/a"]
+                        for sd, r in cd["D2"].items()]), "", cd["reading"] + ".", "", cd.get("oracle_order_note", ""), ""]
+    cm = D["gpu_cost_model"]
+    L += ["## GPU cost model (slot 01)", "",
+          f"Fit t = {fmt(cm['fit']['a_s'])} s + {fmt(cm['fit']['b_s_per_instruction'])} s x n_instructions, rms "
+          f"{fmt(cm['fit']['rms_s'])} s, max residual {fmt(cm['fit']['max_abs_residual_s'])} s over "
+          f"{len(cm['fit']['points'])} runs.", "",
+          md_table(["content", "circuits", "ratio of totals s", "S2_2x4 rate s", "fit s"],
+                   [[r["content"], r["circuits"], fmt(r["ratio_of_totals_s"]), fmt(r["S2_2x4_rate_s"]), fmt(r["fit_s"])]
+                    for r in cm["table"]]), "",
+          "## Slots under R14 (" + ("ci/parts" if od["OD4"] == "SIGNED" else "provisional, never requested") + ")", "",
+          md_table(["slot", "runs", "shots", "statevector s (fit / S2 / ratio)", "predicted s", "at 1e-3 s/shot", "fits"],
+                   [[s_, v.get("n_runs"), fmt((v.get("prediction") or {}).get("shots")),
+                     " / ".join(fmt((v.get("prediction") or {}).get("statevector_s", {}).get(k))
+                                for k in ("fit", "S2_2x4_rate", "ratio_of_totals")),
+                     fmt((v.get("prediction") or {}).get("predicted_s")),
+                     fmt((v.get("prediction") or {}).get("predicted_s_slow_sampling")),
+                     (v.get("prediction") or {}).get("fits")] for s_, v in D["slots_provisional"].items()]), ""]
+    return L
+
+
 def report_2x4(R, D):
     pl = D["plan"]
     fin = pl["final"]
@@ -2426,7 +3262,8 @@ def report_2x4(R, D):
          f"no number is typed by hand.  Prompt: {D['prompt']}.  Basis: **{D['basis']}**.  {env_block()}", "",
          f"What PASS means: {D['what_pass_means']}.", "",
          f"STOP fired: **{D['stop']['fired']}**" + (f" ({'; '.join(D['stop']['conditions'])})" if D["stop"]["fired"] else "")
-         + f".  Rule: {D['stop']['rule']}.", "",
+         + f".  Rule: {D['stop']['rule']}.  Conditions if OD1-OD4 were signed: "
+         + (", ".join(D["stop"]["conditions_under_proposed_rules"]) or "none") + ".", ""] + report_36a(D) + [
          "## Criteria", "", R.criteria_table(), "",
          "## A1 the decoder's random acceptance (exact, factorised; prompts/36 R2)", "",
          md_table(["sector", "accepted", "dimension", "equals dimension", "fraction", "flag", "link", "sector", "unknown",
@@ -2529,7 +3366,8 @@ def main():
                     help="4: the prompts/36 path (--stage acceptance | etol | plan | chunk --seed S | resize --s S | "
                          "regression | assemble)")
     ap.add_argument("--stage", default=None,
-                    choices=("acceptance", "etol", "plan", "chunk", "resize", "regression", "assemble"))
+                    choices=("acceptance", "etol", "plan", "chunk", "resize", "regression", "assemble",
+                             "extend", "ladder-ext", "cv3-final", "cluster"))
     ap.add_argument("--seed", type=int, default=None, help="--lattice 4 --stage chunk: the emulation seed")
     ap.add_argument("--s", type=float, default=None, help="--lattice 4 --stage resize: the re-sizing factor")
     ap.add_argument("--monte-carlo", type=int, default=MC_STRINGS_2X4, help="--stage acceptance: Monte-Carlo strings")
@@ -2552,6 +3390,21 @@ def main():
             s = a.s if a.s is None or a.s != int(a.s) else int(a.s)
             resize_2x4(s, list(a.seeds), quick=a.quick)
             return 0
+        if st == "extend":
+            return stage_extend_2x4(list(a.seeds), quick=a.quick)
+        if st == "ladder-ext":
+            print("s_star_information:", stage_ladder_ext_2x4(list(a.seeds), quick=a.quick))
+            return 0
+        if st == "cv3-final":
+            s_star = None
+            for s in GRID_EXT_2X4:
+                p = os.path.join(CV4_DIR, f"resize_s{s:g}.json")
+                if os.path.exists(p) and load_json(p)["sectors"]["B=1"]["ok_all_seeds"]:
+                    s_star = s
+                    break
+            return stage_cv3_final_2x4(s_star, list(a.seeds), quick=a.quick)
+        if st == "cluster":
+            return stage_cluster_2x4(list(a.seeds), quick=a.quick)
         if st == "regression":
             return stage_regression_2x4(a.part or "all")
         return assemble_2x4(list(a.seeds) if not a.quick else [SEEDS[0]], quick=a.quick)

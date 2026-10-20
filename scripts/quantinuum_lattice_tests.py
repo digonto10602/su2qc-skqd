@@ -1842,26 +1842,23 @@ SCHEMA_36 = "prompts/36"
 PROMPT_36_S4 = "prompts/36_2x4_full_pipeline.md section 4"
 CV_PLAN_2X4 = os.path.join(ROOT, "validation", "CV_2x4_plan.json")
 QV01_JSON = os.path.join(ROOT, "validation", "QV_2x4_01.json")
-SLOT_LAYOUT_2X4 = {      # prompts/36 R6
-    "QV_2x4_02": {"content": "SK-B1: the 16 B=1 circuits (refs 103, 110, 118, 230; k = 1..4), sampled",
-                  "family": {"twoB": 2, "refs": None}},
-    "QV_2x4_03": {"content": "SK-B0a: B=0 refs 102, 1338, 11026, 16833, 2086, 281 (24 circuits), sampled",
-                  "family": {"twoB": 0, "refs": (102, 1338, 11026, 16833, 2086, 281)}},
-    "QV_2x4_04": {"content": "SK-B0b: B=0 refs 3166, 345, 474, 682, 6930 (20 circuits), sampled",
-                  "family": {"twoB": 0, "refs": (3166, 345, 474, 682, 6930)}},
-    "QV_2x4_05": {"content": "CV3-B0: the 11 k = 5 B=0 circuits at the equal-shots sample (CV3)", "k5": 0},
-    "QV_2x4_06": {"content": "CV3-B1 + NAT-a: the 4 k = 5 B=1 circuits + native k = 1 of the frozen source, 6 of the 13 "
-                             "circuits slot 01 did not run", "k5": 2, "native": (0, 6)},
-    "QV_2x4_07": {"content": "NAT-b: native k = 1 of the frozen source, the remaining 7 circuits", "native": (6, 13)},
+SLOT_LAYOUT_2X4 = {      # prompts/36a R14 (replaces prompts/36 R6; slots 06-08 are reserve)
+    "QV_2x4_02": {"content": "SK-B1 + CV3-B1: the 16 B=1 family circuits + the 4 B=1 k = 5 circuits, sampled",
+                  "family": {"twoB": 2, "refs": None}, "k5": True},
+    "QV_2x4_03": {"content": "SK-B0a: B=0 refs 102, 1338, 11026, 16833, 2086, 281 (k = 1..4) + their 6 k = 5, sampled",
+                  "family": {"twoB": 0, "refs": (102, 1338, 11026, 16833, 2086, 281)}, "k5": True},
+    "QV_2x4_04": {"content": "SK-B0b: B=0 refs 3166, 345, 474, 682, 6930 (k = 1..4) + their 5 k = 5, sampled",
+                  "family": {"twoB": 0, "refs": (3166, 345, 474, 682, 6930)}, "k5": True},
+    "QV_2x4_05": {"content": "NAT: the 13 native structured k = 1 circuits slot 01 did not run (frozen source, R7)",
+                  "native": (0, 13)},
 }
-LOAD_S_PER_CIRCUIT_ASSUMED = 4.1      # slot 01's measured load_s 36.95 s over 9 runs (validation/QV_2x4_01.json)
-SAMPLE_S_PER_SHOT_ASSUMED = 1e-4      # prompts/36 R6 (to be measured by the first sampling slot)
+RESERVE_SLOTS = ("QV_2x4_06", "QV_2x4_07", "QV_2x4_08")
 DRY_PLAN_SHOTS = 267                  # the dry runs' plan point at 2x2 (the D3'-R floor)
 
 
 def native_runs_2x4():
-    """R7: (status, [native runs]) for slots 06/07 from validation/QV_2x4_01.json -- written only when that file exists
-    with stop == false and a frozen source; the native QPY bundles come from --tier export (pytket venv)."""
+    """R7: (status, [native runs]) for the native slot from validation/QV_2x4_01.json -- written only when that file
+    exists with stop == false and a frozen source; the native QPY bundles come from --tier export (pytket venv)."""
     if not os.path.exists(QV01_JSON):
         return "withheld (R7): validation/QV_2x4_01.json not harvested", []
     d = load_json(QV01_JSON)["data"]
@@ -1889,66 +1886,42 @@ def native_runs_2x4():
     return f"ready: frozen source {src} (validation/QV_2x4_01.json, stop false)", runs
 
 
-def predict_slot(runs, spi):
-    sv = spi * sum(int(r["n_instructions"]) for r in runs)
-    load = LOAD_S_PER_CIRCUIT_ASSUMED * len(runs)
-    samp = SAMPLE_S_PER_SHOT_ASSUMED * sum(int(r.get("shots", 0)) for r in runs)
-    return {"statevector_s": sv, "load_s_assumed": load, "sampling_s_assumed": samp, "predicted_s": sv + load + samp}
-
-
-def provisional_plan_2x4(CV, s):
-    """(gpu, k5) of the plan D3'-R x s (s = 1: the plan itself), the R5 rule -- information when CV_2x4_plan STOPs."""
-    nl = CV._stage_file("plan.json")["noiseless"]
-    mans = CV.circuits_L(4)
-    final = {}
-    for sec in ("B=0", "B=1"):
-        for c, v in nl[sec]["shots"].items():
-            final[c] = int(v) if s == 1 else CV.resized_shots(int(v), s)
-    n_eq = {}
-    for tb in (0, 2):
-        ids = [c for c in final if int(mans[c]["twoB"]) == tb]
-        n_eq[tb] = int(math.ceil(sum(final[c] for c in ids) / len(ids) / 100.0) * 100)
-    gpu, _U = CV.gpu_plan(final, mans, n_eq)
-    _M, _codec, _acc, sectors = CV.sectors_L(4)
-    return gpu, CV.k5_plan(sectors, n_eq)
-
-
 def tier_slots_2x4(args):
-    """prompts/36 section 4: ci/parts/QV_2x4_02..07.json from validation/CV_2x4_plan.json data.plan.final and the irl0
-    bundle index (A6).  predicted_s at the S2_2x4 s_per_instruction (A6 as written) plus the load / sampling overheads;
-    the same prediction at slot 01's measured s_per_instruction is recorded beside it (information)."""
+    """prompts/36a R13 / R14 / 3.7: the four slot contents 02..05 from validation/CV_2x4_plan.json -- data.plan.final when
+    the owner signed OD1 and OD4 (-> ci/parts/QV_2x4_02..05.json, 06-08 marked reserve), otherwise the proposed plan
+    data.replan_36a.proposed (-> data/cv/2x4/provisional_parts_s<s*>/, status PROVISIONAL, never requested).
+    `prediction` = gate_CV.slot_prediction (the three statevector models + load + compare + sampling)."""
+    import gate_CV as CV
     from skqd.campaign33 import tokens as T
     t0 = time.time()
-    out_dir, prov = PARTS_DIR, None
-    if args.provisional_s is not None:            # information only: the parts a plan at s would give (never requested)
-        import gate_CV as CV
-        prov = float(args.provisional_s)
-        prov = int(prov) if prov == int(prov) else prov
-        gpu, k5 = provisional_plan_2x4(CV, prov)
-        out_dir = os.path.join(CV.CV4_DIR, f"provisional_parts_s{prov:g}")
-        os.makedirs(out_dir, exist_ok=True)
+    D = load_json(CV_PLAN_2X4)["data"]
+    od = D.get("owner_decision") or {}
+    signed = od.get("OD1") == "SIGNED" and od.get("OD4") == "SIGNED"
+    prop = D["replan_36a"]["proposed"]
+    if not prop.get("complete"):
+        raise SystemExit("STOP: no proposed plan (s = 32 fails at B=1 or B=0 has no passing s): no slot is written")
+    gpu, k5 = prop["gpu"], prop["k5"]
+    s_star = D["s_star_information"]
+    if signed:
+        out_dir, status0 = PARTS_DIR, "ready"
     else:
-        fin = load_json(CV_PLAN_2X4)["data"]["plan"]["final"]
-        if fin.get("resized_by") is None or not fin.get("gpu"):
-            raise SystemExit("STOP: validation/CV_2x4_plan.json has no final plan (data.plan.final.resized_by is None: "
-                             "prompts/36 section 9); ci/parts/QV_2x4_02..07.json are not written.  --provisional-s S writes "
-                             "the parts of a plan at S to data/cv/2x4/provisional_parts_s<S>/ for information")
-        gpu, k5 = fin["gpu"], fin["cv3_at_equal_shots"]
+        out_dir = os.path.join(CV.CV4_DIR, f"provisional_parts_s{s_star:g}")
+        status0 = ("PROVISIONAL: owner items OD1-OD4 unsigned (data/owner_decision_2x4_cv_plan_DRAFT.md); information "
+                   "only, never requested")
+    os.makedirs(out_dir, exist_ok=True)
     irl0 = load_json(os.path.join(qpy_dir(4), "index.json"))["irl0"]
-    spi = s_per_instruction()
-    spi01 = (load_json(QV01_JSON)["data"]["run"]["s_per_instruction"] if os.path.exists(QV01_JSON) else None)
+    cost = D["gpu_cost_model"]
     toks = T.load_tokens()
     nat_status, nat_runs = native_runs_2x4()
     written = {}
     for slot, lay in SLOT_LAYOUT_2X4.items():
         s0 = T.base_seed(slot, toks)
-        runs = []
-        sel = []
+        runs, sel = [], []
         if "family" in lay:
             f = lay["family"]
-            sel = [c for c in gpu if irl0[c]["twoB"] == f["twoB"] and (f["refs"] is None or irl0[c]["reference"] in f["refs"])]
-        if "k5" in lay:
-            sel += [c for c in k5 if int(k5[c]["twoB"]) == lay["k5"]]
+            fam = [c for c in gpu if irl0[c]["twoB"] == f["twoB"] and (f["refs"] is None or irl0[c]["reference"] in f["refs"])]
+            refs = {irl0[c]["reference"] for c in fam}
+            sel = fam + [c for c in k5 if int(k5[c]["twoB"]) == f["twoB"] and int(k5[c]["reference"]) in refs]
         for c in sorted(sel, key=lambda c: irl0[c]["circuit_index"]):
             e = irl0[c]
             w = gpu.get(c) or k5[c]
@@ -1956,50 +1929,46 @@ def tier_slots_2x4(args):
                          "gz_sha256": e["gz_sha256"], "n_instructions": int(e["n_instructions"]), "twoB": int(e["twoB"]),
                          "reference": int(e["reference"]), "k": int(e["k"]), "dt": float(e["dt"]),
                          "shots": int(w["shots"]), "plan_shots": int(w["plan_shots"]),
-                         "prefix_lengths": [int(x) for x in w["prefix_lengths"]], "uniform_shots": int(w["uniform_shots"]),
+                         "prefix_lengths": [int(x) for x in w["prefix_lengths"]],
+                         "prefix_lengths_dropped": [int(x) for x in w.get("prefix_lengths_dropped", [])],
+                         "uniform_shots": int(w["uniform_shots"]),
                          "seed": T.chunk_seed(s0, int(e["circuit_index"]), 0, int(w["shots"])),
                          "circuit_index": int(e["circuit_index"])})
-        status, native_status = "ready", None
+        status, native_status = status0, None
         if "native" in lay:
             a, b = lay["native"]
             native_status = nat_status
-            if nat_runs:
-                runs += nat_runs[a:b]
-            elif not runs:
-                status = nat_status if nat_status.startswith("withheld") else f"withheld: {nat_status}"
-            else:
-                status = f"ready (sampling runs); native part {nat_status}"
-        pred = predict_slot(runs, spi)
-        part = {"slot": slot, "schema": SCHEMA_36, "prompt": PROMPT_36_S4, "lattice": "2x4", "content": lay["content"],
-                "family": "IR-L0", "plan_source": "validation/CV_2x4_plan.json data.plan.final", "status": status,
-                "native_status": native_status, "runs": runs, "pairs": [],
-                "prediction": {"s_per_instruction": spi, "source": S_PER_INSTRUCTION_SRC, **pred,
-                               "budget_s": SLOT_SHARE * SLOT_WALL_S, "fits": pred["predicted_s"] <= SLOT_SHARE * SLOT_WALL_S,
-                               "overheads": (f"load {LOAD_S_PER_CIRCUIT_ASSUMED} s per circuit (slot 01: 36.95 s / 9 runs), "
-                                             f"sampling {SAMPLE_S_PER_SHOT_ASSUMED} s per shot (assumed, prompts/36 R6)"),
-                               "information_at_slot01_measured_rate": (
-                                   None if spi01 is None else {"s_per_instruction": spi01,
-                                                               "source": "validation/QV_2x4_01.json data.run.s_per_instruction",
-                                                               **predict_slot(runs, spi01)})},
-                "seed_rule": T.SEED_RULE, "s0": s0, "token_index": T.token_index(slot, toks),
+            runs += nat_runs[a:b]
+            if not nat_runs:
+                status = nat_status
+        pred = CV.slot_prediction(runs, cost)
+        part = {"slot": slot, "schema": SCHEMA_36, "prompt": "prompts/36a_CV_2x4_plan_fix_20261019.md R13 / R14",
+                "lattice": "2x4", "content": lay["content"], "family": "IR-L0" if "family" in lay else "native",
+                "plan_source": ("validation/CV_2x4_plan.json data.plan.final" if signed
+                                else "validation/CV_2x4_plan.json data.replan_36a.proposed (unsigned)"),
+                "s_by_sector": prop["s_by_sector"], "status": status, "native_status": native_status, "runs": runs,
+                "pairs": [], "prediction": pred, "seed_rule": T.SEED_RULE, "s0": s0, "token_index": T.token_index(slot, toks),
                 "created": now(), "git_commit": git_commit_short()}
-        if prov is not None:
-            part["status"] = (f"PROVISIONAL (s = {prov:g}): validation/CV_2x4_plan.json STOPPED (no final plan); "
-                              f"information only, never requested; was: {part['status']}")
-            part["plan_source"] = f"data/cv/2x4/plan.json x s = {prov:g} (gate_CV.resized_shots), provisional"
         with open(os.path.join(out_dir, slot + ".json"), "w") as fh:
             json.dump(part, fh, indent=1)
-        written[slot] = {"runs": len(runs), "predicted_s": round(pred["predicted_s"], 1), "status": status}
-    print(json.dumps(written, indent=1), f"({time.time() - t0:.0f} s)")
+        written[slot] = {"runs": len(runs), "shots": pred["shots"], "predicted_s": round(pred["predicted_s"], 1),
+                         "slow": round(pred["predicted_s_slow_sampling"], 1), "fits": pred["fits"]}
+    if signed:
+        for slot in RESERVE_SLOTS:
+            with open(os.path.join(PARTS_DIR, slot + ".json"), "w") as fh:
+                json.dump({"slot": slot, "schema": SCHEMA_36, "prompt": "prompts/36a R14", "runs": [], "pairs": [],
+                           "status": "reserve (re-runs); no content"}, fh, indent=1)
+    print(rel(out_dir), json.dumps(written, indent=1), f"({time.time() - t0:.0f} s)")
     return 0
 
 
 # ---- the dry runs (laptop CPU, 2x2): the same JSON structure
 def dry_part_36(slot):
-    """The 2x2 analogue of slot `slot`: B=1 circuits (02), the first / second half of the B=0 references (03 / 04), the
-    k = 5 circuits of B=0 (05) and B=1 (06), the 2x2 natives of dry_part_2x2 (06 tail, 07).  Plan point 267 per
-    circuit; the GPU rule of prompts/36 R5 for the shots; bundles dumped to results/qv_2x4/dryrun/qpy and loaded back
-    with their sha256 (the CI path)."""
+    """The 2x2 analogue of slot `slot` under R14: the B=1 family + its k = 5 (02), the first / second half of the B=0
+    references + their k = 5 (03 / 04), the 2x2 natives of dry_part_2x2 (05).  Plan point 267 per circuit at s = 1; the
+    R13 shot rule (gate_CV.gpu_plan_r13 / k5_plan_r13); bundles dumped to results/qv_2x4/dryrun/qpy and loaded back with
+    their sha256 (the CI path)."""
+    import gate_CV as CV
     from gate_S2D import circuit_set
     from quantinuum_build_circuits import circuit_id
     from skqd.campaign33 import tokens as T
@@ -2013,41 +1982,42 @@ def dry_part_36(slot):
         for r in references(M.basis, tb):
             fam.append((f"B{tb // 2}_ref{int(r):02d}_k5", tb, int(r), 5, F.coarse_step(int(r), 5, dts[tb])))
     ci = {f[0]: i for i, f in enumerate(fam)}
-    n_by_tb = {tb: sum(1 for f in fam if f[1] == tb and f[3] <= 4) for tb in (0, 2)}
     lay = SLOT_LAYOUT_2X4[slot]
-    sel = []
+    s0 = T.base_seed(slot)
+    runs = []
     if "family" in lay:
         tb = lay["family"]["twoB"]
         refs = sorted({f[2] for f in fam if f[1] == tb and f[3] <= 4})
         if lay["family"]["refs"] is not None:
             refs = refs[: (len(refs) + 1) // 2] if slot == "QV_2x4_03" else refs[(len(refs) + 1) // 2:]
-        sel = [f for f in fam if f[1] == tb and f[2] in refs and f[3] <= 4]
-    if "k5" in lay:
-        sel += [f for f in fam if f[1] == lay["k5"] and f[3] == 5]
-    s0 = T.base_seed(slot)
-    out_dir = os.path.join(ROOT, "results", "qv_2x4", "dryrun", "qpy")
-    runs = []
-    n_eq = {tb: int(math.ceil(DRY_PLAN_SHOTS / 100.0) * 100) for tb in (0, 2)}
-    for cid, tb, r, k, gates in sel:
-        qc = cq.ir_to_qiskit(gates, 12, measure=True)
-        path = os.path.join(out_dir, cid + ".irl0.qpy.gz")
-        rec = dump_qpy13(qc, path)
-        if k <= 4:
-            N = DRY_PLAN_SHOTS
-            cv = max(8 * N, 6250)
-            U = int(math.ceil(200_000 / n_by_tb[tb]))
-            pref = sorted({int(math.floor(phi * N + 0.5)) for phi in (1 / 16, 1 / 8, 1 / 4, 1 / 2, 1.0)}
-                          | {8 * N, n_eq[tb], 2 * n_eq[tb]})
-            sh, plan, uni = cv + U, N, U
-        else:
-            sh, plan, uni, pref = max(2 * n_eq[tb], 6250), n_eq[tb], 0, [n_eq[tb], 2 * n_eq[tb]]
-        runs.append({"label": f"{cid}:irl0:sample", "base_id": cid, "kind": "sample", "qpy": rel(path),
-                     "gz_sha256": rec["gz_sha256"], "n_instructions": len(qc.data), "twoB": tb, "reference": r, "k": k,
-                     "dt": dts[tb], "shots": sh, "plan_shots": plan, "prefix_lengths": pref, "uniform_shots": uni,
-                     "seed": T.chunk_seed(s0, ci[cid], 0, sh), "circuit_index": ci[cid]})
+        sel = [f for f in fam if f[1] == tb and f[2] in refs]
+        mans = {f[0]: {"twoB": f[1]} for f in fam if f[3] <= 4}
+        final = {f[0]: DRY_PLAN_SHOTS for f in fam if f[3] <= 4}
+        n_eq = {t: CV.n_eq_of(sum(v for c, v in final.items() if mans[c]["twoB"] == t),
+                              sum(1 for c in final if mans[c]["twoB"] == t)) for t in (0, 2)}
+        gpu, _U = CV.gpu_plan_r13(final, final, {0: 1, 2: 1}, mans, n_eq)
+        out_dir = os.path.join(ROOT, "results", "qv_2x4", "dryrun", "qpy")
+        for cid, t, r, k, gates in sel:
+            qc = cq.ir_to_qiskit(gates, 12, measure=True)
+            path = os.path.join(out_dir, cid + ".irl0.qpy.gz")
+            rec = dump_qpy13(qc, path)
+            if k <= 4:
+                w = gpu[cid]
+            else:
+                ne = n_eq[t]
+                L = max(ne, CV.GPU_MIN_SHOTS)
+                w = {"shots": L, "plan_shots": ne, "prefix_lengths": sorted(x for x in {ne, 2 * ne} if x <= L),
+                     "prefix_lengths_dropped": sorted(x for x in {2 * ne} if x > L), "uniform_shots": 0}
+            runs.append({"label": f"{cid}:irl0:sample", "base_id": cid, "kind": "sample", "qpy": rel(path),
+                         "gz_sha256": rec["gz_sha256"], "n_instructions": len(qc.data), "twoB": t, "reference": r, "k": k,
+                         "dt": dts[t], "shots": int(w["shots"]), "plan_shots": int(w["plan_shots"]),
+                         "prefix_lengths": [int(x) for x in w["prefix_lengths"]],
+                         "prefix_lengths_dropped": [int(x) for x in w.get("prefix_lengths_dropped", [])],
+                         "uniform_shots": int(w["uniform_shots"]),
+                         "seed": T.chunk_seed(s0, ci[cid], 0, int(w["shots"])), "circuit_index": ci[cid]})
     if "native" in lay:
         p2, _g, _m = dry_part_2x2()
-        runs += [dict(r, label=r["label"], dry_native=True) for r in p2["runs"] if r["kind"] == "native"]
+        runs += [dict(r, dry_native=True) for r in p2["runs"] if r["kind"] == "native"]
     return {"slot": slot, "schema": SCHEMA_36, "content": "DRY RUN (2x2) of: " + lay["content"], "runs": runs,
             "pairs": [], "status": "ready", "prediction": None, "s0": s0, "dry_plan_shots": DRY_PLAN_SHOTS}
 
@@ -2105,6 +2075,21 @@ def segments_of(seq, run):
         out.append({"start": int(a), "shots": int(z - a), "counts": {str(int(k)): int(v) for k, v in zip(u, c)},
                     "uniform": bool(a >= n - int(run.get("uniform_shots", 0)) and int(run.get("uniform_shots", 0)) > 0)})
     return out
+
+
+def segments_cumulative_check(segments, seq, run):
+    """True iff, for every prefix length L of the run, the counts rebuilt from the segments ending at or before L equal
+    np.unique of the first L outcomes."""
+    for L in run.get("prefix_lengths", []):
+        tot = {}
+        for sg in segments:
+            if sg["start"] + sg["shots"] <= int(L):
+                for k, v in sg["counts"].items():
+                    tot[int(k)] = tot.get(int(k), 0) + int(v)
+        u, c = np.unique(seq[: int(L)], return_counts=True)
+        if tot != {int(a): int(b) for a, b in zip(u, c)}:
+            return False
+    return True
 
 
 def gpu_verify_36(args, slot, dry, device, avail, ci, t0):
@@ -2215,6 +2200,8 @@ def gpu_verify_36(args, slot, dry, device, avail, ci, t0):
         rec["plan_shots"], rec["prefix_lengths"], rec["uniform_shots"] = r["plan_shots"], r["prefix_lengths"], r["uniform_shots"]
         rec["seed"], rec["circuit_index"], rec["aer_calls"] = int(r["seed"]), int(r["circuit_index"]), calls
         rec["segments"] = segments_of(seq, r)
+        rec["prefix_lengths_dropped"] = r.get("prefix_lengths_dropped", [])
+        rec["segments_cumulative_check"] = segments_cumulative_check(rec["segments"], seq, r)
         rec["n_distinct"] = len(counts)
         rec["seconds_per_shot"] = (float(md["sample_measure_time"]) / len(seq)
                                    if md.get("sample_measure_time") is not None else None)
@@ -2265,6 +2252,9 @@ def gpu_verify_36(args, slot, dry, device, avail, ci, t0):
            "rejected": sum(v["rejected"] for v in samples)}, "0; 0; 0", k2)
     R.add("K3 decoder round trip: every accepted state re-encodes to its string (0 mismatches)",
           sum(v["roundtrip"]["mismatches"] for v in samples), "0", all(v["roundtrip"]["mismatches"] == 0 for v in samples))
+    seg_ok = all(v["segments_cumulative_check"] for v in samples)
+    R.add("K0 the prefix segments rebuild the counts of the first L outcomes at every prefix L (prompts/36a R15 (iii))",
+          {v["label"]: v["segments_cumulative_check"] for v in samples}, "all true", seg_ok)
     R.add("M measure_sampling true on every sampled run (Aer metadata; false would re-simulate per shot: STOP the design)",
           {v["label"]: v["measure_sampling"] for v in samples}, "all true", all(v["measure_sampling"] for v in samples))
     if natives:
@@ -2296,6 +2286,8 @@ def gpu_verify_36(args, slot, dry, device, avail, ci, t0):
               "qpu_seconds": 0, "hqc": 0, "per_run": per, "run": run, "s0": s0,
               "part": {k: v for k, v in part.items() if k != "runs"},
               "stop": {"K1": not k1, "measure_sampling": not all(v["measure_sampling"] for v in samples)},
+              "segments_cumulative_check": bool(seg_ok),
+              "prefix_lengths_dropped": {v["label"]: v["prefix_lengths_dropped"] for v in samples},
               "segments_rule": ("per run, `segments` tile [0, shots) in shot order with boundaries at every prefix length, "
                                 "at shots - uniform_shots and at shots; counts at a prefix L = the sum of the segments that "
                                 "end at or before L; the last `uniform_shots` are the uniform 2e5-per-sector block")}
@@ -2307,7 +2299,7 @@ def gpu_verify_36(args, slot, dry, device, avail, ci, t0):
                          f"`validation/{gate}.json`.\n\n" + R.criteria_table() + "\n")
 
 
-SKQD_SLOTS = ("QV_2x4_02", "QV_2x4_03", "QV_2x4_04", "QV_2x4_05", "QV_2x4_06")
+SKQD_SLOTS = ("QV_2x4_02", "QV_2x4_03", "QV_2x4_04")      # prompts/36a R14: the k = 5 runs ride with their sector
 
 
 def _decoded_chunks(P, runs, tb, with_uniform=False):
@@ -2594,9 +2586,6 @@ def main(argv=None):
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--slot", type=int, default=None, help="--tier gpu-verify: the slot NN of token QV_2x4_NN (prompts/35b)")
-    ap.add_argument("--provisional-s", type=float, default=None,
-                    help="--tier slots-2x4: write the parts of the plan D3'-R x S to data/cv/2x4/provisional_parts_s<S>/ "
-                         "(information when CV_2x4_plan has no final plan)")
     ap.add_argument("--note", default=None, help="the reason recorded with an explicit --shots (hugr tier)")
     args = ap.parse_args(argv)
     if args.tier == "export":
