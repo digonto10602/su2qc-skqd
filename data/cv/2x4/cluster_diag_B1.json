@@ -94,7 +94,8 @@
    "E_R_minus_E0_B": 0.0018057663345070196,
    "E_R_minus_E0_O": 0.000404760317215036,
    "rH_O_oracle_b1_json": 0.06730344985366547,
-   "oracle_rH_reproduced_1e-9": true
+   "rH_O_vs_scratch_abs_diff": 3.191891195797325e-16,
+   "scratch_rH_reproduced_1e-5": true
   },
   "1": {
    "size_B": 1538,
@@ -117,7 +118,8 @@
    "E_R_minus_E0_B": 0.001846709103789479,
    "E_R_minus_E0_O": 0.00043749691741812313,
    "rH_O_oracle_b1_json": 0.0696444818797093,
-   "oracle_rH_reproduced_1e-9": false
+   "rH_O_vs_scratch_abs_diff": 1.6666260431452695e-07,
+   "scratch_rH_reproduced_1e-5": true
   },
   "2": {
    "size_B": 1560,
@@ -140,7 +142,8 @@
    "E_R_minus_E0_B": 0.002091745596604966,
    "E_R_minus_E0_O": 0.0004206770638708335,
    "rH_O_oracle_b1_json": 0.06841954232948359,
-   "oracle_rH_reproduced_1e-9": true
+   "rH_O_vs_scratch_abs_diff": 1.27675647831893e-15,
+   "scratch_rH_reproduced_1e-5": true
   }
  },
  "oracle_order_note": "O is ordered by the gate's ground state (BLAS one thread: identical in repeated gate processes, checked 2026-10-19).  scratch/executor36/oracle_b1.py ran with a 4-thread BLAS pool, and the top-|B| boundary of O cuts groups of near-equal weights whose order depends on the round-off of the reference eigensolve; multi-thread reductions are not bit-reproducible, so the scratch values are reproduced to 1e-9 only where the boundary does not cut such a group (scratch/executor36/oracle_threads.py: a 4-thread run reproduced 1583 / 1538 to 1e-15, a later 4-thread child process did not).  The r_H(O) differences are recorded per seed; they do not touch any criterion (D2 is information)",
@@ -150,5 +153,6 @@
  "basis": "B_all(8 N) u refs per seed; O = refs u the oracle top-|B| of psi_0 weight (controls.oracle on the sector reference's ground state)",
  "runtime_s": 84.27414345741272,
  "oracle_reference": "scratch/executor36/oracle_b1.json",
- "oracle_rH_reproduced_1e-9": false
+ "scratch_rH_reproduced_1e-5": true,
+ "scratch_check_rule": "prompts/36a addendum A2: |r_H(O) - scratch| <= 1e-5 per seed, information only (never a pass criterion); the gate-internal one-thread reproducibility (O_equals_one_thread_O) is the real check"
 }

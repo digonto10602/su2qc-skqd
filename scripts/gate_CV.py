@@ -2212,7 +2212,8 @@ def cluster_diag(S, seeds_B, n_states=4, oracle_ref=None, oracle_prob=None, orac
                "E_R_minus_E0_O": float(ro.ER - S.E0)}
         if oracle_ref is not None and str(n) in oracle_ref:
             row["rH_O_oracle_b1_json"] = float(oracle_ref[str(n)]["rH"])
-            row["oracle_rH_reproduced_1e-9"] = bool(abs(row["rH_O"] - row["rH_O_oracle_b1_json"]) <= 1e-9)
+            row["rH_O_vs_scratch_abs_diff"] = abs(row["rH_O"] - row["rH_O_oracle_b1_json"])
+            row["scratch_rH_reproduced_1e-5"] = bool(row["rH_O_vs_scratch_abs_diff"] <= 1e-5)
         d2[name] = row
     return {"D1": d1, "D2": d2}
 
@@ -2257,8 +2258,8 @@ def stage_cluster_2x4(seeds=SEEDS, quick=False):
     out.update({"prompt": PROMPT_36A, "sector": "B=1", "basis": "B_all(8 N) u refs per seed; O = refs u the oracle top-|B| "
                 "of psi_0 weight (controls.oracle on the sector reference's ground state)", "runtime_s": time.time() - t0,
                 "oracle_reference": rel(orc) if oref else None,
-                "oracle_rH_reproduced_1e-9": (all(r.get("oracle_rH_reproduced_1e-9", False) for r in rows.values())
-                                              if oref else None)})
+                "scratch_rH_reproduced_1e-5": (all(r.get("scratch_rH_reproduced_1e-5", False) for r in rows.values())
+                                               if oref else None)})
     with open(os.path.join(CV4_DIR, "cluster_diag_B1.json"), "w") as fh:
         json.dump(_j(out), fh, indent=1)
     print(out["reading"])
@@ -2783,34 +2784,95 @@ def replan_36a(chunks, ladder, seeds, quick, mans, sectors, nl, crit1, E_tol):
     out["cv3_final_ok"] = bool(cv3) and all((r["at_final"] or {}).get("ok") is True for d in cv3.values() for r in d.values())
     # ---- cluster diagnostic, cost model
     cp = os.path.join(CV4_DIR, "cluster_diag_B1.json")
-    out["cluster_diag"] = load_json(cp) if os.path.exists(cp) else None
+    out["cluster_diag"] = d2_scratch_flags(load_json(cp)) if os.path.exists(cp) else None
     out["gpu_cost_model"] = gpu_cost_model()
     return out
 
 
-def bundles_corrected(a7):
-    """R12 (OD3): n_unitary_instructions == the slot-01 structured:source count of the sector for every k."""
-    import quantinuum_lattice_tests as QL
-    p01 = load_json(os.path.join(QL.PARTS_DIR, "QV_2x4_01.json"))
-    n_unit = {int(r["twoB"]): int(r["n_instructions"]) for r in p01["runs"]
-              if r["kind"] == "source" and r["source"] == "structured"}
+RULE_R12_A1 = ("n_unitary_instructions = C + n_x(bundle) for every bundle and every k = 1..5, with C one constant common to "
+               "all 75 bundles (the coarse-step body) and n_x the reference's preparation x gates, equal to the 1-bits of its "
+               "codeword (prompts/36a addendum A1)")
+
+
+def bundles_corrected(a7, M=None):
+    """R12 as corrected by the prompts/36a addendum A1 (OD3): n_unitary = C + n_x(bundle), C one constant for all 75
+    bundles; n_x(bundle) = the bundle's x instructions = n_x of the k = 1 bundle of the same reference = the popcount of
+    the reference's codeword (Codec.encode).  If the popcount identity fails, `popcount_identity_holds` is false and the
+    caller STOPs (no silent re-definition)."""
+    from skqd.codec import Codec
+    from skqd.reference_sim import bits_to_int
+    if M is None:
+        from skqd.exact import Model
+        M = Model(4)
+    codec = Codec(M.basis)
     idx = load_json(BUNDLE_INDEX_2X4)["irl0"]
-    bad = sorted(c for c, e in idx.items() if int(e["n_unitary_instructions"]) != n_unit[int(e["twoB"])])
-    ok = bool(not bad and len(idx) == 75)
-    # information: the count is the coarse-step body (k-independent) plus the reference preparation (x gates: 4 for the
-    # Dirac sea, 5 for the one-meson / diquark references), so it is per reference, not per sector
-    body = sorted({int(e["n_unitary_instructions"]) - int(e["ir_counts"].get("x", 0)) for e in idx.values()})
-    by_ref = {}
+    nx = {c: int(e["ops"].get("x", 0)) for c, e in idx.items()}
+    nx_ir = {c: int(e["ir_counts"].get("x", 0)) for c, e in idx.items()}
+    body = {c: int(e["n_unitary_instructions"]) - nx[c] for c, e in idx.items()}
+    Cs = sorted(set(body.values()))
+    by_ref, k1 = {}, {}
+    for c, e in idx.items():
+        key = f"2B={e['twoB']} ref {e['reference']}"
+        by_ref.setdefault(key, set()).add(nx[c])
+        if int(e["k"]) == 1:
+            k1[key] = nx[c]
+    popc = {}
+    for c, e in idx.items():
+        key = f"2B={e['twoB']} ref {e['reference']}"
+        popc[key] = int(bin(bits_to_int(codec.encode(M.basis.labels[int(e["reference"])]))).count("1"))
+    n_x_by_ref = {k: sorted(v) for k, v in sorted(by_ref.items())}
+    pop_by_ref = dict(sorted(popc.items()))
+    same_as_k1 = all(nx[c] == k1[f"2B={e['twoB']} ref {e['reference']}"] for c, e in idx.items())
+    pop_ok = all(n_x_by_ref[k] == [pop_by_ref[k]] for k in n_x_by_ref)
+    ok = bool(len(idx) == 75 and len(Cs) == 1 and same_as_k1 and pop_ok and nx == nx_ir)
+    n_unit_by_ref = {}
     for e in idx.values():
-        by_ref.setdefault(f"2B={e['twoB']} ref {e['reference']}", set()).add(int(e["n_unitary_instructions"]))
-    return {"n_unit_by_twoB": {str(k): v for k, v in n_unit.items()},
-            "information_body_minus_prep_x": body, "information_body_constant": len(body) == 1,
-            "information_n_unitary_by_reference": {k: sorted(v) for k, v in by_ref.items()},
-            "n_unit_source": "ci/parts/QV_2x4_01.json runs[*.structured:source].n_instructions",
-            "rule_corrected": "n_unitary_instructions == n_unit[twoB] for every k = 1..5 (prompts/36a R12)",
-            "rule_corrected_holds": ok, "rule_corrected_failures": bad,
+        n_unit_by_ref.setdefault(f"2B={e['twoB']} ref {e['reference']}", set()).add(int(e["n_unitary_instructions"]))
+    return {"rule_corrected": RULE_R12_A1, "C": Cs[0] if len(Cs) == 1 else Cs, "C_constant": len(Cs) == 1,
+            "n_x_by_reference": n_x_by_ref, "popcount_by_reference": pop_by_ref, "popcount_identity_holds": bool(pop_ok),
+            "n_x_equals_k1_bundle_of_reference": bool(same_as_k1), "n_x_bundle_ops_equals_ir_counts": nx == nx_ir,
+            "rule_corrected_holds": ok,
+            "rule_corrected_failures": sorted(c for c in idx if len(Cs) != 1 or not pop_ok) if not ok else [],
+            "information_body_minus_prep_x": Cs, "information_body_constant": len(Cs) == 1,
+            "information_n_unitary_by_reference": {k: sorted(v) for k, v in sorted(n_unit_by_ref.items())},
+            "withdrawn": "R12 per sector (n_unit[twoB] from slot 01) -- withdrawn by the prompts/36a addendum A1",
             "ok_corrected": bool(ok and a7.get("within_cap") and a7.get("slot01_sources_ok") and a7.get("roundtrip_ok")
                                  and not a7.get("missing_or_bad_sha"))}
+
+
+def d2_scratch_flags(cd):
+    """prompts/36a addendum A2: the D2 comparison with the executor's scratch oracle_b1.json is information at 1e-5
+    (`scratch_rH_reproduced_1e-5`, `rH_O_vs_scratch_abs_diff` per seed); the 1e-9 flag is removed.  Pure re-labelling
+    of the recorded numbers (no recomputation)."""
+    if not cd:
+        return cd
+    for r in cd["D2"].values():
+        r.pop("oracle_rH_reproduced_1e-9", None)
+        if "rH_O_oracle_b1_json" in r:
+            r["rH_O_vs_scratch_abs_diff"] = abs(r["rH_O"] - r["rH_O_oracle_b1_json"])
+            r["scratch_rH_reproduced_1e-5"] = bool(r["rH_O_vs_scratch_abs_diff"] <= 1e-5)
+    cd.pop("oracle_rH_reproduced_1e-9", None)
+    rows = [r for r in cd["D2"].values() if "scratch_rH_reproduced_1e-5" in r]
+    cd["scratch_rH_reproduced_1e-5"] = (all(r["scratch_rH_reproduced_1e-5"] for r in rows) if rows else None)
+    cd["scratch_check_rule"] = ("prompts/36a addendum A2: |r_H(O) - scratch| <= 1e-5 per seed, information only (never a "
+                                "pass criterion); the gate-internal one-thread reproducibility (O_equals_one_thread_O) "
+                                "is the real check")
+    return cd
+
+
+def od3_nx_text(bd):
+    """'4 for the Dirac-sea reference 102, 5 for the other fourteen references' rendered from n_x_by_reference."""
+    words = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 10: "ten", 13: "thirteen", 14: "fourteen"}
+    by_n = {}
+    for k, v in bd["n_x_by_reference"].items():
+        by_n.setdefault(v[0], []).append(k.split(" ref ")[1])
+    parts = []
+    for n, refs in sorted(by_n.items(), key=lambda kv: len(kv[1])):
+        if len(refs) == 1:
+            parts.append(f"{n} for the Dirac-sea reference {refs[0]}" if refs[0] == "102" else f"{n} for reference {refs[0]}")
+        else:
+            parts.append(f"{n} for the other {words.get(len(refs), len(refs))} references")
+    return ", ".join(parts)
 
 
 def write_owner_draft(D):
@@ -2835,13 +2897,15 @@ def write_owner_draft(D):
                  + (fmt(d['B=1']['at_final']['ratio']) if d['B=1'].get('at_final') else 'n/a')
                  for sd, d in D["cv3"]["readings"].items()), "",
              "OD3: UNSIGNED", "",
-             "  A7 corrected: n_instructions == the sector's coarse-step count for every k ("
-             + ", ".join(f"2B={k}: {v}" for k, v in D["bundles"]["n_unit_by_twoB"].items())
-             + f"); rule_corrected_holds = {D['bundles']['rule_corrected_holds']} (failures: "
-             f"{len(D['bundles']['rule_corrected_failures'])} bundles).  Information: the count is per reference "
-             f"({', '.join(f'{k}: {v}' for k, v in D['bundles']['information_n_unitary_by_reference'].items())}); the "
-             f"coarse-step body without the reference's x gates is {D['bundles']['information_body_minus_prep_x']} for all "
-             f"bundles -- the corrected rule needs the planner's wording before it is signed.", "",
+             "  A7 corrected (prompts/36a addendum A1): n_unitary_instructions = C + n_x(bundle) for every bundle and every "
+             f"k = 1..5, with C one constant common to all 75 bundles (the coarse-step body, {D['bundles']['C']} as computed: "
+             "information_body_minus_prep_x) and n_x the reference's preparation x gates, equal to the 1-bits of its "
+             f"codeword ({od3_nx_text(D['bundles'])}: information_n_unitary_by_reference "
+             f"{' / '.join(str(x) for x in sorted({v for vs in D['bundles']['information_n_unitary_by_reference'].values() for v in vs}))}"
+             "); replaces \"k x 142288\".  The per-sector wording of the first draft (\"2B=0: 142288, 2B=2: 142289\") was "
+             "wrong and is withdrawn; rule_corrected_holds is re-evaluated by the gate under this wording (prompts/36a A3) "
+             f"before the owner signs: rule_corrected_holds = {D['bundles']['rule_corrected_holds']}, n_x_by_reference == "
+             f"popcount_by_reference: {D['bundles']['popcount_identity_holds']}.", "",
              "OD4: UNSIGNED", "",
              f"  GPU shots per R13 and four slots 02-05 per R14 on the slot-01 cost model t = {fmt(cm['a_s'])} s + "
              f"{fmt(cm['b_s_per_instruction'])} s x n_instructions (rms {fmt(cm['rms_s'])} s); provisional slots: "
@@ -3058,7 +3122,9 @@ def assemble_2x4(seeds=SEEDS, quick=False):
           "all ok", a6["ok"])
     # ---- A7
     a7 = a7_bundles(mans, {c: None for c in k5_ids_L(sectors)})
-    a7.update(bundles_corrected(a7))
+    a7.update(bundles_corrected(a7, M))
+    if not a7["popcount_identity_holds"]:
+        stops.append("R12 (addendum A1): n_x(bundle) differs from the popcount of the reference codeword (STOP)")
     a7["rule_as_written_holds"] = a7["n_instructions_rule_holds"]
     a7["reading"] = "corrected (OD3 signed)" if od3 else "as written (OD3 unsigned)"
     a7_ok = a7["ok_corrected"] if od3 else a7["ok"]

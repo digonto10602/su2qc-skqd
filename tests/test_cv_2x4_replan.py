@@ -103,3 +103,27 @@ def test_gpu_cost_model_fit_from_slot01():
     m = CV.gpu_cost_model()
     assert len(m["fit"]["points"]) == 9 and m["fit"]["rms_ok"]
     assert sum(p["residual_s"] for p in m["fit"]["points"]) == pytest.approx(0.0, abs=1e-6)
+
+
+def test_d2_scratch_flags_relabel():
+    import gate_CV as CV
+    cd = {"D2": {"a": {"rH_O": 0.07, "rH_O_oracle_b1_json": 0.07 + 2e-6, "oracle_rH_reproduced_1e-9": False},
+                 "b": {"rH_O": 0.06, "rH_O_oracle_b1_json": 0.06 + 2e-5}}, "oracle_rH_reproduced_1e-9": False}
+    out = CV.d2_scratch_flags(cd)
+    assert "oracle_rH_reproduced_1e-9" not in out and "oracle_rH_reproduced_1e-9" not in out["D2"]["a"]
+    assert out["D2"]["a"]["scratch_rH_reproduced_1e-5"] and not out["D2"]["b"]["scratch_rH_reproduced_1e-5"]
+    assert out["scratch_rH_reproduced_1e-5"] is False
+
+
+def test_od3_nx_text():
+    import gate_CV as CV
+    bd = {"n_x_by_reference": {"2B=0 ref 102": [4], **{f"2B=0 ref {r}": [5] for r in range(14)}}}
+    assert CV.od3_nx_text(bd) == "4 for the Dirac-sea reference 102, 5 for the other fourteen references"
+
+
+def test_bundles_corrected_popcount_identity():
+    import gate_CV as CV
+    if not os.path.exists(CV.BUNDLE_INDEX_2X4):
+        pytest.skip("no 2x4 bundle index")
+    b = CV.bundles_corrected({"within_cap": True, "slot01_sources_ok": True, "roundtrip_ok": True})
+    assert b["popcount_identity_holds"] and b["C_constant"] and b["rule_corrected_holds"]

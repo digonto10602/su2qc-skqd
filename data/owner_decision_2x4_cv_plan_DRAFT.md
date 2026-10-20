@@ -12,7 +12,7 @@ OD2: UNSIGNED
 
 OD3: UNSIGNED
 
-  A7 corrected (prompts/36a addendum A1): n_unitary_instructions = C + n_x(bundle) for every bundle and every k = 1..5, with C one constant common to all 75 bundles (the coarse-step body, 142284 as computed: information_body_minus_prep_x) and n_x the reference's preparation x gates, equal to the 1-bits of its codeword (4 for the Dirac-sea reference 102, 5 for the other fourteen references: information_n_unitary_by_reference 142288 / 142289); replaces "k x 142288".  The per-sector wording of the first draft ("2B=0: 142288, 2B=2: 142289") was wrong and is withdrawn; rule_corrected_holds is re-evaluated by the gate under this wording (prompts/36a A3) before the owner signs.
+  A7 corrected (prompts/36a addendum A1): n_unitary_instructions = C + n_x(bundle) for every bundle and every k = 1..5, with C one constant common to all 75 bundles (the coarse-step body, 142284 as computed: information_body_minus_prep_x) and n_x the reference's preparation x gates, equal to the 1-bits of its codeword (4 for the Dirac-sea reference 102, 5 for the other fourteen references: information_n_unitary_by_reference 142288 / 142289); replaces "k x 142288".  The per-sector wording of the first draft ("2B=0: 142288, 2B=2: 142289") was wrong and is withdrawn; rule_corrected_holds is re-evaluated by the gate under this wording (prompts/36a A3) before the owner signs: rule_corrected_holds = True, n_x_by_reference == popcount_by_reference: True.
 
 OD4: UNSIGNED
 

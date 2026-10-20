@@ -8355,7 +8355,8 @@
      "E_R_minus_E0_B": 0.0018057663345070196,
      "E_R_minus_E0_O": 0.000404760317215036,
      "rH_O_oracle_b1_json": 0.06730344985366547,
-     "oracle_rH_reproduced_1e-9": true
+     "rH_O_vs_scratch_abs_diff": 3.191891195797325e-16,
+     "scratch_rH_reproduced_1e-5": true
     },
     "1": {
      "size_B": 1538,
@@ -8378,7 +8379,8 @@
      "E_R_minus_E0_B": 0.001846709103789479,
      "E_R_minus_E0_O": 0.00043749691741812313,
      "rH_O_oracle_b1_json": 0.0696444818797093,
-     "oracle_rH_reproduced_1e-9": false
+     "rH_O_vs_scratch_abs_diff": 1.6666260431452695e-07,
+     "scratch_rH_reproduced_1e-5": true
     },
     "2": {
      "size_B": 1560,
@@ -8401,7 +8403,8 @@
      "E_R_minus_E0_B": 0.002091745596604966,
      "E_R_minus_E0_O": 0.0004206770638708335,
      "rH_O_oracle_b1_json": 0.06841954232948359,
-     "oracle_rH_reproduced_1e-9": true
+     "rH_O_vs_scratch_abs_diff": 1.27675647831893e-15,
+     "scratch_rH_reproduced_1e-5": true
     }
    },
    "oracle_order_note": "O is ordered by the gate's ground state (BLAS one thread: identical in repeated gate processes, checked 2026-10-19).  scratch/executor36/oracle_b1.py ran with a 4-thread BLAS pool, and the top-|B| boundary of O cuts groups of near-equal weights whose order depends on the round-off of the reference eigensolve; multi-thread reductions are not bit-reproducible, so the scratch values are reproduced to 1e-9 only where the boundary does not cut such a group (scratch/executor36/oracle_threads.py: a 4-thread run reproduced 1583 / 1538 to 1e-15, a later 4-thread child process did not).  The r_H(O) differences are recorded per seed; they do not touch any criterion (D2 is information)",
@@ -8411,7 +8414,8 @@
    "basis": "B_all(8 N) u refs per seed; O = refs u the oracle top-|B| of psi_0 weight (controls.oracle on the sector reference's ground state)",
    "runtime_s": 84.27414345741272,
    "oracle_reference": "scratch/executor36/oracle_b1.json",
-   "oracle_rH_reproduced_1e-9": false
+   "scratch_rH_reproduced_1e-5": true,
+   "scratch_check_rule": "prompts/36a addendum A2: |r_H(O) - scratch| <= 1e-5 per seed, information only (never a pass criterion); the gate-internal one-thread reproducibility (O_equals_one_thread_O) is the real check"
   },
   "gpu_cost_model": {
    "models": {
@@ -25805,10 +25809,78 @@
    },
    "roundtrip_ok": true,
    "ok": false,
-   "n_unit_by_twoB": {
-    "0": 142288,
-    "2": 142289
+   "rule_corrected": "n_unitary_instructions = C + n_x(bundle) for every bundle and every k = 1..5, with C one constant common to all 75 bundles (the coarse-step body) and n_x the reference's preparation x gates, equal to the 1-bits of its codeword (prompts/36a addendum A1)",
+   "C": 142284,
+   "C_constant": true,
+   "n_x_by_reference": {
+    "2B=0 ref 102": [
+     4
+    ],
+    "2B=0 ref 11026": [
+     5
+    ],
+    "2B=0 ref 1338": [
+     5
+    ],
+    "2B=0 ref 16833": [
+     5
+    ],
+    "2B=0 ref 2086": [
+     5
+    ],
+    "2B=0 ref 281": [
+     5
+    ],
+    "2B=0 ref 3166": [
+     5
+    ],
+    "2B=0 ref 345": [
+     5
+    ],
+    "2B=0 ref 474": [
+     5
+    ],
+    "2B=0 ref 682": [
+     5
+    ],
+    "2B=0 ref 6930": [
+     5
+    ],
+    "2B=2 ref 103": [
+     5
+    ],
+    "2B=2 ref 110": [
+     5
+    ],
+    "2B=2 ref 118": [
+     5
+    ],
+    "2B=2 ref 230": [
+     5
+    ]
    },
+   "popcount_by_reference": {
+    "2B=0 ref 102": 4,
+    "2B=0 ref 11026": 5,
+    "2B=0 ref 1338": 5,
+    "2B=0 ref 16833": 5,
+    "2B=0 ref 2086": 5,
+    "2B=0 ref 281": 5,
+    "2B=0 ref 3166": 5,
+    "2B=0 ref 345": 5,
+    "2B=0 ref 474": 5,
+    "2B=0 ref 682": 5,
+    "2B=0 ref 6930": 5,
+    "2B=2 ref 103": 5,
+    "2B=2 ref 110": 5,
+    "2B=2 ref 118": 5,
+    "2B=2 ref 230": 5
+   },
+   "popcount_identity_holds": true,
+   "n_x_equals_k1_bundle_of_reference": true,
+   "n_x_bundle_ops_equals_ir_counts": true,
+   "rule_corrected_holds": true,
+   "rule_corrected_failures": [],
    "information_body_minus_prep_x": [
     142284
    ],
@@ -25817,105 +25889,51 @@
     "2B=0 ref 102": [
      142288
     ],
-    "2B=0 ref 16833": [
-     142289
-    ],
     "2B=0 ref 11026": [
-     142289
-    ],
-    "2B=0 ref 6930": [
-     142289
-    ],
-    "2B=0 ref 3166": [
-     142289
-    ],
-    "2B=0 ref 2086": [
      142289
     ],
     "2B=0 ref 1338": [
      142289
     ],
-    "2B=0 ref 682": [
+    "2B=0 ref 16833": [
      142289
     ],
-    "2B=0 ref 474": [
-     142289
-    ],
-    "2B=0 ref 345": [
+    "2B=0 ref 2086": [
      142289
     ],
     "2B=0 ref 281": [
      142289
     ],
-    "2B=2 ref 230": [
+    "2B=0 ref 3166": [
      142289
     ],
-    "2B=2 ref 118": [
+    "2B=0 ref 345": [
+     142289
+    ],
+    "2B=0 ref 474": [
+     142289
+    ],
+    "2B=0 ref 682": [
+     142289
+    ],
+    "2B=0 ref 6930": [
+     142289
+    ],
+    "2B=2 ref 103": [
      142289
     ],
     "2B=2 ref 110": [
      142289
     ],
-    "2B=2 ref 103": [
+    "2B=2 ref 118": [
+     142289
+    ],
+    "2B=2 ref 230": [
      142289
     ]
    },
-   "n_unit_source": "ci/parts/QV_2x4_01.json runs[*.structured:source].n_instructions",
-   "rule_corrected": "n_unitary_instructions == n_unit[twoB] for every k = 1..5 (prompts/36a R12)",
-   "rule_corrected_holds": false,
-   "rule_corrected_failures": [
-    "B0_ref11026_k1",
-    "B0_ref11026_k2",
-    "B0_ref11026_k3",
-    "B0_ref11026_k4",
-    "B0_ref11026_k5",
-    "B0_ref1338_k1",
-    "B0_ref1338_k2",
-    "B0_ref1338_k3",
-    "B0_ref1338_k4",
-    "B0_ref1338_k5",
-    "B0_ref16833_k1",
-    "B0_ref16833_k2",
-    "B0_ref16833_k3",
-    "B0_ref16833_k4",
-    "B0_ref16833_k5",
-    "B0_ref2086_k1",
-    "B0_ref2086_k2",
-    "B0_ref2086_k3",
-    "B0_ref2086_k4",
-    "B0_ref2086_k5",
-    "B0_ref281_k1",
-    "B0_ref281_k2",
-    "B0_ref281_k3",
-    "B0_ref281_k4",
-    "B0_ref281_k5",
-    "B0_ref3166_k1",
-    "B0_ref3166_k2",
-    "B0_ref3166_k3",
-    "B0_ref3166_k4",
-    "B0_ref3166_k5",
-    "B0_ref345_k1",
-    "B0_ref345_k2",
-    "B0_ref345_k3",
-    "B0_ref345_k4",
-    "B0_ref345_k5",
-    "B0_ref474_k1",
-    "B0_ref474_k2",
-    "B0_ref474_k3",
-    "B0_ref474_k4",
-    "B0_ref474_k5",
-    "B0_ref682_k1",
-    "B0_ref682_k2",
-    "B0_ref682_k3",
-    "B0_ref682_k4",
-    "B0_ref682_k5",
-    "B0_ref6930_k1",
-    "B0_ref6930_k2",
-    "B0_ref6930_k3",
-    "B0_ref6930_k4",
-    "B0_ref6930_k5"
-   ],
-   "ok_corrected": false,
+   "withdrawn": "R12 per sector (n_unit[twoB] from slot 01) -- withdrawn by the prompts/36a addendum A1",
+   "ok_corrected": true,
    "rule_as_written_holds": false,
    "reading": "as written (OD3 unsigned)"
   },
@@ -26313,14 +26331,14 @@
   },
   "completed": true
  },
- "runtime_s": 435.35189270973206,
+ "runtime_s": 435.2360460758209,
  "environment": {
   "python": "3.12.14",
   "numpy": "2.5.2",
   "scipy": "1.18.0",
   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
   "cpu_count": 12,
-  "git_commit": "25b3021",
-  "timestamp": "2026-10-19 18:44:35 MDT"
+  "git_commit": "baa8929",
+  "timestamp": "2026-10-19 19:07:08 MDT"
  }
 }
