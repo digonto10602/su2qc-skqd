@@ -196,6 +196,8 @@ def d3r_plan(p_by_circuit, f_by_circuit, ids, k4_ids, S99, S999, floor=267, roun
             raise ValueError("D3'-R: no finite k = 4 extra reaches the recall target")
     return {"shots": shots, "shots_total": int(sum(shots.values())), "lp_shots": lp,
             "lp_shots_total": int(sum(lp.values())), "lp_objective": float(res.fun),
+            "lp_status": ("optimal" if int(res.status) == 0 else f"status {int(res.status)}"),
+            "lp_message": str(res.message),
             "k4_extra_per_circuit": int(extra), "k4_ids": k4,
             "lambda_by_state": lam.tolist(),
             "lambda_min_S99": float(lam[S99].min()), "lambda_min_S999": float(lam[S999].min()),

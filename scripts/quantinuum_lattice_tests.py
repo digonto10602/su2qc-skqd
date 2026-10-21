@@ -187,11 +187,18 @@ class Phys:
         self.n = int(self.emb.n)
         self.int_to_idx = {int(x): i for i, x in enumerate(self.emb.ints)}
         self.sector = {}
+        acc_file = os.path.join(ROOT, "data", "cv", f"acceptance_2x{lat}.json")      # prompts/36 3.1 (c)
+        acc = load_json(acc_file) if os.path.exists(acc_file) else None
         for tb in (0, 2):
             ref = self.M.reference(G2, tb)
             idx = np.asarray(ref.indices, dtype=int)
+            sec = "B=0" if tb == 0 else "B=1"
+            if acc is not None and sec in acc:
+                a, a_src = float(acc[sec]["fraction"]), rel(acc_file)
+            else:
+                a, a_src = float(len(idx)) / float(2 ** self.n), "assumed"
             self.sector[tb] = {"indices": idx, "dim": int(len(idx)), "ints": set(int(self.emb.ints[i]) for i in idx),
-                               "a": float(len(idx)) / float(2 ** self.n)}
+                               "a": a, "a_source": a_src}
 
     def exact(self, man):
         """{string int: p} over the sector codewords (krylov.ideal_sector_distribution, repetitions 1)."""
@@ -295,6 +302,7 @@ def tier_export(args):
     os.makedirs(out_dir, exist_ok=True)
     ip = os.path.join(out_dir, "index.json")
     index = load_json(ip) if os.path.exists(ip) else {"circuits": {}}
+    index.setdefault("circuits", {})          # the 2x4 index also carries the irl0 block (prompts/36)
     for cid in ids:
         m = mans.get(cid) or cals[cid]
         text = read_frozen(lat, m["files"]["json"])
@@ -1445,6 +1453,208 @@ def tier_slots(args):
     return 0
 
 
+IRL0_DIR_REL = "data/quantinuum/circuits_2x4_qpy"
+IRL0_ROUTE = ("gate_S2_2x4.preload_factory(4, 'exact', thetas) (the frozen term IR of S2_2x4, data/S2_2x4/cache) -> "
+              "CircuitFactory.coarse_step(reference, k, dt) (ONE coarse step at angle k dt) -> "
+              "circuits_qiskit.ir_to_qiskit(ir, 28, measure=True: barrier, measure q[k] -> c[k]) -> "
+              "campaign33.circuits.dump_qpy13 (QPY v13, gzip mtime 0)")
+
+
+def ir_text_sha256(gates):
+    """sha256 of the IR gate list as text: one line per gate, name, qubits and the parameter (a matrix as the repr of
+    its complex entries) -- prompts/36 3.3 `ir_sha256`."""
+    lines = []
+    for name, qs, p in gates:
+        if p is None:
+            ps = "None"
+        elif np.ndim(p) == 0:
+            ps = repr(float(p))
+        else:
+            ps = ",".join(repr(complex(x)) for x in np.asarray(p).ravel())
+        lines.append(f"{name} {list(int(q) for q in qs)} {ps}")
+    return sha256_text("\n".join(lines))
+
+
+def irl0_family_2x4():
+    """[(cid, twoB, reference, k, dt, circuit_index)] of the 60 family circuits (index order of the structured entries,
+    gate_CV.circuits_L) and the 15 k = 5 circuits (B0 refs then B1 refs, references order), circuit index global."""
+    import gate_CV as CV
+    import gate_S2_2x4 as S4
+    from skqd.krylov import references
+    mans = CV.circuits_L(4)
+    dts = {tb: float(S4.dt_of(4, tb)) for tb in (0, 2)}
+    out = []
+    for c, m in mans.items():
+        if abs(float(m["dt"]) - dts[int(m["twoB"])]) > 0.0:
+            raise SystemExit(f"{c}: manifest dt {m['dt']!r} != gate_S2_2x4.dt_of {dts[int(m['twoB'])]!r}")
+        out.append((c, int(m["twoB"]), int(m["reference"]), int(m["k"]), dts[int(m["twoB"])], int(m["family_index"])))
+    M = S4.model(4)
+    n = len(out)
+    for tb in (0, 2):
+        for r in references(M.basis, tb):
+            out.append((f"B{tb // 2}_ref{int(r)}_k5", tb, int(r), 5, dts[tb], n))
+            n += 1
+    return out, mans
+
+
+def tier_bundles_2x4(args):
+    """prompts/36 3.3 / A7 (coding env: qiskit 2.5.2 writes QPY v13): the IR-L0 bundles of the 60 family circuits and the
+    15 k = 5 circuits -> data/quantinuum/circuits_2x4_qpy/<id>.irl0.qpy.gz + index.json["irl0"].  One k = 4 bundle is
+    written first and the total projected (STOP above 60 MB).  --part check143 (the qiskit 1.4.3 twin): every bundle
+    loaded back (sha256, instruction count, op histogram) -> irl0_check_qiskit143.json.  --part sparse-k5: the two
+    k = 5 term sets (B0_ref102_k5, B1_ref230_k5) on the sparse simulator against krylov.coarse_states (information)."""
+    if args.part == "check143":
+        return bundles_check143()
+    if args.part == "sparse-k5":
+        return bundles_sparse_k5()
+    import qiskit
+
+    import gate_S2_2x4 as S4
+
+    from skqd import circuits_qiskit as cq
+    from skqd import quantinuum_native as qn
+    from skqd.campaign33.circuits import dump_qpy13, load_qpy, roundtrip, structure_diff, unitary_part
+    t0 = time.time()
+    fam, mans = irl0_family_2x4()
+    if args.only:
+        fam = [f for f in fam if f[0] in set(args.only)]
+    thetas = sorted({k * dt for _c, _tb, _r, k, dt, _i in fam})
+    F = S4.preload_factory(4, "exact", thetas)
+    out_dir = qpy_dir(4)
+    os.makedirs(out_dir, exist_ok=True)
+    ip = os.path.join(out_dir, "index.json")
+    index = load_json(ip) if os.path.exists(ip) else {}
+    irl0 = index.get("irl0", {})
+    first = [f for f in fam if f[3] == 4][:1]
+    order = first + [f for f in fam if f not in first]
+    proj = None
+    for i, (cid, tb, r, k, dt, ci) in enumerate(order):
+        gates = F.coarse_step(r, k, dt)
+        qc = cq.ir_to_qiskit(gates, 28, measure=True)
+        path = os.path.join(out_dir, cid + ".irl0.qpy.gz")
+        rec = dump_qpy13(qc, path)
+        rt = roundtrip(qc, path)
+        n_unit = sum(1 for inst in qc.data if inst.operation.name not in ("barrier", "measure"))
+        irc = qn.ir_counts(gates)
+        man_ok = None
+        if cid in mans and mans[cid].get("id"):
+            mf = load_json(os.path.join(circ_dir(4), mans[cid]["id"] + ".manifest.json"))
+            man_ok = (irc == {kk: int(v) for kk, v in mf["original_ir_counts"].items()})
+        irl0[cid] = {"file": rel(path), "gz_sha256": rec["gz_sha256"], "bytes_gz": os.path.getsize(path),
+                     "bytes_uncompressed": rec["bytes_uncompressed"], "qpy_version": rec["header"]["qpy_version"],
+                     "qpy_header": rec["header"], "qiskit_version": qiskit.__version__,
+                     "n_instructions": int(len(qc.data)), "n_unitary_instructions": int(n_unit),
+                     "ops": {kk: int(v) for kk, v in qc.count_ops().items()}, "ir_counts": irc,
+                     "ir_sha256": ir_text_sha256(gates), "ir_gates": len(gates),
+                     "matches_manifest_original_ir_counts": man_ok, "roundtrip_identical_laptop": rt["identical"],
+                     "twoB": tb, "reference": r, "k": k, "dt": dt, "theta": k * dt, "circuit_index": ci,
+                     "family": "IR-L0" if k <= 4 else "IR-L0 k = 5 (CV3)"}
+        if i == 0:
+            proj = {"measured_on": cid, "bytes_gz": os.path.getsize(path), "n_bundles": len(fam) if not args.only else 75,
+                    "projected_total_bytes": os.path.getsize(path) * 75, "cap_bytes": 60_000_000}
+            print(f"  projection from {cid}: {proj['projected_total_bytes'] / 1e6:.1f} MB for 75 bundles", flush=True)
+            if proj["projected_total_bytes"] > 60_000_000:
+                raise SystemExit("STOP (prompts/36 A7): the projected bundle total exceeds 60 MB -- ask before writing")
+        print(f"  {cid}: {len(qc.data)} instructions, {os.path.getsize(path)} B, roundtrip {rt['identical']}, "
+              f"manifest counts {man_ok} [{time.time() - t0:.0f} s]", flush=True)
+        index["irl0"] = dict(sorted(irl0.items(), key=lambda kv: kv[1]["circuit_index"]))
+        with open(ip + ".tmp", "w") as fh:          # incremental: a chunked (--only) build resumes from here
+            json.dump(index, fh, indent=1)
+        os.replace(ip + ".tmp", ip)
+    index["irl0"] = dict(sorted(irl0.items(), key=lambda kv: kv[1]["circuit_index"]))
+    # the two slot-01 structured sources against the new k = 1 bundles
+    same = {}
+    p01 = load_json(os.path.join(PARTS_DIR, "QV_2x4_01.json"))
+    for r in p01["runs"]:
+        if r["kind"] == "source" and r["source"] == "structured" and r["base_id"] in irl0:
+            e = irl0[r["base_id"]]
+            byte = r["gz_sha256"] == e["gz_sha256"]
+            old = load_qpy(os.path.join(ROOT, r["qpy"]))[0]
+            new = load_qpy(os.path.join(ROOT, e["file"]))[0]
+            sd = structure_diff(unitary_part(new), old, tol=0.0)
+            same[r["base_id"]] = {"slot01_file": r["qpy"], "irl0_file": e["file"], "byte_identical": bool(byte),
+                                  "gate_for_gate_identical_unitary_part": bool(sd["structure_equal"] and sd["max_param_diff"] == 0.0),
+                                  "max_param_diff": sd["max_param_diff"], "n_slot01": sd["n_a"] if False else len(old.data),
+                                  "n_irl0_unitary": len(unitary_part(new).data),
+                                  "difference": ("the irl0 bundle adds the terminal barrier and the 28 measurements "
+                                                 "(prompts/36 3.3 measure=True); slot 01 dumped the source with measure=False")}
+    index["irl0_vs_slot01_sources"] = same
+    tot = sum(v["bytes_gz"] for v in index["irl0"].values())
+    index["irl0_summary"] = {"n_bundles": len(index["irl0"]), "total_bytes_gz": tot, "cap_bytes": 60_000_000,
+                             "projection": proj or index.get("irl0_summary", {}).get("projection"),
+                             "route": IRL0_ROUTE, "produced_by": "scripts/quantinuum_lattice_tests.py --lattice 4 --tier bundles-2x4",
+                             "prompt": "prompts/36_2x4_full_pipeline.md section 3.3", "created": now(),
+                             "git_commit": git_commit_short(), "versions": versions(("qiskit", "qiskit-aer", "numpy"))}
+    with open(ip, "w") as fh:
+        json.dump(index, fh, indent=1)
+    print(f"{rel(ip)}: {len(index['irl0'])} irl0 bundles, {tot / 1e6:.2f} MB; slot-01 sources {same} "
+          f"({time.time() - t0:.0f} s)")
+    return 0
+
+
+def bundles_check143():
+    """qiskit 1.4.3 twin: every irl0 bundle loads (sha256), with the index's instruction count and op histogram."""
+    import qiskit
+
+    from skqd.campaign33.circuits import load_qpy, sha256_file
+    t0 = time.time()
+    index = load_json(os.path.join(qpy_dir(4), "index.json"))
+    rows, ok = {}, True
+    for cid, e in index["irl0"].items():
+        p = os.path.join(ROOT, e["file"])
+        sha_ok = sha256_file(p) == e["gz_sha256"]
+        qc = load_qpy(p)[0]
+        ops = {k: int(v) for k, v in qc.count_ops().items()}
+        r = {"sha256_ok": sha_ok, "n_instructions": len(qc.data), "n_ok": len(qc.data) == e["n_instructions"],
+             "ops_ok": ops == e["ops"], "num_qubits": qc.num_qubits, "num_clbits": qc.num_clbits}
+        r["ok"] = bool(sha_ok and r["n_ok"] and r["ops_ok"] and qc.num_qubits == 28 and qc.num_clbits == 28)
+        ok &= r["ok"]
+        rows[cid] = r
+    out = {"ok": bool(ok and len(rows) == len(index["irl0"])), "n_checked": len(rows), "qiskit": qiskit.__version__,
+           "python": sys.executable, "per_bundle": rows, "seconds": time.time() - t0, "created": now(),
+           "rule": "load -> sha256 of the .gz, instruction count and op histogram equal to the index (prompts/36 3.3)"}
+    with open(os.path.join(qpy_dir(4), "irl0_check_qiskit143.json"), "w") as fh:
+        json.dump(out, fh, indent=1)
+    print(f"irl0 check on qiskit {qiskit.__version__}: {out['n_checked']} bundles, ok {out['ok']} ({out['seconds']:.0f} s)")
+    return 0 if out["ok"] else 1
+
+
+def bundles_sparse_k5():
+    """Information: the k = 5 term IR (synthesised for prompts/36) on the sparse simulator against coarse_states, for one
+    reference per sector (the term IR is shared by the references of a sector)."""
+    import gate_S2_2x4 as S4
+
+    from skqd.exact import mass_default
+    from skqd.krylov import basis_vector, coarse_states, term_groups
+    from skqd.reference_sim import CodewordEmbedding
+    from skqd.sparse_sim import run_sparse
+    t0 = time.time()
+    M = S4.model(4)
+    E = CodewordEmbedding(M)
+    groups = term_groups(M.terms, G2, mass_default(G2))
+    out = {}
+    for tb, r in ((0, 102), (2, 230)):
+        dt = float(S4.dt_of(4, tb))
+        F = S4.preload_factory(4, "exact", [5 * dt])
+        gates = F.coarse_step(r, 5, dt)
+        t = time.time()
+        st = run_sparse(gates, E.n)
+        got = st.dense_on(E.ints)
+        exact = coarse_states(groups, basis_vector(M.basis.dim, r), dt, 5)[5]
+        out[f"B{tb // 2}_ref{r}_k5"] = {"max_deviation_vs_coarse_states": float(np.abs(got - exact).max()),
+                                         "leakage": float(1.0 - np.sum(np.abs(got) ** 2)), "ir_gates": len(gates),
+                                         "sparse_wall_s": time.time() - t}
+        print(f"  B{tb // 2}_ref{r}_k5: {out[f'B{tb // 2}_ref{r}_k5']}", flush=True)
+    ip = os.path.join(qpy_dir(4), "index.json")
+    index = load_json(ip)
+    index["irl0_sparse_check_k5"] = {"rows": out, "seconds": time.time() - t0, "created": now(),
+                                     "rule": "information (prompts/36 3.3): skqd.sparse_sim.run_sparse of the k = 5 IR vs "
+                                             "krylov.coarse_states (no phase removal), as gate_S2_2x4 C5"}
+    with open(ip, "w") as fh:
+        json.dump(index, fh, indent=1)
+    return 0
+
+
 def git_commit_short():
     r = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, capture_output=True, text=True)
     return r.stdout.strip() or "n/a"
@@ -1511,6 +1721,10 @@ def tier_gpu_verify(args):
     avail = list(AerSimulator().available_devices())
     device = "GPU" if ("GPU" in avail and not dry) else "CPU"
     slot = f"QV_2x4_{int(args.slot or 1):02d}"
+    pfile = os.path.join(PARTS_DIR, slot + ".json")
+    if (dry and int(args.slot or 1) >= 2) or (not dry and os.path.exists(pfile)
+                                               and load_json(pfile).get("schema") == SCHEMA_36):
+        return gpu_verify_36(args, slot, dry, device, avail, ci, t0)      # prompts/36 section 4 (slots 02..)
     if dry:
         part, ir_by_id, mans = dry_part_2x2()
     else:
@@ -1623,6 +1837,694 @@ def tier_gpu_verify(args):
     return write_gate(R, f"# {gate}\n\nStatus: **{'PASS' if R.passed else 'FAIL'}**.\n\n" + R.criteria_table() + "\n")
 
 
+# --------------------------------------------------------------------------- prompts/36: slots QV_2x4_02..07
+SCHEMA_36 = "prompts/36"
+PROMPT_36_S4 = "prompts/36_2x4_full_pipeline.md section 4"
+CV_PLAN_2X4 = os.path.join(ROOT, "validation", "CV_2x4_plan.json")
+QV01_JSON = os.path.join(ROOT, "validation", "QV_2x4_01.json")
+SLOT_LAYOUT_2X4 = {      # prompts/36a R14 (replaces prompts/36 R6; slots 06-08 are reserve)
+    "QV_2x4_02": {"content": "SK-B1 + CV3-B1: the 16 B=1 family circuits + the 4 B=1 k = 5 circuits, sampled",
+                  "family": {"twoB": 2, "refs": None}, "k5": True},
+    "QV_2x4_03": {"content": "SK-B0a: B=0 refs 102, 1338, 11026, 16833, 2086, 281 (k = 1..4) + their 6 k = 5, sampled",
+                  "family": {"twoB": 0, "refs": (102, 1338, 11026, 16833, 2086, 281)}, "k5": True},
+    "QV_2x4_04": {"content": "SK-B0b: B=0 refs 3166, 345, 474, 682, 6930 (k = 1..4) + their 5 k = 5, sampled",
+                  "family": {"twoB": 0, "refs": (3166, 345, 474, 682, 6930)}, "k5": True},
+    "QV_2x4_05": {"content": "NAT: the 13 native structured k = 1 circuits slot 01 did not run (frozen source, R7)",
+                  "native": (0, 13)},
+}
+RESERVE_SLOTS = ("QV_2x4_06", "QV_2x4_07", "QV_2x4_08")
+DRY_PLAN_SHOTS = 267                  # the dry runs' plan point at 2x2 (the D3'-R floor)
+
+
+def native_runs_2x4():
+    """R7: (status, [native runs]) for the native slot from validation/QV_2x4_01.json -- written only when that file
+    exists with stop == false and a frozen source; the native QPY bundles come from --tier export (pytket venv)."""
+    if not os.path.exists(QV01_JSON):
+        return "withheld (R7): validation/QV_2x4_01.json not harvested", []
+    d = load_json(QV01_JSON)["data"]
+    src = d.get("frozen_source")
+    if d.get("stop") or not src:
+        return f"withheld (R7): QV_2x4_01 stop {d.get('stop')}, frozen source {src}", []
+    idx, mans, _ = family(4)
+    done = {r["base_id"] for r in load_json(os.path.join(PARTS_DIR, "QV_2x4_01.json"))["runs"]}
+    ids = [c for c in idx["circuits"] if mans[c].get("source") == src and int(mans[c]["k"]) == 1
+           and mans[c]["base_id"] not in done]
+    ip = os.path.join(qpy_dir(4), "index.json")
+    exp = load_json(ip).get("circuits", {}) if os.path.exists(ip) else {}
+    missing = [c for c in ids if c not in exp]
+    if missing:
+        return (f"withheld: native bundles not exported ({len(missing)} of {len(ids)}); run "
+                f"~/.local/share/su2qc-quantinuum/venv/bin/python scripts/quantinuum_lattice_tests.py --lattice 4 "
+                f"--tier export --only {' '.join(missing)}"), []
+    runs = []
+    for c in ids:
+        m, e = mans[c], exp[c]
+        runs.append({"label": f"{c}:native", "base_id": m["base_id"], "kind": "native", "source": src,
+                     "qpy": f"{IRL0_DIR_REL}/{e['file']}", "gz_sha256": e["gz_sha256"], "qpy_header": e["qpy"],
+                     "n_instructions": int(sum(e["ops"].values())), "twoB": int(m["twoB"]), "reference": int(m["reference"]),
+                     "k": 1, "dt": float(m["dt"]), "method": "save_statevector (full 2^28 vector)"})
+    return f"ready: frozen source {src} (validation/QV_2x4_01.json, stop false)", runs
+
+
+def tier_slots_2x4(args):
+    """prompts/36a R13 / R14 / 3.7: the four slot contents 02..05 from validation/CV_2x4_plan.json -- data.plan.final when
+    the owner signed OD1 and OD4 (-> ci/parts/QV_2x4_02..05.json, 06-08 marked reserve), otherwise the proposed plan
+    data.replan_36a.proposed (-> data/cv/2x4/provisional_parts_s<s*>/, status PROVISIONAL, never requested).
+    `prediction` = gate_CV.slot_prediction (the three statevector models + load + compare + sampling)."""
+    import gate_CV as CV
+    from skqd.campaign33 import tokens as T
+    t0 = time.time()
+    D = load_json(CV_PLAN_2X4)["data"]
+    od = D.get("owner_decision") or {}
+    signed = od.get("OD1") == "SIGNED" and od.get("OD4") == "SIGNED"
+    prop = D["replan_36a"]["proposed"]
+    if not prop.get("complete"):
+        raise SystemExit("STOP: no proposed plan (s = 32 fails at B=1 or B=0 has no passing s): no slot is written")
+    gpu, k5 = prop["gpu"], prop["k5"]
+    s_star = D["s_star_information"]
+    if signed:
+        out_dir, status0 = PARTS_DIR, "ready"
+    else:
+        out_dir = os.path.join(CV.CV4_DIR, f"provisional_parts_s{s_star:g}")
+        status0 = ("PROVISIONAL: owner items OD1-OD4 unsigned (data/owner_decision_2x4_cv_plan_DRAFT.md); information "
+                   "only, never requested")
+    os.makedirs(out_dir, exist_ok=True)
+    irl0 = load_json(os.path.join(qpy_dir(4), "index.json"))["irl0"]
+    cost = D["gpu_cost_model"]
+    toks = T.load_tokens()
+    nat_status, nat_runs = native_runs_2x4()
+    written = {}
+    for slot, lay in SLOT_LAYOUT_2X4.items():
+        s0 = T.base_seed(slot, toks)
+        runs, sel = [], []
+        if "family" in lay:
+            f = lay["family"]
+            fam = [c for c in gpu if irl0[c]["twoB"] == f["twoB"] and (f["refs"] is None or irl0[c]["reference"] in f["refs"])]
+            refs = {irl0[c]["reference"] for c in fam}
+            sel = fam + [c for c in k5 if int(k5[c]["twoB"]) == f["twoB"] and int(k5[c]["reference"]) in refs]
+        for c in sorted(sel, key=lambda c: irl0[c]["circuit_index"]):
+            e = irl0[c]
+            w = gpu.get(c) or k5[c]
+            runs.append({"label": f"{c}:irl0:sample", "base_id": c, "kind": "sample", "qpy": e["file"],
+                         "gz_sha256": e["gz_sha256"], "n_instructions": int(e["n_instructions"]), "twoB": int(e["twoB"]),
+                         "reference": int(e["reference"]), "k": int(e["k"]), "dt": float(e["dt"]),
+                         "shots": int(w["shots"]), "plan_shots": int(w["plan_shots"]),
+                         "prefix_lengths": [int(x) for x in w["prefix_lengths"]],
+                         "prefix_lengths_dropped": [int(x) for x in w.get("prefix_lengths_dropped", [])],
+                         "uniform_shots": int(w["uniform_shots"]),
+                         "seed": T.chunk_seed(s0, int(e["circuit_index"]), 0, int(w["shots"])),
+                         "circuit_index": int(e["circuit_index"])})
+        status, native_status = status0, None
+        if "native" in lay:
+            a, b = lay["native"]
+            native_status = nat_status
+            runs += nat_runs[a:b]
+            if not nat_runs:
+                status = nat_status
+        pred = CV.slot_prediction(runs, cost)
+        part = {"slot": slot, "schema": SCHEMA_36, "prompt": "prompts/36a_CV_2x4_plan_fix_20261019.md R13 / R14",
+                "lattice": "2x4", "content": lay["content"], "family": "IR-L0" if "family" in lay else "native",
+                "plan_source": ("validation/CV_2x4_plan.json data.plan.final" if signed
+                                else "validation/CV_2x4_plan.json data.replan_36a.proposed (unsigned)"),
+                "s_by_sector": prop["s_by_sector"], "status": status, "native_status": native_status, "runs": runs,
+                "pairs": [], "prediction": pred, "seed_rule": T.SEED_RULE, "s0": s0, "token_index": T.token_index(slot, toks),
+                "created": now(), "git_commit": git_commit_short()}
+        with open(os.path.join(out_dir, slot + ".json"), "w") as fh:
+            json.dump(part, fh, indent=1)
+        written[slot] = {"runs": len(runs), "shots": pred["shots"], "predicted_s": round(pred["predicted_s"], 1),
+                         "slow": round(pred["predicted_s_slow_sampling"], 1), "fits": pred["fits"]}
+    if signed:
+        for slot in RESERVE_SLOTS:
+            with open(os.path.join(PARTS_DIR, slot + ".json"), "w") as fh:
+                json.dump({"slot": slot, "schema": SCHEMA_36, "prompt": "prompts/36a R14", "runs": [], "pairs": [],
+                           "status": "reserve (re-runs); no content"}, fh, indent=1)
+    print(rel(out_dir), json.dumps(written, indent=1), f"({time.time() - t0:.0f} s)")
+    return 0
+
+
+# ---- the dry runs (laptop CPU, 2x2): the same JSON structure
+def dry_part_36(slot):
+    """The 2x2 analogue of slot `slot` under R14: the B=1 family + its k = 5 (02), the first / second half of the B=0
+    references + their k = 5 (03 / 04), the 2x2 natives of dry_part_2x2 (05).  Plan point 267 per circuit at s = 1; the
+    R13 shot rule (gate_CV.gpu_plan_r13 / k5_plan_r13); bundles dumped to results/qv_2x4/dryrun/qpy and loaded back with
+    their sha256 (the CI path)."""
+    import gate_CV as CV
+    from gate_S2D import circuit_set
+    from quantinuum_build_circuits import circuit_id
+    from skqd.campaign33 import tokens as T
+    from skqd.campaign33.circuits import dump_qpy13
+    from skqd import circuits_qiskit as cq
+    from skqd.krylov import references
+    M, F, cset = circuit_set(2)
+    dts = {tb: float(M.reference(G2, tb).dt) for tb in (0, 2)}
+    fam = [(circuit_id(*c[:3]), c[0], int(c[1]), int(c[2]), c[3]) for c in cset]
+    for tb in (0, 2):
+        for r in references(M.basis, tb):
+            fam.append((f"B{tb // 2}_ref{int(r):02d}_k5", tb, int(r), 5, F.coarse_step(int(r), 5, dts[tb])))
+    ci = {f[0]: i for i, f in enumerate(fam)}
+    lay = SLOT_LAYOUT_2X4[slot]
+    s0 = T.base_seed(slot)
+    runs = []
+    if "family" in lay:
+        tb = lay["family"]["twoB"]
+        refs = sorted({f[2] for f in fam if f[1] == tb and f[3] <= 4})
+        if lay["family"]["refs"] is not None:
+            refs = refs[: (len(refs) + 1) // 2] if slot == "QV_2x4_03" else refs[(len(refs) + 1) // 2:]
+        sel = [f for f in fam if f[1] == tb and f[2] in refs]
+        mans = {f[0]: {"twoB": f[1]} for f in fam if f[3] <= 4}
+        final = {f[0]: DRY_PLAN_SHOTS for f in fam if f[3] <= 4}
+        n_eq = {t: CV.n_eq_of(sum(v for c, v in final.items() if mans[c]["twoB"] == t),
+                              sum(1 for c in final if mans[c]["twoB"] == t)) for t in (0, 2)}
+        gpu, _U = CV.gpu_plan_r13(final, final, {0: 1, 2: 1}, mans, n_eq)
+        out_dir = os.path.join(ROOT, "results", "qv_2x4", "dryrun", "qpy")
+        for cid, t, r, k, gates in sel:
+            qc = cq.ir_to_qiskit(gates, 12, measure=True)
+            path = os.path.join(out_dir, cid + ".irl0.qpy.gz")
+            rec = dump_qpy13(qc, path)
+            if k <= 4:
+                w = gpu[cid]
+            else:
+                ne = n_eq[t]
+                L = max(ne, CV.GPU_MIN_SHOTS)
+                w = {"shots": L, "plan_shots": ne, "prefix_lengths": sorted(x for x in {ne, 2 * ne} if x <= L),
+                     "prefix_lengths_dropped": sorted(x for x in {2 * ne} if x > L), "uniform_shots": 0}
+            runs.append({"label": f"{cid}:irl0:sample", "base_id": cid, "kind": "sample", "qpy": rel(path),
+                         "gz_sha256": rec["gz_sha256"], "n_instructions": len(qc.data), "twoB": t, "reference": r, "k": k,
+                         "dt": dts[t], "shots": int(w["shots"]), "plan_shots": int(w["plan_shots"]),
+                         "prefix_lengths": [int(x) for x in w["prefix_lengths"]],
+                         "prefix_lengths_dropped": [int(x) for x in w.get("prefix_lengths_dropped", [])],
+                         "uniform_shots": int(w["uniform_shots"]),
+                         "seed": T.chunk_seed(s0, ci[cid], 0, int(w["shots"])), "circuit_index": ci[cid]})
+    if "native" in lay:
+        p2, _g, _m = dry_part_2x2()
+        runs += [dict(r, dry_native=True) for r in p2["runs"] if r["kind"] == "native"]
+    return {"slot": slot, "schema": SCHEMA_36, "content": "DRY RUN (2x2) of: " + lay["content"], "runs": runs,
+            "pairs": [], "status": "ready", "prediction": None, "s0": s0, "dry_plan_shots": DRY_PLAN_SHOTS}
+
+
+def sample_aer(qc, ints, shots, seed, device, threads):
+    """One Aer call: the unitary part, save_amplitudes(codeword ints) BEFORE the circuit's terminal measurements,
+    shots with memory=True and seed_simulator=seed.  Returns (amplitudes, uint32 outcomes in shot order (bit k =
+    clbit k = qubit k), result, seconds)."""
+    from qiskit import QuantumCircuit
+    from qiskit_aer import AerSimulator
+    cc = QuantumCircuit(qc.num_qubits, qc.num_clbits)
+    cc.global_phase = qc.global_phase
+    meas = []
+    for inst in qc.data:
+        nm = inst.operation.name
+        if nm == "measure":
+            meas.append((qc.find_bit(inst.qubits[0]).index, qc.find_bit(inst.clbits[0]).index))
+            continue
+        if nm == "barrier":
+            continue
+        if meas:
+            raise SystemExit("a gate after a measurement: the circuit has no terminal-measurement block")
+        cc.append(inst.operation, [qc.find_bit(q).index for q in inst.qubits])
+    if sorted(meas) != [(k, k) for k in range(qc.num_qubits)]:
+        raise SystemExit("the measurement map is not q[k] -> c[k]")
+    cc.save_amplitudes([int(x) for x in ints])
+    for q, c in meas:
+        cc.measure(q, c)
+    kw = dict(method="statevector", precision="double")
+    if device == "GPU":
+        kw.update(device="GPU", cuStateVec_enable=True)
+    else:
+        kw["max_parallel_threads"] = int(threads)
+    sim = AerSimulator(**kw)
+    t = time.time()
+    res = sim.run(cc, shots=int(shots), seed_simulator=int(seed), memory=True).result()
+    sec = time.time() - t
+    if not res.success:
+        raise RuntimeError(f"Aer run failed: {res.status}")
+    amps = np.asarray(res.data(0)["amplitudes"], dtype=complex)
+    mem = res.get_memory(0)
+    out = np.fromiter((int(m.replace(" ", ""), 2) for m in mem), dtype=np.int64, count=len(mem)).astype(np.uint32)
+    return amps, out, res, sec
+
+
+def segments_of(seq, run):
+    """The order-kept sequence as consecutive segments tiling [0, shots): boundaries at every prefix length, at the end
+    of the CV block (shots - uniform_shots) and at shots.  Counts at a prefix L = the sum of the segments ending at or
+    before L (exact; more compact than one cumulative dictionary per prefix)."""
+    n = int(run["shots"])
+    b = sorted({0, n, n - int(run.get("uniform_shots", 0))} | {int(x) for x in run.get("prefix_lengths", [])})
+    out = []
+    for a, z in zip(b[:-1], b[1:]):
+        u, c = np.unique(seq[a:z], return_counts=True)
+        out.append({"start": int(a), "shots": int(z - a), "counts": {str(int(k)): int(v) for k, v in zip(u, c)},
+                    "uniform": bool(a >= n - int(run.get("uniform_shots", 0)) and int(run.get("uniform_shots", 0)) > 0)})
+    return out
+
+
+def tier_parts_check_2x4(args):
+    """Laptop check of the requested part files ci/parts/QV_2x4_02..05.json on the CI's qiskit (run it on the 1.4.3
+    twin): every run's QPY bundle exists, matches its gz sha256, loads, has the part's instruction count, 28 qubits and
+    clbits, the terminal measurements q[k] -> c[k] (sample runs); the seed rule; prefixes inside the order-kept block;
+    the slot prediction fits.  The 28-qubit statevectors themselves are the GPU's (a CPU run is hours per circuit)."""
+    import qiskit
+
+    from skqd.campaign33 import tokens as T
+    from skqd.campaign33.circuits import load_qpy, measure_map, sha256_file
+    from skqd.report import GateResult
+    t0 = time.time()
+    toks = T.load_tokens()
+    rows, ok_all = {}, True
+    for slot in SLOT_LAYOUT_2X4:
+        part = load_json(os.path.join(PARTS_DIR, slot + ".json"))
+        s0 = T.base_seed(slot, toks)
+        bad = []
+        for r in part.get("runs", []):
+            path = os.path.join(ROOT, r["qpy"])
+            if not os.path.exists(path) or sha256_file(path) != r["gz_sha256"]:
+                bad.append(f"{r['label']}: sha256")
+                continue
+            qc = load_qpy(path)[0]
+            if len(qc.data) != int(r["n_instructions"]) or qc.num_qubits != 28:
+                bad.append(f"{r['label']}: n_instructions / qubits")
+            if r["kind"] == "sample":
+                if qc.num_clbits != 28 or measure_map(qc) != {k: k for k in range(28)}:
+                    bad.append(f"{r['label']}: measurement map")
+                if int(r["seed"]) != T.chunk_seed(s0, int(r["circuit_index"]), 0, int(r["shots"])):
+                    bad.append(f"{r['label']}: seed rule")
+                if max(r["prefix_lengths"]) > int(r["shots"]) - int(r["uniform_shots"]):
+                    bad.append(f"{r['label']}: prefix beyond the order-kept block")
+        pred = part.get("prediction") or {}
+        ok = bool(part.get("runs") and not bad and pred.get("fits") and part.get("schema") == SCHEMA_36
+                  and str(part.get("status", "")).startswith("ready"))
+        ok_all &= ok
+        rows[slot] = {"runs": len(part.get("runs", [])), "status": part.get("status"), "mismatches": bad[:20],
+                      "predicted_s": pred.get("predicted_s"), "predicted_s_slow_sampling": pred.get("predicted_s_slow_sampling"),
+                      "fits": pred.get("fits"), "ok": ok}
+        print(f"  {slot}: {rows[slot]['runs']} runs, {'ok' if ok else bad[:3]} [{time.time() - t0:.0f} s]", flush=True)
+    reserve = {s: load_json(os.path.join(PARTS_DIR, s + ".json")).get("status") for s in RESERVE_SLOTS}
+    with open(os.path.join(PARTS_DIR, "QV_2x4_01.json"), "rb") as fh:
+        s01 = hashlib.sha256(fh.read()).hexdigest()
+    R = GateResult("dryrun/QV_2x4_parts_check", "the requested part files ci/parts/QV_2x4_02..05 loaded on the CI's qiskit "
+                                                "(laptop structural check; prompts/36a OD4)")
+    R.add("P1 every run of slots 02..05: bundle sha256, load, instruction count, 28 qubits, q[k] -> c[k], seed rule, prefixes "
+          "inside the order-kept block; prediction fits; status ready", rows, "all ok", ok_all)
+    R.add("P2 slots 06..08 are reserve", reserve, "reserve", all(str(v).startswith("reserve") for v in reserve.values()))
+    R.data = {"qiskit": qiskit.__version__, "python": sys.executable, "slots": rows, "reserve": reserve,
+              "QV_2x4_01_part_sha256": s01, "seconds": time.time() - t0}
+    R.runtime_s = time.time() - t0
+    os.makedirs(os.path.join(ROOT, "reports", "dryrun"), exist_ok=True)
+    return write_gate(R, "# dryrun/QV_2x4_parts_check\n\n" + R.criteria_table() + "\n")
+
+
+def segments_cumulative_check(segments, seq, run):
+    """True iff, for every prefix length L of the run, the counts rebuilt from the segments ending at or before L equal
+    np.unique of the first L outcomes."""
+    for L in run.get("prefix_lengths", []):
+        tot = {}
+        for sg in segments:
+            if sg["start"] + sg["shots"] <= int(L):
+                for k, v in sg["counts"].items():
+                    tot[int(k)] = tot.get(int(k), 0) + int(v)
+        u, c = np.unique(seq[: int(L)], return_counts=True)
+        if tot != {int(a): int(b) for a, b in zip(u, c)}:
+            return False
+    return True
+
+
+def gpu_verify_36(args, slot, dry, device, avail, ci, t0):
+    """prompts/36 3.4: the runs of a schema-36 part.  kind 'sample': QPY (sha256) -> save_amplitudes on the 37165
+    codewords + the terminal measurements, one Aer call with memory -> K1 exactness (max abs(dpsi) up to phase, leakage)
+    against krylov.coarse_states, K2 per-state test on the full sequence (5 sigma, p >= 1e-3), rejected strings, K3
+    decoder round trip, the prefix segments into the JSON and the raw uint32 outcomes to results/qv_2x4/<slot>/*.npz
+    (gitignored); kind 'native': the slot-01 statevector route (exactness only, read by Q0P_2x4 R9)."""
+    from skqd import circuits_qiskit as cq
+    from skqd.campaign33 import circuits as C
+    from skqd.campaign33.circuits import load_qpy, sha256_file
+    from skqd.campaign33 import tokens as T
+    from skqd.codec import Codec
+    from skqd.exact import mass_default
+    from skqd.hpc import gpu_count, gpu_telemetry, slurm_layout
+    from skqd.krylov import apply_groups, basis_vector, term_groups
+    from skqd.reference_sim import bits_to_int
+    from skqd.report import GateResult
+    lat = 2 if dry else 4
+    part = dry_part_36(slot) if dry else load_json(os.path.join(PARTS_DIR, slot + ".json"))
+    if not part.get("runs"):
+        raise SystemExit(f"{slot}: no runs ({part.get('status')})")
+    P = Phys(lat)
+    codec = Codec(P.M.basis)
+    groups = term_groups(P.M.terms, G2, mass_default(G2))
+    s0 = int(part.get("s0") or T.base_seed(slot))
+    npz_dir = os.path.join(ROOT, "results", "qv_2x4", "dryrun" if dry else "", slot)
+    os.makedirs(npz_dir, exist_ok=True)
+    phases = {"load_s": 0.0, "statevector_and_sampling_s": 0.0, "sampling_s_aer": 0.0, "compare_s": 0.0}
+    per, oom, seeds_ok = {}, [], True
+    for r in part["runs"]:
+        t = time.time()
+        if dry and r.get("dry_native"):
+            qc, _e = load_native_qiskit(2, r["base_id"])
+            sha = None
+        else:
+            path = os.path.join(ROOT, r["qpy"])
+            sha = sha256_file(path)
+            if sha != r["gz_sha256"]:
+                raise SystemExit(f"{r['label']}: QPY sha256 mismatch")
+            qc = load_qpy(path)[0]
+        phases["load_s"] += time.time() - t
+        psi_ex = apply_groups(groups, basis_vector(P.M.basis.dim, int(r["reference"])), int(r["k"]) * float(r["dt"]))
+        rec = {"label": r["label"], "base_id": r["base_id"], "kind": r["kind"], "twoB": int(r["twoB"]),
+               "reference": int(r["reference"]), "k": int(r["k"]), "n_instructions": int(len(qc.data)),
+               "qpy_gz_sha256": sha, "load_s": time.time() - t}
+        if r["kind"] == "native":
+            t = time.time()
+            sv, res = _statevector_gpu(qc, device, args.threads)
+            ex = C.exactness(sv, psi_ex, P.emb, True)
+            del sv
+            rec.update({"source": r.get("source"), "max_abs_dpsi": ex["max_abs_dpsi_up_to_phase"], "leakage": ex["leakage"],
+                        "meets_bar": bool(ex["max_abs_dpsi_up_to_phase"] < 1e-10 and ex["leakage"] < 1e-9),
+                        "aer_success": bool(getattr(res, "success", True)), "seconds": time.time() - t})
+            phases["statevector_and_sampling_s"] += rec["seconds"]
+            per[r["label"]] = rec
+            print(f"  {r['label']}: dpsi {rec['max_abs_dpsi']:.2e} leak {rec['leakage']:.2e} [{time.time() - t0:.0f} s]",
+                  flush=True)
+            continue
+        if int(r["seed"]) != T.chunk_seed(s0, int(r["circuit_index"]), 0, int(r["shots"])):
+            seeds_ok = False
+        t = time.time()
+        calls = []
+        try:
+            amps, seq, res, sec = sample_aer(qc, P.emb.ints, r["shots"], r["seed"], device, args.threads)
+            calls.append({"shots": int(r["shots"]), "seed": int(r["seed"]), "seconds": sec})
+        except Exception as exc:                     # only an out-of-memory is retried (campaign 33's split rule)
+            if not cq._is_oom(exc):
+                raise
+            half = int(math.ceil(int(r["shots"]) / 2))
+            parts_ = []
+            for j, n_j in enumerate((half, int(r["shots"]) - half)):
+                sd = T.chunk_seed(s0, int(r["circuit_index"]), j, half)
+                a_j, q_j, res, sec = sample_aer(qc, P.emb.ints, n_j, sd, device, args.threads)
+                calls.append({"shots": n_j, "seed": sd, "seconds": sec})
+                parts_.append(q_j)
+                amps = a_j if j == 0 else amps
+            seq = np.concatenate(parts_)
+            oom.append({"label": r["label"], "split": calls, "error": str(exc)[:300]})
+        rec["seconds"] = time.time() - t
+        phases["statevector_and_sampling_s"] += rec["seconds"]
+        md = res.results[0].metadata if hasattr(res, "results") else {}
+        rec["measure_sampling"] = bool(md.get("measure_sampling"))
+        rec["sample_measure_time_s"] = md.get("sample_measure_time")
+        if md.get("sample_measure_time") is not None:
+            phases["sampling_s_aer"] += float(md["sample_measure_time"])
+        t = time.time()
+        ov = complex(np.vdot(psi_ex, amps))
+        rec["max_abs_dpsi"] = float(np.abs(amps * np.exp(-1j * np.angle(ov)) - psi_ex).max())
+        rec["max_abs_dpsi_raw_phase"] = float(np.abs(amps - psi_ex).max())
+        rec["leakage"] = float(1.0 - np.sum(np.abs(amps) ** 2))
+        rec["meets_bar"] = bool(rec["max_abs_dpsi"] < 1e-10 and rec["leakage"] < 1e-9)
+        if dry:                                       # 3.4: save_amplitudes route = save_statevector route on the codewords
+            sv, _res = _statevector_gpu(qc, "CPU", args.threads)
+            rec["dry_amplitudes_vs_statevector_route"] = float(np.abs(sv[P.emb.ints] - amps).max())
+        u, cnt = np.unique(seq, return_counts=True)
+        counts = {int(k): int(v) for k, v in zip(u, cnt)}
+        probs = P.exact({"twoB": r["twoB"], "reference": r["reference"], "k": r["k"], "dt": r["dt"]})
+        rec["per_state"] = per_state(counts, probs, int(len(seq)))
+        acc, rej = P.decode(counts, int(r["twoB"]))
+        rec["accepted"], rec["rejected"] = int(sum(acc.values())), int(rej)
+        bad = 0
+        for i in acc:
+            if bits_to_int(codec.encode(P.M.basis.labels[int(i)])) != int(P.emb.ints[int(i)]):
+                bad += 1
+        rec["roundtrip"] = {"accepted_states": len(acc), "mismatches": bad}
+        rec["shots"], rec["shots_required"] = int(len(seq)), int(r["shots"])
+        rec["plan_shots"], rec["prefix_lengths"], rec["uniform_shots"] = r["plan_shots"], r["prefix_lengths"], r["uniform_shots"]
+        rec["seed"], rec["circuit_index"], rec["aer_calls"] = int(r["seed"]), int(r["circuit_index"]), calls
+        rec["segments"] = segments_of(seq, r)
+        rec["prefix_lengths_dropped"] = r.get("prefix_lengths_dropped", [])
+        rec["segments_cumulative_check"] = segments_cumulative_check(rec["segments"], seq, r)
+        rec["n_distinct"] = len(counts)
+        rec["seconds_per_shot"] = (float(md["sample_measure_time"]) / len(seq)
+                                   if md.get("sample_measure_time") is not None else None)
+        npz = os.path.join(npz_dir, r["base_id"] + ".npz")
+        np.savez_compressed(npz, outcomes=seq, meta=json.dumps({"seed": int(r["seed"]), "shots": int(len(seq)),
+                                                                "slot": slot, "label": r["label"]}))
+        rec["npz"] = rel(npz)
+        rec["aer_success"] = True
+        phases["compare_s"] += time.time() - t
+        per[r["label"]] = rec
+        print(f"  {r['label']}: dpsi {rec['max_abs_dpsi']:.2e} leak {rec['leakage']:.2e} per-state "
+              f"{len(rec['per_state']['failures'])} fails, rejected {rej}, ms {rec['measure_sampling']} "
+              f"[{time.time() - t0:.0f} s]", flush=True)
+    wall = time.time() - t0
+    tel = gpu_telemetry() if device == "GPU" else None
+    gate = slot if not dry else f"dryrun/{slot}"
+    R = GateResult(gate, ("DRY RUN (laptop CPU at 2x2): " if dry else "")
+                   + f"{slot}: {part.get('content')} (prompts/36 section 4)")
+    samples = [v for v in per.values() if v["kind"] == "sample"]
+    natives = [v for v in per.values() if v["kind"] == "native"]
+    n_shots = sum(v["shots"] for v in samples)
+    run = {"engine": f"AerSimulator statevector double, device {device}" + (", cuStateVec" if device == "GPU" else ""),
+           "device": device, "available_devices": avail, "gpus": (gpu_count(slurm_layout()) if device == "GPU" else 0),
+           "slurm": slurm_layout(), "wall_s": wall, "phases": phases,
+           "seconds_per_circuit": phases["statevector_and_sampling_s"] / max(1, len(per)),
+           "seconds_per_shot": (phases["sampling_s_aer"] / n_shots if n_shots and phases["sampling_s_aer"] else None),
+           "s_per_instruction": phases["statevector_and_sampling_s"] / max(1, sum(v["n_instructions"] for v in per.values())),
+           "peak_gpu_memory_mib": (tel or {}).get("peak_memory_mib"), "mean_gpu_utilization": (tel or {}).get("mean_utilization_pct"),
+           "gpu_telemetry": tel, "gpu_node_hours": (wall / 3600.0 if device == "GPU" else None),
+           "E_p": None, "E_p_note": "not measured: one task", "oom_retries": oom, "prediction": part.get("prediction"),
+           "ci": ci, "versions": versions(("qiskit", "qiskit-aer", "numpy", "scipy"))}
+    k1 = all(v["meets_bar"] for v in samples)
+    R.add("K1 every sampled circuit: max abs(dpsi) < 1e-10 (phase removed, on the codeword amplitudes) and leakage < 1e-9 "
+          "against krylov.coarse_states (save_amplitudes route; a failure is a STOP)",
+          {"n": len(samples), "max_dpsi": max((v["max_abs_dpsi"] for v in samples), default=None),
+           "max_leakage": max((v["leakage"] for v in samples), default=None),
+           **({"max_dry_amplitudes_vs_statevector": max((v["dry_amplitudes_vs_statevector_route"] for v in samples),
+                                                        default=None)} if dry else {})},
+          "< 1e-10; < 1e-9" + ("; dry: amplitudes = statevector route to 1e-12" if dry else ""),
+          k1 and (not dry or all(v["dry_amplitudes_vs_statevector_route"] <= 1e-12 for v in samples)))
+    k2 = all(v["per_state"]["ok"] and v["per_state"]["fraction_outside_exact_support"] == 0 and v["rejected"] == 0
+             for v in samples)
+    R.add("K2 per-state test on the full sequence (|n/N - p| <= 5 sigma for p >= 1e-3), 0 failures; fraction outside the "
+          "exact support 0; rejected 0",
+          {"failures": sum(len(v["per_state"]["failures"]) for v in samples),
+           "max_z": max((v["per_state"]["max_z"] for v in samples), default=None),
+           "outside": max((v["per_state"]["fraction_outside_exact_support"] for v in samples), default=None),
+           "rejected": sum(v["rejected"] for v in samples)}, "0; 0; 0", k2)
+    R.add("K3 decoder round trip: every accepted state re-encodes to its string (0 mismatches)",
+          sum(v["roundtrip"]["mismatches"] for v in samples), "0", all(v["roundtrip"]["mismatches"] == 0 for v in samples))
+    seg_ok = all(v["segments_cumulative_check"] for v in samples)
+    R.add("K0 the prefix segments rebuild the counts of the first L outcomes at every prefix L (prompts/36a R15 (iii))",
+          {v["label"]: v["segments_cumulative_check"] for v in samples}, "all true", seg_ok)
+    R.add("M measure_sampling true on every sampled run (Aer metadata; false would re-simulate per shot: STOP the design)",
+          {v["label"]: v["measure_sampling"] for v in samples}, "all true", all(v["measure_sampling"] for v in samples))
+    if natives:
+        R.add("N1 every native run completed on the statevector route; the bar is recorded for Q0P_2x4 (R9)",
+              {v["label"]: [v["max_abs_dpsi"], v["leakage"], v["meets_bar"]] for v in natives}, "completed",
+              all(v["aer_success"] for v in natives))
+    from skqd.campaign33.tokens import walltime_seconds
+    R.add("S1 the run happened on the GPU" if not dry else "S1 (dry run) the run happened on the CPU",
+          f"{device} (available {avail})", "GPU" if not dry else "CPU", (device == "GPU") if not dry else True)
+    pred = (part.get("prediction") or {}).get("predicted_s")
+    lim = min(walltime_seconds("01:00:00"), 3600.0)
+    s2 = wall <= lim and (pred is None or wall <= 1.1 * float(pred) + 120.0)
+    R.add("S2 wall <= min(walltime, 3600 s) and <= 1.1 x predicted + 120 s", f"{wall:.0f} s (predicted {pred})",
+          "inside", s2 if not dry else wall <= lim)
+    pol = all(run[k] is not None for k in ("engine", "device", "wall_s", "phases", "gpus", "seconds_per_circuit"))
+    if not dry:
+        pol = pol and run["seconds_per_shot"] is not None and run["peak_gpu_memory_mib"] is not None \
+            and run["mean_gpu_utilization"] is not None
+    R.add("S3 policy telemetry non-null (wall, phases, GPUs, s per circuit, s per shot, peak GPU MiB, mean utilisation)"
+          + (" -- dry run: present" if dry else ""),
+          {k: run[k] for k in ("wall_s", "gpus", "seconds_per_circuit", "seconds_per_shot", "peak_gpu_memory_mib",
+                               "mean_gpu_utilization")}, "non-null", pol)
+    R.add("S4 every seed recorded (chunk_seed(s0, circuit index, 0, shots))", seeds_ok, "true",
+          seeds_ok and all(v.get("seed") is not None for v in samples))
+    R.add("S5 OOM retries recorded", f"{len(oom)} recorded", "each split recorded", all("split" in o for o in oom))
+    R.add("S6 shots >= the part's shots on every sampled run", {v["label"]: v["shots"] for v in samples},
+          ">= shots", all(v["shots"] >= v["shots_required"] for v in samples))
+    R.data = {"prompt": PROMPT_36_S4, "schema": SCHEMA_36, "token": slot, "dry_run": dry, "lattice": f"2x{lat}",
+              "qpu_seconds": 0, "hqc": 0, "per_run": per, "run": run, "s0": s0,
+              "part": {k: v for k, v in part.items() if k != "runs"},
+              "stop": {"K1": not k1, "measure_sampling": not all(v["measure_sampling"] for v in samples)},
+              "segments_cumulative_check": bool(seg_ok),
+              "prefix_lengths_dropped": {v["label"]: v["prefix_lengths_dropped"] for v in samples},
+              "segments_rule": ("per run, `segments` tile [0, shots) in shot order with boundaries at every prefix length, "
+                                "at shots - uniform_shots and at shots; counts at a prefix L = the sum of the segments that "
+                                "end at or before L; the last `uniform_shots` are the uniform 2e5-per-sector block")}
+    R.runtime_s = wall
+    if dry:
+        os.makedirs(os.path.join(ROOT, "validation", "dryrun"), exist_ok=True)
+        os.makedirs(os.path.join(ROOT, "reports", "dryrun"), exist_ok=True)
+    return write_gate(R, f"# {gate}\n\nStatus: **{'PASS' if R.passed else 'FAIL'}**.  Generated from "
+                         f"`validation/{gate}.json`.\n\n" + R.criteria_table() + "\n")
+
+
+SKQD_SLOTS = ("QV_2x4_02", "QV_2x4_03", "QV_2x4_04")      # prompts/36a R14: the k = 5 runs ride with their sector
+
+
+def _decoded_chunks(P, runs, tb, with_uniform=False):
+    """{cid: [{start, shots, accepted {full-basis index: n}, rejected}]} from the slot JSON segments (the CV block only,
+    or the uniform block only)."""
+    from skqd.campaign33 import analysis as A
+    out = {}
+    for c, v in runs.items():
+        rows = []
+        for seg in v["segments"]:
+            if bool(seg.get("uniform")) != with_uniform:
+                continue
+            acc, rej, _ = A.decode_counts(P, {int(k): int(n) for k, n in seg["counts"].items()}, tb)
+            rows.append({"start": seg["start"], "shots": seg["shots"], "accepted": acc, "rejected": rej})
+        out[c] = rows
+    return out
+
+
+def tier_assemble_2x4(args):
+    """prompts/36 2.2 / Part C: gate SKQD_2x4 from validation/QV_2x4_02..06.json -- K1-K3 per sampled circuit, K4 the
+    plan point, K5 CV1-CV5 on the real sequences (CV3 from the k = 5 runs), K6 the uniform 2e5-per-sector point, K7 the
+    emulation agreement (information), S1-S6 per slot.  --dry-run: the 2x2 dry-run JSONs -> validation/dryrun/SKQD_2x4.json
+    (structural status; K4-K6 are information at 2x2, where the sector saturates)."""
+    from skqd.campaign33 import analysis as A
+    from skqd.report import GateResult, md_table, env_block
+    t0 = time.time()
+    dry = bool(args.dry_run)
+    lat = 2 if dry else 4
+    recs, missing = {}, []
+    for s in SKQD_SLOTS:
+        p = os.path.join(ROOT, "validation", "dryrun" if dry else "", s + ".json")
+        if os.path.exists(p):
+            recs[s] = load_json(p)
+        else:
+            missing.append(s)
+    gate = "dryrun/SKQD_2x4" if dry else "SKQD_2x4"
+    R = GateResult(gate, ("DRY RUN (2x2): " if dry else "") + "the 2x4 noiseless SKQD pipeline on the Aer GPU samples of "
+                   "slots QV_2x4_02..06 (prompts/36 section 2.2)")
+    R.add("completeness: slots 02..06 harvested" + ("" if dry else " on the GPU"),
+          {"present": sorted(recs), "missing": missing}, "all five",
+          not missing and (dry or all(r["data"]["run"]["device"] == "GPU" for r in recs.values())))
+    per = {}
+    for s, d in recs.items():
+        for v in d["data"]["per_run"].values():
+            if v["kind"] == "sample":
+                per[v["base_id"]] = dict(v, slot=s)
+    fam = {c: v for c, v in per.items() if int(v["k"]) <= 4}
+    k5 = {c: v for c, v in per.items() if int(v["k"]) == 5}
+    k1 = bool(per) and all(v["meets_bar"] for v in per.values())
+    R.add("K1 exactness on every sampled circuit (max abs(dpsi) < 1e-10, leakage < 1e-9; STOP otherwise)",
+          {"n": len(per), "max_dpsi": max((v["max_abs_dpsi"] for v in per.values()), default=None),
+           "max_leakage": max((v["leakage"] for v in per.values()), default=None)}, "< 1e-10; < 1e-9", k1)
+    k2 = bool(per) and all(v["per_state"]["ok"] and v["per_state"]["fraction_outside_exact_support"] == 0
+                           and v["rejected"] == 0 for v in per.values())
+    R.add("K2 per-state test on every sampled circuit, 0 failures; outside exact support 0; rejected 0",
+          {"failures": sum(len(v["per_state"]["failures"]) for v in per.values()),
+           "rejected": sum(v["rejected"] for v in per.values())}, "0", k2)
+    R.add("K3 decoder round trip, 0 mismatches", sum(v["roundtrip"]["mismatches"] for v in per.values()), "0",
+          bool(per) and all(v["roundtrip"]["mismatches"] == 0 for v in per.values()))
+    P = A.Physics(lat=lat)
+    emu = (load_json(CV_PLAN_2X4)["data"] if (not dry and os.path.exists(CV_PLAN_2X4)) else None)
+    sectors, stops = {}, []
+    for sec, tb in (("B=0", 0), ("B=1", 2)):
+        ids = sorted(c for c, v in fam.items() if int(v["twoB"]) == tb)
+        if not ids:
+            sectors[sec] = None
+            continue
+        et = A.e_tol(P, sec)
+        runs = {c: fam[c] for c in ids}
+        pre = A.Prefixes.from_chunks(P, tb, _decoded_chunks(P, runs, tb))
+        plan = {c: int(fam[c]["plan_shots"]) for c in ids}
+        n, sh = pre.counts(plan)
+        pt = A.skqd_point(P, sec, n, sh, with_random=False)
+        cert = A.certificate_reading(sec, pt)
+        ids5 = sorted(c for c, v in k5.items() if int(v["twoB"]) == tb)
+        eq = None
+        if ids5:
+            n_eq = sorted({int(k5[c]["plan_shots"]) for c in ids5})
+            pk5 = A.Prefixes.from_chunks(P, tb, _decoded_chunks(P, {c: k5[c] for c in ids5}, tb))
+            eq = (pre, n_eq[0], pk5)
+        cv = A.cv_reading(P, sec, pre, plan, et["value"], eq=eq, with_random=True, k_of={c: int(fam[c]["k"]) for c in ids})
+        uc = _decoded_chunks(P, runs, tb, with_uniform=True)
+        nu = np.zeros(P.M.basis.dim, dtype=np.int64)
+        su = 0
+        for c, rows in uc.items():
+            for r_ in rows:
+                for i, v in r_["accepted"].items():
+                    nu[int(i)] += int(v)
+                su += int(r_["shots"])
+        pu = A.skqd_point(P, sec, nu, su, with_random=False)
+        cu = A.certificate_reading(sec, pu)
+        crit = cv["criteria"]
+        if crit.get("CV3") and crit["CV3"].get("ok") is False:
+            stops.append(f"CV3 {sec} on the GPU sequences (family question for the planner)")
+        k7 = None
+        if emu:
+            cs = [v[sec] for v in emu["certificates"].values()]
+            k7 = {"gpu": {"recall_S999": cert["recall_S999"], "E_R_minus_E0": cert["E_R_minus_E0"], "width": cert["width"],
+                          "B_all_size": cert["B_all_size"]},
+                  "emulation_min_max": {k: [min(x[k] for x in cs), max(x[k] for x in cs)]
+                                        for k in ("recall_S999", "E_R_minus_E0", "B_all_size")},
+                  "emulation_width_min_max": [min((x["kt_width"] if sec == "B=0" else x["rH"]) for x in cs),
+                                              max((x["kt_width"] if sec == "B=0" else x["rH"]) for x in cs)]}
+        sectors[sec] = {"E_tol": et, "circuits": len(ids), "k5_circuits": len(ids5), "plan_shots": int(sh),
+                        "plan_point": cert, "cv": cv, "uniform_point": cu, "uniform_shots": su, "K7_information": k7}
+    have = [s for s in sectors.values() if s]
+    k4 = bool(have) and all(s["plan_point"]["recall_S999"] >= 0.9 and s["plan_point"]["E0_inside"]
+                            and s["plan_point"]["variational_ok"] and s["plan_point"]["W"] >= 0.99 for s in have)
+    k5c = bool(have) and all(all(s["cv"]["criteria"][k]["ok"] for k in ("CV1", "CV2", "CV3", "CV4", "CV5")) for s in have)
+    k6 = bool(have) and all(s["uniform_point"]["recall_S999"] >= 0.9 and s["uniform_point"]["E0_inside"]
+                            and s["uniform_point"]["variational_ok"] for s in have)
+    tag = "(dry run at 2x2: information) " if dry else ""
+    R.add(tag + "K4 the plan point: recall S999 >= 0.9; E0 inside Kato-Temple (B=0) / Weinstein (B=1); E_R >= E0 - 1e-9; "
+          "W(B_all) >= 0.99",
+          {sec: (None if s is None else {k: s["plan_point"][k] for k in ("recall_S999", "E0_inside", "E_R_minus_E0", "W",
+                                                                         "width", "B_all_size")})
+           for sec, s in sectors.items()}, ">= 0.9; inside; >= -1e-9; >= 0.99", k4 if not dry else bool(have))
+    R.add(tag + "K5 convergence on the real sequences: CV1, CV2 (H1 0.1 KT at B=0, H2 0.15 Weinstein at B=1), CV3 "
+          "(k = 4 -> 5 at equal shots, STOP otherwise), CV4 (every prefix and every k, 200 random bases), CV5",
+          {sec: (None if s is None else {k: s["cv"]["criteria"][k].get("ok") for k in ("CV1", "CV2", "CV3", "CV4", "CV5")})
+           for sec, s in sectors.items()}, "all ok", k5c if not dry else bool(have))
+    R.add(tag + "K6 the uniform 2e5-per-sector point: recall S999 >= 0.9, E0 inside, E_R >= E0 - 1e-9",
+          {sec: (None if s is None else {k: s["uniform_point"][k] for k in ("recall_S999", "E0_inside", "E_R_minus_E0",
+                                                                            "width", "B_all_size")})
+           for sec, s in sectors.items()}, ">= 0.9; inside; >= -1e-9", k6 if not dry else bool(have))
+    R.add("K7 emulation agreement (information, no threshold)",
+          {sec: (None if s is None else s["K7_information"]) for sec, s in sectors.items()}, "information", True)
+    s_rows = {}
+    for s, d in recs.items():
+        cs = {c["name"][:2]: c["passed"] for c in d["criteria"] if c["name"].startswith("S")}
+        s_rows[s] = cs
+    R.add("S1-S6 on every sampling slot (from the slot JSONs)", s_rows, "all pass",
+          bool(s_rows) and all(all(v.values()) and len(v) == 6 for v in s_rows.values()))
+    tele = {s: {k: d["data"]["run"].get(k) for k in ("engine", "device", "gpus", "wall_s", "seconds_per_circuit",
+                                                    "seconds_per_shot", "peak_gpu_memory_mib", "mean_gpu_utilization",
+                                                    "gpu_node_hours", "E_p_note")} for s, d in recs.items()}
+    R.data = {"prompt": "prompts/36_2x4_full_pipeline.md section 2.2", "dry_run": dry, "lattice": f"2x{lat}",
+              "sectors": sectors, "telemetry": tele, "per_circuit": {c: {k: v[k] for k in (
+                  "slot", "twoB", "reference", "k", "shots", "plan_shots", "max_abs_dpsi", "leakage", "rejected", "n_distinct",
+                  "seconds_per_shot")} | {"per_state_failures": len(v["per_state"]["failures"])} for c, v in per.items()},
+              "stop": {"fired": bool(stops) or not k1, "conditions": stops + ([] if k1 else ["K1"])},
+              "what_pass_means": ("the 2x4 noiseless SKQD pipeline runs end to end on the GPU samples of the signed IR-L0 "
+                                  "family: exact circuits, per-state statistics, a converged and certified ground-state "
+                                  "energy at the plan, beating random bases") if not dry else
+              "DRY RUN: the assembly code path at 2x2 (structural only)",
+              "comparison_2x3": {"C1_IDEAL": "validation/C1_IDEAL.json", "CV_2x3_plan": "validation/CV_2x3_plan.json"}}
+    R.runtime_s = time.time() - t0
+    L = [f"# {R.gate} — {R.title}", "", f"Status: **{'PASS' if R.passed else 'FAIL'}**.  Generated by "
+         f"`scripts/quantinuum_lattice_tests.py --tier assemble-2x4{' --dry-run --lattice 2' if dry else ' --lattice 4'}` "
+         f"from `validation/{R.gate}.json`; no number typed by hand.  {env_block()}", "", "## Criteria", "",
+         R.criteria_table(), "", "## Per-slot telemetry", "",
+         md_table(["slot", "engine", "device", "GPUs", "wall s", "s per circuit", "s per shot", "peak GPU MiB",
+                   "mean utilisation %", "GPU node-hours", "E(p)"],
+                  [[s, v["engine"], v["device"], v["gpus"], fmt(v["wall_s"]), fmt(v["seconds_per_circuit"]),
+                    fmt(v["seconds_per_shot"]), fmt(v["peak_gpu_memory_mib"]), fmt(v["mean_gpu_utilization"]),
+                    fmt(v["gpu_node_hours"]), v["E_p_note"]] for s, v in tele.items()]), "",
+         "## Plan point, uniform point and CV per sector", "",
+         md_table(["sector", "plan shots", "recall S999", "E_R - E0", "width", "|B_all|", "E0 inside", "CV1 dE", "CV3 dE",
+                   "CV4 margin", "CV5 W", "uniform recall", "uniform E_R - E0"],
+                  [[sec, fmt(s["plan_shots"]), fmt(s["plan_point"]["recall_S999"]), fmt(s["plan_point"]["E_R_minus_E0"]),
+                    fmt(s["plan_point"]["width"]), s["plan_point"]["B_all_size"], s["plan_point"]["E0_inside"],
+                    fmt(s["cv"]["criteria"]["CV1"]["dE"]), fmt((s["cv"]["criteria"].get("CV3") or {}).get("dE_k4_k5")),
+                    fmt(s["cv"]["criteria"]["CV4"].get("margin_at_N")), fmt(s["cv"]["criteria"]["CV5"]["W_at_N"], 6),
+                    fmt(s["uniform_point"]["recall_S999"]), fmt(s["uniform_point"]["E_R_minus_E0"])]
+                   for sec, s in sectors.items() if s]), ""]
+    if dry:
+        os.makedirs(os.path.join(ROOT, "reports", "dryrun"), exist_ok=True)
+    return write_gate(R, "\n".join(L))
+
+
 def tier_qv_tokens(args):
     """prompts/35b section 4: the eight generic slots QV_2x4_01..08 in scripts/gate_tokens.json (the QV_2x4_K1..K4 of
     35a R1 removed), appended after the campaign-33 tokens; estimate_minutes of slot 01 from its part's prediction,
@@ -1728,7 +2630,8 @@ def tier_qsc(args):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--lattice", type=int, choices=(2, 3, 4), required=True)
-    ap.add_argument("--tier", required=True, choices=("export", "noiseless", "noise", "pecos", "hugr", "gpu-verify", "qsc", "qv-tokens", "slots", "assemble"))
+    ap.add_argument("--tier", required=True, choices=("export", "noiseless", "noise", "pecos", "hugr", "gpu-verify", "qsc", "qv-tokens", "slots", "assemble",
+                                                        "bundles-2x4", "slots-2x4", "assemble-2x4", "parts-check-2x4"))
     ap.add_argument("--part", default=None)
     ap.add_argument("--only", nargs="*", default=None)
     ap.add_argument("--scenarios", nargs="*", default=None)
@@ -1758,6 +2661,14 @@ def main(argv=None):
         return tier_slots(args)
     if args.tier == "gpu-verify":
         return tier_gpu_verify(args)
+    if args.tier == "bundles-2x4":
+        return tier_bundles_2x4(args)
+    if args.tier == "slots-2x4":
+        return tier_slots_2x4(args)
+    if args.tier == "parts-check-2x4":
+        return tier_parts_check_2x4(args)
+    if args.tier == "assemble-2x4":
+        return tier_assemble_2x4(args)
     if args.lattice == 2:
         return assemble_QN_2x2()
     return assemble_QN_2x4()

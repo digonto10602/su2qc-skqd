@@ -114,6 +114,68 @@ def random_acceptance(codec, twoB):
     return {"accepted": acc, "strings": n, "fraction": acc / n, "reasons": reasons}
 
 
+def random_acceptance_factorised(codec, twoB):
+    """The exact count of `random_acceptance` without the 2^n loop (prompts/36 R2).
+
+    `Codec.decode` rejects a string at the first flagged vertex ('flag'), else at the first link whose two
+    end bits differ ('link'), else on the baryon number ('sector'), else if the label is not in
+    `basis.index` ('unknown').  So: per vertex, the 2^w patterns `decode_vertex` accepts, grouped by their
+    flux bits; 'flag' = 2^n - prod_v (accepted patterns of v); the link-consistent strings are enumerated
+    exactly by joining the vertices over the link values (every link spin assignment j2, then the product
+    of the per-vertex (n, iota) choices compatible with it); 'link' = unflagged - link-consistent; each
+    link-consistent product is then put through the sector test and the `basis.index` lookup.  Returns the
+    dictionary of `random_acceptance` (all four reasons present, zeros included) plus the per-vertex and
+    join bookkeeping."""
+    lat = codec.basis.lat
+    nv = lat.n_sites
+    per_vertex, n_ok = [], []
+    for s in range(nv):
+        by_flux, ok = {}, 0
+        for bits in itertools.product((0, 1), repeat=int(codec.widths[s])):
+            try:
+                flux, nn, io = codec.decode_vertex(s, bits)
+            except Reject:
+                continue
+            ok += 1
+            by_flux.setdefault(tuple(int(x) for x in flux), []).append((int(nn), int(io)))
+        per_vertex.append(by_flux)
+        n_ok.append(ok)
+    strings = 2 ** int(codec.n_qubits)
+    unflagged = 1
+    for x in n_ok:
+        unflagged *= int(x)
+    consistent = sector_rej = unknown = accepted = 0
+    nvac = [lat.n_vac(s) for s in range(nv)]
+    flux_links = [[int(l) for l, _ in codec.ends[s]] for s in range(nv)]
+    for j2 in itertools.product((0, 1), repeat=int(lat.n_links)):
+        choices = []
+        for s in range(nv):
+            c = per_vertex[s].get(tuple(j2[l] for l in flux_links[s]))
+            if not c:
+                break
+            choices.append(c)
+        if len(choices) < nv:
+            continue
+        for combo in itertools.product(*choices):
+            consistent += 1
+            n = tuple(c[0] for c in combo)
+            if sum(n[s] - nvac[s] for s in range(nv)) != twoB:
+                sector_rej += 1
+                continue
+            if (tuple(j2), n, tuple(c[1] for c in combo)) in codec.basis.index:
+                accepted += 1
+            else:
+                unknown += 1
+    reasons = {"flag": strings - unflagged, "link": unflagged - consistent, "sector": sector_rej, "unknown": unknown}
+    assert accepted + sum(reasons.values()) == strings
+    return {"accepted": accepted, "strings": strings, "fraction": accepted / strings, "reasons": reasons,
+            "per_vertex_accepted_patterns": n_ok, "unflagged_strings": unflagged,
+            "link_consistent_strings": consistent,
+            "method": ("factorised: per-vertex decode_vertex tables, joined over the link spins (every j2 in "
+                       "{0,1}^n_links x the compatible per-vertex (n, iota) choices), then the sector test and the "
+                       "basis.index lookup (gate_H0P.random_acceptance_factorised, prompts/36 R2)")}
+
+
 def label_of(model, basis_index):
     """'(j2 tuple); (n tuple)' of a basis state -- the label the memo's tables use."""
     j2, n, _iota = model.basis.labels[int(basis_index)]

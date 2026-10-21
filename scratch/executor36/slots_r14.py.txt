@@ -1,0 +1,180 @@
+SLOT_LAYOUT_2X4 = {      # prompts/36a R14 (replaces prompts/36 R6; slots 06-08 are reserve)
+    "QV_2x4_02": {"content": "SK-B1 + CV3-B1: the 16 B=1 family circuits + the 4 B=1 k = 5 circuits, sampled",
+                  "family": {"twoB": 2, "refs": None}, "k5": True},
+    "QV_2x4_03": {"content": "SK-B0a: B=0 refs 102, 1338, 11026, 16833, 2086, 281 (k = 1..4) + their 6 k = 5, sampled",
+                  "family": {"twoB": 0, "refs": (102, 1338, 11026, 16833, 2086, 281)}, "k5": True},
+    "QV_2x4_04": {"content": "SK-B0b: B=0 refs 3166, 345, 474, 682, 6930 (k = 1..4) + their 5 k = 5, sampled",
+                  "family": {"twoB": 0, "refs": (3166, 345, 474, 682, 6930)}, "k5": True},
+    "QV_2x4_05": {"content": "NAT: the 13 native structured k = 1 circuits slot 01 did not run (frozen source, R7)",
+                  "native": (0, 13)},
+}
+RESERVE_SLOTS = ("QV_2x4_06", "QV_2x4_07", "QV_2x4_08")
+DRY_PLAN_SHOTS = 267                  # the dry runs' plan point at 2x2 (the D3'-R floor)
+
+
+def native_runs_2x4():
+    """R7: (status, [native runs]) for the native slot from validation/QV_2x4_01.json -- written only when that file
+    exists with stop == false and a frozen source; the native QPY bundles come from --tier export (pytket venv)."""
+    if not os.path.exists(QV01_JSON):
+        return "withheld (R7): validation/QV_2x4_01.json not harvested", []
+    d = load_json(QV01_JSON)["data"]
+    src = d.get("frozen_source")
+    if d.get("stop") or not src:
+        return f"withheld (R7): QV_2x4_01 stop {d.get('stop')}, frozen source {src}", []
+    idx, mans, _ = family(4)
+    done = {r["base_id"] for r in load_json(os.path.join(PARTS_DIR, "QV_2x4_01.json"))["runs"]}
+    ids = [c for c in idx["circuits"] if mans[c].get("source") == src and int(mans[c]["k"]) == 1
+           and mans[c]["base_id"] not in done]
+    ip = os.path.join(qpy_dir(4), "index.json")
+    exp = load_json(ip).get("circuits", {}) if os.path.exists(ip) else {}
+    missing = [c for c in ids if c not in exp]
+    if missing:
+        return (f"withheld: native bundles not exported ({len(missing)} of {len(ids)}); run "
+                f"~/.local/share/su2qc-quantinuum/venv/bin/python scripts/quantinuum_lattice_tests.py --lattice 4 "
+                f"--tier export --only {' '.join(missing)}"), []
+    runs = []
+    for c in ids:
+        m, e = mans[c], exp[c]
+        runs.append({"label": f"{c}:native", "base_id": m["base_id"], "kind": "native", "source": src,
+                     "qpy": f"{IRL0_DIR_REL}/{e['file']}", "gz_sha256": e["gz_sha256"], "qpy_header": e["qpy"],
+                     "n_instructions": int(sum(e["ops"].values())), "twoB": int(m["twoB"]), "reference": int(m["reference"]),
+                     "k": 1, "dt": float(m["dt"]), "method": "save_statevector (full 2^28 vector)"})
+    return f"ready: frozen source {src} (validation/QV_2x4_01.json, stop false)", runs
+
+
+def tier_slots_2x4(args):
+    """prompts/36a R13 / R14 / 3.7: the four slot contents 02..05 from validation/CV_2x4_plan.json -- data.plan.final when
+    the owner signed OD1 and OD4 (-> ci/parts/QV_2x4_02..05.json, 06-08 marked reserve), otherwise the proposed plan
+    data.replan_36a.proposed (-> data/cv/2x4/provisional_parts_s<s*>/, status PROVISIONAL, never requested).
+    `prediction` = gate_CV.slot_prediction (the three statevector models + load + compare + sampling)."""
+    import gate_CV as CV
+    from skqd.campaign33 import tokens as T
+    t0 = time.time()
+    D = load_json(CV_PLAN_2X4)["data"]
+    od = D.get("owner_decision") or {}
+    signed = od.get("OD1") == "SIGNED" and od.get("OD4") == "SIGNED"
+    prop = D["replan_36a"]["proposed"]
+    if not prop.get("complete"):
+        raise SystemExit("STOP: no proposed plan (s = 32 fails at B=1 or B=0 has no passing s): no slot is written")
+    gpu, k5 = prop["gpu"], prop["k5"]
+    s_star = D["s_star_information"]
+    if signed:
+        out_dir, status0 = PARTS_DIR, "ready"
+    else:
+        out_dir = os.path.join(CV.CV4_DIR, f"provisional_parts_s{s_star:g}")
+        status0 = ("PROVISIONAL: owner items OD1-OD4 unsigned (data/owner_decision_2x4_cv_plan_DRAFT.md); information "
+                   "only, never requested")
+    os.makedirs(out_dir, exist_ok=True)
+    irl0 = load_json(os.path.join(qpy_dir(4), "index.json"))["irl0"]
+    cost = D["gpu_cost_model"]
+    toks = T.load_tokens()
+    nat_status, nat_runs = native_runs_2x4()
+    written = {}
+    for slot, lay in SLOT_LAYOUT_2X4.items():
+        s0 = T.base_seed(slot, toks)
+        runs, sel = [], []
+        if "family" in lay:
+            f = lay["family"]
+            fam = [c for c in gpu if irl0[c]["twoB"] == f["twoB"] and (f["refs"] is None or irl0[c]["reference"] in f["refs"])]
+            refs = {irl0[c]["reference"] for c in fam}
+            sel = fam + [c for c in k5 if int(k5[c]["twoB"]) == f["twoB"] and int(k5[c]["reference"]) in refs]
+        for c in sorted(sel, key=lambda c: irl0[c]["circuit_index"]):
+            e = irl0[c]
+            w = gpu.get(c) or k5[c]
+            runs.append({"label": f"{c}:irl0:sample", "base_id": c, "kind": "sample", "qpy": e["file"],
+                         "gz_sha256": e["gz_sha256"], "n_instructions": int(e["n_instructions"]), "twoB": int(e["twoB"]),
+                         "reference": int(e["reference"]), "k": int(e["k"]), "dt": float(e["dt"]),
+                         "shots": int(w["shots"]), "plan_shots": int(w["plan_shots"]),
+                         "prefix_lengths": [int(x) for x in w["prefix_lengths"]],
+                         "prefix_lengths_dropped": [int(x) for x in w.get("prefix_lengths_dropped", [])],
+                         "uniform_shots": int(w["uniform_shots"]),
+                         "seed": T.chunk_seed(s0, int(e["circuit_index"]), 0, int(w["shots"])),
+                         "circuit_index": int(e["circuit_index"])})
+        status, native_status = status0, None
+        if "native" in lay:
+            a, b = lay["native"]
+            native_status = nat_status
+            runs += nat_runs[a:b]
+            if not nat_runs:
+                status = nat_status
+        pred = CV.slot_prediction(runs, cost)
+        part = {"slot": slot, "schema": SCHEMA_36, "prompt": "prompts/36a_CV_2x4_plan_fix_20261019.md R13 / R14",
+                "lattice": "2x4", "content": lay["content"], "family": "IR-L0" if "family" in lay else "native",
+                "plan_source": ("validation/CV_2x4_plan.json data.plan.final" if signed
+                                else "validation/CV_2x4_plan.json data.replan_36a.proposed (unsigned)"),
+                "s_by_sector": prop["s_by_sector"], "status": status, "native_status": native_status, "runs": runs,
+                "pairs": [], "prediction": pred, "seed_rule": T.SEED_RULE, "s0": s0, "token_index": T.token_index(slot, toks),
+                "created": now(), "git_commit": git_commit_short()}
+        with open(os.path.join(out_dir, slot + ".json"), "w") as fh:
+            json.dump(part, fh, indent=1)
+        written[slot] = {"runs": len(runs), "shots": pred["shots"], "predicted_s": round(pred["predicted_s"], 1),
+                         "slow": round(pred["predicted_s_slow_sampling"], 1), "fits": pred["fits"]}
+    if signed:
+        for slot in RESERVE_SLOTS:
+            with open(os.path.join(PARTS_DIR, slot + ".json"), "w") as fh:
+                json.dump({"slot": slot, "schema": SCHEMA_36, "prompt": "prompts/36a R14", "runs": [], "pairs": [],
+                           "status": "reserve (re-runs); no content"}, fh, indent=1)
+    print(rel(out_dir), json.dumps(written, indent=1), f"({time.time() - t0:.0f} s)")
+    return 0
+
+
+# ---- the dry runs (laptop CPU, 2x2): the same JSON structure
+def dry_part_36(slot):
+    """The 2x2 analogue of slot `slot` under R14: the B=1 family + its k = 5 (02), the first / second half of the B=0
+    references + their k = 5 (03 / 04), the 2x2 natives of dry_part_2x2 (05).  Plan point 267 per circuit at s = 1; the
+    R13 shot rule (gate_CV.gpu_plan_r13 / k5_plan_r13); bundles dumped to results/qv_2x4/dryrun/qpy and loaded back with
+    their sha256 (the CI path)."""
+    import gate_CV as CV
+    from gate_S2D import circuit_set
+    from quantinuum_build_circuits import circuit_id
+    from skqd.campaign33 import tokens as T
+    from skqd.campaign33.circuits import dump_qpy13
+    from skqd import circuits_qiskit as cq
+    from skqd.krylov import references
+    M, F, cset = circuit_set(2)
+    dts = {tb: float(M.reference(G2, tb).dt) for tb in (0, 2)}
+    fam = [(circuit_id(*c[:3]), c[0], int(c[1]), int(c[2]), c[3]) for c in cset]
+    for tb in (0, 2):
+        for r in references(M.basis, tb):
+            fam.append((f"B{tb // 2}_ref{int(r):02d}_k5", tb, int(r), 5, F.coarse_step(int(r), 5, dts[tb])))
+    ci = {f[0]: i for i, f in enumerate(fam)}
+    lay = SLOT_LAYOUT_2X4[slot]
+    s0 = T.base_seed(slot)
+    runs = []
+    if "family" in lay:
+        tb = lay["family"]["twoB"]
+        refs = sorted({f[2] for f in fam if f[1] == tb and f[3] <= 4})
+        if lay["family"]["refs"] is not None:
+            refs = refs[: (len(refs) + 1) // 2] if slot == "QV_2x4_03" else refs[(len(refs) + 1) // 2:]
+        sel = [f for f in fam if f[1] == tb and f[2] in refs]
+        mans = {f[0]: {"twoB": f[1]} for f in fam if f[3] <= 4}
+        final = {f[0]: DRY_PLAN_SHOTS for f in fam if f[3] <= 4}
+        n_eq = {t: CV.n_eq_of(sum(v for c, v in final.items() if mans[c]["twoB"] == t),
+                              sum(1 for c in final if mans[c]["twoB"] == t)) for t in (0, 2)}
+        gpu, _U = CV.gpu_plan_r13(final, final, {0: 1, 2: 1}, mans, n_eq)
+        out_dir = os.path.join(ROOT, "results", "qv_2x4", "dryrun", "qpy")
+        for cid, t, r, k, gates in sel:
+            qc = cq.ir_to_qiskit(gates, 12, measure=True)
+            path = os.path.join(out_dir, cid + ".irl0.qpy.gz")
+            rec = dump_qpy13(qc, path)
+            if k <= 4:
+                w = gpu[cid]
+            else:
+                ne = n_eq[t]
+                L = max(ne, CV.GPU_MIN_SHOTS)
+                w = {"shots": L, "plan_shots": ne, "prefix_lengths": sorted(x for x in {ne, 2 * ne} if x <= L),
+                     "prefix_lengths_dropped": sorted(x for x in {2 * ne} if x > L), "uniform_shots": 0}
+            runs.append({"label": f"{cid}:irl0:sample", "base_id": cid, "kind": "sample", "qpy": rel(path),
+                         "gz_sha256": rec["gz_sha256"], "n_instructions": len(qc.data), "twoB": t, "reference": r, "k": k,
+                         "dt": dts[t], "shots": int(w["shots"]), "plan_shots": int(w["plan_shots"]),
+                         "prefix_lengths": [int(x) for x in w["prefix_lengths"]],
+                         "prefix_lengths_dropped": [int(x) for x in w.get("prefix_lengths_dropped", [])],
+                         "uniform_shots": int(w["uniform_shots"]),
+                         "seed": T.chunk_seed(s0, ci[cid], 0, int(w["shots"])), "circuit_index": ci[cid]})
+    if "native" in lay:
+        p2, _g, _m = dry_part_2x2()
+        runs += [dict(r, dry_native=True) for r in p2["runs"] if r["kind"] == "native"]
+    return {"slot": slot, "schema": SCHEMA_36, "content": "DRY RUN (2x2) of: " + lay["content"], "runs": runs,
+            "pairs": [], "status": "ready", "prediction": None, "s0": s0, "dry_plan_shots": DRY_PLAN_SHOTS}
+
+

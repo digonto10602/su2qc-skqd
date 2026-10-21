@@ -1,0 +1,20 @@
+# Owner decision -- CV_2x4_plan (prompts/36a), SIGNED 2026-10-21
+
+Owner (Digonto), 2026-10-21, verbatim: "signed OD1-OD4."  Recorded by the coordinator from the session; the item texts below are the generated draft (data/owner_decision_2x4_cv_plan_DRAFT.md at commit 230f574) with each status line changed to SIGNED.
+
+OD1: SIGNED
+
+  Re-sizing grid of the noiseless GPU-sampled 2x4 plan extended to {12, 16, 24, 32} (STOP at 32; hardware plans keep <= 8).  s_star_information = 12; per seed r_H(sN/2) / r_H(sN): 20260914 0.1396 / 0.1019; 1 0.1362 / 0.1023; 2 0.1437 / 0.1064; B=1 shots at s*: 294,000
+
+OD2: SIGNED
+
+  CV3 read at the final plan's N_eq (1x, 2 N_eq and the variational bound stay on record).  B=1 per seed, dE / E_tol at 1x and at the final N_eq: 20260914 0.8926 / 0.1819; 1 1.209 / 0.1723; 2 0.8392 / 0.1539
+
+OD3: SIGNED
+
+  A7 corrected (prompts/36a addendum A1): n_unitary_instructions = C + n_x(bundle) for every bundle and every k = 1..5, with C one constant common to all 75 bundles (the coarse-step body, 142284 as computed: information_body_minus_prep_x) and n_x the reference's preparation x gates, equal to the 1-bits of its codeword (4 for the Dirac-sea reference 102, 5 for the other fourteen references: information_n_unitary_by_reference 142288 / 142289); replaces "k x 142288".  The per-sector wording of the first draft ("2B=0: 142288, 2B=2: 142289") was wrong and is withdrawn; rule_corrected_holds is re-evaluated by the gate under this wording (prompts/36a A3) before the owner signs: rule_corrected_holds = True, n_x_by_reference == popcount_by_reference: True.
+
+OD4: SIGNED
+
+  GPU shots per R13 and four slots 02-05 per R14 on the slot-01 cost model t = 50.61 s + 3.428e-05 s x n_instructions (rms 2.793 s); provisional slots: QV_2x4_02 predicted 1314 s, fits True; QV_2x4_03 predicted 1851 s, fits True; QV_2x4_04 predicted 1542 s, fits True; QV_2x4_05 predicted 2629 s, fits True
+

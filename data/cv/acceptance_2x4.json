@@ -1,0 +1,199 @@
+{
+ "prompt": "prompts/36_2x4_full_pipeline.md",
+ "lattice": "2x4",
+ "n_qubits": 28,
+ "cross_checks": {
+  "2x2": {
+   "sectors": {
+    "B=0": {
+     "factorised": {
+      "accepted": 38,
+      "strings": 4096,
+      "reasons": {
+       "flag": 2800,
+       "link": 1214,
+       "sector": 44,
+       "unknown": 0
+      }
+     },
+     "exhaustive": {
+      "accepted": 38,
+      "strings": 4096,
+      "reasons": {
+       "flag": 2800,
+       "link": 1214,
+       "sector": 44,
+       "unknown": 0
+      }
+     },
+     "equal": true
+    },
+    "B=1": {
+     "factorised": {
+      "accepted": 20,
+      "strings": 4096,
+      "reasons": {
+       "flag": 2800,
+       "link": 1214,
+       "sector": 62,
+       "unknown": 0
+      }
+     },
+     "exhaustive": {
+      "accepted": 20,
+      "strings": 4096,
+      "reasons": {
+       "flag": 2800,
+       "link": 1214,
+       "sector": 62,
+       "unknown": 0
+      }
+     },
+     "equal": true
+    }
+   },
+   "factorised_equals_exhaustive": true,
+   "exhaustive_source": "gate_H0P.random_acceptance re-run now (2^12 strings)"
+  },
+  "2x3": {
+   "sectors": {
+    "B=0": {
+     "factorised": {
+      "accepted": 677,
+      "strings": 1048576,
+      "reasons": {
+       "flag": 829552,
+       "link": 217297,
+       "sector": 1050,
+       "unknown": 0
+      }
+     },
+     "exhaustive": {
+      "accepted": 677,
+      "strings": 1048576,
+      "reasons": {
+       "flag": 829552,
+       "link": 217297,
+       "sector": 1050,
+       "unknown": 0
+      }
+     },
+     "equal": true
+    },
+    "B=1": {
+     "factorised": {
+      "accepted": 426,
+      "strings": 1048576,
+      "reasons": {
+       "flag": 829552,
+       "link": 217297,
+       "sector": 1301,
+       "unknown": 0
+      }
+     },
+     "exhaustive": {
+      "accepted": 426,
+      "strings": 1048576,
+      "reasons": {
+       "flag": 829552,
+       "link": 217297,
+       "sector": 1301,
+       "unknown": 0
+      }
+     },
+     "equal": true
+    }
+   },
+   "factorised_equals_exhaustive": true,
+   "exhaustive_source": "data/cv/acceptance_2x3.json"
+  }
+ },
+ "B=0": {
+  "accepted": 12843,
+  "strings": 268435456,
+  "fraction": 4.784390330314636e-05,
+  "reasons": {
+   "flag": 231420400,
+   "link": 36977891,
+   "sector": 24322,
+   "unknown": 0
+  },
+  "method": "factorised: per-vertex decode_vertex tables, joined over the link spins (every j2 in {0,1}^n_links x the compatible per-vertex (n, iota) choices), then the sector test and the basis.index lookup (gate_H0P.random_acceptance_factorised, prompts/36 R2)",
+  "dimension": 12843,
+  "equals_dimension": true,
+  "per_vertex_accepted_patterns": [
+   6,
+   6,
+   13,
+   13,
+   13,
+   13,
+   6,
+   6
+  ],
+  "unflagged_strings": 37015056,
+  "link_consistent_strings": 37165,
+  "monte_carlo": {
+   "strings": 10000000,
+   "accepted": 491,
+   "expected": 478.4390330314636,
+   "sigma": 21.872725999304038,
+   "z": 0.5742753312475112,
+   "seed": 36,
+   "reasons": {
+    "flag": 8623608,
+    "link": 1375033,
+    "sector": 868,
+    "unknown": 0
+   },
+   "within_3_sigma": true
+  }
+ },
+ "B=1": {
+  "accepted": 8934,
+  "strings": 268435456,
+  "fraction": 3.328174352645874e-05,
+  "reasons": {
+   "flag": 231420400,
+   "link": 36977891,
+   "sector": 28231,
+   "unknown": 0
+  },
+  "method": "factorised: per-vertex decode_vertex tables, joined over the link spins (every j2 in {0,1}^n_links x the compatible per-vertex (n, iota) choices), then the sector test and the basis.index lookup (gate_H0P.random_acceptance_factorised, prompts/36 R2)",
+  "dimension": 8934,
+  "equals_dimension": true,
+  "per_vertex_accepted_patterns": [
+   6,
+   6,
+   13,
+   13,
+   13,
+   13,
+   6,
+   6
+  ],
+  "unflagged_strings": 37015056,
+  "link_consistent_strings": 37165,
+  "monte_carlo": {
+   "strings": 10000000,
+   "accepted": 349,
+   "expected": 332.8174352645874,
+   "sigma": 18.242981075472994,
+   "z": 0.8870570368112398,
+   "seed": 36,
+   "reasons": {
+    "flag": 8623608,
+    "link": 1375033,
+    "sector": 1010,
+    "unknown": 0
+   },
+   "within_3_sigma": true
+  }
+ },
+ "runtime_s": 148.02685117721558,
+ "factorised_runtime_s": 0.2684597969055176,
+ "monte_carlo_runtime_s": 125.88316440582275,
+ "monte_carlo_rng": "numpy default_rng(seed).integers(0, 2^n_qubits, int64) in chunks of 200000; bit k = qubit k",
+ "function": "scripts/gate_H0P.random_acceptance_factorised (prompts/36 R2); Monte-Carlo through Codec.decode",
+ "assumption_replaced": "scripts/quantinuum_lattice_tests.Phys used a = dim / 2^n_qubits (assumed); it now reads this file"
+}
