@@ -1,0 +1,93 @@
+{
+ "checks": {
+  "2x3|frozen|B0_ref117_k1|quantinuum": {
+   "max_abs_dprob_native_vs_logical": 6.483702463810914e-14,
+   "native_ops": {
+    "rz": 4309,
+    "r": 3051,
+    "rzz": 2158
+   },
+   "n_qubits_simulated": 20,
+   "layout": {
+    "basis_gates": [
+     "rz",
+     "rx",
+     "ry",
+     "rzz"
+    ],
+    "optimization_level": 0,
+    "seed_transpiler": 7,
+    "coupling_map": null,
+    "then": "every run of 1q gates merged into one r (PhasedX) + one virtual rz"
+   }
+  },
+  "2x3|frozen|B0_ref117_k1|ibm": {
+   "max_abs_dprob_native_vs_logical": 6.471490010540037e-13,
+   "native_ops": {
+    "sx": 12237,
+    "rz": 10566,
+    "cz": 8573,
+    "x": 734
+   },
+   "n_qubits_simulated": 21,
+   "layout": {
+    "coupling_map": "heavy_hex_156 (noise_models.heavy_hex_156)",
+    "basis_gates": [
+     "cz",
+     "rz",
+     "sx",
+     "x"
+    ],
+    "optimization_level": 1,
+    "seed_transpiler": 7,
+    "layout_method": "sabre",
+    "routing_method": "sabre"
+   }
+  },
+  "2x4|compressed_circuit_llm_2x4_classA|B0_ref102_k1|ibm": {
+   "native_ops": {
+    "sx": 11405,
+    "cz": 6131,
+    "rz": 4914,
+    "x": 19
+   },
+   "n_qubits_used": 38,
+   "route_s": 48.482404470443726
+  },
+  "2x4|compressed_circuit_llm_2x4_classB|B0_ref102_k1|ibm": {
+   "native_ops": {
+    "sx": 4260,
+    "cz": 2281,
+    "rz": 2001,
+    "x": 11
+   },
+   "n_qubits_used": 28,
+   "route_s": 7.478074550628662
+  },
+  "2x3|frozen|B0_ref117_k1|native_form_sparse": {
+   "max_support": 442368,
+   "final_support": 550,
+   "wall_s": 201.27567625045776
+  },
+  "2x3|frozen|B0_ref117_k1|ir_form_sparse": {
+   "max_support": 998,
+   "wall_s": 0.6864817142486572
+  }
+ },
+ "provenance": {
+  "git_commit": "a07ba6d",
+  "machine": {
+   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+   "node": "pichkaCommander",
+   "python": "3.12.14",
+   "executable": "/home/digimonk/anaconda3/envs/coding/bin/python",
+   "numpy": "2.5.2",
+   "scipy": "1.18.0",
+   "cpu_count": 12,
+   "qiskit": "2.5.2",
+   "qiskit_aer": "0.17.2"
+  },
+  "created_utc": "2026-10-21 23:53:57 UTC",
+  "command": "python scripts/native_check.py"
+ }
+}

@@ -1,0 +1,80 @@
+{
+ "vendor": "IBM",
+ "purpose": "C5 (notes/008, owner's change): IBM Heron noise parameters from internet-published data only; no backend, no API call, no live calibration, no qiskit fake-backend snapshot",
+ "access_date": "2026-10-21",
+ "conventions": {
+  "errors": "IBM's per-gate 'error' values are the randomized-benchmarking error per gate (average gate infidelity); readout error = assignment error averaged over |0> and |1> (P(0|1) and P(1|0) given separately where published).",
+  "medians": "IBM's public numbers are medians over qubits/edges unless stated; paper snapshots quote what the authors read and do not always say median vs mean (stated per value)."
+ },
+ "sources": {
+  "platform": {"url": "https://quantum.cloud.ibm.com/computers", "title": "IBM Quantum Platform - Compute resources (public, signed-out table)", "source_date": "live page, read 2026-10-21 (no sign-in; the per-QPU detail panel needs the API and was not used)", "accessed": "2026-10-21"},
+  "proc_types": {"url": "https://quantum.cloud.ibm.com/docs/en/guides/processor-types", "title": "IBM Quantum documentation - Processor types (Heron r2: 156 qubits, heavy-hexagonal lattice; r3 July 2025)", "source_date": "not stated (mentions Nighthawk r2, September 2026)", "accessed": "2026-10-21"},
+  "frac": {"url": "https://quantum.cloud.ibm.com/docs/en/guides/fractional-gates", "title": "IBM Quantum documentation - Fractional gates (Heron basis gates cz, id, rz, sx, x; with fractional gates also rx, rzz)", "source_date": "not stated", "accessed": "2026-10-21"},
+  "qdc2025": {"url": "https://www.ibm.com/quantum/blog/qdc-2025", "title": "IBM Quantum blog, Scaling for quantum advantage and beyond (QDC 2025): Heron r3 176 two-qubit couplings, 330 000 CLOPS", "source_date": "2025-11-12", "accessed": "2026-10-21"},
+  "patra2026": {"url": "https://arxiv.org/abs/2607.20585", "title": "A. K. Patra et al., Machine-Learned Compact Subspace Generation for QSCI within DMET, arXiv:2607.20585, App. A Tables A1 (ibm_boston, Heron r3) and A2 (ibm_fez, Heron r2)", "source_date": "2026-07 (calibration snapshots 2026-01-14 for ibm_fez; 2026-04-27 .. 2026-05-02 for ibm_boston)", "accessed": "2026-10-21"},
+  "kingston2026": {"url": "https://arxiv.org/abs/2605.10638", "title": "Quantifying the Hadamard Resilience Effect and the Coherence Gap in NISQ-Era Classifiers, arXiv:2605.10638, Sec. III (ibm_kingston, Heron r2, medians at execution time)", "source_date": "2026-05", "accessed": "2026-10-21"},
+  "kingston_jun2026": {"url": "https://arxiv.org/abs/2610.20855", "title": "Perfect and peak state transfer on IBM quantum hardware, arXiv:2610.20855, Sec. 5.3 (ibm_kingston calibration of 2026-06-12)", "source_date": "2026-10-12", "accessed": "2026-10-21"},
+  "pitt2026": {"url": "https://arxiv.org/abs/2605.26757", "title": "Practical Entanglement Distillation Protocols with Quadratic Error Suppression, arXiv:2605.26757, App. A (IBM Research Zurich; ibm_pittsburgh, Heron r3): 2q gate 88 ns, 1q gate 32 ns, readout 2584 ns", "source_date": "2026-05-27", "accessed": "2026-10-21"},
+  "gambetta2025": {"url": "https://x.com/jaygambetta/status/1925017189959991338", "title": "J. Gambetta (IBM) post announcing ibm_pittsburgh, Heron r3: T1 300 us, T2 370 us, 2Q error ~5e-4 (best), layered error 3.2e-3", "source_date": "2025-05-21 (approx., from the post id)", "accessed": "2026-10-21 (via search-engine snippet; the post itself was not fetched)"}
+ },
+ "public_platform_snapshot_2026-10-21": {
+  "source": "platform",
+  "columns": ["processor_type", "programmable_qubits", "2Q_error_best", "2Q_error_layered_EPLG", "readout_error_median", "CLOPS"],
+  "definitions": {"2Q_error_best": "lowest two-qubit error over all edges (isolated RB)", "2Q_error_layered_EPLG": "average two-qubit error per layered gate for a 100-qubit chain", "readout_error_median": "median assignment error"},
+  "rows": {
+   "ibm_kingston": ["Heron r2", 156, 1.095e-3, 4.153e-3, 1.105e-2, "340K"],
+   "ibm_fez": ["Heron r2", 156, 1.258e-3, 4.513e-3, 1.215e-2, "320K"],
+   "ibm_marrakesh": ["Heron r2", 156, 1.164e-3, 5.087e-3, 1.697e-2, "300K"],
+   "ibm_boston": ["Heron r3", 156, 6.009e-4, 2.884e-3, 3.418e-3, "340K"],
+   "ibm_pittsburgh": ["Heron r3", 156, 7.528e-4, 4.474e-3, 4.639e-3, "330K"],
+   "ibm_aachen": ["Heron r3", 156, 6.804e-4, 3.196e-3, 5.554e-3, "330K"],
+   "ibm_phoenix": ["Nighthawk r2", 120, 7.851e-4, 3.363e-3, 7.263e-3, "2.0M"],
+   "ibm_miami": ["Nighthawk r1", 120, 8.777e-4, 9.295e-3, 1.819e-2, "24K"],
+   "ibm_berlin": ["Nighthawk r1", 120, 5.463e-4, 4.654e-3, 1.880e-2, "25K"]
+  }
+ },
+ "devices": {
+  "ibm_heron_r2_fez": {
+   "qubits": {"value": 156, "source": "proc_types"},
+   "topology": {"value": "heavy-hexagonal lattice, 156 qubits; 176 couplers (8 rows of 16 qubits + 7 x 4 bridge qubits)", "source": "proc_types", "qualification": "row/bridge structure: our reconstruction consistent with 156 qubits and the 176 couplings quoted for Heron (qdc2025); exact bridge columns not published outside the API"},
+   "native_gates": {"value": ["cz", "id", "rz", "sx", "x"], "source": "frac", "qualification": "fractional rx, rzz optional (not used here)"},
+   "T1": {"value": 145.142198e-6, "unit": "s", "source": "patra2026", "qualification": "ibm_fez pre-execution snapshot 2026-01-14 12:29 IST (Table A2); the paper does not say median or mean"},
+   "T2": {"value": 104.489980e-6, "unit": "s", "source": "patra2026", "qualification": "as T1"},
+   "sx_error": {"value": 2.83e-4, "source": "patra2026"},
+   "x_error": {"value": 2.83e-4, "source": "patra2026"},
+   "cz_error": {"value": 2.510e-3, "source": "patra2026"},
+   "readout_error": {"value": 9.460e-3, "source": "patra2026", "qualification": "assignment error"},
+   "p0_given_1": {"value": 1.2939e-2, "source": "patra2026"},
+   "p1_given_0": {"value": 6.592e-3, "source": "patra2026"},
+   "readout_length": {"value": 1560e-9, "unit": "s", "source": "patra2026"},
+   "cz_duration": {"value": 68e-9, "unit": "s", "source": "patra2026"},
+   "sx_duration": {"value": 32e-9, "unit": "s", "source": "pitt2026", "qualification": "measured on ibm_pittsburgh (Heron r3); single-qubit gate length on Heron, assumed equal on r2"},
+   "cross_check_kingston": {"value": {"sx_error": 2.63e-4, "cz_error": 1.97e-3, "T1": 255.97e-6, "T2": 151.64e-6, "readout_error": 8.36e-3}, "source": "kingston2026", "qualification": "ibm_kingston medians at execution time"},
+   "cross_check_kingston_2026-06-12": {"value": {"sx_error": 2.6e-4, "cz_error": 2.1e-3, "rzz_fractional_error": 1.8e-3}, "source": "kingston_jun2026", "qualification": "medians, calibration of 2026-06-12"},
+   "public_2026-10-21": {"value": {"2Q_error_best": 1.258e-3, "EPLG": 4.513e-3, "readout_error_median": 1.215e-2}, "source": "platform"}
+  },
+  "ibm_heron_r3_boston": {
+   "qubits": {"value": 156, "source": "proc_types"},
+   "topology": {"value": "heavy-hexagonal lattice, 156 qubits, 176 couplers", "source": "qdc2025", "qualification": "as r2"},
+   "native_gates": {"value": ["cz", "id", "rz", "sx", "x"], "source": "frac"},
+   "T1": {"value": 274.121707e-6, "unit": "s", "source": "patra2026", "qualification": "ibm_boston pre-execution snapshot 2026-05-02 13:34 IST (Table A1, last column); five earlier snapshots 274-280 us"},
+   "T2": {"value": 315.990742e-6, "unit": "s", "source": "patra2026", "qualification": "same snapshot; earlier snapshots 316-335 us"},
+   "sx_error": {"value": 1.40e-4, "source": "patra2026"},
+   "x_error": {"value": 1.40e-4, "source": "patra2026"},
+   "cz_error": {"value": 1.170e-3, "source": "patra2026", "qualification": "same snapshot; range over the six snapshots 1.098e-3 .. 1.220e-3"},
+   "readout_error": {"value": 5.127e-3, "source": "patra2026"},
+   "p0_given_1": {"value": 5.859e-3, "source": "patra2026"},
+   "p1_given_0": {"value": 3.906e-3, "source": "patra2026"},
+   "readout_length": {"value": 2200e-9, "unit": "s", "source": "patra2026"},
+   "cz_duration": {"value": 68e-9, "unit": "s", "source": "patra2026", "qualification": "ibm_pittsburgh (also r3) reports an 88 ns 2q gate (pitt2026): durations differ per device"},
+   "sx_duration": {"value": 32e-9, "unit": "s", "source": "pitt2026"},
+   "cross_check_pittsburgh_announcement": {"value": {"T1": 300e-6, "T2": 370e-6, "2Q_error_best": 5e-4, "EPLG": 3.2e-3}, "source": "gambetta2025"},
+   "public_2026-10-21": {"value": {"2Q_error_best": 6.009e-4, "EPLG": 2.884e-3, "readout_error_median": 3.418e-3}, "source": "platform"}
+  }
+ },
+ "model_inputs": {
+  "_note": "Subset used by noise_models.py. Two IBM models: Heron r2 (ibm_fez, the package's earlier device) and Heron r3 (ibm_boston).",
+  "ibm_heron_r2_fez": {"p1": 2.83e-4, "p2": 2.510e-3, "ro_p01": 1.2939e-2, "ro_p10": 6.592e-3, "T1": 145.142198e-6, "T2": 104.489980e-6, "t1q": 32e-9, "t2q": 68e-9, "t_ro": 1560e-9},
+  "ibm_heron_r3_boston": {"p1": 1.40e-4, "p2": 1.170e-3, "ro_p01": 5.859e-3, "ro_p10": 3.906e-3, "T1": 274.121707e-6, "T2": 315.990742e-6, "t1q": 32e-9, "t2q": 68e-9, "t_ro": 2200e-9}
+ }
+}

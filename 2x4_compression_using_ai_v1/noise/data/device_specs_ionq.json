@@ -1,0 +1,57 @@
+{
+ "vendor": "IonQ",
+ "purpose": "C5 (notes/008, owner's change): IonQ noise parameters from internet-published data only; no account, no API (the IonQ characterization endpoints were not called)",
+ "access_date": "2026-10-21",
+ "conventions": {
+  "errors": "Vendor page: 1Q error = Clifford RB error rate; 2Q error = direct randomized benchmarking (DRB) error rate; SPAM = average error of state preparation and measurement.",
+  "noise_model_doc": "IonQ's published simulator noise model (Aria-class and pre-Sept-2025 Forte): depolarizing channels after each gate, K0 = sqrt(1 - 3 r1q/4) I, Ki = sqrt(r1q/4) sigma_i (1q) and K00 = sqrt(1 - 15 r2q/16) I x I, Kij = sqrt(r2q/16) sigma_i x sigma_j (2q)."
+ },
+ "sources": {
+  "forte_page": {"url": "https://ionq.com/quantum-systems/forte", "title": "IonQ Forte product page (specifications)", "source_date": "not stated ('Available since 2022'; copyright 2017-2026)", "accessed": "2026-10-21"},
+  "forte_ent_page": {"url": "https://www.ionq.com/quantum-systems/forte-enterprise", "title": "IonQ Forte Enterprise product page (#AQ 36, 36 qubits; same specification block as Forte)", "source_date": "not stated", "accessed": "2026-10-21"},
+  "tempo_page": {"url": "https://www.ionq.com/quantum-systems/tempo", "title": "IonQ Tempo: 100-Qubit Quantum Computer (#AQ 64)", "source_date": "not stated (copyright 2017-2026)", "accessed": "2026-10-21"},
+  "forte_paper": {"url": "https://arxiv.org/abs/2308.05071", "title": "J.-S. Chen et al., Benchmarking a trapped-ion quantum computer with 30 qubits, arXiv:2308.05071v2 (Quantum, accepted 2024-10-15)", "source_date": "2024-11-02 (v2)", "accessed": "2026-10-21"},
+  "noise_doc": {"url": "https://docs.ionq.com/guides/simulation-with-noise-models", "title": "IonQ docs - Simulation with Noise Models", "source_date": "not stated; mentions the September 2025 update of the Forte model", "accessed": "2026-10-21"},
+  "backends_doc": {"url": "https://docs.ionq.com/user-manual/backends.md", "title": "IonQ docs - Backends (Forte 1 and Forte Enterprise 1: 36 qubits; noise-model simulators up to 29 qubits)", "source_date": "not stated", "accessed": "2026-10-21"},
+  "native_doc": {"url": "https://docs.ionq.com/features/getting-started-with-native-gates.md", "title": "IonQ docs - Getting started with native gates (GPi, GPi2, ZZ on Forte; MS on Aria)", "source_date": "not stated", "accessed": "2026-10-21"},
+  "aq64_news": {"url": "https://www.ionq.com/news/ionq-achieves-landmark-result-setting-new-world-record-in-quantum-computing", "title": "IonQ news: #AQ 64 on Tempo (October 2025)", "source_date": "2025-10", "accessed": "2026-10-21 (search result; not fetched)"}
+ },
+ "devices": {
+  "ionq_forte": {
+   "qubits": {"value": 36, "source": "forte_page"},
+   "algorithmic_qubits": {"value": 36, "source": "forte_page"},
+   "connectivity": {"value": "all-to-all", "source": "forte_page"},
+   "native_gates": {"value": ["GPi(phi)", "GPi2(phi)", "ZZ(theta) = exp(-i pi theta Z x Z), theta in turns", "virtual RZ"], "source": "native_doc"},
+   "p1_error": {"value": 2.0e-4, "source": "forte_page", "qualification": "'0.02%' Clifford RB; paper: median 2.0e-4 (30-qubit configuration)"},
+   "p2_error": {"value": 4.0e-3, "source": "forte_page", "qualification": "'0.4%' direct RB; paper: per-pair median 46.4e-4, 10th percentile 34.5e-4, 90th 99.6e-4, best 27.8e-4"},
+   "spam_error": {"value": 5.0e-3, "source": "forte_page", "qualification": "'0.5%' average SPAM; paper: 0.5% on each qubit"},
+   "T1": {"value": "10-100 s", "source": "forte_page"},
+   "T2": {"value": 1.0, "unit": "s", "source": "forte_page", "qualification": "'~1s'"},
+   "t1q": {"value": 110e-6, "unit": "s", "source": "forte_paper", "qualification": "total duration of each single-qubit gate (nine pi/2 pulses, SK1 sequence)"},
+   "t2q": {"value": 900e-6, "unit": "s", "source": "forte_paper", "qualification": "average ZZ(chi) duration, pair dependent"},
+   "parallelism": {"value": null, "source": null, "qualification": "not published; modelled as serial gate execution (one gate at a time)"},
+   "simulator_noise_model_pre_2025-09": {"value": {"r1q": 0.0002666666666666667, "r2q": 0.004949333333333333}, "source": "noise_doc", "qualification": "parameters of IonQ's own depolarizing noise model for Forte 1 jobs before mid-September 2025; 'should not be directly compared to experimentally obtained error rates'"}
+  },
+  "ionq_forte_enterprise": {
+   "qubits": {"value": 36, "source": "forte_ent_page"},
+   "algorithmic_qubits": {"value": 36, "source": "forte_ent_page"},
+   "p1_error": {"value": 2.0e-4, "source": "forte_ent_page"},
+   "p2_error": {"value": 4.0e-3, "source": "forte_ent_page"},
+   "spam_error": {"value": 5.0e-3, "source": "forte_ent_page"},
+   "T1": {"value": "10-100 s", "source": "forte_ent_page"},
+   "T2": {"value": 1.0, "unit": "s", "source": "forte_ent_page"},
+   "note": {"value": "identical published numbers to Forte; one model ('ionq_forte') covers both", "source": "forte_ent_page"}
+  },
+  "ionq_tempo": {
+   "qubits": {"value": 100, "source": "tempo_page", "qualification": "'100 Target qubits'"},
+   "algorithmic_qubits": {"value": 64, "source": "tempo_page"},
+   "p2_fidelity_target": {"value": 0.999, "source": "tempo_page", "qualification": "'99.9 % Target fidelity' (a design target, not a benchmark result)"},
+   "other": {"value": null, "source": "tempo_page", "qualification": "no published 1q error, SPAM, T1/T2 or gate durations ('faster gate speeds' without numbers)"}
+  }
+ },
+ "model_inputs": {
+  "_note": "Subset used by noise_models.py. ionq_tempo is a TARGET-SPEC model: only p2 = 1 - 0.999 is published; p1, SPAM, T2 and durations are inherited from Forte (assumption, labelled in every result).",
+  "ionq_forte": {"p1": 2.0e-4, "p2": 4.0e-3, "spam": 5.0e-3, "T1": 10.0, "T2": 1.0, "t1q": 110e-6, "t2q": 900e-6, "serial": true},
+  "ionq_tempo": {"p1": 2.0e-4, "p2": 1.0e-3, "spam": 5.0e-3, "T1": 10.0, "T2": 1.0, "t1q": 110e-6, "t2q": 900e-6, "serial": true, "assumed_from_forte": ["p1", "spam", "T1", "T2", "t1q", "t2q"]}
+ }
+}

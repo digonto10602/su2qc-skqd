@@ -1,0 +1,99 @@
+{
+ "vendor": "Quantinuum",
+ "purpose": "C6 + C5 (notes/008): public device information from the internet; no account, no API, no submission, no backend calibration snapshot",
+ "access_date": "2026-10-21",
+ "conventions": {
+  "infidelity": "Quantinuum quotes average gate infidelity from randomized benchmarking (RB); the 2-qubit 'Gate Error' on the Performance Validation page is the total error F_T = F_RB + L/D including leakage (D = 2).",
+  "spam": "SPAM error = mean of the |0> and |1> prepare-and-measure error (Performance Validation page).",
+  "memory": "'Memory error per qubit at depth-1 circuit time' = idling/transport error per qubit per depth-1 layer, where a depth-1 layer = arbitrary permutation of all qubits + 1q and 2q gates on all floor(N/2) pairs of a maximally dense circuit (System Operation page)."
+ },
+ "sources": {
+  "pv": {"url": "https://docs.quantinuum.com/systems/user_guide/hardware_user_guide/performance_validation.html", "title": "Performance Validation - Quantinuum Systems (machine-specific RB results)", "source_date": "not stated on the page (copyright 2025); values are the 'latest Randomized Benchmarking (RB) sweep'", "accessed": "2026-10-21"},
+  "ds_h2": {"url": "https://docs.quantinuum.com/systems/_static/assets/data_sheets/Quantinuum%20H2%20Product%20Data%20Sheet.pdf", "title": "Quantinuum System Model H2 Product Data Sheet, Version 4.00", "source_date": "2025-09-17", "accessed": "2026-10-21"},
+  "ds_helios": {"url": "https://docs.quantinuum.com/systems/_static/assets/data_sheets/Quantinuum%20Helios%20Product%20Data%20Sheet.pdf", "title": "Quantinuum Helios Product Data Sheet, Version 1.2", "source_date": "2026-06-09", "accessed": "2026-10-21"},
+  "emu_noise": {"url": "https://docs.quantinuum.com/systems/user_guide/emulator_user_guide/noise_model.html", "title": "Emulator Noise Model - Quantinuum Systems", "source_date": "not stated (copyright 2025)", "accessed": "2026-10-21"},
+  "emu_h2": {"url": "https://docs.quantinuum.com/systems/user_guide/emulator_user_guide/emulators/h2_emulators.html", "title": "System Model H2 Emulators: default noise model parameters", "source_date": "emulators from 2025-07-16 (the H2-2E table is also headed 'H2-1E emulators from 2025-07-16' on the page)", "accessed": "2026-10-21"},
+  "emu_helios": {"url": "https://docs.quantinuum.com/systems/user_guide/emulator_user_guide/emulators/helios_emulators.html", "title": "Quantinuum Helios Emulators: default noise model parameters", "source_date": "Helios-1E emulators from 2025-11-18", "accessed": "2026-10-21"},
+  "ops": {"url": "https://docs.quantinuum.com/systems/user_guide/hardware_user_guide/operation.html", "title": "System Operation - Quantinuum Systems (depth-1 circuit time definition)", "source_date": "not stated", "accessed": "2026-10-21"},
+  "helios_ops": {"url": "https://docs.quantinuum.com/systems/user_guide/hardware_user_guide/helios.html", "title": "Helios Operation - Quantinuum Systems", "source_date": "not stated", "accessed": "2026-10-21"},
+  "costing": {"url": "https://docs.quantinuum.com/systems/trainings/helios/getting_started/costing.html", "title": "Job Costing (Helios training) - HQC formula", "source_date": "not stated", "accessed": "2026-10-21"},
+  "helios_paper": {"url": "https://arxiv.org/abs/2511.05465", "title": "A. Ransford et al., Helios: A 98-qubit trapped-ion quantum computer, arXiv:2511.05465v1 (published as Nature, doi:10.1038/s41586-026-10676-4)", "source_date": "2025-11-07", "accessed": "2026-10-21"},
+  "h2_paper": {"url": "https://arxiv.org/abs/2305.03828", "title": "S. A. Moses et al., A race-track trapped-ion quantum processor, arXiv:2305.03828; Phys. Rev. X 13, 041052 (2023)", "source_date": "2023-05 (PRX Dec 2023)", "accessed": "2026-10-21"}
+ },
+ "devices": {
+  "H2-2": {
+   "qubits": {"value": 56, "source": "ds_h2", "qualification": "System Model H2 family (N >= 56)"},
+   "connectivity": {"value": "all-to-all", "source": "ds_h2"},
+   "parallel_2q_operations": {"value": 4, "source": "ds_h2", "qualification": "4 gate zones"},
+   "native_gates": {"value": ["Rz (virtual)", "PhasedX / Rxy(theta, phi)", "ZZ = exp(-i pi/4 ZZ)", "RZZ(theta) = exp(-i theta/2 ZZ)", "general SU(4) entangler"], "source": "ds_h2"},
+   "p1_avg_infidelity": {"value": 2.8e-05, "uncertainty": 3.6e-06, "source": "pv", "qualification": "machine-specific RB, average over zones, includes leakage"},
+   "p1_leakage": {"value": 6.1e-06, "uncertainty": 1.3e-06, "source": "pv"},
+   "p2_avg_infidelity": {"value": 8.3e-04, "uncertainty": 4.8e-05, "source": "pv", "qualification": "machine-specific 2Q RB at the fully entangling ZZ, F_T = F_RB + L/2, average over zones"},
+   "p2_leakage": {"value": 1.9e-04, "uncertainty": 1.7e-05, "source": "pv"},
+   "memory_error_depth1": {"value": 1.2e-04, "uncertainty": 2.0e-05, "source": "pv", "qualification": "per qubit per depth-1 circuit time (transport-interleaved 1Q RB, includes the 1q gate error)"},
+   "measurement_crosstalk": {"value": 2.2e-05, "uncertainty": 5.3e-07, "source": "pv"},
+   "spam_0": {"value": 6.7e-04, "uncertainty": 8.7e-05, "source": "pv", "qualification": "P(1|prepared 0)"},
+   "spam_1": {"value": 1.2e-03, "uncertainty": 1.1e-04, "source": "pv", "qualification": "P(0|prepared 1)"},
+   "typical_product_sheet": {"value": {"p1": 3e-05, "p2": 1e-03, "spam": 1e-03, "memory_depth1": 2e-04, "mcmr_crosstalk": 5e-06}, "source": "ds_h2", "qualification": "'Typical' column, H2 generation, average over zones"},
+   "max_product_sheet": {"value": {"p1": 2e-04, "p2": 2e-03, "spam": 5e-03, "memory_depth1": 2e-03, "mcmr_crosstalk": 2e-04}, "source": "ds_h2", "qualification": "'Max' column (upper bound during operation)"},
+   "rzz_angle_dependence_paper": {"value": "epsilon(theta) = (2.9(2) theta/pi + 0.46(6)) x 1e-3", "source": "h2_paper", "qualification": "H2 at launch (2023), zone-averaged direct RB of U_ZZ(theta); not the current machine"},
+   "emulator_H2-2E": {"value": {"p1": 7.3e-05, "p2": 0.00129, "p_meas_0": 0.0009, "p_meas_1": 0.0018, "p_crosstalk_meas": 8.8e-06, "p_init": 4e-05, "p_crosstalk_init": 9.6e-06, "p1_emission_ratio": 0.32, "p2_emission_ratio": 0.59, "quadratic_dephasing_rate": 0.043, "linear_dephasing_rate": 0.0028, "coherent_to_incoherent_factor": 2.0, "przz_a": 1.518, "przz_b": 0.241, "przz_c": 1.518, "przz_d": 0.241, "przz_power": 1.0, "qubits_statevector": 32}, "source": "emu_h2", "qualification": "emulator defaults, not hardware measurements"},
+   "T1": {"value": null, "source": null, "qualification": "not published as a number for H2; hyperfine 171Yb+ clock qubit; idling error is published as memory error per depth-1 layer instead"},
+   "T2": {"value": null, "source": null, "qualification": "not published as a number for H2 (see memory error)"},
+   "gate_durations": {"value": null, "source": "h2_paper", "qualification": "not published per gate; H2 paper Table 1 gives shot time 0.72 s for a 32-qubit RCS circuit with 172 2Q gates in 56 2Q gate rounds (17 ms/shot fixed overhead)"},
+   "hqc_formula": {"value": "HQC = 5 + C/5000 (N_1q + 10 N_2q + 5 N_m), C = shots, N_1q = PhasedX count (Rz excluded), N_2q = ZZ/RZZ count, N_m = measurements+resets+initialisations", "source": "costing", "qualification": "published on the Helios costing page as the HQC formula (Max(...) over shots for dynamic programs)"}
+  },
+  "H2-1": {
+   "p1_avg_infidelity": {"value": 1.9e-05, "uncertainty": 4.2e-06, "source": "pv"},
+   "p1_leakage": {"value": 4.8e-06, "uncertainty": 1.5e-06, "source": "pv"},
+   "p2_avg_infidelity": {"value": 1.1e-03, "uncertainty": 8.1e-05, "source": "pv"},
+   "p2_leakage": {"value": 1.4e-04, "uncertainty": 2.1e-05, "source": "pv"},
+   "memory_error_depth1": {"value": 2.0e-04, "uncertainty": 2.3e-05, "source": "pv"},
+   "measurement_crosstalk": {"value": 6.6e-06, "uncertainty": 9.0e-07, "source": "pv"},
+   "spam_0": {"value": 6.0e-04, "uncertainty": 8.2e-05, "source": "pv"},
+   "spam_1": {"value": 1.4e-03, "uncertainty": 1.2e-04, "source": "pv"},
+   "emulator_H2-1E": {"value": {"p1": 1.89e-05, "p2": 0.00105, "p_meas_0": 0.0006, "p_meas_1": 0.00139, "p_crosstalk_meas": 3.3e-06, "p_init": 4e-05, "p_crosstalk_init": 3.3e-06, "p1_emission_ratio": 0.54, "p2_emission_ratio": 0.255, "quadratic_dephasing_rate": 0.043, "linear_dephasing_rate": 0.0028, "coherent_to_incoherent_factor": 2.0}, "source": "emu_h2"}
+  },
+  "Helios-1": {
+   "qubits": {"value": 98, "source": "ds_helios", "qualification": "137Ba+ (N >= 98)"},
+   "connectivity": {"value": "all-to-all", "source": "ds_helios"},
+   "parallel_2q_operations": {"value": 4, "source": "ds_helios", "qualification": "8 gate zones for SPAM and 1q operations, 4 zones for 2q operations; 'This system requires 7 gating rounds to perform 2-qubit gates on all [N/2] pairs for a maximally dense circuit' (helios_ops)"},
+   "native_gates": {"value": ["Rz (virtual)", "Rxy(theta, phi)", "ZZ = exp(-i pi/4 ZZ)", "RZZ(theta) = exp(-i theta/2 ZZ)"], "source": "ds_helios", "qualification": "minimum RZZ angle 1e-4, minimum Rxy angle 3e-4 (smaller angles rounded to zero; helios_ops)"},
+   "p1_avg_infidelity": {"value": 3.0e-05, "source": "pv", "qualification": "Performance Validation '1-Qubit Gate Error 0.3e-04'; paper: 2.5(1)e-5 Clifford average infidelity"},
+   "p1_leakage": {"value": 1.0e-05, "source": "pv"},
+   "p2_avg_infidelity": {"value": 7.9e-04, "source": "pv", "qualification": "paper Table 2: 7.9(2)e-4 (2QRB), 8.1(2)e-4 (cycle benchmarking); average over zones"},
+   "p2_leakage": {"value": 2.4e-04, "source": "pv"},
+   "memory_error_linear_depth1": {"value": 5.0e-04, "source": "pv", "qualification": "paper: linear memory error rate 5(1)e-4 per depth-1 transport; nearly all of it is leakage (leakage rate 4.0(2)e-4)"},
+   "memory_error_quadratic_depth1": {"value": 0.7e-04, "source": "pv", "qualification": "paper: quadratic memory error parameter 7(2)e-5 (fit a + b l + c l^2 in the number l of depth-1 transports)"},
+   "leakage_memory_quadratic_depth1": {"value": 4.0e-04, "source": "pv"},
+   "global_measurement_crosstalk": {"value": 0.5e-04, "source": "pv"},
+   "spam": {"value": 4.8e-04, "source": "pv", "qualification": "standard measurement, average of |0> and |1>; paper: 8(1)e-4 (|0>) and 1.6(5)e-4 (|1>)"},
+   "spam_0": {"value": 8.0e-04, "source": "helios_paper", "qualification": "standard measurement preparing |0>"},
+   "spam_1": {"value": 1.6e-04, "source": "helios_paper", "qualification": "standard measurement preparing |1> (leaked states read as 1, so this under-counts)"},
+   "spam_ternary_leakage": {"value": 1.7e-03, "source": "pv"},
+   "typical_product_sheet": {"value": {"p1": 0.3e-04, "p2": 8e-04, "spam": 5e-04, "memory_depth1": 6e-04, "mcmr_crosstalk": 0.5e-04}, "source": "ds_helios"},
+   "max_product_sheet": {"value": {"p1": 2e-04, "p2": 20e-04, "spam": 20e-04, "memory_depth1": 10e-04, "mcmr_crosstalk": 7e-04}, "source": "ds_helios"},
+   "depth1_time": {"value": 0.055, "unit": "s", "source": "helios_paper", "qualification": "average depth-1 time per layer for a depth-10 random program on all 98 qubits (Fig. 4a)"},
+   "T2": {"value": "~seconds", "source": "ds_helios", "qualification": "'Long T2 coherence times (~seconds)'; no number"},
+   "T1": {"value": null, "source": null, "qualification": "not published"},
+   "gate_durations": {"value": null, "source": "helios_paper", "qualification": "per-gate durations not published; ground-state cooling ~3 ms (paper App.)"},
+   "emulator_Helios-1E": {"value": {"p1": 2.5e-05, "p2": 0.0008, "p_meas_0": 1e-06, "p_meas_1": 1e-06, "p_crosstalk_meas": 5.5e-05, "p_init": 0.0005, "p_crosstalk_init": 3.5e-06, "p1_emission_ratio": 0.8, "p2_emission_ratio": 0.24, "p_prep_leak_ratio": 0.75, "p1_seepage_prob": 0.3333333333333333, "p2_seepage_prob": 0.3333333333333333, "leak2depolar": false, "quadratic_dephasing_rate": 0.058, "linear_dephasing_rate": 0.0079, "coherent_to_incoherent_factor": 1.5, "przz_a": 1.518, "przz_b": 0.241, "przz_c": 1.518, "przz_d": 0.241, "przz_power": 1.0, "qubits_statevector": 32}, "source": "emu_helios"},
+   "hqc_formula": {"value": "same as H2 (HQC = 5 + C/5000 (N_1q + 10 N_2q + 5 N_m)); Helios jobs limited to 10 000 shots and 500 000 HQC", "source": "costing"}
+  }
+ },
+ "emulator_noise_model_description": {
+  "source": "emu_noise",
+  "summary": [
+   "p1 / p2: probability of a fault in a 1q / 2q gate, modelled mostly as asymmetric depolarizing channels; a fraction (p1_emission_ratio, p2_emission_ratio) is spontaneous emission instead: X 1/4, Y 1/4, leakage 1/2 of the time.",
+   "p_meas: classical bit-flip on measurement, separately for 0 and 1 outcomes; p_init: initialisation fault; crosstalk faults on MCMR.",
+   "RZZ(theta) depolarizing strength scales with angle: (przz_a |theta/pi|^przz_power + przz_b) p2, normalised so theta = pi/2 gives p2.",
+   "Memory (dephasing): Z noise during idling and transport, quadratic (coherent RZ(f d) in statevector mode, incoherent Pauli Z with probability sin^2(f d / 2) in stabilizer mode) and linear (Pauli Z with probability r d), d = duration.",
+   "Helios emulators add leakage/seepage; H2 emulators do not."
+  ]
+ },
+ "model_inputs": {
+  "_note": "The subset of the numbers above that noise_models.py uses (machine-specific Performance Validation values; product-sheet 'typical' values are kept as a variant)",
+  "quantinuum_h2_2": {"p1": 2.8e-05, "p2": 8.3e-04, "spam0": 6.7e-04, "spam1": 1.2e-03, "mem_depth1": 1.2e-04, "rzz_angle_scaling": {"a": 1.518, "b": 0.241, "power": 1.0}, "parallel_2q": 4},
+  "quantinuum_helios_1": {"p1": 3.0e-05, "p2": 7.9e-04, "spam0": 8.0e-04, "spam1": 1.6e-04, "mem_depth1": 5.7e-04, "mem_depth1_note": "linear 5.0e-4 + quadratic 0.7e-4 at l = 1 depth-1 transport per layer", "rzz_angle_scaling": {"a": 1.518, "b": 0.241, "power": 1.0}, "parallel_2q": 4}
+ }
+}

@@ -1,0 +1,196 @@
+{
+ "test": "engine_validation",
+ "lattice": "2x3",
+ "family": "frozen",
+ "device": "quantinuum_h2_2",
+ "rows": {
+  "B0_ref117_k1|seed7": {
+   "circuit": "B0_ref117_k1",
+   "seed": 7,
+   "trajectories": [
+    {
+     "trajectory": "noiseless",
+     "n_faults": 0,
+     "max_abs_diff": 1.1776205379073468e-13,
+     "abs_overlap": 0.9999999999999801,
+     "aer_s": 18.256540298461914
+    },
+    {
+     "trajectory": 0,
+     "n_faults": 2,
+     "faults": [
+      [
+       3797.0,
+       [
+        6,
+        7
+       ],
+       "gate_2q",
+       "ZI"
+      ],
+      [
+       3947.0,
+       [
+        10,
+        7
+       ],
+       "gate_2q",
+       "XZ"
+      ]
+     ],
+     "max_abs_diff": 6.337560404638686e-13,
+     "abs_overlap": 0.9999999999999875,
+     "prune_bound": 2.6206217673861555e-11,
+     "aer_s": 22.218374013900757
+    },
+    {
+     "trajectory": 1,
+     "n_faults": 2,
+     "faults": [
+      [
+       1476.25,
+       [
+        13
+       ],
+       "memory",
+       "Z"
+      ],
+      [
+       2797.0,
+       [
+        10,
+        12
+       ],
+       "gate_2q",
+       "XY"
+      ]
+     ],
+     "max_abs_diff": 2.6982306425375726e-12,
+     "abs_overlap": 0.9999999999999782,
+     "prune_bound": 8.275748564341661e-11,
+     "aer_s": 21.81959867477417
+    },
+    {
+     "trajectory": 2,
+     "n_faults": 1,
+     "faults": [
+      [
+       2910.5,
+       [
+        14
+       ],
+       "gate_1q",
+       "Y"
+      ]
+     ],
+     "max_abs_diff": 7.973733493223441e-13,
+     "abs_overlap": 0.9999999999999835,
+     "prune_bound": 4.607221704286257e-11,
+     "aer_s": 21.62664532661438
+    },
+    {
+     "trajectory": 3,
+     "n_faults": 2,
+     "faults": [
+      [
+       2614.0,
+       [
+        10,
+        12
+       ],
+       "gate_2q",
+       "YZ"
+      ],
+      [
+       3237.0,
+       [
+        7,
+        0
+       ],
+       "gate_2q",
+       "ZI"
+      ]
+     ],
+     "max_abs_diff": 2.3273598967741547e-13,
+     "abs_overlap": 0.9999999999999758,
+     "prune_bound": 3.7148245990354096e-11,
+     "aer_s": 17.444247007369995
+    },
+    {
+     "trajectory": 4,
+     "n_faults": 5,
+     "faults": [
+      [
+       801.0,
+       [
+        5,
+        13
+       ],
+       "gate_2q",
+       "XY"
+      ],
+      [
+       3582.0,
+       [
+        7,
+        8
+       ],
+       "gate_2q",
+       "YY"
+      ],
+      [
+       3962.0,
+       [
+        7
+       ],
+       "gate_1q",
+       "Z"
+      ],
+      [
+       4268.25,
+       [
+        0
+       ],
+       "memory",
+       "Z"
+      ],
+      [
+       4407.25,
+       [
+        0
+       ],
+       "memory",
+       "Z"
+      ]
+     ],
+     "max_abs_diff": 2.5877336014460446e-12,
+     "abs_overlap": 0.9999999999999875,
+     "prune_bound": 9.313230858736656e-11,
+     "aer_s": 15.726797103881836
+    }
+   ],
+   "max_abs_diff_max": 2.6982306425375726e-12
+  }
+ },
+ "summary": {
+  "n_checks": 6,
+  "max_abs_diff_max": 2.6982306425375726e-12
+ },
+ "method": "Validate the sparse trajectory engine against Qiskit Aer statevector (complex128) on FIXED fault patterns.\n\nUsage: python validate_engine.py LATTICE FAMILY DEVICE TAG N_TRAJ [SEED]\nFor N_TRAJ trajectories with at least one fault (faults sampled with numpy default_rng(SEED) from the device model),\nthe IR circuit with the same Pauli gates inserted at the same positions is run (a) by traj_sparse.Engine and\n(b) by AerSimulator(method=\"statevector\", precision=\"double\"); the two final states are compared after removing\nthe global phase: max |psi_sparse - psi_aer e^{-i phi}| over all 2^n strings (sparse entries outside its support = 0).\nAlso the noiseless state.  Writes noise/data/results/<LATTICE>/<FAMILY>/<DEVICE>/engine_validation.json (appends).\n",
+ "provenance": {
+  "git_commit": "a07ba6d",
+  "machine": {
+   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+   "node": "pichkaCommander",
+   "python": "3.12.14",
+   "executable": "/home/digimonk/anaconda3/envs/coding/bin/python",
+   "numpy": "2.5.2",
+   "scipy": "1.18.0",
+   "cpu_count": 12,
+   "qiskit": "2.5.2",
+   "qiskit_aer": "0.17.2"
+  },
+  "created_utc": "2026-10-21 23:18:18 UTC",
+  "command": "python scripts/validate_engine.py 2x3 frozen quantinuum_h2_2 B0_ref117_k1 5 7"
+ }
+}
