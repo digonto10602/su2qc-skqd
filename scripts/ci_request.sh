@@ -17,7 +17,29 @@ for t in "$@"; do
   [ "$t" = "$(printf '%s' "$t" | tr -cd 'A-Za-z0-9_')" ] || { echo "bad token '$t'" >&2; exit 64; }
 done
 cd "$(git rev-parse --show-toplevel)"
-git pull -q --rebase --autostash origin master
+# Sync by MERGE, never rebase: the Perlmutter CI pushes merge commits to master, and
+# `git pull --rebase` on top of them left the tree mid-rebase (2026-10 incidents).
+GITDIR=$(git rev-parse --git-dir)
+if [ -d "$GITDIR/rebase-merge" ] || [ -d "$GITDIR/rebase-apply" ] || [ -f "$GITDIR/MERGE_HEAD" ]; then
+  echo "a rebase or merge is in progress; finish or abort it first" >&2; exit 65
+fi
+[ "$(git rev-parse --abbrev-ref HEAD)" = "master" ] || { echo "not on master" >&2; exit 65; }
+sync_master() {
+  git fetch -q origin master
+  git merge -q --no-edit origin/master || { git merge --abort 2>/dev/null || true;
+    echo "merge with origin/master failed; resolve by hand" >&2; exit 66; }
+}
+# push with up to 3 attempts: if the CI pushed in between, merge again and retry
+push_master() {
+  local i
+  for i in 1 2 3; do
+    git push -q origin HEAD:master && return 0
+    echo "push rejected (attempt $i); merging origin/master and retrying" >&2
+    sync_master
+  done
+  echo "push failed 3 times" >&2; exit 67
+}
+sync_master
 mkdir -p ci/requests
 NONCE() { printf '# requested %s from %s nonce %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(hostname)" "$(date +%s%N)$RANDOM"; }
 if [ "$LEGACY" = "1" ]; then
@@ -25,7 +47,7 @@ if [ "$LEGACY" = "1" ]; then
   { printf '%s\n' "$1"; NONCE; } > ci/request.txt
   git add ci/request.txt
   git commit -qm "ci: request $1"
-  git push -q origin HEAD:master
+  push_master
   echo "request $(git log -1 --format=%H -- ci/request.txt) ($1) pushed; picked up at :07 past the hour (UTC)"
   exit 0
 fi
@@ -40,5 +62,5 @@ for t in "$@"; do
 done
 git add "${FILES[@]}"
 git commit -qm "ci: request $*"
-git push -q origin HEAD:master
+push_master
 echo "requests pushed in $(git log -1 --format=%h): ${FILES[*]}; picked up at :07 past the hour (UTC)"
