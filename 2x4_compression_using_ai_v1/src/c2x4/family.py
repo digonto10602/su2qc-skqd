@@ -37,7 +37,7 @@ def _key(theta):
 def _cached(tag, fn, per_ref=False):
     def b(P, name, theta, ctx):
         r = f"_r{ctx['ref']}" if per_ref else ""
-        p = os.path.join(CACHE, f"{tag}{r}_{name}_{_key(theta)}.pkl.gz")
+        p = P.cpath(f"{tag}{r}_{name}_{_key(theta)}.pkl.gz")
         if os.path.exists(p):
             with gzip.open(p, "rb") as fh:
                 return pickle.load(fh)
@@ -125,11 +125,12 @@ def archive_builder(label: str, cls: str):
     return b
 
 
-def archive_family(label: str, cls: str, peephole: bool = False) -> dict:
+def archive_family(label: str, cls: str, peephole: bool = False, lx: int = 4) -> dict:
+    from .problem import get_problem
     b = archive_builder(label, cls)
-    P_names = [f"hop{l}" for l in range(10)] + ["plaq0", "plaq1", "plaq2"]
+    P_names = get_problem(lx).term_names()
     return {"builders": {nm: b for nm in P_names}, "drop_diag": cls == "input", "peephole": peephole,
-            "archive": label, "class": cls}
+            "archive": label, "class": cls, "lx": lx}
 
 
 def finish(family: dict, gates: list) -> list:
