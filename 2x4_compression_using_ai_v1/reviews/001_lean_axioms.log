@@ -1,0 +1,22 @@
+@Compress2x4.telescoping_bound_mirror : ∀ {E : Type u_1} [inst : SeminormedAddCommGroup E] (U V : ℕ → E → E),
+  (∀ (i : ℕ) (x y : E), ‖U i x - U i y‖ ≤ ‖x - y‖) →
+    ∀ (ψ : E) (k : ℕ),
+      ‖Compress2x4.run V k ψ - Compress2x4.run U k ψ‖ ≤
+        ∑ i ∈ Finset.range k, ‖V i (Compress2x4.run V i ψ) - U i (Compress2x4.run V i ψ)‖
+@Compress2x4.agree_on_reachable_n : ∀ {M : Type u_1} (U V : ℕ → M → M) (S : ℕ → Set M),
+  (∀ (i : ℕ), ∀ x ∈ S i, V i x = U i x) →
+    (∀ (i : ℕ), ∀ x ∈ S i, U i x ∈ S (i + 1)) →
+      ∀ (k : ℕ), ∀ x ∈ S 0, Compress2x4.run V k x = Compress2x4.run U k x ∧ Compress2x4.run U k x ∈ S k
+@Compress2x4.exp_intertwine : ∀ {m : Type u_1} [inst : Fintype m] [inst_1 : DecidableEq m] (A P C : Matrix m m ℂ),
+  A * P = P * C → NormedSpace.exp A * P = P * NormedSpace.exp C
+@Compress2x4.dropped_part_bound : ∀ {E : Type u_1} [inst : SeminormedAddCommGroup E] (V U : E →+ E),
+  (∀ (x : E), ‖V x‖ = ‖x‖) → (∀ (x : E), ‖U x‖ = ‖x‖) → ∀ (φ p : E), V (φ - p) = U (φ - p) → ‖V φ - U φ‖ ≤ 2 * ‖p‖
+'Compress2x4.telescoping_bound_mirror' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Compress2x4.agree_on_reachable_n' does not depend on any axioms
+'Compress2x4.exp_intertwine' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Compress2x4.dropped_part_bound' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Compress2x4.diagonal_mulVec_single' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Compress2x4.exp_conj_frame' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Compress2x4.ccz_circuit' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Compress2x4.exp_xt_diag' depends on axioms: [propext, Classical.choice, Quot.sound]
+lean exit 0
