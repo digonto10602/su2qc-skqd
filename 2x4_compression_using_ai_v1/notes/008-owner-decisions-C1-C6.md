@@ -30,3 +30,16 @@ The owner asked for the full report first: "Before signing all of this, write th
   quantinuum, ionq. keep the results separate and easily callable."
 - **C6:** "don't have access to quantinuum, you need to get information from the internet about quantinuum
   devices, when i get access I will tell you."
+
+## Signed 2026-10-21
+
+Owner, verbatim: "for C5 use internet to find the noise models for ibm, ionq and quantinuum, dont use the backend
+for now. other than that sign all of them and go ahead"
+
+- **C3, C4, C6: SIGNED** as quoted above.
+- **C5: SIGNED with the owner's change:** the IBM, IonQ and Quantinuum noise models are built from publicly
+  published device data found on the internet (vendor pages, papers, documentation), each parameter with its source
+  URL and access date.  No live backend, no backend API calls and no backend calibration snapshots are used for now.
+- Work split: genie-opus does C4 (one more 2x4 round, hard stop) then C3 (2x3 compression; noiseless and noisy
+  checks of the 2x3 families go through the C5 harness).  A separate agent does C6 + C5 in
+  `2x4_compression_using_ai_v1/noise/` (research, noise models, accuracy and noise tests, a loader API).
