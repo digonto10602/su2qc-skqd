@@ -2077,6 +2077,61 @@ def segments_of(seq, run):
     return out
 
 
+def tier_parts_check_2x4(args):
+    """Laptop check of the requested part files ci/parts/QV_2x4_02..05.json on the CI's qiskit (run it on the 1.4.3
+    twin): every run's QPY bundle exists, matches its gz sha256, loads, has the part's instruction count, 28 qubits and
+    clbits, the terminal measurements q[k] -> c[k] (sample runs); the seed rule; prefixes inside the order-kept block;
+    the slot prediction fits.  The 28-qubit statevectors themselves are the GPU's (a CPU run is hours per circuit)."""
+    import qiskit
+
+    from skqd.campaign33 import tokens as T
+    from skqd.campaign33.circuits import load_qpy, measure_map, sha256_file
+    from skqd.report import GateResult
+    t0 = time.time()
+    toks = T.load_tokens()
+    rows, ok_all = {}, True
+    for slot in SLOT_LAYOUT_2X4:
+        part = load_json(os.path.join(PARTS_DIR, slot + ".json"))
+        s0 = T.base_seed(slot, toks)
+        bad = []
+        for r in part.get("runs", []):
+            path = os.path.join(ROOT, r["qpy"])
+            if not os.path.exists(path) or sha256_file(path) != r["gz_sha256"]:
+                bad.append(f"{r['label']}: sha256")
+                continue
+            qc = load_qpy(path)[0]
+            if len(qc.data) != int(r["n_instructions"]) or qc.num_qubits != 28:
+                bad.append(f"{r['label']}: n_instructions / qubits")
+            if r["kind"] == "sample":
+                if qc.num_clbits != 28 or measure_map(qc) != {k: k for k in range(28)}:
+                    bad.append(f"{r['label']}: measurement map")
+                if int(r["seed"]) != T.chunk_seed(s0, int(r["circuit_index"]), 0, int(r["shots"])):
+                    bad.append(f"{r['label']}: seed rule")
+                if max(r["prefix_lengths"]) > int(r["shots"]) - int(r["uniform_shots"]):
+                    bad.append(f"{r['label']}: prefix beyond the order-kept block")
+        pred = part.get("prediction") or {}
+        ok = bool(part.get("runs") and not bad and pred.get("fits") and part.get("schema") == SCHEMA_36
+                  and str(part.get("status", "")).startswith("ready"))
+        ok_all &= ok
+        rows[slot] = {"runs": len(part.get("runs", [])), "status": part.get("status"), "mismatches": bad[:20],
+                      "predicted_s": pred.get("predicted_s"), "predicted_s_slow_sampling": pred.get("predicted_s_slow_sampling"),
+                      "fits": pred.get("fits"), "ok": ok}
+        print(f"  {slot}: {rows[slot]['runs']} runs, {'ok' if ok else bad[:3]} [{time.time() - t0:.0f} s]", flush=True)
+    reserve = {s: load_json(os.path.join(PARTS_DIR, s + ".json")).get("status") for s in RESERVE_SLOTS}
+    with open(os.path.join(PARTS_DIR, "QV_2x4_01.json"), "rb") as fh:
+        s01 = hashlib.sha256(fh.read()).hexdigest()
+    R = GateResult("dryrun/QV_2x4_parts_check", "the requested part files ci/parts/QV_2x4_02..05 loaded on the CI's qiskit "
+                                                "(laptop structural check; prompts/36a OD4)")
+    R.add("P1 every run of slots 02..05: bundle sha256, load, instruction count, 28 qubits, q[k] -> c[k], seed rule, prefixes "
+          "inside the order-kept block; prediction fits; status ready", rows, "all ok", ok_all)
+    R.add("P2 slots 06..08 are reserve", reserve, "reserve", all(str(v).startswith("reserve") for v in reserve.values()))
+    R.data = {"qiskit": qiskit.__version__, "python": sys.executable, "slots": rows, "reserve": reserve,
+              "QV_2x4_01_part_sha256": s01, "seconds": time.time() - t0}
+    R.runtime_s = time.time() - t0
+    os.makedirs(os.path.join(ROOT, "reports", "dryrun"), exist_ok=True)
+    return write_gate(R, "# dryrun/QV_2x4_parts_check\n\n" + R.criteria_table() + "\n")
+
+
 def segments_cumulative_check(segments, seq, run):
     """True iff, for every prefix length L of the run, the counts rebuilt from the segments ending at or before L equal
     np.unique of the first L outcomes."""
@@ -2576,7 +2631,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--lattice", type=int, choices=(2, 3, 4), required=True)
     ap.add_argument("--tier", required=True, choices=("export", "noiseless", "noise", "pecos", "hugr", "gpu-verify", "qsc", "qv-tokens", "slots", "assemble",
-                                                        "bundles-2x4", "slots-2x4", "assemble-2x4"))
+                                                        "bundles-2x4", "slots-2x4", "assemble-2x4", "parts-check-2x4"))
     ap.add_argument("--part", default=None)
     ap.add_argument("--only", nargs="*", default=None)
     ap.add_argument("--scenarios", nargs="*", default=None)
@@ -2610,6 +2665,8 @@ def main(argv=None):
         return tier_bundles_2x4(args)
     if args.tier == "slots-2x4":
         return tier_slots_2x4(args)
+    if args.tier == "parts-check-2x4":
+        return tier_parts_check_2x4(args)
     if args.tier == "assemble-2x4":
         return tier_assemble_2x4(args)
     if args.lattice == 2:

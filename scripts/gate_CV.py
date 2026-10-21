@@ -3090,8 +3090,12 @@ def assemble_2x4(seeds=SEEDS, quick=False):
           "2, 3, 4, 6, 8} at which CV1, CV2, CV4, CV5 hold in all seeds and both sectors; CV3 (k = 4 -> 5, equal shots) "
           "<= E_tol in every seed (STOP otherwise)",
           {"resized_by": s_final, "seeds": sorted(chunks), "complete": complete,
+           "CV3_reading_point": cv3_read,
            "CV3": {sd: {sec: f"{v['dE_k4_k5']:.3e} ({v['ratio']:.2f} E_tol)" for sec, v in d.items()}
                    for sd, d in cv3_by_seed.items()},
+           "CV3_at_final": {sd: {sec: (f"{r['at_final']['dE_k4_k5']:.3e} ({r['at_final']['ratio']:.2f} E_tol)"
+                                       if r.get("at_final") else None) for sec, r in d.items()}
+                            for sd, d in rp["cv3_readings"].items()},
            "final_shots_total": int(sum(final.values())) if final else None,
            "gpu_shots_total": int(sum(v["shots"] for v in gpu.values())) if gpu else None},
           "s in grid; CV3 ok", bool(complete and final_ok and cv3_ok_read))
