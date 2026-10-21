@@ -23,6 +23,18 @@ from .evaluate import term_unitary_columns
 from skqd.circuits_ir import _multiplexed_two_level, run_ir   # noqa: E402  (package synthesis blocks, read-only)
 
 
+LINEAR = {"on": False}       # set by linsynth.use_linear: theta-dependent items as generators (LinRot)
+
+
+def _rot_item(f: float, theta: float):
+    """exp(-i theta f X) on a pair: a 2x2 unitary (it1-it5) or, in linear mode, its generator f X (linsynth.LinRot)."""
+    if LINEAR["on"]:
+        from .linsynth import LinRot
+        return LinRot(np.array([[0, f], [f, 0]], dtype=complex), theta)
+    cth, sth = np.cos(theta * f), np.sin(theta * f)
+    return np.array([[cth, -1j * sth], [-1j * sth, cth]], dtype=complex)
+
+
 # ------------------------------------------------------------------ layout
 def corners_of(P, pidx: int) -> list:
     """The four corners of plaquette `pidx` in the order c00, c10, c11, c01 with their qubits:
@@ -263,7 +275,7 @@ def cf1_gates(P, name: str, theta: float, pidx: int, return_info: bool = False, 
         if f == 0.0:
             continue
         cth, sth = np.cos(theta * f), np.sin(theta * f)
-        items.append((s0, s1, np.array([[cth, -1j * sth], [-1j * sth, cth]], dtype=complex)))
+        items.append((s0, s1, _rot_item(f, theta)))
     stats = []
     core = _multiplexed_two_level(1 << t, items, np.array(omega, dtype=np.int64), len(sup), stats=stats)
     core = [(nm, [sup[q] for q in qs], par) for nm, qs, par in core]
@@ -515,7 +527,7 @@ def cf2_gates(P, name: str, theta: float, pidx: int, return_info: bool = False, 
         if f == 0.0:
             continue
         cth, sth = np.cos(theta * f), np.sin(theta * f)
-        items.append((s0_, s1_, np.array([[cth, -1j * sth], [-1j * sth, cth]], dtype=complex)))
+        items.append((s0_, s1_, _rot_item(f, theta)))
     stats = []
     # the package's greedy control reduction tries low bit indices first: relabel the support so that
     # the bits the flags were computed from (third link, vertex bit) come first and are dropped first
@@ -714,7 +726,7 @@ def cfg_gates(P, name: str, theta: float, pidx: int, return_info: bool = False, 
         if f == 0.0:
             continue
         cth, sth = np.cos(theta * f), np.sin(theta * f)
-        items.append((s0_, s1_, np.array([[cth, -1j * sth], [-1j * sth, cth]], dtype=complex)))
+        items.append((s0_, s1_, _rot_item(f, theta)))
     stats = []
     # the package's greedy control reduction tries low bit indices first: relabel the support so that
     # the bits the flags were computed from (third link, vertex bit) come first and are dropped first

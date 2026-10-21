@@ -24,6 +24,9 @@ from skqd.circuits_ir import (_FLIP2, _I2, _axis_angle, _basis_change_to_y, _mul
                               _pack, _phase_su2)
 
 
+SOLVER = {"mode": "lp"}          # "lp": L1 + greedy pruning (it3-it5); "milp": exact minimum support (certify.py)
+
+
 def walsh_matrix(m: int) -> np.ndarray:
     c = np.arange(1 << m)
     S = np.arange(1 << m)
@@ -205,17 +208,21 @@ def sw_two_level(diff: int, items: list, valid, k: int, stats=None, prune_max: i
             continue
         fidx = np.flatnonzero(red_fixed)
         try:
-            a, sup = sparse_walsh(mr, fidx, red_val[fidx], prune_max=prune_max)
+            if SOLVER["mode"] == "milp":
+                from .certify import milp_walsh
+                a, sup = milp_walsh(mr, fidx, red_val[fidx])
+            else:
+                a, sup = sparse_walsh(mr, fidx, red_val[fidx], prune_max=prune_max)
         except RuntimeError:
             continue
         masks = [int(S) for S in sup if S != 0 and abs(a[S]) > 1e-15]
         order = mask_walk(masks)
         cost = walk_cost(order) + 2 * len(frame) + 2 * (len(bits) - 1)
         if best is None or cost < best[0]:
-            best = (cost, t, rest, [ctrl[q] for q in keep], a, order, ref, frame)
+            best = (cost, t, rest, [ctrl[q] for q in keep], a, order, ref, frame, (mr, fidx, red_val[fidx]))
     if best is None:
         return _multiplexed_two_level(diff, items, valid, k, stats=stats)
-    cost, t, rest, ctrl_r, a, order, ref, frame = best
+    cost, t, rest, ctrl_r, a, order, ref, frame, reduced = best
     B = _basis_change_to_y(ref)
     gates = [("unitary", [t], B)]
     if abs(a[0]) > 1e-15:
@@ -236,7 +243,9 @@ def sw_two_level(diff: int, items: list, valid, k: int, stats=None, prune_max: i
     if stats is not None:
         stats.append({"flip_pattern": int(diff), "target": int(t), "n_controls": len(ctrl_r),
                       "n_terms": len(order) + 1, "walk_cnots": walk_cost(order), "frame_cnots": len(frame),
-                      "n_rotations": len(items)})
+                      "n_rotations": len(items), "support_used": len(order),
+                      "reduced_table": {"m": int(reduced[0]), "fixed_idx": [int(v) for v in reduced[1]],
+                                        "fixed_val": [float(v) for v in reduced[2]]}})
     return comp + fr + gates + fr[::-1] + comp
 
 

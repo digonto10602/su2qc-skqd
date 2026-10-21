@@ -24,6 +24,14 @@ from c2x4.reach import contract_states                             # noqa: E402
 from c2x4.problem import get_problem                               # noqa: E402
 
 
+def _k_independent(circs: dict) -> dict:
+    """Per reference: is the gate skeleton (names and qubits, angles ignored) identical for every k?"""
+    by = {}
+    for cid, row in circs.items():
+        by.setdefault(cid.rsplit("_k", 1)[0], set()).add(row.get("skeleton_sha256"))
+    return {"all": all(len(v) == 1 for v in by.values()), "per_reference": {r: len(v) == 1 for r, v in by.items()}}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--family", required=True)
@@ -35,12 +43,14 @@ def main():
     ap.add_argument("--prune-tau", type=float, default=None,
                     help="certified pruned simulation (evaluate.verify_circuit_pruned); default: exact, no pruning")
     ap.add_argument("--max-wall", type=float, default=1700.0, help="stop starting new circuits after this (s)")
+    ap.add_argument("--lx", type=int, default=4)
     args = ap.parse_args()
     t_start = time.time()
-    P = get_problem()
+    P = get_problem(args.lx)
     if args.family.startswith("arch:"):
         parts = args.family.split(":")                # arch:<label>:<input|operator>[:pp]
-        fam = archive_family(parts[1], parts[2], peephole=(len(parts) > 3 and parts[3] == "pp"))
+        from c2x4.family import family_from_spec
+        fam = family_from_spec(args.family, lx=args.lx)
     else:
         fam = FAMILIES[args.family]
     if args.circuits == "all":
@@ -89,7 +99,9 @@ def main():
         v = (verify_circuit(P, g, twoB, ref, k) if args.prune_tau is None
              else verify_circuit_pruned(P, g, twoB, ref, k, tau=args.prune_tau))
         n_pass += int(v["pass"])
-        out["circuits"][P.tag(twoB, ref, k)] = {"counts": c, "verification": v}
+        import hashlib
+        skel = hashlib.sha256(repr([(nm_, list(qs_)) for nm_, qs_, _p in g]).encode()).hexdigest()
+        out["circuits"][P.tag(twoB, ref, k)] = {"counts": c, "verification": v, "skeleton_sha256": skel}
         print(f"A2 {P.tag(twoB, ref, k)}: 2q {c['n_2q']} depth2q {c['depth_2q']} 1q {c['n_1q']} | "
               f"dev {v['max_dev_phase_aligned']:.2e} leak {v['leakage']:.2e} "
               f"{'' if 'certified_max_dev' not in v else 'cert ' + format(v['certified_max_dev'], '.2e') + ' '}"
@@ -107,15 +119,20 @@ def main():
             "depth_2q_range": [min(x["counts"]["depth_2q"] for x in cs),
                                max(x["counts"]["depth_2q"] for x in cs)],
             "bar": {"max_dev": BAR_DEV, "leakage": BAR_LEAK},
-            "baseline": {"n_2q": 71548, "depth_2q": 70300,
-                         "source": "data/quantinuum/circuits_2x4/*.structured.manifest.json levels.0.counts; "
-                                   "reproduced by data/p2_0_harness_baseline.json"}}
+            "skeleton_k_independent": _k_independent(out["circuits"]),
+            "baseline": ({"n_2q": 71548, "depth_2q": 70300,
+                          "source": "data/quantinuum/circuits_2x4/*.structured.manifest.json levels.0.counts; "
+                                    "reproduced by data/p2_0_harness_baseline.json"} if args.lx == 4 else
+                         {"n_2q": 2158, "source": "data/quantinuum/circuits_2x3/index.json summary.n_zz (frozen 2x3 "
+                                                  "family, Qiskit opt-3 then pytket level 0)"})}
         print("summary:", out["summary"], flush=True)
     label = f"_{args.label}" if args.label else ""
-    p = write_json(f"data/eval_{args.family.replace(':', '_')}{label}.json", out,
+    sub = "" if args.lx == 4 else "c2x3/"
+    p = write_json(f"data/{sub}eval_{args.family.replace(':', '_')}{label}.json", out,
                    produced_by="2x4_compression_using_ai_v1/scripts/eval_family.py",
                    parameters={"family": args.family, "circuits": args.circuits, "kmax": args.kmax,
-                               "g2": P.g2, "m": P.m, "dt": P.dt, "prune_tau": args.prune_tau}, t_start=t_start)
+                               "g2": P.g2, "m": P.m, "dt": P.dt, "prune_tau": args.prune_tau, "lx": args.lx,
+                               "lattice": P.lattice}, t_start=t_start)
     print("wrote", p)
 
 

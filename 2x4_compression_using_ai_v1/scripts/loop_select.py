@@ -54,13 +54,21 @@ def main():
     ap.add_argument("--refs", default="all")
     ap.add_argument("--terms", default="all")
     ap.add_argument("--merge", action="store_true", help="merge into an existing archive of this label")
+    ap.add_argument("--classes", default="operator,input")
+    ap.add_argument("--lx", type=int, default=4)
+    ap.add_argument("--max-wall", type=float, default=1750.0, help="30-minute rule: stop starting new references")
     args = ap.parse_args()
     t_start = time.time()
-    P = get_problem()
+    P = get_problem(args.lx)
     R = get_reach(P)
+    classes = args.classes.split(",")
     labels = args.proposals.split(",")
     terms = P.names[1:] if args.terms == "all" else args.terms.split(",")
-    path = os.path.join(STUDY, "data", f"archive_{args.label}.json")
+    from c2x4.env import archive_path
+    path = archive_path(args.label)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    if args.refs != "all" or args.merge:
+        pass
     arch = {"input": {}, "operator": {}}
     if args.merge and os.path.exists(path):
         with open(path) as fh:
@@ -68,9 +76,9 @@ def main():
         arch = {"input": old.get("input", {}), "operator": old.get("operator", {})}
     # ---- operator-exact class (reference independent), at theta = dt of B = 0
     th0 = P.theta(0, 1)
-    for nm in terms:
+    for nm in (terms if "operator" in classes else []):
         rows = [try_candidate(P, lb, nm, th0, None, None) for lb in labels
-                if applicable(lb, nm) and PROPOSALS[lb]["contract"] in ("operator", "both")]
+                if applicable(lb, nm, P) and PROPOSALS[lb]["contract"] in ("operator", "both")]
         prev = arch["operator"].get(nm, {}).get("candidates", [])
         rows = prev + [r for r in rows if r["label"] not in {p["label"] for p in prev}]
         b = best(rows)
@@ -82,14 +90,17 @@ def main():
     if args.refs != "all":
         want = {int(v) for v in args.refs.split(",")}
         refs = [(tb, r) for tb, r in refs if r in want]
-    for twoB, ref in refs:
+    for twoB, ref in (refs if "input" in classes else []):
+        if time.time() - t_start > args.max_wall:
+            print("wall limit: remaining references not run (30-minute rule); re-run with --merge", flush=True)
+            break
         th = P.theta(twoB, 1)
         key = str(ref)
         arch["input"].setdefault(key, {"twoB": twoB})
         for nm in terms:
             loc = R.local_reachable(ref, nm)
             con = contract_states(P, nm, loc)
-            rows = [try_candidate(P, lb, nm, th, con, loc) for lb in labels if applicable(lb, nm)]
+            rows = [try_candidate(P, lb, nm, th, con, loc) for lb in labels if applicable(lb, nm, P)]
             prev = arch["input"][key].get(nm, {}).get("candidates", [])
             rows = prev + [r for r in rows if r["label"] not in {p["label"] for p in prev}]
             b = best(rows)
@@ -102,7 +113,8 @@ def main():
     write_json(path, arch, produced_by="2x4_compression_using_ai_v1/scripts/loop_select.py",
                parameters={"label": args.label, "proposals": labels, "terms": terms, "refs": args.refs,
                            "A1": {"max_dev": A1_DEV, "max_leak": A1_LEAK},
-                           "selection_theta": "1 * dt of the sector"}, t_start=t_start)
+                           "selection_theta": "1 * dt of the sector", "lx": args.lx, "classes": classes},
+               t_start=t_start)
     print("wrote", path, f"({time.time() - t_start:.0f} s)")
 
 

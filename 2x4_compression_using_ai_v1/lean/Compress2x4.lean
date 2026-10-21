@@ -6,3 +6,6 @@ import Compress2x4.Reach
 import Compress2x4.Budget
 import Compress2x4.Ucr
 import Compress2x4.Pair
+import Compress2x4.Glue
+import Compress2x4.Rounding
+import Compress2x4.Conj

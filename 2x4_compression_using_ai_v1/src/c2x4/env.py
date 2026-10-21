@@ -62,3 +62,11 @@ def write_json(path: str, payload: dict, produced_by: str, parameters: dict, see
     with open(path, "w") as fh:
         json.dump(out, fh, indent=1, default=_default)
     return path
+
+
+def archive_path(label: str) -> str:
+    """data/archive_<label>.json for 2x4; data/c2x3/archive_<label>.json for 2x3 labels (prefix 'L3_'), so that the
+    2x3 outputs stay in their own folder (C3, notes/010)."""
+    if label.startswith("L3_"):
+        return os.path.join(DATA, "c2x3", f"archive_{label}.json")
+    return os.path.join(DATA, f"archive_{label}.json")

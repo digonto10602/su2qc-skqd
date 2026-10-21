@@ -38,7 +38,9 @@ def vertex_parity_frame(P, name: str) -> list:
     return gates
 
 
-def framed_gates(P, name: str, theta: float, frame: list, contract=None, stats=None) -> list:
+def framed_gates(P, name: str, theta: float, frame: list, contract=None, stats=None, anc=None) -> list:
+    """`anc`: a support qubit that the frame leaves at 0 on every codeword (a clean ancilla): the angle-linear
+    multiplexors may then write a flag into it (linsynth.FLAG)."""
     sup, states, h, pos = P.local(name)
     k = len(sup)
     gpos = {q: i for i, q in enumerate(sup)}
@@ -57,7 +59,18 @@ def framed_gates(P, name: str, theta: float, frame: list, contract=None, stats=N
     H2 = F @ hc @ F.conj().T
     if np.abs(np.imag(H2)).max() > 1e-12 and np.abs(np.real(H2)).max() > 1e-12:
         pass                                    # complex generator: synth_on picks the real gauge
-    core = synth_on([int(s) for s in om], H2, k, theta, stats=stats)
+    if anc is not None:
+        if np.any((om >> gpos[anc]) & 1):
+            raise AssertionError(f"ancilla {anc} is not clean after the frame")
+        from .linsynth import FLAG
+        old = FLAG["q"]
+        FLAG["q"] = gpos[anc]
+        try:
+            core = synth_on([int(s) for s in om], H2, k, theta, stats=stats)
+        finally:
+            FLAG["q"] = old
+    else:
+        core = synth_on([int(s) for s in om], H2, k, theta, stats=stats)
     core = [(nm, [sup[q] for q in qs], par) for nm, qs, par in core]
     return frame + core + invert(frame)
 
@@ -145,3 +158,143 @@ def vertex_bright_frame(P, name: str) -> list:
                     loc = loc + g
                     A1 = np.real(U @ mats[c] @ U.conj().T)
     return out
+
+
+# ------------------------------------------------------------------ C4 step 3: JW sign as a conjugation (label JWC, mine)
+def _parity(v: int) -> int:
+    return bin(int(v)).count("1") & 1
+
+
+def jwc_framed_gates(P, name: str, theta: float, frame: list, contract=None, stats=None, anc=None) -> list:
+    """Hop with the Jordan-Wigner sign taken out of the multiplexors (notes/007 §6 step 3; plan notes/010).
+
+    The framed generator is H2 = (-1)^{par(J)} h0, J the support qubits outside the two end vertices (the JW string),
+    h0 independent of J (checked element by element; a NotImplementedError otherwise).  Fold par(J) into p = J[0]
+    (CX J[i] -> p), synthesise exp(-i theta h0) on the remaining qubits with the angle-linear synthesis, and conjugate
+    every theta-multiplexor's target by CZ(p, t): Z_t W(a) Z_t = W(-a) for a closed CNOT walk W, so the p = 1 branch is
+    exp(+i theta h0) = B^T P(-theta) B (B the theta-free basis change of the bipartite block rounds).  Lean:
+    Compress2x4.walk_conj_neg (new in C4) and exp_conj_frame."""
+    from .linsynth import CONJ, use_linear
+    sup, states, h, pos = P.local(name)
+    k = len(sup)
+    gpos = {q: i for i, q in enumerate(sup)}
+    lat, codec = P.M.lat, P.E.codec
+    x, y, _ = lat.links[int(name[3:])]
+    vq = set()
+    for s_ in (x, y):
+        o, w = int(codec.offsets[s_]), codec.widths[s_]
+        vq |= set(range(o, o + w))
+    J = [gpos[q] for q in sup if q not in vq]
+    if not J:
+        raise NotImplementedError("no JW qubits")
+    cols = states if contract is None else [int(s_) for s_ in contract]
+    idx = np.array([pos[int(s_)] for s_ in cols])
+    hc = np.asarray(h)[np.ix_(idx, idx)]
+    col, out, amp = term_unitary_columns(frame, sup, cols)
+    om = np.unique(out[np.abs(amp) > 1e-14])
+    opos = {int(s_): i for i, s_ in enumerate(om)}
+    F = np.zeros((len(om), len(cols)), dtype=complex)
+    for c_, o_, a_ in zip(col, out, amp):
+        if abs(a_) > 1e-14:
+            F[opos[int(o_)], c_] += a_
+    H2 = F @ hc @ F.conj().T
+    R = [i for i in range(k) if i not in J]
+    Jmask = sum(1 << j for j in J)
+
+    def rest_of(s_):
+        return sum(((int(s_) >> r) & 1) << i for i, r in enumerate(R))
+    h0 = {}
+    for i_, j_ in zip(*np.nonzero(np.abs(H2) > 1e-13)):
+        si, sj = int(om[i_]), int(om[j_])
+        if (si & Jmask) != (sj & Jmask):
+            raise NotImplementedError("the term changes a JW qubit")
+        v = H2[i_, j_] * (-1) ** _parity(sj & Jmask)
+        key = (rest_of(si), rest_of(sj))
+        if key in h0 and abs(h0[key] - v) > 1e-12:
+            raise NotImplementedError("the JW dependence is not a pure parity sign")
+        h0[key] = v
+    rstates = sorted({rest_of(s_) for s_ in om})
+    rpos = {s_: i for i, s_ in enumerate(rstates)}
+    H0 = np.zeros((len(rstates), len(rstates)), dtype=complex)
+    for (a_, b_), v in h0.items():
+        H0[rpos[a_], rpos[b_]] = v
+    p = J[0]
+    fold = [("cx", [sup[j], sup[p]], None) for j in J[1:]]
+    kr = len(R) + 1                                   # register: R qubits, then p
+    from .linsynth import FLAG
+    old, oldf = CONJ["q"], FLAG["q"]
+    CONJ["q"] = len(R)
+    if anc is not None:
+        if np.any((om >> gpos[anc]) & 1):
+            raise AssertionError(f"ancilla {anc} is not clean after the frame")
+        FLAG["q"] = R.index(gpos[anc])
+    try:
+        with use_linear("milp" if SOLVER_MODE["milp"] else "lp"):
+            core = synth_on(rstates, H0, kr, theta, stats=stats)
+    finally:
+        CONJ["q"], FLAG["q"] = old, oldf
+    regmap = [sup[r] for r in R] + [sup[p]]
+    core = [(nm, [regmap[q] for q in qs], par) for nm, qs, par in core]
+    return frame + fold + core + invert(fold) + invert(frame)
+
+
+SOLVER_MODE = {"milp": False}
+
+
+# ------------------------------------------------------------------ C4 step 3: hop frame with a clean ancilla (label CB, mine)
+def _bright_rotations(qs, mats_c, valid_c, loc):
+    """The bright/dark rotations of one vertex (as in vertex_bright_frame) for a given vertex-local fold `loc`
+    (local indices); returns gates in local indices of the vertex."""
+    from .plaqfactor import _gate_unitary
+    from skqd.circuits_ir import _multiplexed_two_level as _mtl
+    w = len(qs)
+    U = _gate_unitary(loc, w)
+    A1 = np.real(U @ mats_c @ U.conj().T)
+    vset = np.array(sorted({int(np.argmax(np.abs(U[:, s]))) for s in valid_c}), dtype=np.int64)
+    done = set()
+    out = []
+    for s0 in range(1 << w):
+        for M_ in (A1[:, s0], A1[s0, :]):
+            nz = [int(t) for t in np.flatnonzero(np.abs(M_) > 1e-12)]
+            if len(nz) == 2 and tuple(nz) not in done:
+                s1, s2 = nz
+                d = s1 ^ s2
+                if d & (d - 1):
+                    raise NotImplementedError("bright pair differs in more than one bit")
+                v1, v2 = M_[s1], M_[s2]
+                R = np.array([[v1, v2], [-v2, v1]], dtype=complex) / np.hypot(v1, v2)
+                g = _mtl(d, [(s1, s2, R)], vset, w)
+                out += g
+                done.add(tuple(nz))
+                loc = loc + g
+                U = _gate_unitary(loc, w)
+                A1 = np.real(U @ mats_c @ U.conj().T)
+    return out
+
+
+def vertex_bright_frame_clean(P, name: str, anc_vertex: int = 1, bright: bool = True):
+    """Parity folds + bright rotations as vertex_bright_frame, except that vertex B = ends[anc_vertex] folds its
+    parity into its first other flux qubit, and B's copy of the hopping link is then cleared by CX from A's copy
+    (equal on every codeword; done before A's fold changes A's copy).  Returns (frame, ancilla qubit)."""
+    l = int(name[3:])
+    lat, codec = P.M.lat, P.E.codec
+    ends = lat.ends()
+    gparts, mats, eta, valid = hop_vertex_factors(P, name)
+    xy = lat.links[l][:2]
+    Lq, others = [], []
+    for c, v in enumerate(xy):
+        o = int(codec.offsets[v])
+        flux = [(ll, o + j) for j, (ll, _r) in enumerate(ends[v])]
+        Lq.append([q for ll, q in flux if ll == l][0])
+        others.append([q for ll, q in flux if ll != l])
+    A, B = 1 - anc_vertex, anc_vertex
+    fold = {A: [("cx", [q, Lq[A]], None) for q in others[A]],
+            B: [("cx", [Lq[B], others[B][0]], None)] + [("cx", [q, others[B][0]], None) for q in others[B][1:]]}
+    rot = {}
+    for c in (A, B):
+        qs = gparts[c]
+        loc = [(nm, [qs.index(q) for q in qq], par) for nm, qq, par in fold[c]]
+        g = _bright_rotations(qs, mats[c], valid[c], loc) if bright else []
+        rot[c] = [(nm, [qs[q] for q in qq], par) for nm, qq, par in g]
+    frame = fold[B] + rot[B] + [("cx", [Lq[A], Lq[B]], None)] + fold[A] + rot[A]
+    return frame, Lq[B]

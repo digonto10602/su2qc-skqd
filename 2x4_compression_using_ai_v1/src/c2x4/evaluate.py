@@ -30,6 +30,39 @@ FREE = {"gphase", "barrier"}
 BAR_DEV = 1e-10
 BAR_LEAK = 1e-9
 
+# ---------------------------------------------------------------- floating-point rounding term (reviewer note 2)
+U_ROUND = 2.0 ** -53                                   # unit roundoff of IEEE double
+MU_CMUL = np.sqrt(2.0) * 2 * U_ROUND / (1 - 2 * U_ROUND)   # complex product, Higham Lemma 3.5 (sqrt2 gamma_2)
+GAMMA_PAIR = MU_CMUL + U_ROUND + MU_CMUL * U_ROUND     # Lean Compress2x4.pair_round_bound
+EPS_ENTRY = 2 * U_ROUND                                # cos/sin/exp of a double angle within 1 ulp per entry (libm)
+
+
+def rounding_bound(gates: list) -> dict:
+    """A priori bound on || computed - exact || of the sparse simulator over a gate list, from the standard model
+    of floating-point arithmetic (Lean: Compress2x4.pair_round_bound, gate_round_sq, entry_err_sq; summed by
+    telescoping_bound_mirror with ||v_i|| <= 1 + 1e-9).  Per non-permutation gate: delta = GAMMA_PAIR ||G'||_F +
+    ||G' - G||_F, with G' the matrix the simulator uses and G the exact gate: ||G' - G||_F <= 2 EPS_ENTRY for gates
+    built from an angle (ry, rx, rz, p, cp, h), and the measured distance of a stored 1-qubit 'unitary' matrix to its
+    unitary polar factor.  x, cx, cz are exact (permutations / sign changes) and cost nothing."""
+    import scipy.linalg as _sla
+    tot, n_np, worst_u = 0.0, 0, 0.0
+    for name, qs, par in gates:
+        if name in ("x", "cx", "cz", "gphase", "barrier"):
+            continue
+        n_np += 1
+        if name == "unitary":
+            G = np.asarray(par, dtype=complex)
+            Up, _ = _sla.polar(G)
+            e = float(np.linalg.norm(G - Up)) + 2 * U_ROUND
+            worst_u = max(worst_u, e)
+            fro = float(np.linalg.norm(G))
+        else:
+            e = 2 * EPS_ENTRY
+            fro = np.sqrt(2.0)
+        tot += GAMMA_PAIR * fro + e
+    return {"rounding_bound": tot * (1 + 1e-9), "n_nonpermutation_gates": n_np, "u": U_ROUND,
+            "gamma_pair": GAMMA_PAIR, "worst_unitary_entry_err": worst_u}
+
 
 def counts(gates: list) -> dict:
     """Two-qubit count (each cx/cz/cp/rzz = one ZZPhase after the package's conversion rule,
@@ -173,9 +206,11 @@ def verify_circuit_pruned(P, gates: list, twoB: int, ref: int, k: int, tau: floa
     idx, amp = st.sorted_state()
     leak_direct = float(np.sum(np.abs(amp[~np.isin(idx, P.ints)]) ** 2))
     leak = float(1.0 - np.sum(np.abs(got) ** 2))
-    cert_dev = dev + bound
-    cert_leak = (np.sqrt(max(leak_direct, 0.0)) + bound) ** 2
+    rb = rounding_bound(gates)
+    cert_dev = dev + bound + rb["rounding_bound"]
+    cert_leak = (np.sqrt(max(leak_direct, 0.0)) + bound + rb["rounding_bound"]) ** 2
     return {"twoB": twoB, "reference": ref, "k": k, "theta": P.theta(twoB, k),
+            "rounding": rb, "certified_includes_rounding": True,
             "method": f"sparse_sim with pruning |a| < {tau:g} every {every} gates, pruned norm certified",
             "max_dev_phase_aligned": dev, "leakage": leak, "leakage_direct": leak_direct,
             "prune_bound": bound, "n_prune_events": n_events,

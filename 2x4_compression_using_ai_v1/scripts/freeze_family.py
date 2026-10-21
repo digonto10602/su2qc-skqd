@@ -33,7 +33,8 @@ def build_family(spec: str, lx: int):
     parts = spec.split(":")
     if parts[0] != "arch":
         raise ValueError("only archive families (arch:<label>:<input|operator>[:pp]) are frozen")
-    return archive_family(parts[1], parts[2], peephole=(len(parts) > 3 and parts[3] == "pp"), lx=lx)
+    from c2x4.family import family_from_spec
+    return family_from_spec(spec, lx=lx)
 
 
 def main():

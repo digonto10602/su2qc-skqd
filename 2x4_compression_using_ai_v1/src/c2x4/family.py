@@ -110,7 +110,8 @@ def proposal_builder(plabel: str, cls: str):
 def archive_builder(label: str, cls: str):
     """Builder that uses, per (reference, term) [input class] or per term [operator class], the best
     verified proposal of data/archive_<label>.json (cache keyed by the proposal, never by the archive)."""
-    path = os.path.join(_STUDY, "data", f"archive_{label}.json")
+    from .env import archive_path
+    path = archive_path(label)
     with open(path) as fh:
         arch = _json.load(fh)
 
@@ -133,8 +134,19 @@ def archive_family(label: str, cls: str, peephole: bool = False, lx: int = 4) ->
             "archive": label, "class": cls, "lx": lx}
 
 
+def family_from_spec(spec: str, lx: int = 4) -> dict:
+    """arch:<label>:<input|operator>[:pp|:pp2]"""
+    parts = spec.split(":")
+    pp = parts[3] if len(parts) > 3 else False
+    return archive_family(parts[1], parts[2], peephole=pp, lx=lx)
+
+
 def finish(family: dict, gates: list) -> list:
     if family.get("peephole"):
         from .peephole import optimise
         gates, _ = optimise(gates)
+        if family.get("peephole") == "pp2":           # C4 step 4: CNOT-run resynthesis, then the peephole again
+            from .peephole import resynth_cx_runs
+            gates, _ = resynth_cx_runs(gates)
+            gates, _ = optimise(gates)
     return gates
