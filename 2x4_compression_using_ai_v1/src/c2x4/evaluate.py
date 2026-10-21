@@ -72,7 +72,12 @@ def verify_circuit(P, gates: list, twoB: int, ref: int, k: int) -> dict:
     dev_raw = float(np.abs(got - tgt).max())
     dev = float(np.abs(got * np.exp(-1j * phase) - tgt).max())
     leak = float(1.0 - np.sum(np.abs(got) ** 2))
+    idx, amp = st.sorted_state()
+    leak_direct = float(np.sum(np.abs(amp[~np.isin(idx, P.ints)]) ** 2))
+    dvec = got * np.exp(-1j * phase) - tgt
+    l2 = float(np.sqrt(np.sum(np.abs(dvec) ** 2) + leak_direct))
     return {"twoB": twoB, "reference": ref, "k": k, "theta": P.theta(twoB, k),
+            "leakage_direct": leak_direct, "l2_dev_phase_aligned": l2,
             "max_dev_phase_aligned": dev, "max_dev_raw": dev_raw, "global_phase": float(phase),
             "leakage": leak, "norm": st.norm(), "fidelity": float(abs(ov) ** 2),
             "sparse_wall_s": wall, "sparse_max_support": int(st.max_support),
@@ -128,3 +133,79 @@ def verify_term_operator(P, name: str, gates: list, theta: float, restrict_to=No
             "max_dev": dev, "max_leak": float(leak_cols.max()),
             "max_dev_outside_codewords": float(np.sqrt(leak_cols.max())),
             "wall_s": time.time() - t0}
+
+
+def verify_circuit_pruned(P, gates: list, twoB: int, ref: int, k: int, tau: float = 1e-15,
+                          every: int = 32) -> dict:
+    """The package bar with a certified pruned simulation.
+
+    The exact sparse simulator keeps every nonzero amplitude; round-off residues (~1e-17) that frames leave on
+    non-codeword strings are scattered by later don't-care slots and the support can grow to 2^16 (observed on
+    the class-A circuits).  Here, after every `every` gates, amplitudes with |a| < tau are removed and the removed
+    norm is added up.  With v the computed and u the exact (unpruned) final state,
+        ||v - u||_2 <= sum over pruning events of ||removed part||_2 =: B_prune
+    (Lean: Compress2x4.telescoping_bound_mirror -- gates are unitary, pruning is the only non-unitary step), so
+        max_s |u_s e^{-i phi} - target_s| <= measured dev + B_prune,
+        leakage(u) <= (sqrt(leakage_direct(v)) + B_prune)^2.
+    The pass criterion uses these certified values."""
+    t0 = time.time()
+    st = SparseState(P.n)
+    bound = 0.0
+    n_events = 0
+    max_support = 1
+    for i in range(0, len(gates), every):
+        apply_ir(st, gates[i:i + every])
+        st.to_sparse()
+        small = np.abs(st.amp) < tau
+        if small.any():
+            bound += float(np.sqrt(np.sum(np.abs(st.amp[small]) ** 2)))
+            st.idx, st.amp = st.idx[~small], st.amp[~small]
+            n_events += 1
+        max_support = max(max_support, int(st.idx.size), int(st.max_support))
+        st.max_support = int(st.idx.size)
+    wall = time.time() - t0
+    got = st.dense_on(P.ints)
+    tgt = P.target(twoB, ref, k)
+    ov = np.vdot(tgt, got)
+    phase = np.angle(ov) if abs(ov) > 0 else 0.0
+    dvec = got * np.exp(-1j * phase) - tgt
+    dev = float(np.abs(dvec).max())
+    idx, amp = st.sorted_state()
+    leak_direct = float(np.sum(np.abs(amp[~np.isin(idx, P.ints)]) ** 2))
+    leak = float(1.0 - np.sum(np.abs(got) ** 2))
+    cert_dev = dev + bound
+    cert_leak = (np.sqrt(max(leak_direct, 0.0)) + bound) ** 2
+    return {"twoB": twoB, "reference": ref, "k": k, "theta": P.theta(twoB, k),
+            "method": f"sparse_sim with pruning |a| < {tau:g} every {every} gates, pruned norm certified",
+            "max_dev_phase_aligned": dev, "leakage": leak, "leakage_direct": leak_direct,
+            "prune_bound": bound, "n_prune_events": n_events,
+            "certified_max_dev": cert_dev, "certified_leakage": float(cert_leak),
+            "l2_dev_phase_aligned": float(np.sqrt(np.sum(np.abs(dvec) ** 2) + leak_direct)),
+            "fidelity": float(abs(ov) ** 2), "sparse_wall_s": wall, "sparse_max_support": max_support,
+            "pass": bool(cert_dev < BAR_DEV and cert_leak < BAR_LEAK)}
+
+
+def certified_state_check(gates: list, n: int, ints: np.ndarray, tgt: np.ndarray, tau: float = 1e-15,
+                          every: int = 32) -> dict:
+    """Pruned simulation of any gate list (e.g. a native circuit read back from pytket) against a target on the
+    codeword integers `ints`, with the certified bound of `verify_circuit_pruned` (notes/006)."""
+    st = SparseState(n)
+    bound = 0.0
+    for i in range(0, len(gates), every):
+        apply_ir(st, gates[i:i + every])
+        st.to_sparse()
+        small = np.abs(st.amp) < tau
+        if small.any():
+            bound += float(np.sqrt(np.sum(np.abs(st.amp[small]) ** 2)))
+            st.idx, st.amp = st.idx[~small], st.amp[~small]
+    got = st.dense_on(ints)
+    ov = np.vdot(tgt, got)
+    ph = np.angle(ov) if abs(ov) > 0 else 0.0
+    dev = float(np.abs(got * np.exp(-1j * ph) - tgt).max())
+    idx, amp = st.sorted_state()
+    leak_direct = float(np.sum(np.abs(amp[~np.isin(idx, ints)]) ** 2))
+    cert_dev = dev + bound
+    cert_leak = float((np.sqrt(max(leak_direct, 0.0)) + bound) ** 2)
+    return {"max_dev_phase_aligned": dev, "leakage_direct": leak_direct, "prune_bound": bound,
+            "certified_max_dev": cert_dev, "certified_leakage": cert_leak,
+            "pass": bool(cert_dev < BAR_DEV and cert_leak < BAR_LEAK)}

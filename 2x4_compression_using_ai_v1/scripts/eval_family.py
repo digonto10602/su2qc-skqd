@@ -16,8 +16,10 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"))
 
 from c2x4.env import write_json                                   # noqa: E402
-from c2x4.evaluate import counts, verify_circuit, verify_term_operator, BAR_DEV, BAR_LEAK   # noqa: E402
-from c2x4.family import FAMILIES, term_builder, circuit, baseline_builder, get_reach   # noqa: E402
+from c2x4.evaluate import (BAR_DEV, BAR_LEAK, counts, verify_circuit, verify_circuit_pruned,   # noqa: E402
+                           verify_term_operator)
+from c2x4.family import (FAMILIES, archive_family, baseline_builder, circuit, get_reach,   # noqa: E402
+                         term_builder)
 from c2x4.reach import contract_states                             # noqa: E402
 from c2x4.problem import get_problem                               # noqa: E402
 
@@ -29,16 +31,24 @@ def main():
     ap.add_argument("--kmax", type=int, default=4)
     ap.add_argument("--label", default="")
     ap.add_argument("--no-terms", action="store_true")
+    ap.add_argument("--terms-only", action="store_true", help="A1 only (no full-circuit simulation)")
+    ap.add_argument("--prune-tau", type=float, default=None,
+                    help="certified pruned simulation (evaluate.verify_circuit_pruned); default: exact, no pruning")
     ap.add_argument("--max-wall", type=float, default=1700.0, help="stop starting new circuits after this (s)")
     args = ap.parse_args()
     t_start = time.time()
     P = get_problem()
-    fam = FAMILIES[args.family]
+    if args.family.startswith("arch:"):
+        parts = args.family.split(":")                # arch:<label>:<input|operator>[:pp]
+        fam = archive_family(parts[1], parts[2], peephole=(len(parts) > 3 and parts[3] == "pp"))
+    else:
+        fam = FAMILIES[args.family]
     if args.circuits == "all":
         ids = P.circuit_ids(args.kmax)
     else:
         ids = [tuple(int(v) for v in s.split(":")) for s in args.circuits.split(",")]
     out = {"family": args.family, "drop_diag": fam.get("drop_diag", False),
+           "peephole": fam.get("peephole", False),
            "builders": {nm: getattr(b, "tag", b.__name__) for nm, b in fam["builders"].items()},
            "terms": {}, "circuits": {}}
     # ---- A1 term level at every theta used
@@ -69,24 +79,29 @@ def main():
                   f"{out['terms'][nm]['worst_leak']:.2e}, 2q {out['terms'][nm]['n_2q']}", flush=True)
     # ---- A2 + A5 per circuit
     n_pass = 0
-    for (twoB, ref, k) in ids:
+    for (twoB, ref, k) in ([] if args.terms_only else ids):
         if time.time() - t_start > args.max_wall:
             print("wall limit reached: remaining circuits not run (30-minute rule)", flush=True)
             out["truncated_at_wall_s"] = args.max_wall
             break
         g = circuit(P, fam, twoB, ref, k)
         c = counts(g)
-        v = verify_circuit(P, g, twoB, ref, k)
+        v = (verify_circuit(P, g, twoB, ref, k) if args.prune_tau is None
+             else verify_circuit_pruned(P, g, twoB, ref, k, tau=args.prune_tau))
         n_pass += int(v["pass"])
         out["circuits"][P.tag(twoB, ref, k)] = {"counts": c, "verification": v}
         print(f"A2 {P.tag(twoB, ref, k)}: 2q {c['n_2q']} depth2q {c['depth_2q']} 1q {c['n_1q']} | "
-              f"dev {v['max_dev_phase_aligned']:.2e} leak {v['leakage']:.2e} pass {v['pass']} "
+              f"dev {v['max_dev_phase_aligned']:.2e} leak {v['leakage']:.2e} "
+              f"{'' if 'certified_max_dev' not in v else 'cert ' + format(v['certified_max_dev'], '.2e') + ' '}"
+              f"pass {v['pass']} "
               f"({v['sparse_wall_s']:.1f} s)", flush=True)
     cs = out["circuits"].values()
     if cs:
         out["summary"] = {
             "n_circuits": len(out["circuits"]), "n_pass": n_pass,
             "max_dev_phase_aligned": max(x["verification"]["max_dev_phase_aligned"] for x in cs),
+            "max_certified_dev": max(x["verification"].get("certified_max_dev", x["verification"]["max_dev_phase_aligned"]) for x in cs),
+            "max_certified_leakage": max(x["verification"].get("certified_leakage", abs(x["verification"]["leakage"])) for x in cs),
             "max_abs_leakage": max(abs(x["verification"]["leakage"]) for x in cs),
             "n_2q_range": [min(x["counts"]["n_2q"] for x in cs), max(x["counts"]["n_2q"] for x in cs)],
             "depth_2q_range": [min(x["counts"]["depth_2q"] for x in cs),
@@ -97,10 +112,10 @@ def main():
                                    "reproduced by data/p2_0_harness_baseline.json"}}
         print("summary:", out["summary"], flush=True)
     label = f"_{args.label}" if args.label else ""
-    p = write_json(f"data/eval_{args.family}{label}.json", out,
+    p = write_json(f"data/eval_{args.family.replace(':', '_')}{label}.json", out,
                    produced_by="2x4_compression_using_ai_v1/scripts/eval_family.py",
                    parameters={"family": args.family, "circuits": args.circuits, "kmax": args.kmax,
-                               "g2": P.g2, "m": P.m, "dt": P.dt}, t_start=t_start)
+                               "g2": P.g2, "m": P.m, "dt": P.dt, "prune_tau": args.prune_tau}, t_start=t_start)
     print("wrote", p)
 
 

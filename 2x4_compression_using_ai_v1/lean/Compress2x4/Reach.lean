@@ -67,6 +67,27 @@ theorem telescoping_bound (U V : ℕ → E → E) (hV : ∀ i x y, ‖V i x - V 
           gcongr; exact hV k _ _
       _ ≤ _ := by gcongr
 
+/-- L6 mirrored (used by the pruned simulator): if every EXACT step is 1-Lipschitz (unitary), the distance between
+the computed run (each step followed by pruning tiny amplitudes, V) and the exact run (U) is at most the sum of
+what was changed along the COMPUTED trajectory: sum_i || V_i(v_i) - U_i(v_i) ||, v_i = run V i psi. -/
+theorem telescoping_bound_mirror (U V : ℕ → E → E) (hU : ∀ i x y, ‖U i x - U i y‖ ≤ ‖x - y‖) (ψ : E) :
+    ∀ k, ‖run V k ψ - run U k ψ‖ ≤
+      ∑ i ∈ Finset.range k, ‖V i (run V i ψ) - U i (run V i ψ)‖ := by
+  intro k
+  induction k with
+  | zero => simp [run]
+  | succ k ih =>
+    rw [Finset.sum_range_succ]
+    show ‖V k (run V k ψ) - U k (run U k ψ)‖ ≤ _
+    calc ‖V k (run V k ψ) - U k (run U k ψ)‖
+        = ‖(V k (run V k ψ) - U k (run V k ψ)) + (U k (run V k ψ) - U k (run U k ψ))‖ := by
+          congr 1; abel
+      _ ≤ ‖V k (run V k ψ) - U k (run V k ψ)‖ + ‖U k (run V k ψ) - U k (run U k ψ)‖ :=
+          norm_add_le _ _
+      _ ≤ ‖V k (run V k ψ) - U k (run V k ψ)‖ + ‖run V k ψ - run U k ψ‖ := by
+          gcongr; exact hU k _ _
+      _ ≤ _ := by linarith
+
 end Budget
 
 /-- The one-qubit y rotation Ry(phi) = [[cos(phi/2), -sin(phi/2)], [sin(phi/2), cos(phi/2)]]. -/
@@ -93,5 +114,6 @@ end Compress2x4
 
 #print axioms Compress2x4.agree_on_reachable_n
 #print axioms Compress2x4.telescoping_bound
+#print axioms Compress2x4.telescoping_bound_mirror
 #print axioms Compress2x4.ry_add_two_pi
 #print axioms Compress2x4.relphase_cancel

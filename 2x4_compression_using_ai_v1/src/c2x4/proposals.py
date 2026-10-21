@@ -28,6 +28,44 @@ def _pkg(P, nm, th, con, loc):
     return P.baseline_term_ir(nm, th)
 
 
+def _cfg(P, nm, th, con, loc):
+    return plaqfactor.cfg_gates(P, nm, th, int(nm[4:]), contract=con, flag_rule="dark")
+
+
+def _cfg_t(P, nm, th, con, loc):
+    return plaqfactor.cfg_gates(P, nm, th, int(nm[4:]), contract=con, flag_rule="triple")
+
+
+def _sw(fn):
+    """The same proposal with every multiplexed rotation synthesised by the sparse-Walsh walk."""
+    from .sparsemux import use_sparse_mux
+
+    def g(P, nm, th, con, loc):
+        with use_sparse_mux():
+            return fn(P, nm, th, con, loc)
+    return g
+
+
+def _fullsynth(P, nm, th, con, loc):
+    """The package's exact block synthesis on all local codewords (operator class), via reach.synth_on."""
+    from .reach import synth_on
+    sup, states, h, pos = P.local(nm)
+    g = synth_on(states, h, len(sup), th)
+    return [(n, [sup[q] for q in qs], par) for n, qs, par in g]
+
+
+def _framed(P, nm, th, con, loc):
+    """Vertex parity frame, then the package block synthesis on the framed generator (hopframe.py)."""
+    from .hopframe import framed_gates, vertex_parity_frame
+    return framed_gates(P, nm, th, vertex_parity_frame(P, nm), contract=con)
+
+
+def _bframed(P, nm, th, con, loc):
+    """Vertex parity fold + bright/dark intertwiner rotations, then block synthesis (hopframe.py)."""
+    from .hopframe import framed_gates, vertex_bright_frame
+    return framed_gates(P, nm, th, vertex_bright_frame(P, nm), contract=con)
+
+
 PROPOSALS = {
     "pkg": {"fn": _pkg, "terms": tuple([f"hop{l}" for l in range(10)] + ["plaq0", "plaq2"]),
             "contract": "operator"},
@@ -37,6 +75,17 @@ PROPOSALS = {
              "contract": "input"},
     "cf1": {"fn": _cf1, "terms": "plaq", "contract": "both"},
     "cf2": {"fn": _cf2, "terms": ("plaq1",), "contract": "both"},
+    "cfg": {"fn": _cfg, "terms": "plaq", "contract": "both"},
+    "cfg_t": {"fn": _cfg_t, "terms": "plaq", "contract": "both"},
+    "rpkg_sw": {"fn": _sw(_rpkg), "terms": tuple([f"hop{l}" for l in range(10)] + ["plaq0", "plaq2"]),
+                "contract": "input"},
+    "full_sw": {"fn": _sw(_fullsynth), "terms": tuple([f"hop{l}" for l in range(10)]), "contract": "operator"},
+    "cfg_sw": {"fn": _sw(_cfg), "terms": "plaq", "contract": "both"},
+    "cfg_t_sw": {"fn": _sw(_cfg_t), "terms": "plaq", "contract": "both"},
+    "cf2_sw": {"fn": _sw(_cf2), "terms": ("plaq1",), "contract": "both"},
+    "framed_sw": {"fn": _sw(_framed), "terms": tuple(f"hop{l}" for l in range(10)), "contract": "both"},
+    "bframed": {"fn": _bframed, "terms": tuple(f"hop{l}" for l in range(10)), "contract": "both"},
+    "bframed_sw": {"fn": _sw(_bframed), "terms": tuple(f"hop{l}" for l in range(10)), "contract": "both"},
 }
 
 

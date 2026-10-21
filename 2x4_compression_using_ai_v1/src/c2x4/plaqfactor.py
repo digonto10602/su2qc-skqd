@@ -532,6 +532,205 @@ def cf2_gates(P, name: str, theta: float, pidx: int, return_info: bool = False, 
     return gates
 
 
+def cfg_gates(P, name: str, theta: float, pidx: int, return_info: bool = False, exact_toffoli=False,
+              contract=None, use_flags=True, flag_rule="dark"):
+    """CF2 generalised (label CFG, mine): corners may be interior (third link + vertex bit) or corner vertices
+    (two plaquette links + vertex bit).  Flags g_c = third AND q are computed only for corners that have a
+    dark state (a three-state block); the sign corrections offered depend on the corner type."""
+    sup, states, h, pos = P.local(name)
+    gpos = {q: i for i, q in enumerate(sup)}
+    corners = corners_of(P, pidx)
+    fac = factorise(P, name, corners)
+    # ---- 1. corner frames (CX + bright rotation); remember the bright items to re-sign them
+    def build_frames(bright_sign, cz_c, cz_q, ccz_xc=(0, 0, 0, 0)):
+        fr, pa = [], []
+        for c, corner in enumerate(corners):
+            cp = fac["corner_positions"][c]
+            valid = sorted({_sub(int(s), cp) for s in states})
+            qs = corner["qubits"]
+            w = len(qs)
+            ja, jb = qs.index(corner["plinks"][0]), qs.index(corner["plinks"][1])
+            g = [("cx", [ja, jb], None)]
+            U = _gate_unitary(g, w)
+            A1 = np.real(U @ fac["mats"][c] @ U.conj().T)
+            vset = np.array(sorted({int(np.argmax(np.abs(U[:, s]))) for s in valid}), dtype=np.int64)
+            for blk in corner_blocks(A1):
+                if len(blk) != 3:
+                    continue
+                deg = [(np.abs(A1[s, blk]) > 1e-12).sum() for s in blk]
+                s0 = blk[int(np.argmax(deg))]
+                s1, s2 = [s for s in blk if s != s0]
+                v1, v2 = A1[s1, s0], A1[s2, s0]
+                R = np.array([[v1, v2], [-v2, v1]], dtype=complex) / np.hypot(v1, v2)
+                if bright_sign[c]:
+                    R = -R
+                g += _multiplexed_two_level(s1 ^ s2, [(s1, s2, R)], vset, w)
+            jc = qs.index(corner["third"]) if corner["third"] is not None else None
+            jq = qs.index(corner["q"])
+            if cz_c[c]:
+                g.append(("cp", [jc, ja], np.pi))
+            if cz_q[c]:
+                g.append(("cp", [jq, ja], np.pi))
+            if ccz_xc[c]:                                  # (-1)^{p_a (1 - x) c}
+                g += [("x", [jb], None)] + ccz(ja, jb, jc) + [("x", [jb], None)]
+            fr += [(nm, [qs[q] for q in qq], par) for nm, qq, par in g]
+            pa.append(qs[ja])
+        return fr, pa
+
+    def labels(s):
+        out = []
+        for corner in corners:
+            x = (s >> gpos[corner["plinks"][1]]) & 1
+            cc = (s >> gpos[corner["third"]]) & 1 if corner["third"] is not None else 0
+            qq = (s >> gpos[corner["q"]]) & 1
+            out.append((x, cc, qq))
+        return out
+
+    # ---- 2. sign analysis in the plain frame (+ ladder) and choice of the cheapest corrections
+    zero = [0, 0, 0, 0]
+    fr0, pa = build_frames(zero, zero, zero)
+    has_triple = [any(len(b_) == 3 for b_ in corner_blocks(fac["mats"][c])) for c in range(4)]
+    # a corner needs a flag when one of its valid states is annihilated by its corner matrix (a dark state,
+    # either the dark member of a three-state block or an isolated valid state)
+    def _has_dark(c):
+        cp = fac["corner_positions"][c]
+        valid = sorted({_sub(int(s_), cp) for s_ in states})
+        Mx = fac["mats"][c]
+        if has_triple[c]:
+            return True
+        if flag_rule == "triple":
+            return False
+        return any(not (np.abs(Mx[v]).any() or np.abs(Mx[:, v]).any()) for v in valid)
+    has_dark = [_has_dark(c) for c in range(4)]
+    p1 = pa[0]
+    ladder = [("cx", [p1, q], None) for q in pa[1:]]
+    H2, omega = frame_generator(P, name, fr0 + ladder, contract)
+    coo = H2.tocoo()
+    t = gpos[p1]
+    if np.any((coo.row ^ coo.col) != (1 << t)):
+        raise AssertionError("frame generator is not X on p_1 (x) diagonal")
+    samples = [(int(cc), float(np.real(v))) for cc, v in zip(coo.col, coo.data) if not (int(cc) >> t) & 1]
+    # monomials: free = all x-monomials (16), bright per corner, g per corner, g products are free too but
+    # unnecessary here; costed = c_c, q_c
+    import itertools as _it
+    free_cols, costed_cols = [], []
+    def feat(s):
+        L = labels(s)
+        xs = [l[0] for l in L]
+        f = []
+        for sub_ in _it.product([0, 1], repeat=4):
+            f.append(int(all(xs[i] for i in range(4) if sub_[i])))
+        for ci, (x, cc, qq) in enumerate(L):
+            # bright label: its sign is free (Ry angle + 2 pi) only where a bright rotation exists
+            f.append(int(x == 0 and cc == 1 and qq == 0) if has_triple[ci] else 0)
+            f.append(int(cc == 1 and qq == 1) if (has_dark[ci] and use_flags) else 0)   # g flag
+        cost = []
+        for ci, (x, cc, qq) in enumerate(L):
+            third = corners[ci]["third"] is not None
+            cost += [cc if third else 0, qq, int(x == 0 and cc == 1) if third else 0]
+        return f, cost
+    F_free, F_cost, b = [], [], []
+    for s, v in samples:
+        f, c_ = feat(s)
+        F_free.append(f)
+        F_cost.append(c_)
+        b.append(int(v < 0))
+    F_free, F_cost, b = np.array(F_free), np.array(F_cost), np.array(b)
+    unit_cost = [1, 1, 5] * 4                       # CZ(c,pa), CZ(q,pa): 1 ZZ; CCZ(pa,~x,c): 3 CP + 2 CX
+    choice = None
+    for sel_mask in sorted(range(1 << 12), key=lambda m_: (sum(unit_cost[i] for i in range(12) if (m_ >> i) & 1), m_)):
+        sel = [i for i in range(12) if (sel_mask >> i) & 1]
+        A = np.hstack([F_free, F_cost[:, sel]]) if sel else F_free
+        ok, sol = f2_solve(A, b)
+        if ok:
+            choice = (sel, sol)
+            break
+    if choice is None:
+        raise AssertionError("sign structure not absorbable")
+    sel, sol = choice
+    nfree = F_free.shape[1]
+    bright_sign = [int(sol[16 + 2 * c]) for c in range(4)]
+    cz_c, cz_q, ccz_xc = [0] * 4, [0] * 4, [0] * 4
+    for i, s_ in enumerate(sel):
+        if sol[nfree + i]:
+            (cz_c, cz_q, ccz_xc)[s_ % 3][s_ // 3] = 1
+    fr, pa = build_frames(bright_sign, cz_c, cz_q, ccz_xc)
+    # ---- 3. ladder, then clear redundant qubits (relations on the occupied set)
+    frame = fr + ladder
+    _, omega = frame_generator(P, name, frame, contract)
+    k = len(sup)
+    rel = f2_relations(omega, k)
+    # pick pivots: prefer the cleared p_a's of corners 1..3, then x of corner 3, never p1
+    need = sum(1 for c in range(4) if has_dark[c]) if use_flags else 0
+    prefer = [gpos[q] for q in pa[1:]] + [gpos[corners[3]["plinks"][1]]]
+    # reduce relations so that each preferred pivot appears in exactly one relation
+    rel = list(rel)
+    clear = []
+    for pv in prefer:
+        cand = [r for r in rel if (r >> pv) & 1]
+        if not cand:
+            continue
+        r0 = min(cand, key=lambda r: bin(r).count("1"))
+        rel = [r ^ r0 if ((r >> pv) & 1 and r != r0) else r for r in rel if r != r0]
+        clear.append((pv, r0))
+        if len(clear) == need:
+            break
+    # constant value of each relation on omega: r . s0
+    s0 = int(omega[0])
+    clear_gates = []
+    for pv, r in clear:
+        for b_ in range(k):
+            if b_ != pv and (r >> b_) & 1:
+                clear_gates.append(("cx", [sup[b_], sup[pv]], None))
+        if bin(r & s0).count("1") % 2:
+            clear_gates.append(("x", [sup[pv]], None))
+    # the clears of later pivots must not use earlier pivots as sources (they are already 0): check
+    frame = frame + clear_gates
+    _, omega2 = frame_generator(P, name, frame, contract)
+    anc = [sup[pv] for pv, _ in clear]
+    for a in anc:
+        if np.any((omega2 >> gpos[a]) & 1):
+            raise AssertionError(f"qubit {a} is not cleared")
+    # ---- 4. flags g_c = c_c AND q_c into the clean qubits
+    if len(anc) < need:
+        raise AssertionError(f"only {len(anc)} clean qubits for {need} flags")
+    flags = []
+    flag_corners = [c for c in range(4) if has_dark[c]] if use_flags else []
+    for c, a in zip(flag_corners, anc):
+        flags += (toffoli if exact_toffoli else rtof)(corners[c]["third"], corners[c]["q"], a)
+    frame = frame + flags
+    H3, omega3 = frame_generator(P, name, frame, contract)
+    coo = H3.tocoo()
+    if np.any((coo.row ^ coo.col) != (1 << t)):
+        raise AssertionError("final frame generator is not X on p_1 (x) diagonal")
+    Fval = {int(cc): complex(v) for cc, v in zip(coo.col, coo.data)}
+    items = []
+    for s0_ in sorted({int(s) & ~(1 << t) for s in omega3}):
+        s1_ = s0_ | (1 << t)
+        f = Fval.get(s0_, 0.0)
+        if abs(f - np.conj(Fval.get(s1_, 0.0))) > 1e-12 or abs(np.imag(f)) > 1e-12:
+            raise AssertionError("frame generator is not real symmetric on a pair")
+        f = float(np.real(f))
+        if f == 0.0:
+            continue
+        cth, sth = np.cos(theta * f), np.sin(theta * f)
+        items.append((s0_, s1_, np.array([[cth, -1j * sth], [-1j * sth, cth]], dtype=complex)))
+    stats = []
+    # the package's greedy control reduction tries low bit indices first: relabel the support so that
+    # the bits the flags were computed from (third link, vertex bit) come first and are dropped first
+    first = [gpos[c_["third"]] for c_ in corners if c_["third"] is not None] + [gpos[c_["q"]] for c_ in corners]
+    order = first + [b_ for b_ in range(k) if b_ not in first]          # new index i <- old bit order[i]
+    core = mux_relabelled(1 << t, items, omega3, k, order, stats)
+    core = [(nm, [sup[q] for q in qs], par) for nm, qs, par in core]
+    gates = frame + core + invert(frame)
+    if return_info:
+        return gates, {"has_dark": has_dark, "bright_sign": bright_sign, "cz_c": cz_c, "cz_q": cz_q, "ccz_xc": ccz_xc, "ancillas": anc,
+                       "clear_2q": sum(1 for g in clear_gates if g[0] == "cx"),
+                       "frame_2q": sum(1 for g in frame if g[0] in ("cx", "cz", "cp", "rzz")),
+                       "multiplexer": stats, "n_rotations": len(items)}
+    return gates
+
+
 def _perm_int(s: int, order: list) -> int:
     """New integer whose bit i is old bit order[i]."""
     return sum(((int(s) >> o) & 1) << i for i, o in enumerate(order))
