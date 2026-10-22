@@ -1,0 +1,166 @@
+{
+ "lattice": "2x3",
+ "family": "compressed_circuit_llm_2x3_classB",
+ "device": "quantinuum_h2_2_nomem",
+ "circuit": "B1_ref29_k2",
+ "engine_name": "sparse",
+ "twoB": 2,
+ "reference": 29,
+ "k": 2,
+ "shots": 300,
+ "seed_simulator": 1894352418,
+ "seed_readout": 1894352419,
+ "seed_floor": 1894352420,
+ "seed_bootstrap": 2028,
+ "n_qubits": 20,
+ "sector_size": 426,
+ "p_ref": 0.741693399520201,
+ "ideal_weight_in_sector": 0.9999999999999987,
+ "budget": {
+  "n_2q": 382,
+  "n_1q_native": 512,
+  "n_1q_pulses": 512,
+  "log_clean": {
+   "gate_1q": -0.02150445159666615,
+   "gate_2q": -0.3941663608011713,
+   "idle": 0.0,
+   "memory": 0.0
+  },
+  "n_events": {
+   "gate_1q": 512,
+   "gate_2q": 382,
+   "idle": 0,
+   "memory": 0
+  },
+  "depth1_equivalent_layers": 38.2,
+  "n_active_qubits": 20,
+  "f_gate": 0.6598974647977001,
+  "f_parts": {
+   "gate_1q": 0.9787251205699662,
+   "gate_2q": 0.6742418794905406,
+   "idle": 1.0,
+   "memory": 1.0
+  }
+ },
+ "f_model": 0.6476663805093381,
+ "f_gate": 0.6598974647977001,
+ "f0_prime": 0.6497307143753691,
+ "readout_survival_ref": 0.9845934391861201,
+ "acceptance": 0.7966666666666666,
+ "acceptance_ci95": [
+  0.7475056883005968,
+  0.8383261486559936
+ ],
+ "acceptance_codeword_membership": 0.7966666666666666,
+ "rejections": {
+  "flag": 31,
+  "link": 18,
+  "sector": 12,
+  "unknown": 0
+ },
+ "acceptance_random_level": 0.0004062652587890625,
+ "ref_hits": 164,
+ "f_hit": 0.7370520851612048,
+ "f_hit_ci95": [
+  0.6607831147090294,
+  0.8117300873416281
+ ],
+ "f_hit_traj": 0.7328781053126794,
+ "b_all": {
+  "0.001": 0.7133333333333334,
+  "0.01": 0.74,
+  "0.03": 0.74
+ },
+ "f_ideal": {
+  "0.001": 0.7023433199527657,
+  "0.01": 0.7285991449977288,
+  "0.03": 0.7285991449977288
+ },
+ "f_ideal_1e-3_ci95": [
+  0.6531136479934596,
+  0.7515729919120716
+ ],
+ "r_nc": 1.0494185168740173,
+ "r_nc_ci95": [
+  0.9604830846292746,
+  1.1377296127910335
+ ],
+ "mean_sector_weight_pre_readout": 0.7985000349593944,
+ "tv_accepted": 0.11415963335457546,
+ "tv_accepted_floor_mean": 0.0563263544133343,
+ "tv_accepted_floor_sd": 0.011246199031625664,
+ "tv_population_pre_readout": 0.11306149845016347,
+ "accepted_counts": {
+  "60": 1,
+  "30": 2,
+  "78": 1,
+  "75": 1,
+  "535": 1,
+  "71": 19,
+  "799": 9,
+  "45": 2,
+  "529": 18,
+  "29": 164,
+  "1356": 3,
+  "560": 3,
+  "171": 8,
+  "23": 1,
+  "155": 1,
+  "293": 5
+ },
+ "engine_diagnostics": {
+  "n_faults_mean": 0.41333333333333333,
+  "n_faults_hist": [
+   200,
+   78,
+   20,
+   2
+  ],
+  "fault_free_fraction_sampled": 0.6666666666666666,
+  "prune_bound_max": 3.769393387236041e-12,
+  "support_max": 3862,
+  "support_mean": 884.9133333333333,
+  "clean_state_max_abs_dpsi": 1.5624688148904797e-14,
+  "clean_prune_bound": 1.1949531950131417e-15
+ },
+ "engine": "skqd.sparse_sim (package) via noise/src/traj_sparse.py, prune |a|<1e-12 every 32 gates",
+ "noise_placement": "IR level (traj_sparse.ir_events)",
+ "noise_spec_file": "data/device_specs_quantinuum.json",
+ "noise_spec_sha256": "90dd6204acdafe5d71ebd4b6d2ef9b692f20c734aa9b3fa8dba3d087484d4886",
+ "noise_model_params": {
+  "p1": 2.8e-05,
+  "p2": 0.00083,
+  "spam0": 0.00067,
+  "spam1": 0.0012,
+  "mem_depth1": 0.0,
+  "rzz_angle_scaling": {
+   "a": 1.518,
+   "b": 0.241,
+   "power": 1.0
+  },
+  "parallel_2q": 4,
+  "variant_of": "quantinuum_h2_2",
+  "kind": "quantinuum",
+  "device": "quantinuum_h2_2_nomem"
+ },
+ "timing_s": {
+  "simulate": 4.060974597930908,
+  "total": 8.045600414276123
+ },
+ "provenance": {
+  "git_commit": "6086e4d+dirty(noise/)",
+  "machine": {
+   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+   "node": "pichkaCommander",
+   "python": "3.12.14",
+   "executable": "/home/digimonk/anaconda3/envs/coding/bin/python",
+   "numpy": "2.5.2",
+   "scipy": "1.18.0",
+   "cpu_count": 12,
+   "qiskit": "2.5.2",
+   "qiskit_aer": "0.17.2"
+  },
+  "created_utc": "2026-10-22 03:03:47 UTC",
+  "command": "python /home/digimonk/Projects/su2qc-skqd/2x4_compression_using_ai_v1/noise/scripts/noisy_run.py 2x3 compressed_circuit_llm_2x3_classB quantinuum_h2_2_nomem B1_ref29_k2 --shots 300"
+ }
+}

@@ -1,0 +1,61 @@
+{
+ "test": "skqd_energy",
+ "lattice": "2x3",
+ "family": "compressed_circuit_llm_2x3_classB",
+ "device": "quantinuum_h2_2_nomem",
+ "rows": {
+  "twoB=0": {
+   "n_circuits": 32,
+   "dim_noisy": 211,
+   "dim_ideal_samples": 187,
+   "E_ritz_noisy": -5.601465959679032,
+   "E_ritz_ideal_samples": -5.599327249846538,
+   "E0_exact": -5.602600457881777,
+   "dE_noisy": 0.0011344982027443606,
+   "dE_ideal_samples": 0.003273208035238895,
+   "sector_dim": 677
+  },
+  "twoB=2": {
+   "n_circuits": 12,
+   "dim_noisy": 135,
+   "dim_ideal_samples": 127,
+   "E_ritz_noisy": -3.8180742286970912,
+   "E_ritz_ideal_samples": -3.818123560599747,
+   "E0_exact": -3.8260844431241456,
+   "dE_noisy": 0.008010214427054407,
+   "dE_ideal_samples": 0.007960882524398638,
+   "sector_dim": 426
+  }
+ },
+ "summary": {
+  "twoB=0": {
+   "dE_noisy": 0.0011344982027443606,
+   "dE_ideal_samples": 0.003273208035238895,
+   "dim_noisy": 211,
+   "dim_ideal_samples": 187
+  },
+  "twoB=2": {
+   "dE_noisy": 0.008010214427054407,
+   "dE_ideal_samples": 0.007960882524398638,
+   "dim_noisy": 135,
+   "dim_ideal_samples": 127
+  }
+ },
+ "method": "B = union over the family's circuits of the sector of every accepted (decoded) basis state; E_ritz = lowest eigenvalue of H restricted to B (skqd.skqd.ritz); the ideal comparison draws, per circuit, as many samples from the exact coarse-state distribution as the noisy run accepted (numpy default_rng(4242 + twoB)); E0 from Model(Lx).reference(4.0, twoB)",
+ "provenance": {
+  "git_commit": "6086e4d+dirty(noise/)",
+  "machine": {
+   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+   "node": "pichkaCommander",
+   "python": "3.12.14",
+   "executable": "/home/digimonk/anaconda3/envs/coding/bin/python",
+   "numpy": "2.5.2",
+   "scipy": "1.18.0",
+   "cpu_count": 12,
+   "qiskit": "2.5.2",
+   "qiskit_aer": "0.17.2"
+  },
+  "created_utc": "2026-10-22 03:37:30 UTC",
+  "command": "python scripts/aggregate.py"
+ }
+}

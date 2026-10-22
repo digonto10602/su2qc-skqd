@@ -1,0 +1,163 @@
+{
+ "lattice": "2x4",
+ "family": "compressed_circuit_llm_2x4_classA_v2",
+ "device": "quantinuum_h2_2_nomem",
+ "circuit": "B1_ref103_k1",
+ "engine_name": "sparse",
+ "twoB": 2,
+ "reference": 103,
+ "k": 1,
+ "shots": 300,
+ "seed_simulator": 23435426,
+ "seed_readout": 23435427,
+ "seed_floor": 23435428,
+ "seed_bootstrap": 2028,
+ "n_qubits": 28,
+ "sector_size": 8934,
+ "p_ref": 0.9313143954167585,
+ "ideal_weight_in_sector": 1.0000000000000009,
+ "budget": {
+  "n_2q": 1492,
+  "n_1q_native": 1805,
+  "n_1q_pulses": 1805,
+  "log_clean": {
+   "gate_1q": -0.07581159205465503,
+   "gate_2q": -1.5410689621845721,
+   "idle": 0.0,
+   "memory": 0.0
+  },
+  "n_events": {
+   "gate_1q": 1805,
+   "gate_2q": 1492,
+   "idle": 0,
+   "memory": 0
+  },
+  "depth1_equivalent_layers": 106.57142857142857,
+  "n_active_qubits": 28,
+  "f_gate": 0.19851699721388905,
+  "f_parts": {
+   "gate_1q": 0.9269908425474598,
+   "gate_2q": 0.21415205857734826,
+   "idle": 1.0,
+   "memory": 1.0
+  }
+ },
+ "f_model": 0.19338489507115234,
+ "f_gate": 0.19851699721388905,
+ "f0_prime": 0.19431022060811298,
+ "readout_survival_ref": 0.978808985301931,
+ "acceptance": 0.35,
+ "acceptance_ci95": [
+  0.2982320021334252,
+  0.40556088929301776
+ ],
+ "acceptance_codeword_membership": 0.35,
+ "rejections": {
+  "flag": 87,
+  "link": 86,
+  "sector": 22,
+  "unknown": 0
+ },
+ "acceptance_random_level": 3.328174352645874e-05,
+ "ref_hits": 91,
+ "f_hit": 0.3257045470639302,
+ "f_hit_ci95": [
+  0.27280919419790506,
+  0.38393955978802313
+ ],
+ "f_hit_traj": 0.30676251805321136,
+ "b_all": {
+  "0.001": 0.30666666666666664,
+  "0.01": 0.31666666666666665,
+  "0.03": 0.32
+ },
+ "f_ideal": {
+  "0.001": 0.3001680888259255,
+  "0.01": 0.30995617867894476,
+  "0.03": 0.3132188752966179
+ },
+ "f_ideal_1e-3_ci95": [
+  0.25122763956082894,
+  0.35237123470869514
+ ],
+ "r_nc": 1.085073860908692,
+ "r_nc_ci95": [
+  1.0087240103483608,
+  1.1630819512666186
+ ],
+ "mean_sector_weight_pre_readout": 0.35177499643651367,
+ "tv_accepted": 0.10738093537157736,
+ "tv_accepted_floor_mean": 0.04087432883696219,
+ "tv_accepted_floor_sd": 0.011675593646797143,
+ "tv_population_pre_readout": 0.33519242863772253,
+ "accepted_counts": {
+  "109": 1,
+  "475": 1,
+  "4487": 1,
+  "16834": 1,
+  "11027": 1,
+  "103": 91,
+  "28580": 4,
+  "8011": 1,
+  "3971": 1,
+  "5411": 3
+ },
+ "engine_diagnostics": {
+  "n_faults_mean": 1.5066666666666666,
+  "n_faults_hist": [
+   72,
+   99,
+   64,
+   41,
+   20,
+   2,
+   2
+  ],
+  "fault_free_fraction_sampled": 0.24,
+  "prune_bound_max": 7.894650425854034e-10,
+  "support_max": 98648,
+  "support_mean": 23349.56,
+  "clean_state_max_abs_dpsi": 2.6751246250788038e-12,
+  "clean_prune_bound": 1.302809435243563e-10
+ },
+ "engine": "skqd.sparse_sim (package) via noise/src/traj_sparse.py, prune |a|<1e-12 every 32 gates",
+ "noise_placement": "IR level (traj_sparse.ir_events)",
+ "noise_spec_file": "data/device_specs_quantinuum.json",
+ "noise_spec_sha256": "90dd6204acdafe5d71ebd4b6d2ef9b692f20c734aa9b3fa8dba3d087484d4886",
+ "noise_model_params": {
+  "p1": 2.8e-05,
+  "p2": 0.00083,
+  "spam0": 0.00067,
+  "spam1": 0.0012,
+  "mem_depth1": 0.0,
+  "rzz_angle_scaling": {
+   "a": 1.518,
+   "b": 0.241,
+   "power": 1.0
+  },
+  "parallel_2q": 4,
+  "variant_of": "quantinuum_h2_2",
+  "kind": "quantinuum",
+  "device": "quantinuum_h2_2_nomem"
+ },
+ "timing_s": {
+  "simulate": 124.97399377822876,
+  "total": 153.0156593322754
+ },
+ "provenance": {
+  "git_commit": "6086e4d+dirty(noise/)",
+  "machine": {
+   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+   "node": "pichkaCommander",
+   "python": "3.12.14",
+   "executable": "/home/digimonk/anaconda3/envs/coding/bin/python",
+   "numpy": "2.5.2",
+   "scipy": "1.18.0",
+   "cpu_count": 12,
+   "qiskit": "2.5.2",
+   "qiskit_aer": "0.17.2"
+  },
+  "created_utc": "2026-10-22 03:47:06 UTC",
+  "command": "python /home/digimonk/Projects/su2qc-skqd/2x4_compression_using_ai_v1/noise/scripts/noisy_run.py 2x4 compressed_circuit_llm_2x4_classA_v2 quantinuum_h2_2_nomem B1_ref103_k1 --shots 300"
+ }
+}

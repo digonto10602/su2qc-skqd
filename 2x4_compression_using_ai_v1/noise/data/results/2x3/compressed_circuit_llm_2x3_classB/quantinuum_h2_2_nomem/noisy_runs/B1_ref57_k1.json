@@ -1,0 +1,164 @@
+{
+ "lattice": "2x3",
+ "family": "compressed_circuit_llm_2x3_classB",
+ "device": "quantinuum_h2_2_nomem",
+ "circuit": "B1_ref57_k1",
+ "engine_name": "sparse",
+ "twoB": 2,
+ "reference": 57,
+ "k": 1,
+ "shots": 300,
+ "seed_simulator": 991919291,
+ "seed_readout": 991919292,
+ "seed_floor": 991919293,
+ "seed_bootstrap": 2028,
+ "n_qubits": 20,
+ "sector_size": 426,
+ "p_ref": 0.9121993484563765,
+ "ideal_weight_in_sector": 1.0000000000000002,
+ "budget": {
+  "n_2q": 309,
+  "n_1q_native": 409,
+  "n_1q_pulses": 409,
+  "log_clean": {
+   "gate_1q": -0.017178360748118102,
+   "gate_2q": -0.3183895447771091,
+   "idle": 0.0,
+   "memory": 0.0
+  },
+  "n_events": {
+   "gate_1q": 409,
+   "gate_2q": 309,
+   "idle": 0,
+   "memory": 0
+  },
+  "depth1_equivalent_layers": 30.9,
+  "n_active_qubits": 20,
+  "f_gate": 0.7149319572333155,
+  "f_parts": {
+   "gate_1q": 0.9829683460290378,
+   "gate_2q": 0.727319409746482,
+   "idle": 1.0,
+   "memory": 1.0
+  }
+ },
+ "f_model": 0.7016808182369791,
+ "f_gate": 0.7149319572333155,
+ "f0_prime": 0.7039173145564143,
+ "readout_survival_ref": 0.9845934391861201,
+ "acceptance": 0.79,
+ "acceptance_ci95": [
+  0.7403888770058533,
+  0.8322781995696902
+ ],
+ "acceptance_codeword_membership": 0.79,
+ "rejections": {
+  "flag": 24,
+  "link": 28,
+  "sector": 11,
+  "unknown": 0
+ },
+ "acceptance_random_level": 0.0004062652587890625,
+ "ref_hits": 205,
+ "f_hit": 0.7491052635475676,
+ "f_hit_ci95": [
+  0.6891687237618535,
+  0.8039598481710474
+ ],
+ "f_hit_traj": 0.7647066077525734,
+ "b_all": {
+  "0.001": 0.7666666666666667,
+  "0.01": 0.77,
+  "0.03": 0.7733333333333333
+ },
+ "f_ideal": {
+  "0.001": 0.7548549700426921,
+  "0.01": 0.7581369481733125,
+  "0.03": 0.7614189263039328
+ },
+ "f_ideal_1e-3_ci95": [
+  0.705625298083386,
+  0.8008026638713777
+ ],
+ "r_nc": 0.9923830315447226,
+ "r_nc_ci95": [
+  0.9395753260541165,
+  1.0376049261657132
+ ],
+ "mean_sector_weight_pre_readout": 0.8123012591028355,
+ "tv_accepted": 0.06106623295473798,
+ "tv_accepted_floor_mean": 0.02760717295950594,
+ "tv_accepted_floor_sd": 0.007840391880819909,
+ "tv_population_pre_readout": 0.08040048409140263,
+ "accepted_counts": {
+  "60": 1,
+  "58": 2,
+  "94": 5,
+  "78": 5,
+  "57": 205,
+  "341": 3,
+  "125": 6,
+  "1384": 1,
+  "53": 3,
+  "45": 1,
+  "177": 2,
+  "51": 1,
+  "321": 2
+ },
+ "engine_diagnostics": {
+  "n_faults_mean": 0.3466666666666667,
+  "n_faults_hist": [
+   215,
+   72,
+   9,
+   2,
+   2
+  ],
+  "fault_free_fraction_sampled": 0.7166666666666667,
+  "prune_bound_max": 6.6682483641485155e-12,
+  "support_max": 1216,
+  "support_mean": 446.2866666666667,
+  "clean_state_max_abs_dpsi": 1.1862773281170051e-14,
+  "clean_prune_bound": 8.305131365492673e-16
+ },
+ "engine": "skqd.sparse_sim (package) via noise/src/traj_sparse.py, prune |a|<1e-12 every 32 gates",
+ "noise_placement": "IR level (traj_sparse.ir_events)",
+ "noise_spec_file": "data/device_specs_quantinuum.json",
+ "noise_spec_sha256": "90dd6204acdafe5d71ebd4b6d2ef9b692f20c734aa9b3fa8dba3d087484d4886",
+ "noise_model_params": {
+  "p1": 2.8e-05,
+  "p2": 0.00083,
+  "spam0": 0.00067,
+  "spam1": 0.0012,
+  "mem_depth1": 0.0,
+  "rzz_angle_scaling": {
+   "a": 1.518,
+   "b": 0.241,
+   "power": 1.0
+  },
+  "parallel_2q": 4,
+  "variant_of": "quantinuum_h2_2",
+  "kind": "quantinuum",
+  "device": "quantinuum_h2_2_nomem"
+ },
+ "timing_s": {
+  "simulate": 2.619206666946411,
+  "total": 6.816617965698242
+ },
+ "provenance": {
+  "git_commit": "6086e4d+dirty(noise/)",
+  "machine": {
+   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+   "node": "pichkaCommander",
+   "python": "3.12.14",
+   "executable": "/home/digimonk/anaconda3/envs/coding/bin/python",
+   "numpy": "2.5.2",
+   "scipy": "1.18.0",
+   "cpu_count": 12,
+   "qiskit": "2.5.2",
+   "qiskit_aer": "0.17.2"
+  },
+  "created_utc": "2026-10-22 03:05:09 UTC",
+  "command": "python /home/digimonk/Projects/su2qc-skqd/2x4_compression_using_ai_v1/noise/scripts/noisy_run.py 2x3 compressed_circuit_llm_2x3_classB quantinuum_h2_2_nomem B1_ref57_k1 --shots 300"
+ }
+}

@@ -1,0 +1,183 @@
+{
+ "lattice": "2x3",
+ "family": "compressed_circuit_llm_2x3_classA",
+ "device": "quantinuum_helios_1",
+ "circuit": "B0_ref25_k2",
+ "engine_name": "sparse",
+ "twoB": 0,
+ "reference": 25,
+ "k": 2,
+ "shots": 400,
+ "seed_simulator": 222742348,
+ "seed_readout": 222742349,
+ "seed_floor": 222742350,
+ "seed_bootstrap": 2028,
+ "n_qubits": 20,
+ "sector_size": 677,
+ "p_ref": 0.7002626651645479,
+ "ideal_weight_in_sector": 0.9999999999999986,
+ "budget": {
+  "n_2q": 871,
+  "n_1q_native": 1070,
+  "n_1q_pulses": 1070,
+  "log_clean": {
+   "gate_1q": -0.048151083407462276,
+   "gate_2q": -0.8570111868535399,
+   "idle": 0.0,
+   "memory": -0.9920827704579231
+  },
+  "n_events": {
+   "gate_1q": 1070,
+   "gate_2q": 871,
+   "idle": 0,
+   "memory": 1740
+  },
+  "depth1_equivalent_layers": 87.1,
+  "n_active_qubits": 20,
+  "f_gate": 0.1499812427979166,
+  "f_parts": {
+   "gate_1q": 0.9529897952548472,
+   "gate_2q": 0.4244287266511699,
+   "idle": 1.0,
+   "memory": 0.37080358744525005
+  }
+ },
+ "f_model": 0.14854796957558894,
+ "f_gate": 0.1499812427979166,
+ "f0_prime": 0.14788349339388135,
+ "readout_survival_ref": 0.98601325495841,
+ "acceptance": 0.52,
+ "acceptance_ci95": [
+  0.47108291452024986,
+  0.5685365937004329
+ ],
+ "acceptance_codeword_membership": 0.52,
+ "rejections": {
+  "flag": 75,
+  "link": 92,
+  "sector": 25,
+  "unknown": 0
+ },
+ "acceptance_random_level": 0.0006456375122070312,
+ "ref_hits": 119,
+ "f_hit": 0.42484058453993595,
+ "f_hit_ci95": [
+  0.36385995776649116,
+  0.4913226887692472
+ ],
+ "f_hit_traj": 0.4356098386468301,
+ "b_all": {
+  "0.001": 0.405,
+  "0.01": 0.41,
+  "0.03": 0.4125
+ },
+ "f_ideal": {
+  "0.001": 0.3993353682581561,
+  "0.01": 0.40426543453294805,
+  "0.03": 0.4067304676703441
+ },
+ "f_ideal_1e-3_ci95": [
+  0.35249973864763157,
+  0.4437059647312845
+ ],
+ "r_nc": 1.0638691643893954,
+ "r_nc_ci95": [
+  0.9452651433714462,
+  1.1850062286996792
+ ],
+ "mean_sector_weight_pre_readout": 0.5260548028552523,
+ "tv_accepted": 0.1837373025433573,
+ "tv_accepted_floor_mean": 0.08151217817246287,
+ "tv_accepted_floor_sd": 0.019140154991938534,
+ "tv_population_pre_readout": 0.22634365979296484,
+ "accepted_counts": {
+  "28": 3,
+  "50": 1,
+  "26": 4,
+  "86": 6,
+  "74": 1,
+  "70": 6,
+  "1628": 1,
+  "49": 4,
+  "795": 7,
+  "525": 6,
+  "25": 119,
+  "975": 1,
+  "333": 7,
+  "117": 11,
+  "1352": 2,
+  "521": 1,
+  "21": 2,
+  "791": 2,
+  "13": 3,
+  "169": 9,
+  "875": 1,
+  "417": 1,
+  "221": 1,
+  "19": 1,
+  "331": 2,
+  "153": 1,
+  "289": 4,
+  "497": 1
+ },
+ "engine_diagnostics": {
+  "n_faults_mean": 1.9725,
+  "n_faults_hist": [
+   54,
+   106,
+   117,
+   70,
+   34,
+   14,
+   3,
+   1,
+   1
+  ],
+  "fault_free_fraction_sampled": 0.135,
+  "prune_bound_max": 4.624382838302164e-12,
+  "support_max": 5136,
+  "support_mean": 1598.0,
+  "clean_state_max_abs_dpsi": 2.7008342945625747e-14,
+  "clean_prune_bound": 4.041120472735788e-15
+ },
+ "engine": "skqd.sparse_sim (package) via noise/src/traj_sparse.py, prune |a|<1e-12 every 32 gates",
+ "noise_placement": "IR level (traj_sparse.ir_events)",
+ "noise_spec_file": "data/device_specs_quantinuum.json",
+ "noise_spec_sha256": "90dd6204acdafe5d71ebd4b6d2ef9b692f20c734aa9b3fa8dba3d087484d4886",
+ "noise_model_params": {
+  "p1": 3e-05,
+  "p2": 0.00079,
+  "spam0": 0.0008,
+  "spam1": 0.00016,
+  "mem_depth1": 0.00057,
+  "mem_depth1_note": "linear 5.0e-4 + quadratic 0.7e-4 at l = 1 depth-1 transport per layer",
+  "rzz_angle_scaling": {
+   "a": 1.518,
+   "b": 0.241,
+   "power": 1.0
+  },
+  "parallel_2q": 4,
+  "kind": "quantinuum",
+  "device": "quantinuum_helios_1"
+ },
+ "timing_s": {
+  "simulate": 23.300315618515015,
+  "total": 27.99658989906311
+ },
+ "provenance": {
+  "git_commit": "6086e4d+dirty(noise/)",
+  "machine": {
+   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+   "node": "pichkaCommander",
+   "python": "3.12.14",
+   "executable": "/home/digimonk/anaconda3/envs/coding/bin/python",
+   "numpy": "2.5.2",
+   "scipy": "1.18.0",
+   "cpu_count": 12,
+   "qiskit": "2.5.2",
+   "qiskit_aer": "0.17.2"
+  },
+  "created_utc": "2026-10-22 02:02:31 UTC",
+  "command": "python /home/digimonk/Projects/su2qc-skqd/2x4_compression_using_ai_v1/noise/scripts/noisy_run.py 2x3 compressed_circuit_llm_2x3_classA quantinuum_helios_1 B0_ref25_k2 --shots 400"
+ }
+}

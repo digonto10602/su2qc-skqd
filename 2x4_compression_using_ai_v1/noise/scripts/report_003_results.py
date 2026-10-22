@@ -233,12 +233,42 @@ if fz:
     P(f"- **Frozen 2x3 baseline on H2-2:** analytic $f$ = {e(fz['f_mean'])} (gate-only {e(fz['f_gate_only_mean'])}, "
       f"package convention {e(fz['f_pkg_mean'])})" + (f"; sampled over {nz['n_circuits']} circuits: acceptance "
       f"{e(nz['acceptance_mean'])}, pooled $f_{{\\rm hit}}$ {e(nz['f_hit_pooled'])}, $r_{{\\rm nc}}$ {e(nz['r_nc_pooled'])}." if nz else "."))
+_ben = []
+for lat, fam in (("2x3", "compressed_circuit_llm_2x3_classB"), ("2x3", "compressed_circuit_llm_2x3_classA"), ("2x3", "frozen"),
+                 ("2x4", B), ("2x4", A)):
+    h, hl = summ(lat, fam, "quantinuum_h2_2", "noise_behaviour"), summ(lat, fam, "quantinuum_helios_1", "noise_behaviour")
+    if h and hl:
+        _ben.append(f"{lat} `{fam}`: H2-2 $f$ {e(h['f_model_mean'])} vs $f_{{\\rm ideal}}$ {e(h['f_ideal_1e-3_pooled'])}, "
+                    f"Helios-1 $f$ {e(hl['f_model_mean'])} vs $f_{{\\rm ideal}}$ {e(hl['f_ideal_1e-3_pooled'])} "
+                    f"(acceptance {e(h['acceptance_mean'])} / {e(hl['acceptance_mean'])})")
+if _ben:
+    P("- **Many faults are harmless.**  The fault-free fraction $f$ under-predicts the useful fraction: a $Z$ error on a "
+      "qubit that is in a computational-basis state at that moment changes nothing measurable.  This matters most for "
+      "the memory channel (pure $Z$): " + "; ".join(_ben) + ".  So the large memory charge of the Helios model lowers "
+      "$f$ much more than it lowers the ideal-sample fraction.")
 P("- **Reviewer's note 5 (does class B propagate errors differently?):** compare, circuit by circuit in table 3.5, "
   "$f_{\\rm hit}$ with $f$ and $r_{\\rm nc}$ between the classes under the same model.  $r_{\\rm nc}>1$ means the "
   "reference-string estimator over-counts the ideal-sample fraction (near-clean shots), $r_{\\rm nc}<1$ that faulty "
   "shots fall *off* the reference string more than in proportion.  The class-B circuits act arbitrarily outside the "
   "reachable set, so an error that leaves it is not brought back; in the data this shows up, if at all, as a "
   "different $r_{\\rm nc}$ and accepted-distribution TV at equal $f$.")
+_n5 = []
+for lat, fa_, fb_ in (("2x4", A, B), ("2x4", A + "_v2", B + "_v2"), ("2x3", "compressed_circuit_llm_2x3_classA", "compressed_circuit_llm_2x3_classB")):
+    for dev in ("quantinuum_h2_2", "quantinuum_helios_1", "quantinuum_h2_2_nomem", "ionq_tempo_noidle"):
+        na, nb = summ(lat, fa_, dev, "noise_behaviour"), summ(lat, fb_, dev, "noise_behaviour")
+        if na and nb:
+            _n5.append(f"{lat} {fa_[-2:] if fa_.endswith('v2') else 'v1'} {dev}: $r_{{\\rm nc}}$ A {e(na['r_nc_pooled'])} / B {e(nb['r_nc_pooled'])}, "
+                       f"$f_{{\\rm hit}}/f$ A {e(na['f_hit_pooled'] / na['f_model_mean'])} / B {e(nb['f_hit_pooled'] / nb['f_model_mean'])}, "
+                       f"TV(acc) A {e(na['tv_accepted_mean'])} / B {e(nb['tv_accepted_mean'])}")
+if _n5:
+    P("- **Note 5 in numbers (pooled, same circuits):** " + "; ".join(_n5) + ".  Under these Pauli models class B shows no "
+      "sign of handling errors worse than class A: its $r_{\\rm nc}$ is not larger and its accepted distribution is closer "
+      "to the ideal one, because it has fewer gates.  (A model with coherent or leakage errors could behave differently; "
+      "those are not modelled.)")
+P("- **SKQD energy (table 3.6):** with the same number of accepted samples, the noisy runs reach a lower (closer) Ritz "
+  "energy than ideal samples in most rows, because noisy shots add extra basis states and the Ritz energy can only "
+  "go down when the subspace grows.  This is not evidence that noise helps; the ideal comparison has fewer distinct "
+  "states (columns 'dim').")
 for dev in ("ibm_heron_r2_fez", "ibm_heron_r3_boston", "ionq_forte", "ionq_tempo"):
     fa, fb = summ("2x4", A, dev, "analytic_f"), summ("2x4", B, dev, "analytic_f")
     if fa and fb:
