@@ -106,7 +106,8 @@ def noise_behaviour():
                 "f_hit_pooled": hits / exp_ref, "f_ideal_1e-3_pooled": fi,
                 "r_nc_pooled": (hits / exp_ref) / fi if fi > 0 else None,
                 "f_hit_over_f_model_pooled": (hits / exp_ref) / float(np.mean([r["f0_prime"] for r in runs])),
-                "tv_accepted_mean": float(np.nanmean([r["tv_accepted"] for r in runs])),
+                "tv_accepted_n_none": sum(r["tv_accepted"] is None for r in runs),
+                "tv_accepted_mean": (float(np.nanmean(_tv)) if (_tv := [np.nan if r["tv_accepted"] is None else r["tv_accepted"] for r in runs]) and not all(np.isnan(_tv)) else None),
                 "tv_accepted_floor_mean": float(np.mean([r["tv_accepted_floor_mean"] for r in runs])),
                 "tv_population_pre_readout_mean": float(np.mean([r["tv_population_pre_readout"] for r in runs])),
                 "definitions": "pooled f_hit = sum hits / sum shots p_ref; pooled f_ideal = shot-weighted mean of "

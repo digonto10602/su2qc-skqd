@@ -420,6 +420,58 @@
    "n_2q_native": 763,
    "sim_s": 107.7717068195343
   },
+  "B1_ref103_k1": {
+   "shots": 300,
+   "acceptance": 0.6066666666666667,
+   "acceptance_ci95": [
+    0.550375270835491,
+    0.6602608952612607
+   ],
+   "acceptance_random_level": 3.328174352645874e-05,
+   "f_model": 0.4754984072769338,
+   "f_gate": 0.488117316287154,
+   "f0_prime": 0.4777736150633309,
+   "readout_survival_ref": 0.978808985301931,
+   "p_ref": 0.9313143954167585,
+   "ref_hits": 158,
+   "f_hit": 0.5655089938033073,
+   "f_hit_ci95": [
+    0.5048649966064896,
+    0.6254289693244549
+   ],
+   "f_hit_traj": 0.5416959431172017,
+   "f_ideal": {
+    "0.001": 0.5318195486807158,
+    "0.01": 0.5448703351514083,
+    "0.03": 0.5448703351514083
+   },
+   "f_ideal_1e-3_ci95": [
+    0.47635370618027306,
+    0.5840226945634854
+   ],
+   "b_all": {
+    "0.001": 0.5433333333333333,
+    "0.01": 0.5566666666666666,
+    "0.03": 0.5566666666666666
+   },
+   "r_nc": 1.0633475117756859,
+   "r_nc_ci95": [
+    1.0150349308918263,
+    1.110979048874066
+   ],
+   "tv_accepted": 0.09195557097490226,
+   "tv_accepted_floor_mean": 0.03183056063418419,
+   "tv_accepted_floor_sd": 0.005564747549135429,
+   "tv_population_pre_readout": 0.23979877736917188,
+   "mean_sector_weight_pre_readout": 0.6124688724858826,
+   "seed_simulator": 1392411737,
+   "n_qubits": 28,
+   "sector_size": 8934,
+   "acceptance_codeword_membership": 0.6066666666666667,
+   "engine_name": "sparse",
+   "n_2q_native": 661,
+   "sim_s": 60.84990930557251
+  },
   "B1_ref230_k1": {
    "shots": 300,
    "acceptance": 0.6633333333333333,
@@ -578,18 +630,19 @@
   }
  },
  "summary": {
-  "n_circuits": 11,
-  "shots_total": 3300,
-  "acceptance_mean": 0.5966666666666667,
-  "f_model_mean": 0.4713718474478975,
-  "f0_prime_mean": 0.473696833309055,
-  "f_hit_pooled": 0.557902296235645,
-  "f_ideal_1e-3_pooled": 0.5250767145990425,
-  "r_nc_pooled": 1.062515782406517,
-  "f_hit_over_f_model_pooled": 1.1777623513722155,
-  "tv_accepted_mean": 0.20219762756058293,
-  "tv_accepted_floor_mean": 0.1540712107957132,
-  "tv_population_pre_readout_mean": 0.1894966211635789,
+  "n_circuits": 12,
+  "shots_total": 3600,
+  "acceptance_mean": 0.5975,
+  "f_model_mean": 0.4717157274336505,
+  "f0_prime_mean": 0.47403656512191134,
+  "f_hit_pooled": 0.5588389544327254,
+  "f_ideal_1e-3_pooled": 0.5256386174391819,
+  "r_nc_pooled": 1.0631619060929913,
+  "f_hit_over_f_model_pooled": 1.17889419414092,
+  "tv_accepted_n_none": 0,
+  "tv_accepted_mean": 0.19301078951177622,
+  "tv_accepted_floor_mean": 0.14388448994891911,
+  "tv_population_pre_readout_mean": 0.193688467514045,
   "definitions": "pooled f_hit = sum hits / sum shots p_ref; pooled f_ideal = shot-weighted mean of f_ideal(1e-3); r_nc_pooled = their ratio (CF_traj pooled estimator without garbage term)"
  },
  "noise_spec_file": "data/device_specs_quantinuum.json",
@@ -618,7 +671,7 @@
  ],
  "definitions": "C5 test 2: behaviour of one circuit under one device noise model (Pauli trajectories).\n\nUsage: python noisy_run.py LATTICE FAMILY DEVICE TAG [--shots N] [--seed S] [--engine sparse|aer] [--outdir D]\nWrites noise/data/results/<LATTICE>/<FAMILY>/<DEVICE>/<outdir default noisy_runs>/<TAG>.json (skips if present).\n\nEngine 'sparse' (default): src/traj_sparse.py -- the package's exact sparse simulator (skqd.sparse_sim) on the IR\ngate list, faults sampled from the device model and inserted as Pauli gates, |a| < 1e-12 pruned every 32 gates\n(the pruned norm is recorded).  Engine 'aer': the same IR circuit with the same channels inserted as Aer\nQuantumError instructions, Aer statevector sampling (independent cross-check; slow).\nOne shot = one trajectory: the final pre-readout state gives p_tau on the sector codewords; one string is sampled\nfrom |amp|^2 and passed through the readout flips.\n\nQuantities (CF_traj sense, reports/CF_traj.md; the labels are the planner's, not manual terms):\n  acceptance     fraction of post-readout shots the package codec decodes into the circuit's sector\n                 (skqd.codec.Codec.decode_counts(counts, target_twoB))\n  f_model        clean-shot fraction of the model = P(no gate / idle / memory fault) * (1 - mean readout error)^n\n  f0_prime       P(no gate / idle / memory fault) * readout survival of the reference string (CF_traj f0')\n  f_hit          (reference-string hits / shots) / p_ref, p_ref = ideal probability of the reference string\n  TV_pre(tau)    1/2 sum_s |p_tau(s)/w_tau - p_c(s)| over the sector codewords, w_tau = sector weight of tau\n  b_all(delta)   fraction of ALL trajectories with TV_pre < delta (fault-free ones have TV_pre ~ 1e-12)\n  f_ideal(delta) = readout survival of the reference string * b_all(delta)  (= CF_traj f0' + (1 - f0') b(delta))\n  r_nc           = f_hit / f_ideal(1e-3)\n  TV_acc         TV of the empirical accepted distribution from p_c; TV_acc_floor = same statistic for the same\n                 number of ideal samples (finite-shot floor; mean of 20 seeded draws)\n  TV_pop_pre     TV of the trajectory-averaged, sector-normalised pre-readout distribution from p_c\n",
  "provenance": {
-  "git_commit": "6086e4d+dirty(noise/)",
+  "git_commit": "a7d07e4+dirty(noise/)",
   "machine": {
    "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
    "node": "pichkaCommander",
@@ -630,7 +683,7 @@
    "qiskit": "2.5.2",
    "qiskit_aer": "0.17.2"
   },
-  "created_utc": "2026-10-22 03:44:01 UTC",
+  "created_utc": "2026-10-22 16:21:53 UTC",
   "command": "python scripts/aggregate.py"
  }
 }
