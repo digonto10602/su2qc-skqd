@@ -12,7 +12,7 @@ for fam, tag in (("compressed_circuit_llm_2x4_classB", "B1_ref230_k1"), ("compre
     twoB, ref, k = circuits.parse_tag(tag)
     qc = circuits.circuit("2x4", fam, tag)
     qc.measure_all()
-    sim = AerSimulator(method="matrix_product_state", precision="double", max_parallel_threads=4)
+    sim = AerSimulator(method="matrix_product_state", precision="double", max_parallel_threads=2)
     t0 = time.time()
     r = sim.run(qc, shots=4000, seed_simulator=11).result()
     t_mps = time.time() - t0

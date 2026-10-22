@@ -34,7 +34,7 @@ def tags_of(lattice, family):
         return [circuits.tag(*x) for x in circuits.v1_ids()]
     if lattice == "2x3" and family == "frozen":
         return circuits.frozen_2x3_ids()
-    raise KeyError((lattice, family))
+    return list(circuits.genie_ir(family))      # genie's frozen families (notes/009), fixed order
 
 
 def frozen_2x4_native(tag_source):

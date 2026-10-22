@@ -1,0 +1,102 @@
+{
+ "test": "engine_validation",
+ "lattice": "2x4",
+ "family": "compressed_circuit_llm_2x4_classA",
+ "device": "quantinuum_helios_1",
+ "rows": {
+  "B0_ref102_k5|seed7": {
+   "circuit": "B0_ref102_k5",
+   "seed": 7,
+   "trajectories": [
+    {
+     "trajectory": "noiseless",
+     "n_faults": 0,
+     "max_abs_diff": 4.898387307282712e-15,
+     "abs_overlap": 0.9999999999999141,
+     "aer_s": 1409.3653452396393
+    },
+    {
+     "trajectory": 0,
+     "n_faults": 6,
+     "faults": [
+      [
+       429.25,
+       [
+        20
+       ],
+       "memory",
+       "Z"
+      ],
+      [
+       554.25,
+       [
+        11
+       ],
+       "memory",
+       "Z"
+      ],
+      [
+       1107.25,
+       [
+        24
+       ],
+       "memory",
+       "Z"
+      ],
+      [
+       2159.0,
+       [
+        14,
+        16
+       ],
+       "gate_2q",
+       "ZZ"
+      ],
+      [
+       2744.25,
+       [
+        2
+       ],
+       "memory",
+       "Z"
+      ],
+      [
+       2940.25,
+       [
+        17
+       ],
+       "memory",
+       "Z"
+      ]
+     ],
+     "max_abs_diff": 4.7820206803898584e-15,
+     "abs_overlap": 0.9999999999999136,
+     "prune_bound": 1.185593752381274e-14,
+     "aer_s": 1229.151141166687
+    }
+   ],
+   "max_abs_diff_max": 4.898387307282712e-15
+  }
+ },
+ "summary": {
+  "n_checks": 2,
+  "max_abs_diff_max": 4.898387307282712e-15
+ },
+ "method": "Validate the sparse trajectory engine against Qiskit Aer statevector (complex128) on FIXED fault patterns.\n\nUsage: python validate_engine.py LATTICE FAMILY DEVICE TAG N_TRAJ [SEED]\nFor N_TRAJ trajectories with at least one fault (faults sampled with numpy default_rng(SEED) from the device model),\nthe IR circuit with the same Pauli gates inserted at the same positions is run (a) by traj_sparse.Engine and\n(b) by AerSimulator(method=\"statevector\", precision=\"double\"); the two final states are compared after removing\nthe global phase: max |psi_sparse - psi_aer e^{-i phi}| over all 2^n strings (sparse entries outside its support = 0).\nAlso the noiseless state.  Writes noise/data/results/<LATTICE>/<FAMILY>/<DEVICE>/engine_validation.json (appends).\n",
+ "provenance": {
+  "git_commit": "bf55f30+dirty(noise/)",
+  "machine": {
+   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+   "node": "pichkaCommander",
+   "python": "3.12.14",
+   "executable": "/home/digimonk/anaconda3/envs/coding/bin/python",
+   "numpy": "2.5.2",
+   "scipy": "1.18.0",
+   "cpu_count": 12,
+   "qiskit": "2.5.2",
+   "qiskit_aer": "0.17.2"
+  },
+  "created_utc": "2026-10-22 01:28:35 UTC",
+  "command": "python scripts/validate_engine.py 2x4 compressed_circuit_llm_2x4_classA quantinuum_helios_1 B0_ref102_k5 1 7"
+ }
+}

@@ -1,0 +1,174 @@
+{
+ "lattice": "2x3",
+ "family": "frozen",
+ "device": "quantinuum_h2_2",
+ "circuit": "B0_ref333_k1",
+ "engine_name": "sparse",
+ "twoB": 0,
+ "reference": 333,
+ "k": 1,
+ "shots": 400,
+ "seed_simulator": 1928178210,
+ "seed_readout": 1928178211,
+ "seed_floor": 1928178212,
+ "seed_bootstrap": 2028,
+ "n_qubits": 20,
+ "sector_size": 677,
+ "p_ref": 0.9216300468815812,
+ "ideal_weight_in_sector": 1.0,
+ "budget": {
+  "n_2q": 2590,
+  "n_1q_native": 2895,
+  "n_1q_pulses": 2895,
+  "log_clean": {
+   "gate_1q": -0.12159255346162738,
+   "gate_2q": -2.687061645136289,
+   "idle": 0.0,
+   "memory": -0.6216372989838989
+  },
+  "n_events": {
+   "gate_1q": 2895,
+   "gate_2q": 2590,
+   "idle": 0,
+   "memory": 5180
+  },
+  "depth1_equivalent_layers": 259.0,
+  "n_active_qubits": 20,
+  "f_gate": 0.03237750143382844,
+  "f_parts": {
+   "gate_1q": 0.8855090926242266,
+   "gate_2q": 0.06808069098696265,
+   "idle": 1.0,
+   "memory": 0.5370643823669723
+  }
+ },
+ "f_model": 0.03177739009803915,
+ "f_gate": 0.03237750143382844,
+ "f0_prime": 0.03187867548898668,
+ "readout_survival_ref": 0.9845934391861202,
+ "acceptance": 0.135,
+ "acceptance_ci95": [
+  0.10496299040564636,
+  0.17198098456689445
+ ],
+ "acceptance_codeword_membership": 0.135,
+ "rejections": {
+  "flag": 201,
+  "link": 123,
+  "sector": 22,
+  "unknown": 0
+ },
+ "acceptance_random_level": 0.0006456375122070312,
+ "ref_hits": 29,
+ "f_hit": 0.07866497001189394,
+ "f_hit_ci95": [
+  0.055283048152604326,
+  0.1108714867402703
+ ],
+ "f_hit_traj": 0.08151222469602015,
+ "b_all": {
+  "0.001": 0.0725,
+  "0.01": 0.075,
+  "0.03": 0.0825
+ },
+ "f_ideal": {
+  "0.001": 0.07138302434099371,
+  "0.01": 0.07384450793895901,
+  "0.03": 0.08122895873285492
+ },
+ "f_ideal_1e-3_ci95": [
+  0.04676818836134071,
+  0.09845934391861202
+ ],
+ "r_nc": 1.1020122884695203,
+ "r_nc_ci95": [
+  0.8978721648936558,
+  1.341580177267242
+ ],
+ "mean_sector_weight_pre_readout": 0.13860071633389004,
+ "tv_accepted": 0.39917984498928605,
+ "tv_accepted_floor_mean": 0.06510553046949005,
+ "tv_accepted_floor_sd": 0.020937664487962117,
+ "tv_population_pre_readout": 0.630378547285012,
+ "accepted_counts": {
+  "354": 1,
+  "425": 1,
+  "25": 3,
+  "975": 1,
+  "333": 29,
+  "603": 1,
+  "1120": 2,
+  "996": 1,
+  "13": 1,
+  "385": 5,
+  "417": 1,
+  "447": 1,
+  "331": 2,
+  "1208": 1,
+  "493": 1,
+  "277": 1,
+  "505": 1,
+  "275": 1
+ },
+ "engine_diagnostics": {
+  "n_faults_mean": 3.59,
+  "n_faults_hist": [
+   11,
+   39,
+   72,
+   85,
+   80,
+   52,
+   30,
+   20,
+   4,
+   4,
+   3
+  ],
+  "fault_free_fraction_sampled": 0.0275,
+  "prune_bound_max": 2.5407271113341193e-10,
+  "support_max": 4792,
+  "support_mean": 1441.7675,
+  "clean_state_max_abs_dpsi": 5.936548586443994e-14,
+  "clean_prune_bound": 1.4772797641502385e-11
+ },
+ "engine": "skqd.sparse_sim (package) via noise/src/traj_sparse.py, prune |a|<1e-12 every 32 gates",
+ "noise_placement": "IR level (traj_sparse.ir_events)",
+ "noise_spec_file": "data/device_specs_quantinuum.json",
+ "noise_spec_sha256": "90dd6204acdafe5d71ebd4b6d2ef9b692f20c734aa9b3fa8dba3d087484d4886",
+ "noise_model_params": {
+  "p1": 2.8e-05,
+  "p2": 0.00083,
+  "spam0": 0.00067,
+  "spam1": 0.0012,
+  "mem_depth1": 0.00012,
+  "rzz_angle_scaling": {
+   "a": 1.518,
+   "b": 0.241,
+   "power": 1.0
+  },
+  "parallel_2q": 4,
+  "kind": "quantinuum",
+  "device": "quantinuum_h2_2"
+ },
+ "timing_s": {
+  "simulate": 92.11825776100159,
+  "total": 96.52261066436768
+ },
+ "provenance": {
+  "git_commit": "bf55f30+dirty(noise/)",
+  "machine": {
+   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+   "node": "pichkaCommander",
+   "python": "3.12.14",
+   "executable": "/home/digimonk/anaconda3/envs/coding/bin/python",
+   "numpy": "2.5.2",
+   "scipy": "1.18.0",
+   "cpu_count": 12,
+   "qiskit": "2.5.2",
+   "qiskit_aer": "0.17.2"
+  },
+  "created_utc": "2026-10-22 00:56:50 UTC",
+  "command": "python /home/digimonk/Projects/su2qc-skqd/2x4_compression_using_ai_v1/noise/scripts/noisy_run.py 2x3 frozen quantinuum_h2_2 B0_ref333_k1 --shots 400"
+ }
+}

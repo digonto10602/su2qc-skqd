@@ -1,23 +1,27 @@
 #!/bin/bash
-# C5 test 1 background queue: noiseless Aer statevector (complex128) accuracy, resumable.
-# Each run is capped at 30 min (timeout 1800); finished runs are skipped (result JSON exists).
-# Usage: nohup nice -n 10 bash scripts/accuracy_queue.sh > logs/accuracy_queue.log 2>&1 &
+# C5 test 1 background queue: noiseless Aer statevector (complex128) accuracy, resumable, 30-min cap per run.
+# The plan (scripts/queue_plan.py: accuracy_jobs) is re-read before every run, so new families join without restart.
+# Usage: nohup nice -n 10 bash scripts/accuracy_queue.sh >> logs/accuracy_queue.log 2>&1 &
 cd "$(dirname "$0")/.."
 export AER_THREADS=${AER_THREADS:-10}
 PY=${PY:-python}
-list() {
-  $PY - <<'PYEOF'
-import sys; sys.path.insert(0, "src")
-import circuits
-for t in circuits.frozen_2x3_ids(): print("2x3 frozen", t)
-for fam in ("compressed_circuit_llm_2x4_classB", "compressed_circuit_llm_2x4_classA"):
-    for (b, r, k) in circuits.v1_ids(): print("2x4", fam, circuits.tag(b, r, k))
+SKIP=""
+while true; do
+  next=$($PY - "$SKIP" <<'PYEOF'
+import os, sys
+sys.path.insert(0, "scripts")
+import queue_plan
+skip = set(sys.argv[1].split(",")) if sys.argv[1] else set()
+for lat, fam, tag in queue_plan.accuracy_jobs():
+    if f"{lat}/{fam}/{tag}" in skip:
+        continue
+    if not os.path.exists(f"data/results/{lat}/{fam}/noiseless/accuracy_runs/{tag}.json"):
+        print(lat, fam, tag); break
 PYEOF
-}
-list | while read lat fam tag; do
-  out=data/results/$lat/$fam/noiseless/accuracy_runs/$tag.json
-  [ -f "$out" ] && continue
-  echo "START $(date -u +%FT%TZ) $lat $fam $tag"
-  timeout 1800 $PY scripts/accuracy_sv.py $lat $fam $tag || echo "FAILED_OR_TIMEOUT $lat $fam $tag rc=$?"
+)
+  [ -z "$next" ] && break
+  set -- $next
+  echo "START $(date -u +%FT%TZ) $1 $2 $3"
+  timeout 1800 $PY scripts/accuracy_sv.py $1 $2 $3 || { echo "FAILED_OR_TIMEOUT $1 $2 $3 rc=$?"; SKIP="$SKIP,$1/$2/$3"; }
 done
-echo "QUEUE_DONE $(date -u +%FT%TZ)"
+echo "QUEUE_DONE $(date -u +%FT%TZ) skipped: $SKIP"

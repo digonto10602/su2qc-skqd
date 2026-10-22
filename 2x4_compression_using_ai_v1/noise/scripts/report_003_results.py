@@ -79,8 +79,14 @@ P("- Circuits: the 150 v1 circuits rebuilt with genie's builders (cache redirect
   + ").  Frozen 2x3: the committed native QASM (accuracy) and the package IR it was compiled from (trajectories).")
 P("- Test 1: `scripts/accuracy_sv.py` in a resumable background queue (`nice`, one run at a time, 30-min cap): "
   "Aer statevector, `precision=double`, fusion on, target `krylov.coarse_states` with the E3 time step.")
-P("- Test 2: a 28-qubit dense trajectory costs minutes on this laptop, and a matrix-product-state run of one noiseless "
-  "class-A circuit took longer than the sparse route, so the trajectories run on the package's exact sparse simulator "
+_mp = os.path.join(NOISE, "data", "checks", "mps_probe.json")
+_mps = json.load(open(_mp))["checks"] if os.path.exists(_mp) else {}
+_mtxt = "; ".join(f"{k.split('|')[0][-6:]} {k.split('|')[1]}: MPS {v['mps_seconds_4000_shots']:.0f} s for one noiseless "
+                  f"state + 4000 samples (TV to exact {e(v['tv_mps_samples_vs_exact'])}, floor {e(v['tv_floor_4000_exact_samples'])}), "
+                  f"sparse clean run {v['sparse_engine_clean_run_seconds']:.1f} s" for k, v in _mps.items())
+P("- Test 2: a 28-qubit dense trajectory costs minutes on this laptop (Aer statevector times in table 3.1), and Aer's "
+  "matrix-product-state method is correct but slow here (`data/checks/mps_probe.json`: " + (_mtxt or "not recorded") + "), "
+  "and every noisy MPS shot repeats that cost, so the trajectories run on the package's exact sparse simulator "
   "(`skqd.sparse_sim`) at the IR level (`src/traj_sparse.py`, report 002 (g)), checked against Aer statevector on fixed "
   "fault patterns (table 3.2).  Fixed seeds: per run `crc32(lattice|family|device|circuit)`, readout `seed+1`, "
   "bootstrap 2028 (B = 2000) as in CF_traj.")
@@ -156,16 +162,19 @@ P("Source: the per-circuit rows of the 2x4 `noise_behaviour.json` files.  Only c
 P("| model | circuit | A: 2q | B: 2q | A: $f$ | B: $f$ | A: acceptance | B: acceptance | A: $f_{\\rm hit}$ | B: $f_{\\rm hit}$ | A: $r_{\\rm nc}$ | B: $r_{\\rm nc}$ | A: TV(acc) | B: TV(acc) |")
 P("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
 devs = sorted({x[2] for x in avail("noise_behaviour", "2x4")}, key=lambda d: DEV_ORDER.index(d) if d in DEV_ORDER else 99)
-for dev in devs:
-    try:
-        ra = results.load("2x4", A, dev, "noise_behaviour")["rows"]
-        rb = results.load("2x4", B, dev, "noise_behaviour")["rows"]
-    except FileNotFoundError:
-        continue
-    for c in sorted(set(ra) & set(rb)):
-        a, b = ra[c], rb[c]
-        P(f"| {dev} | {c} | {a['n_2q_native']} | {b['n_2q_native']} | {e(a['f_model'])} | {e(b['f_model'])} | {e(a['acceptance'])} | {e(b['acceptance'])} | "
-          f"{e(a['f_hit'])} | {e(b['f_hit'])} | {e(a['r_nc'])} | {e(b['r_nc'])} | {e(a['tv_accepted'])} | {e(b['tv_accepted'])} |")
+for fa_, fb_ in ((A, B), (A + "_v2", B + "_v2")):
+    for dev in devs:
+        try:
+            ra = results.load("2x4", fa_, dev, "noise_behaviour")["rows"]
+            rb = results.load("2x4", fb_, dev, "noise_behaviour")["rows"]
+        except FileNotFoundError:
+            continue
+        for c in sorted(set(ra) & set(rb)):
+            a, b = ra[c], rb[c]
+            P(f"| {dev} ({'v2' if fa_.endswith('v2') else 'v1'}) | {c} | {a['n_2q_native']} | {b['n_2q_native']} | {e(a['f_model'])} | {e(b['f_model'])} | {e(a['acceptance'])} | {e(b['acceptance'])} | "
+              f"{e(a['f_hit'])} | {e(b['f_hit'])} | {e(a['r_nc'])} | {e(b['r_nc'])} | {e(a['tv_accepted'])} | {e(b['tv_accepted'])} |")
+P("\nAt 2x3 the paired comparison is the per-family pooled rows of table 3.4 (all 44 circuits, the same list for "
+  "frozen, class A and class B); per-circuit rows are in `results.table('noise_behaviour', '2x3')`.")
 
 # 3.6 SKQD energy
 P("\n### 3.6 SKQD energy from noisy samples\n")
@@ -179,5 +188,98 @@ for lat, fam, dev, t in sorted(avail("skqd_energy"), key=key_fam):
     for sec, r in results.load(lat, fam, dev, t)["rows"].items():
         P(f"| {lat} | `{fam}` | {dev} | {sec} | {r['n_circuits']} | {r['dim_noisy']} | {e(r['dE_noisy'])} | {r['dim_ideal_samples']} | {e(r['dE_ideal_samples'])} |")
 
-open(os.path.join(NOISE, "reports", "003-noise-results.md.tables"), "w").write("\n".join(L) + "\n")
+
+
+# ------------------------------------------------------------------ 4. meaning (numbers pulled from the JSONs)
+def summ(lat, fam, dev, test):
+    try:
+        return results.load(lat, fam, dev, test)["summary"]
+    except FileNotFoundError:
+        return None
+
+
+P("\n## 4. What the result means\n")
+for dev in ("quantinuum_h2_2", "quantinuum_helios_1"):
+    fa, fb = summ("2x4", A, dev, "analytic_f"), summ("2x4", B, dev, "analytic_f")
+    na, nb = summ("2x4", A, dev, "noise_behaviour"), summ("2x4", B, dev, "noise_behaviour")
+    if fa and fb:
+        P(f"- **{dev}, 2x4, analytic:** class B keeps a clean fraction $f$ = {e(fb['f_mean'])} on average against "
+          f"{e(fa['f_mean'])} for class A (all 75 circuits each; gate channels only: {e(fb['f_gate_only_mean'])} against "
+          f"{e(fa['f_gate_only_mean'])}).  The ratio comes from the two-qubit counts ({e(fb['n_2q_mean'], 4)} against "
+          f"{e(fa['n_2q_mean'], 4)} native RZZ on average).")
+    if na and nb:
+        P(f"- **{dev}, 2x4, sampled ({nb['n_circuits']} / {na['n_circuits']} circuits, same circuits for both classes):** "
+          f"acceptance {e(nb['acceptance_mean'])} (B) against {e(na['acceptance_mean'])} (A); pooled $f_{{\\rm hit}}$ "
+          f"{e(nb['f_hit_pooled'])} against {e(na['f_hit_pooled'])}; $r_{{\\rm nc}}$ {e(nb['r_nc_pooled'])} against "
+          f"{e(na['r_nc_pooled'])}; TV of the accepted distribution {e(nb['tv_accepted_mean'])} against "
+          f"{e(na['tv_accepted_mean'])} (finite-shot floors {e(nb['tv_accepted_floor_mean'])} and {e(na['tv_accepted_floor_mean'])}).")
+for dev in ("quantinuum_h2_2", "quantinuum_helios_1"):
+    v2a, v2b = summ("2x4", A + "_v2", dev, "analytic_f"), summ("2x4", B + "_v2", dev, "analytic_f")
+    if v2a and v2b:
+        P(f"- **{dev}, 2x4 v2, analytic:** $f$ = {e(v2b['f_mean'])} (class B v2) and {e(v2a['f_mean'])} (class A v2), "
+          f"native two-qubit count {e(v2b['n_2q_mean'], 4)} / {e(v2a['n_2q_mean'], 4)}.")
+    rows = []
+    for fam in ("frozen", "compressed_circuit_llm_2x3_classA", "compressed_circuit_llm_2x3_classB"):
+        fs, ns = summ("2x3", fam, dev, "analytic_f"), summ("2x3", fam, dev, "noise_behaviour")
+        if fs:
+            rows.append(f"`{fam}`: $f$ {e(fs['f_mean'])}" + (f", acceptance {e(ns['acceptance_mean'])}, $f_{{\\rm hit}}$ "
+                        f"{e(ns['f_hit_pooled'])}, $r_{{\\rm nc}}$ {e(ns['r_nc_pooled'])}, TV(acc) {e(ns['tv_accepted_mean'])} "
+                        f"({ns['n_circuits']} circuits)" if ns else ""))
+    if rows:
+        P(f"- **{dev}, 2x3 (frozen baseline against the compressed classes):** " + "; ".join(rows) + ".")
+fz = summ("2x3", "frozen", "quantinuum_h2_2", "analytic_f")
+nz = summ("2x3", "frozen", "quantinuum_h2_2", "noise_behaviour")
+if fz:
+    P(f"- **Frozen 2x3 baseline on H2-2:** analytic $f$ = {e(fz['f_mean'])} (gate-only {e(fz['f_gate_only_mean'])}, "
+      f"package convention {e(fz['f_pkg_mean'])})" + (f"; sampled over {nz['n_circuits']} circuits: acceptance "
+      f"{e(nz['acceptance_mean'])}, pooled $f_{{\\rm hit}}$ {e(nz['f_hit_pooled'])}, $r_{{\\rm nc}}$ {e(nz['r_nc_pooled'])}." if nz else "."))
+P("- **Reviewer's note 5 (does class B propagate errors differently?):** compare, circuit by circuit in table 3.5, "
+  "$f_{\\rm hit}$ with $f$ and $r_{\\rm nc}$ between the classes under the same model.  $r_{\\rm nc}>1$ means the "
+  "reference-string estimator over-counts the ideal-sample fraction (near-clean shots), $r_{\\rm nc}<1$ that faulty "
+  "shots fall *off* the reference string more than in proportion.  The class-B circuits act arbitrarily outside the "
+  "reachable set, so an error that leaves it is not brought back; in the data this shows up, if at all, as a "
+  "different $r_{\\rm nc}$ and accepted-distribution TV at equal $f$.")
+for dev in ("ibm_heron_r2_fez", "ibm_heron_r3_boston", "ionq_forte", "ionq_tempo"):
+    fa, fb = summ("2x4", A, dev, "analytic_f"), summ("2x4", B, dev, "analytic_f")
+    if fa and fb:
+        P(f"- **{dev}, 2x4, analytic:** $f$ = {e(fb['f_mean'])} (class B), {e(fa['f_mean'])} (class A); gate channels "
+          f"only {e(fb['f_gate_only_mean'])} / {e(fa['f_gate_only_mean'])}; native two-qubit count "
+          f"{e(fb['n_2q_mean'], 4)} / {e(fa['n_2q_mean'], 4)} on average.")
+fr = {d: summ("2x4", "frozen", d, "analytic_f") for d in ("quantinuum_h2_2", "quantinuum_helios_1", "ibm_heron_r3_boston")}
+if fr["quantinuum_h2_2"]:
+    P(f"- **Frozen 2x4 (analytic only):** $f$ on H2-2 at most {e(fr['quantinuum_h2_2']['f_max'])}, on Helios-1 at most "
+      f"{e(fr['quantinuum_helios_1']['f_max']) if fr['quantinuum_helios_1'] else '–'}; IBM r3 upper bound "
+      f"{e(fr['ibm_heron_r3_boston']['f_upper_bound_max']) if fr['ibm_heron_r3_boston'] else '–'}: the frozen 2x4 circuits give no "
+      "clean shots under any published model, as expected.")
+
+# ------------------------------------------------------------------ 5. problems, queue status, GPU
+import queue_plan  # noqa: E402
+acc_plan = queue_plan.accuracy_jobs()
+acc_done = sum(os.path.exists(os.path.join(NOISE, "data", "results", l, f, "noiseless", "accuracy_runs", t + ".json")) for l, f, t in acc_plan)
+nz_plan = queue_plan.noisy_jobs()
+nz_done = sum(os.path.exists(os.path.join(NOISE, "data", "results", l, f, d, "noisy_runs", t + ".json")) for l, f, d, t, _ in nz_plan)
+P("\n## 5. Problems, assumptions, what is still running\n")
+P(f"- **Still running (background, resumable, 30-min cap per run):** accuracy queue {acc_done} of {len(acc_plan)} runs done "
+  "(order: 2x3 frozen/B/A, 2x4 v2 B/A all 150, then 2x4 v1 B/A; `scripts/accuracy_queue.sh`); noisy queue "
+  f"{nz_done} of {len(nz_plan)} planned jobs done (`scripts/noisy_queue.py`, plan `scripts/queue_plan.py`).  "
+  "Re-run `python scripts/aggregate.py && python scripts/report_003_results.py` to refresh every table.")
+P("- **The machine was shared** with genie-opus's loops (the laptop's 12 threads were oversubscribed for hours); some 28-qubit "
+  "accuracy runs exceeded the 30-minute cap and are retried by a later queue pass (`FAILED_OR_TIMEOUT` lines in "
+  "`logs/accuracy_queue.log`, not committed).")
+P("- **GPU:** nothing in these tests needs it.  It would only speed up test 1 (a 28-qubit Aer statevector run is minutes "
+  "on this CPU, table 3.1; a GPU statevector would be much faster, not measured here).  No GPU token was requested (owner decision).")
+P("- **2x4 noisy runs use a fixed subset** of 12 circuits per family (`queue_plan.S2X4`, both classes, including "
+  "the reviewer's circuits); the SKQD energies of table 3.6 are therefore subset energies, compared with ideal samples "
+  "of the same size from the same circuits.")
+P("- **IBM and IonQ (full) give no clean shots**, so their behaviour is dominated by noise; IBM is reported "
+  "analytically only (routed native circuits are not sparse; the sparse engine runs at the IR level).")
+P("- **Noise placement:** analytic $f$ is on native circuits, trajectories on the IR (report 002 (g)); for the frozen 2x3 "
+  "family the IR has more two-qubit gates than the optimised native form, so its sampled $f$ is lower than its "
+  "analytic $f$ (compare tables 3.3 and 3.4).")
+P("- **Model limits (report 002):** Pauli channels only; Quantinuum memory and IonQ idle charges are my estimates and "
+  "are bracketed by the `_nomem` / `_noidle` variants; IonQ Tempo is a target specification.")
+P("- **Class B validity:** class B circuits are valid only as 'prepare own reference, one coarse step, measure' "
+  "(reviews/001 note 1); every noisy test here is exactly that use.")
+
+open(os.path.join(NOISE, "reports", "003-noise-results.md"), "w").write("\n".join(L) + "\n")
 print("tables written")

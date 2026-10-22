@@ -24,11 +24,10 @@ REVIEW = os.path.join(circuits.STUDY, "reviews", "001_runs")
 
 
 def expected(lat, fam):
-    if lat == "2x4" and fam in circuits.FAMILY_V1:
-        return len(circuits.v1_ids())
-    if lat == "2x3" and fam == "frozen":
-        return len(circuits.frozen_2x3_ids())
-    return None
+    """Planned number of accuracy runs for (lattice, family): scripts/queue_plan.accuracy_jobs."""
+    sys.path.insert(0, os.path.join(circuits.NOISE, "scripts"))
+    import queue_plan
+    return sum(1 for j in queue_plan.accuracy_jobs() if j[0] == lat and j[1] == fam)
 
 
 def accuracy():
@@ -80,7 +79,7 @@ KEEP = ("shots", "acceptance", "acceptance_ci95", "acceptance_random_level", "f_
         "readout_survival_ref", "p_ref", "ref_hits", "f_hit", "f_hit_ci95", "f_hit_traj", "f_ideal",
         "f_ideal_1e-3_ci95", "b_all", "r_nc", "r_nc_ci95", "tv_accepted", "tv_accepted_floor_mean",
         "tv_accepted_floor_sd", "tv_population_pre_readout", "mean_sector_weight_pre_readout", "seed_simulator",
-        "n_qubits_simulated", "sector_size")
+        "n_qubits", "sector_size", "acceptance_codeword_membership", "engine_name")
 
 
 def noise_behaviour():
@@ -94,7 +93,7 @@ def noise_behaviour():
         for r in runs:
             row = {k: r[k] for k in KEEP}
             row["n_2q_native"] = r["budget"]["n_2q"]
-            row["aer_s"] = r["timing_s"]["aer"]
+            row["sim_s"] = r["timing_s"]["simulate"]
             rows[r["circuit"]] = row
         S = sum(r["shots"] for r in runs)
         hits = sum(r["ref_hits"] for r in runs)

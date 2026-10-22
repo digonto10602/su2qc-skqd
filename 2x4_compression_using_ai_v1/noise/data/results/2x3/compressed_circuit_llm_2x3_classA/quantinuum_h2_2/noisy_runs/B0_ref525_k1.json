@@ -1,0 +1,167 @@
+{
+ "lattice": "2x3",
+ "family": "compressed_circuit_llm_2x3_classA",
+ "device": "quantinuum_h2_2",
+ "circuit": "B0_ref525_k1",
+ "engine_name": "sparse",
+ "twoB": 0,
+ "reference": 525,
+ "k": 1,
+ "shots": 400,
+ "seed_simulator": 185452865,
+ "seed_readout": 185452866,
+ "seed_floor": 185452867,
+ "seed_bootstrap": 2028,
+ "n_qubits": 20,
+ "sector_size": 677,
+ "p_ref": 0.9160024273977198,
+ "ideal_weight_in_sector": 1.0,
+ "budget": {
+  "n_2q": 871,
+  "n_1q_native": 1070,
+  "n_1q_pulses": 1070,
+  "log_clean": {
+   "gate_1q": -0.04494094376647015,
+   "gate_2q": -0.9003089584505636,
+   "idle": 0.0,
+   "memory": -0.20881252900233468
+  },
+  "n_events": {
+   "gate_1q": 1070,
+   "gate_2q": 871,
+   "idle": 0,
+   "memory": 1740
+  },
+  "depth1_equivalent_layers": 87.1,
+  "n_active_qubits": 20,
+  "f_gate": 0.3153530635307383,
+  "f_parts": {
+   "gate_1q": 0.9560539411107607,
+   "gate_2q": 0.40644406601110056,
+   "idle": 1.0,
+   "memory": 0.8115473629770243
+  }
+ },
+ "f_model": 0.30950804956054506,
+ "f_gate": 0.3153530635307383,
+ "f0_prime": 0.3104945573796086,
+ "readout_survival_ref": 0.9845934391861202,
+ "acceptance": 0.5425,
+ "acceptance_ci95": [
+  0.4935050341874029,
+  0.5906864207815478
+ ],
+ "acceptance_codeword_membership": 0.5425,
+ "rejections": {
+  "flag": 76,
+  "link": 88,
+  "sector": 19,
+  "unknown": 0
+ },
+ "acceptance_random_level": 0.0006456375122070312,
+ "ref_hits": 179,
+ "f_hit": 0.48853582328521455,
+ "f_hit_ci95": [
+  0.4361351901552045,
+  0.5420268366269294
+ ],
+ "f_hit_traj": 0.47525559549298885,
+ "b_all": {
+  "0.001": 0.4675,
+  "0.01": 0.4775,
+  "0.03": 0.4925
+ },
+ "f_ideal": {
+  "0.001": 0.4602974328195112,
+  "0.01": 0.4701433672113724,
+  "0.03": 0.4849122687991642
+ },
+ "f_ideal_1e-3_ci95": [
+  0.4110677608602052,
+  0.5070656211808519
+ ],
+ "r_nc": 1.0613481380783107,
+ "r_nc_ci95": [
+  1.0008972906036924,
+  1.1267678642407295
+ ],
+ "mean_sector_weight_pre_readout": 0.5473010742506494,
+ "tv_accepted": 0.12373925525957724,
+ "tv_accepted_floor_mean": 0.034038836175885746,
+ "tv_accepted_floor_sd": 0.010205470955075246,
+ "tv_population_pre_readout": 0.2086126221805465,
+ "accepted_counts": {
+  "528": 4,
+  "538": 1,
+  "580": 1,
+  "534": 2,
+  "1096": 6,
+  "41": 4,
+  "525": 179,
+  "25": 1,
+  "603": 1,
+  "545": 1,
+  "996": 4,
+  "521": 1,
+  "558": 1,
+  "519": 8,
+  "990": 1,
+  "591": 2
+ },
+ "engine_diagnostics": {
+  "n_faults_mean": 1.1125,
+  "n_faults_hist": [
+   127,
+   155,
+   76,
+   31,
+   10,
+   1
+  ],
+  "fault_free_fraction_sampled": 0.3175,
+  "prune_bound_max": 2.341331527833207e-11,
+  "support_max": 4416,
+  "support_mean": 1438.925,
+  "clean_state_max_abs_dpsi": 2.944629816873835e-14,
+  "clean_prune_bound": 1.2523800077713592e-12
+ },
+ "engine": "skqd.sparse_sim (package) via noise/src/traj_sparse.py, prune |a|<1e-12 every 32 gates",
+ "noise_placement": "IR level (traj_sparse.ir_events)",
+ "noise_spec_file": "data/device_specs_quantinuum.json",
+ "noise_spec_sha256": "90dd6204acdafe5d71ebd4b6d2ef9b692f20c734aa9b3fa8dba3d087484d4886",
+ "noise_model_params": {
+  "p1": 2.8e-05,
+  "p2": 0.00083,
+  "spam0": 0.00067,
+  "spam1": 0.0012,
+  "mem_depth1": 0.00012,
+  "rzz_angle_scaling": {
+   "a": 1.518,
+   "b": 0.241,
+   "power": 1.0
+  },
+  "parallel_2q": 4,
+  "kind": "quantinuum",
+  "device": "quantinuum_h2_2"
+ },
+ "timing_s": {
+  "simulate": 19.731884956359863,
+  "total": 24.67727017402649
+ },
+ "provenance": {
+  "git_commit": "bf55f30+dirty(noise/)",
+  "machine": {
+   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+   "node": "pichkaCommander",
+   "python": "3.12.14",
+   "executable": "/home/digimonk/anaconda3/envs/coding/bin/python",
+   "numpy": "2.5.2",
+   "scipy": "1.18.0",
+   "cpu_count": 12,
+   "qiskit": "2.5.2",
+   "qiskit_aer": "0.17.2"
+  },
+  "created_utc": "2026-10-22 00:58:24 UTC",
+  "command": "python /home/digimonk/Projects/su2qc-skqd/2x4_compression_using_ai_v1/noise/scripts/noisy_run.py 2x3 compressed_circuit_llm_2x3_classA quantinuum_h2_2 B0_ref525_k1 --shots 400"
+ }
+}
