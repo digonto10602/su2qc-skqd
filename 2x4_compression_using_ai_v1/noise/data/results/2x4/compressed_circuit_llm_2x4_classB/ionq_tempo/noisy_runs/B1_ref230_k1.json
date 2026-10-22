@@ -1,0 +1,178 @@
+{
+ "lattice": "2x4",
+ "family": "compressed_circuit_llm_2x4_classB",
+ "device": "ionq_tempo",
+ "circuit": "B1_ref230_k1",
+ "engine_name": "sparse",
+ "twoB": 2,
+ "reference": 230,
+ "k": 1,
+ "shots": 200,
+ "seed_simulator": 890852507,
+ "seed_readout": 890852508,
+ "seed_floor": 890852509,
+ "seed_bootstrap": 2028,
+ "n_qubits": 28,
+ "sector_size": 8934,
+ "p_ref": 0.9313143954167585,
+ "ideal_weight_in_sector": 1.0000000000000009,
+ "budget": {
+  "n_2q": 582,
+  "n_1q_native": 747,
+  "n_1q_pulses": 1178,
+  "log_clean": {
+   "gate_1q": -0.35346595836604494,
+   "gate_2q": -0.727955066761826,
+   "idle": -6.484194250982543,
+   "memory": 0.0
+  },
+  "n_events": {
+   "gate_1q": 747,
+   "gate_2q": 582,
+   "idle": 981,
+   "memory": 0
+  },
+  "duration_s": 0.6533800000000071,
+  "n_active_qubits": 28,
+  "f_gate": 0.0005179585821658029,
+  "f_parts": {
+   "gate_1q": 0.7022498979151461,
+   "gate_2q": 0.48289547010092626,
+   "idle": 0.0015273909647339475,
+   "memory": 1.0
+  }
+ },
+ "f_model": 0.0004501334573995667,
+ "f_gate": 0.0005179585821658029,
+ "f0_prime": 0.00045013345739956676,
+ "readout_survival_ref": 0.8690529955452602,
+ "acceptance": 0.265,
+ "acceptance_ci95": [
+  0.2086815410670056,
+  0.33017576246740693
+ ],
+ "acceptance_codeword_membership": 0.265,
+ "rejections": {
+  "flag": 81,
+  "link": 52,
+  "sector": 14,
+  "unknown": 0
+ },
+ "acceptance_random_level": 3.328174352645874e-05,
+ "ref_hits": 38,
+ "f_hit": 0.20401273827081343,
+ "f_hit_ci95": [
+  0.15212018158575,
+  0.26845111470510175
+ ],
+ "f_hit_traj": 0.19862433150720699,
+ "b_all": {
+  "0.001": 0.235,
+  "0.01": 0.24,
+  "0.03": 0.24
+ },
+ "f_ideal": {
+  "0.001": 0.20422745395313613,
+  "0.01": 0.20857271893086243,
+  "0.03": 0.20857271893086243
+ },
+ "f_ideal_1e-3_ci95": [
+  0.1564295391981468,
+  0.2563706336858517
+ ],
+ "r_nc": 0.9989486443758342,
+ "r_nc_ci95": [
+  0.8391047712194907,
+  1.1818225380830807
+ ],
+ "mean_sector_weight_pre_readout": 0.300698412693089,
+ "tv_accepted": 0.26499645835836627,
+ "tv_accepted_floor_mean": 0.060588378762797525,
+ "tv_accepted_floor_sd": 0.01029107413695565,
+ "tv_population_pre_readout": 0.38592186698491615,
+ "accepted_counts": {
+  "236": 1,
+  "220": 1,
+  "242": 1,
+  "234": 1,
+  "1370": 1,
+  "230": 38,
+  "28707": 1,
+  "214": 3,
+  "5538": 1,
+  "313": 1,
+  "233": 1,
+  "229": 2,
+  "227": 1
+ },
+ "engine_diagnostics": {
+  "n_faults_mean": 7.355,
+  "n_faults_hist": [
+   0,
+   2,
+   5,
+   8,
+   15,
+   23,
+   25,
+   32,
+   26,
+   20,
+   16,
+   10,
+   9,
+   6,
+   3
+  ],
+  "fault_free_fraction_sampled": 0.0,
+  "prune_bound_max": 1.9764752920038337e-10,
+  "support_max": 26156,
+  "support_mean": 10470.65,
+  "clean_state_max_abs_dpsi": 2.523958981024769e-12,
+  "clean_prune_bound": 4.679995225264728e-11
+ },
+ "engine": "skqd.sparse_sim (package) via noise/src/traj_sparse.py, prune |a|<1e-12 every 32 gates",
+ "noise_placement": "IR level (traj_sparse.ir_events)",
+ "noise_spec_file": "data/device_specs_ionq.json",
+ "noise_spec_sha256": "38d31bb903c57b59870b77c024941a37a67c51d1a55bbbe97ae7d3246c555ae9",
+ "noise_model_params": {
+  "p1": 0.0002,
+  "p2": 0.001,
+  "spam": 0.005,
+  "T1": 10.0,
+  "T2": 1.0,
+  "t1q": 0.00011,
+  "t2q": 0.0009,
+  "serial": true,
+  "assumed_from_forte": [
+   "p1",
+   "spam",
+   "T1",
+   "T2",
+   "t1q",
+   "t2q"
+  ],
+  "kind": "ionq",
+  "device": "ionq_tempo"
+ },
+ "timing_s": {
+  "simulate": 32.57820272445679,
+  "total": 55.32200241088867
+ },
+ "provenance": {
+  "git_commit": "113831a",
+  "machine": {
+   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+   "node": "pichkaCommander",
+   "python": "3.12.14",
+   "executable": "/home/digimonk/anaconda3/envs/coding/bin/python",
+   "numpy": "2.5.2",
+   "scipy": "1.18.0",
+   "cpu_count": 12,
+   "qiskit": "2.5.2",
+   "qiskit_aer": "0.17.2"
+  },
+  "created_utc": "2026-10-22 07:45:28 UTC",
+  "command": "python /home/digimonk/Projects/su2qc-skqd/2x4_compression_using_ai_v1/noise/scripts/noisy_run.py 2x4 compressed_circuit_llm_2x4_classB ionq_tempo B1_ref230_k1 --shots 200"
+ }
+}

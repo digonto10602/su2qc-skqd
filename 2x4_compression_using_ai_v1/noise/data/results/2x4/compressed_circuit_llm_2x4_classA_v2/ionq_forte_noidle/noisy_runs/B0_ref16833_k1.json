@@ -1,0 +1,158 @@
+{
+ "lattice": "2x4",
+ "family": "compressed_circuit_llm_2x4_classA_v2",
+ "device": "ionq_forte_noidle",
+ "circuit": "B0_ref16833_k1",
+ "engine_name": "sparse",
+ "twoB": 0,
+ "reference": 16833,
+ "k": 1,
+ "shots": 300,
+ "seed_simulator": 1944288396,
+ "seed_readout": 1944288397,
+ "seed_floor": 1944288398,
+ "seed_bootstrap": 2028,
+ "n_qubits": 28,
+ "sector_size": 12843,
+ "p_ref": 0.9376338737657491,
+ "ideal_weight_in_sector": 1.0000000000000004,
+ "budget": {
+  "n_2q": 1492,
+  "n_1q_native": 1807,
+  "n_1q_pulses": 3016,
+  "log_clean": {
+   "gate_1q": -0.9049720389224254,
+   "gate_2q": -7.478712400727986,
+   "idle": 0.0,
+   "memory": 0.0
+  },
+  "n_events": {
+   "gate_1q": 1807,
+   "gate_2q": 1492,
+   "idle": 0,
+   "memory": 0
+  },
+  "duration_s": 1.6745600000000238,
+  "n_active_qubits": 28,
+  "f_gate": 0.0002285662535765957,
+  "f_parts": {
+   "gate_1q": 0.4045531966881917,
+   "gate_2q": 0.0005649844209555524,
+   "idle": 1.0,
+   "memory": 1.0
+  }
+ },
+ "f_model": 0.00019863618735129802,
+ "f_gate": 0.0002285662535765957,
+ "f0_prime": 0.00019863618735129802,
+ "readout_survival_ref": 0.8690529955452602,
+ "acceptance": 0.0,
+ "acceptance_ci95": [
+  8.673617379884035e-19,
+  0.012642971421476655
+ ],
+ "acceptance_codeword_membership": 0.0,
+ "rejections": {
+  "flag": 225,
+  "link": 72,
+  "sector": 3,
+  "unknown": 0
+ },
+ "acceptance_random_level": 4.784390330314636e-05,
+ "ref_hits": 0,
+ "f_hit": 0.0,
+ "f_hit_ci95": [
+  9.25053757395606e-19,
+  0.013483910698212757
+ ],
+ "f_hit_traj": 0.002473768425370345,
+ "b_all": {
+  "0.001": 0.0,
+  "0.01": 0.0,
+  "0.03": 0.0033333333333333335
+ },
+ "f_ideal": {
+  "0.001": 0.0,
+  "0.01": 0.0,
+  "0.03": 0.002896843318484201
+ },
+ "f_ideal_1e-3_ci95": [
+  0.0,
+  0.0
+ ],
+ "r_nc": null,
+ "r_nc_ci95": null,
+ "mean_sector_weight_pre_readout": 0.0033635990318344913,
+ "tv_accepted": null,
+ "tv_accepted_floor_mean": 0.10893857159290114,
+ "tv_accepted_floor_sd": 0.20300458287192683,
+ "tv_population_pre_readout": 0.8757610860647519,
+ "accepted_counts": {},
+ "engine_diagnostics": {
+  "n_faults_mean": 8.58,
+  "n_faults_hist": [
+   0,
+   0,
+   2,
+   7,
+   15,
+   18,
+   30,
+   41,
+   32,
+   51,
+   30,
+   27,
+   22,
+   10,
+   6,
+   4,
+   3,
+   2
+  ],
+  "fault_free_fraction_sampled": 0.0,
+  "prune_bound_max": 1.5924024662721423e-09,
+  "support_max": 584824,
+  "support_mean": 67953.56,
+  "clean_state_max_abs_dpsi": 2.5445295632897386e-12,
+  "clean_prune_bound": 1.6445846737529427e-10
+ },
+ "engine": "skqd.sparse_sim (package) via noise/src/traj_sparse.py, prune |a|<1e-12 every 32 gates",
+ "noise_placement": "IR level (traj_sparse.ir_events)",
+ "noise_spec_file": "data/device_specs_ionq.json",
+ "noise_spec_sha256": "38d31bb903c57b59870b77c024941a37a67c51d1a55bbbe97ae7d3246c555ae9",
+ "noise_model_params": {
+  "p1": 0.0002,
+  "p2": 0.004,
+  "spam": 0.005,
+  "T1": 10.0,
+  "T2": 1.0,
+  "t1q": 0.00011,
+  "t2q": 0.0009,
+  "serial": true,
+  "no_idle": true,
+  "variant_of": "ionq_forte",
+  "kind": "ionq",
+  "device": "ionq_forte_noidle"
+ },
+ "timing_s": {
+  "simulate": 579.4219272136688,
+  "total": 593.3487889766693
+ },
+ "provenance": {
+  "git_commit": "113831a",
+  "machine": {
+   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+   "node": "pichkaCommander",
+   "python": "3.12.14",
+   "executable": "/home/digimonk/anaconda3/envs/coding/bin/python",
+   "numpy": "2.5.2",
+   "scipy": "1.18.0",
+   "cpu_count": 12,
+   "qiskit": "2.5.2",
+   "qiskit_aer": "0.17.2"
+  },
+  "created_utc": "2026-10-22 06:26:31 UTC",
+  "command": "python /home/digimonk/Projects/su2qc-skqd/2x4_compression_using_ai_v1/noise/scripts/noisy_run.py 2x4 compressed_circuit_llm_2x4_classA_v2 ionq_forte_noidle B0_ref16833_k1 --shots 300"
+ }
+}
