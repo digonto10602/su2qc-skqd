@@ -10,6 +10,7 @@ Writes data/c2x3/native_<family>.json (2x3) or data/native_<family>.json (2x4).
 from __future__ import annotations
 
 import argparse
+import math
 import json
 import os
 import sys
@@ -49,6 +50,8 @@ def main():
             truncated = True
             break
         n = md["n_qubits"]
+        # the package converter has no 'cz'; CZ = CP(pi) exactly (diag(1, 1, 1, -1)), one ZZPhase either way
+        g = [("cp", qs, math.pi) if nm == "cz" else (nm, qs, par) for nm, qs, par in g]
         t0 = time.time()
         nat = compile_native(ir_to_pytket(g, n, measure=True), "H2-2", optimisation_level=0)
         cnt = native_counts(nat)
