@@ -9,7 +9,15 @@
 # and, for the legacy ci/request.txt, also from ci/status.json (the one-job poller).
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
-git pull -q --rebase --autostash origin master
+# Sync by fetch + MERGE, never rebase (a rebase here silently rewrote unpushed local commits, 2026-10-22).
+GITDIR=$(git rev-parse --git-dir)
+if [ -d "$GITDIR/rebase-merge" ] || [ -d "$GITDIR/rebase-apply" ] || [ -f "$GITDIR/MERGE_HEAD" ]; then
+  echo "warning: a rebase or merge is in progress; showing the local state without syncing" >&2
+else
+  git fetch -q origin master
+  git merge -q --no-edit origin/master || { git merge --abort 2>/dev/null || true;
+    echo "warning: merge with origin/master failed; showing the local state" >&2; }
+fi
 python3 - "$@" <<'PY'
 import json, os, subprocess, sys, glob
 
