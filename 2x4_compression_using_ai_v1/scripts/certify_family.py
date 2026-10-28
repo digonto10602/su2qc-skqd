@@ -115,7 +115,7 @@ def main():
                "gap_support": [r for r in cert if not r["certified_optimal"]][:50],
                "truncated": truncated}
     lab = f"_{args.label}" if args.label else ""
-    sub = "c2x3/" if args.lx == 3 else ""
+    sub = "" if args.lx == 4 else f"c2x{args.lx}/"
     p = write_json(f"data/{sub}cert_{args.archive}_{args.cls}{lab}.json", {"rows": rows, "summary": summary},
                    produced_by="2x4_compression_using_ai_v1/scripts/certify_family.py",
                    parameters=vars(args), t_start=t0)

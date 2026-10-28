@@ -54,6 +54,10 @@ def main():
     ap.add_argument("--fusion", action="store_true")
     ap.add_argument("--label", default="")
     ap.add_argument("--max-wall", type=float, default=1700.0)
+    ap.add_argument("--superposition-seeds", default="",
+                    help="comma list of seeds: also run the operator test on a random superposition of the circuit's "
+                         "sector codewords (manual 5.4; class A must pass, class B is expected to fail).  The "
+                         "X-gate prefix is undone on the input (|cw> -> |cw ^ ref>), so the circuit body acts on phi.")
     args = ap.parse_args()
     t0 = time.time()
     from qiskit_aer import AerSimulator
@@ -120,6 +124,51 @@ def main():
                      "pass_bar": bool(dev < 1e-10 and leak_nc + leak_sec < 1e-9), "aer_s": t_sim}
         print(cid, f"dev {dev:.2e} leak {leak_nc + leak_sec:.1e} phase-pred {rows[cid]['global_phase_minus_predicted_rad']:.1e}"
               f" 2q {n2} pass {rows[cid]['pass_bar']} ({t_sim:.1f} s)", flush=True)
+    sup_rows = {}
+    seeds = [int(v) for v in args.superposition_seeds.split(",") if v.strip()]
+    if seeds:
+        from qiskit import QuantumCircuit
+        from skqd.krylov import apply_groups
+        for cid, qc, md in fam:
+            if want is not None and cid not in want:
+                continue
+            twoB, ref, k = md["twoB"], md["reference"], md["k"]
+            ref_int = int(ints[ref])
+            if ref_int != int(md["reference_bits"]):
+                raise ValueError(f"{cid}: metadata reference_bits {md['reference_bits']} != codeword {ref_int}")
+            sector = np.asarray(M.basis.sector(twoB))
+            for seed in seeds:
+                rng = np.random.default_rng(seed)
+                c = rng.normal(size=len(sector)) + 1j * rng.normal(size=len(sector))
+                c /= np.linalg.norm(c)
+                phi = np.zeros(dim, dtype=complex)
+                phi[sector] = c
+                target = apply_groups(groups, phi.copy(), k * dts[twoB])
+                init = np.zeros(2 ** n, dtype=complex)
+                init[ints ^ ref_int] = phi
+                pre = QuantumCircuit(n)
+                pre.set_statevector(init)
+                qc2 = pre.compose(qc)
+                qc2.save_statevector()
+                res = sim.run(qc2, shots=1, seed_simulator=1).result()
+                if not res.success:
+                    raise RuntimeError(res.status)
+                psi = np.asarray(res.data(0)["statevector"].data)
+                got = psi[ints].copy()
+                psi[ints] = 0
+                leak_nc = float(np.vdot(psi, psi).real)
+                ov = np.vdot(target, got)
+                ph = float(np.angle(ov))
+                d = got * np.exp(-1j * ph) - target
+                dev = float(np.abs(d).max())
+                sup_rows[f"{cid}:seed{seed}"] = {
+                    "circuit_id": cid, "seed": seed, "n_components": int(len(sector)),
+                    "max_abs_dpsi_phase_aligned": dev, "l2_dpsi_phase_aligned": float(np.linalg.norm(d)),
+                    "leakage_noncodeword": leak_nc, "global_phase_rad": ph,
+                    "global_phase_minus_predicted_rad": float(np.angle(np.exp(1j * (ph - md["global_phase_vs_target"])))),
+                    "pass_bar": bool(dev < 1e-10 and leak_nc < 1e-9)}
+            print(cid, "superposition", [f"{sup_rows[f'{cid}:seed{s_}']['l2_dpsi_phase_aligned']:.2e}" for s_ in seeds],
+                  flush=True)
     vals = list(rows.values())
     summary = {"n": len(vals), "n_pass": sum(r["pass_bar"] for r in vals),
                "max_abs_dpsi": max((r["max_abs_dpsi_phase_aligned"] for r in vals), default=None),
@@ -129,17 +178,26 @@ def main():
                "n_2q_consistent": all(r["n_2q_qiskit"] == r["n_2q_metadata"] for r in vals),
                "dt_consistent": all(abs(r["dt_package"] - r["dt_metadata"]) < 1e-15 for r in vals),
                "truncated": truncated}
+    if sup_rows:
+        sv = list(sup_rows.values())
+        summary["random_superposition"] = {
+            "seeds": seeds, "n": len(sv), "n_pass": sum(r["pass_bar"] for r in sv),
+            "max_abs_dpsi": max(r["max_abs_dpsi_phase_aligned"] for r in sv),
+            "max_l2_dpsi": max(r["l2_dpsi_phase_aligned"] for r in sv),
+            "min_l2_dpsi": min(r["l2_dpsi_phase_aligned"] for r in sv),
+            "max_leakage_noncodeword": max(r["leakage_noncodeword"] for r in sv),
+            "max_abs_phase_minus_predicted": max(abs(r["global_phase_minus_predicted_rad"]) for r in sv)}
     print(summary)
-    sub = "c2x3/" if lx == 3 else ""
+    sub = "" if lx == 4 else f"c2x{lx}/"
     lab = f"_{args.label}" if args.label else ""
     p = write_json(f"data/{sub}aer_{args.family}{lab}.json",
-                   {"family": args.family, "circuits": rows, "summary": summary,
+                   {"family": args.family, "circuits": rows, "summary": summary, "random_superposition": sup_rows,
                     "engine": {"qiskit": qiskit.__version__, "qiskit_aer": qiskit_aer.__version__,
                                "method": "statevector", "precision": "double", "fusion": bool(args.fusion),
                                "threads": args.threads},
                     "peak_rss_GiB": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 2 ** 20},
                    produced_by="2x4_compression_using_ai_v1/scripts/verify_aer_family.py",
-                   parameters=vars(args), seed=1, t_start=t0)
+                   parameters=vars(args), seed={"aer_seed_simulator": 1, "superposition_rng": seeds}, t_start=t0)
     print("wrote", p)
 
 

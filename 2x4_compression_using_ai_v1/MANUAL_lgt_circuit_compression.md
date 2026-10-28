@@ -238,6 +238,10 @@ state against the exact coarse state `skqd.krylov.coarse_states` (complex128): $
 
 ### 1.3 2x2: a worked example, not a family
 
+> **Update 2026-10-28:** the owner asked for 2x2 families; they now exist as `compressed_circuit_llm_2x2_classA` /
+> `_classB` (built with the production scripts, `--lx 2`; `notes/011-2x2-families.md`, numbers in
+> `data/c2x2/summary_2x2.json`).  The sandbox example below stays a teaching example; its circuits are not the families.
+
 I did not make 2x2 *families*; the owner decides whether they are made.  The planner judged that 2x2 has little to gain:
 "Already 252 ZZ with $f=0.79$ on H2-2 … Apply the technique only for uniformity of the hardware story; no cost case"
 (`notes/007-planner-review-ultimate-compression.md` §8.3).  For this manual I ran the whole procedure on 2x2 as a

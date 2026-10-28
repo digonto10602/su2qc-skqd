@@ -32,6 +32,21 @@ def _k_independent(circs: dict) -> dict:
     return {"all": all(len(v) == 1 for v in by.values()), "per_reference": {r: len(v) == 1 for r, v in by.items()}}
 
 
+def _baseline(lx: int) -> dict:
+    """The frozen package family's two-qubit count, read from its files (2x2 and 2x3: index.json summary.n_zz)."""
+    if lx == 4:
+        return {"n_2q": 71548, "depth_2q": 70300,
+                "source": "data/quantinuum/circuits_2x4/*.structured.manifest.json levels.0.counts; "
+                          "reproduced by data/p2_0_harness_baseline.json"}
+    import json
+    from c2x4.env import ROOT
+    with open(os.path.join(ROOT, "data", "quantinuum", f"circuits_2x{lx}", "index.json")) as fh:
+        zz = json.load(fh)["summary"]["n_zz"]
+    return {"n_2q": zz["max"], "n_zz_summary": zz,
+            "source": f"data/quantinuum/circuits_2x{lx}/index.json summary.n_zz (frozen 2x{lx} family, Qiskit opt-3 "
+                      f"then pytket level 0)"}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--family", required=True)
@@ -120,14 +135,10 @@ def main():
                                max(x["counts"]["depth_2q"] for x in cs)],
             "bar": {"max_dev": BAR_DEV, "leakage": BAR_LEAK},
             "skeleton_k_independent": _k_independent(out["circuits"]),
-            "baseline": ({"n_2q": 71548, "depth_2q": 70300,
-                          "source": "data/quantinuum/circuits_2x4/*.structured.manifest.json levels.0.counts; "
-                                    "reproduced by data/p2_0_harness_baseline.json"} if args.lx == 4 else
-                         {"n_2q": 2158, "source": "data/quantinuum/circuits_2x3/index.json summary.n_zz (frozen 2x3 "
-                                                  "family, Qiskit opt-3 then pytket level 0)"})}
+            "baseline": _baseline(args.lx)}
         print("summary:", out["summary"], flush=True)
     label = f"_{args.label}" if args.label else ""
-    sub = "" if args.lx == 4 else "c2x3/"
+    sub = "" if args.lx == 4 else f"c2x{args.lx}/"
     p = write_json(f"data/{sub}eval_{args.family.replace(':', '_')}{label}.json", out,
                    produced_by="2x4_compression_using_ai_v1/scripts/eval_family.py",
                    parameters={"family": args.family, "circuits": args.circuits, "kmax": args.kmax,

@@ -44,6 +44,8 @@ Other functions in the same module:
 | `compressed_circuit_llm_2x4_classB_v2` | frozen at `390629e` (C4 round) | 75, 28 qubits | exact on own reference only | 580–763 |
 | `compressed_circuit_llm_2x3_classA` | frozen at `390629e` (C3) | 44 (8 references at $B=0$, 3 at $B=1$, $k=1..4$ — the frozen 2x3 list), 20 qubits | operator-exact | 871–871 |
 | `compressed_circuit_llm_2x3_classB` | frozen at `390629e` (C3) | 44, 20 qubits | exact on own reference only | 309–465 |
+| `compressed_circuit_llm_2x2_classA` | frozen 2026-10-28 (owner request, `notes/011`) | 28 (5 references at $B=0$, 2 at $B=1$, $k=1..4$ — the frozen 2x2 list, ids identical incl. zero padding `B0_ref06_k1`), 12 qubits | operator-exact | 245–245 |
+| `compressed_circuit_llm_2x2_classB` | frozen 2026-10-28 (`notes/011`) | 28, 12 qubits | exact on own reference only | 55–162 |
 
 The aliases without a version keep pointing to v1 (the reviewed it5 families); the owner decides when (if) they move.
 The 2x4 v2 and 2x3 counts come from `data/eval_arch_it6_*_pp2_all75_pruned.json` and
@@ -59,6 +61,17 @@ two-qubit depth equal the verification record.  File sha256 (the v1 files are un
 - `compressed_circuit_llm_2x4_classB_v2.json.gz`: `475a06c28d0f7f519ccc3558b062f9716f77b279a737f6abbc784e1066322c35`
 - `compressed_circuit_llm_2x3_classA.json.gz`: `ae12cff21d380b46b909d4e7892bc09fdc98241f1839954c6e7f3a53f5ff9ec6`
 - `compressed_circuit_llm_2x3_classB.json.gz`: `0e75e43807b9086e41af77c778c0e5d32eecbdbfb953fbdb48fd17697e47ad62`
+- `compressed_circuit_llm_2x2_classA.json.gz`: `fbdd73b1ee35b0dbde838e7e8af37d678ca910d5f0fe5ef870cdaf3b6ea19e9c`
+- `compressed_circuit_llm_2x2_classB.json.gz`: `622f29d6829e0910565ec67d2c08308a40bff0d2703924a3b34a089476422367`
+
+**2x2 (added 2026-10-28, `notes/011`).**  Built by the production scripts with `--lx 2` (loop archive
+`data/c2x2/archive_L2_it1.json`, verification `data/c2x2/eval_arch_L2_it1_*_pp2_all28_pruned.json`, Aer
+`data/c2x2/aer_compressed_circuit_llm_2x2_class*.json`).  $dt$ is read from all 28 frozen 2x2 manifests
+(`data/quantinuum/circuits_2x2/<id>.manifest.json`, equal bit for bit to `Model(2).reference(4, 2B).dt`).  Circuit ids
+follow the package's `circuit_id` (`B{B}_ref{r:02d}_k{k}`); `Problem.tag` now zero-pads to two digits, which leaves every
+2x3/2x4 id unchanged (all their references are $\ge 10$).  Quantinuum native exports in the exact on-disk format of
+`data/quantinuum/circuits_2x2` (read by `scripts/quantinuum_submit.py`): `data/families/native_2x2/<family>/`
+(`index.json`, `<id>.json`, `<id>.qasm`, `<id>.manifest.json`, plus byte-identical copies of `CAL_zeros` / `CAL_x0`).
 
 Gate set of v2 and 2x3: as v1 plus `cz` (the JW conjugation) and `h` (the relative-phase ANDs of the flags); all are
 in the loader's converter.  The package's `ir_to_pytket` has no `cz`; `scripts/native_family.py` rewrites it as
@@ -66,7 +79,7 @@ in the loader's converter.  The package's `ir_to_pytket` has no `cz`; `scripts/n
 
 ## Metadata keys (per circuit)
 
-`circuit_id` (e.g. `B0_ref102_k1`), `lattice` (`2x4`/`2x3`), `family`, `class` (`A`/`B`), `version`, `twoB`,
+`circuit_id` (e.g. `B0_ref102_k1`, 2x2 `B0_ref06_k1`), `lattice` (`2x4`/`2x3`/`2x2`), `family`, `class` (`A`/`B`), `version`, `twoB`,
 `reference` (dressed-basis index), `reference_bits` (the qubit integer the X-gate preparation writes), `k`, `dt`,
 `theta` $=k\,dt$, `n_qubits`, `n_2q`, `n_1q`, `depth_2q`, `ops`, `contract`, `valid_use`, `global_phase_vs_target`,
 `content_sha256`, `source`, `verification` (file and the bar numbers of that circuit).

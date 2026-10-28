@@ -69,4 +69,6 @@ def archive_path(label: str) -> str:
     2x3 outputs stay in their own folder (C3, notes/010)."""
     if label.startswith("L3_"):
         return os.path.join(DATA, "c2x3", f"archive_{label}.json")
+    if label.startswith("L2_"):                     # 2x2 families (notes/011): their own folder data/c2x2/
+        return os.path.join(DATA, "c2x2", f"archive_{label}.json")
     return os.path.join(DATA, f"archive_{label}.json")

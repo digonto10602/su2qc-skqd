@@ -14,10 +14,11 @@ Family names (owner rule, notes/008):
   compressed_circuit_llm_2x4_classA_v1  (= compressed_circuit_llm_2x4_classA) operator-exact, it5, reviewed (reviews/001)
   compressed_circuit_llm_2x4_classB_v1  (= compressed_circuit_llm_2x4_classB) exact on own reference input, it5, reviewed
   compressed_circuit_llm_2x4_classA_v2 / _classB_v2                             C4 round (notes/010), when frozen
-  compressed_circuit_llm_2x3_classA / _classB                                   C3 (2x3), when frozen
+  compressed_circuit_llm_2x3_classA / _classB                                   C3 (2x3)
+  compressed_circuit_llm_2x2_classA / _classB                                   2x2 (owner 2026-10-28, notes/011)
 
 Metadata keys per circuit (all plain Python types):
-  circuit_id, lattice ("2x4" | "2x3"), family, class ("A" | "B"), version, twoB, reference (basis index),
+  circuit_id, lattice ("2x4" | "2x3" | "2x2"), family, class ("A" | "B"), version, twoB, reference (basis index),
   reference_bits (int, the qubit string the circuit prepares with X gates), k, dt, theta (= k dt),
   n_qubits, n_2q, n_1q, depth_2q, contract, valid_use, global_phase_vs_target (phi such that the noiseless
   output equals exp(i phi) * the package's exact coarse state; 0 for class A), content_sha256 (of this circuit's
@@ -44,6 +45,7 @@ FAMILY_NAMES = [
     "compressed_circuit_llm_2x4_classA_v1", "compressed_circuit_llm_2x4_classB_v1",
     "compressed_circuit_llm_2x4_classA_v2", "compressed_circuit_llm_2x4_classB_v2",
     "compressed_circuit_llm_2x3_classA", "compressed_circuit_llm_2x3_classB",
+    "compressed_circuit_llm_2x2_classA", "compressed_circuit_llm_2x2_classB",
 ]
 
 CONTRACTS = {

@@ -4,7 +4,8 @@ exact target states.
 Everything is read from the package (read-only).  The lattice is a parameter (C3, notes/010): Lx = 4 reads dt from
 `data/quantinuum/circuits_2x4/index.json` (copied from validation/E3.json), Lx = 3 from the frozen 2x3 family's
 manifests `data/quantinuum/circuits_2x3/<id>.manifest.json` (gate_S2D.circuit_set(3): `Model(3).reference(4, 2B).dt`),
-cross-checked against the package call.  Cache files of Lx != 4 carry the prefix `L<Lx>_`.  The exact target of circuit (2B, reference, k)
+cross-checked against the package call, Lx = 2 from all 28 frozen 2x2 manifests `data/quantinuum/circuits_2x2/<id>.manifest.json`
+(cross-checked bit for bit against `Model(2).reference(4, 2B).dt`).  Cache files of Lx != 4 carry the prefix `L<Lx>_`.  The exact target of circuit (2B, reference, k)
 is `krylov.apply_groups(groups, e_ref, k dt)` -- the same call as `krylov.coarse_states` -- in
 complex128 with `scipy.sparse.linalg.expm_multiply`, on the 37 165-dimensional dressed basis.
 """
@@ -59,6 +60,25 @@ class Problem:
                 with open(os.path.join(ROOT, "data", "quantinuum", "circuits_2x3", f"{tag}.manifest.json")) as fh:
                     self.dt[twoB] = float(json.load(fh)["dt"])
             self.dt_source = "data/quantinuum/circuits_2x3/<B*_ref*_k1>.manifest.json (frozen 2x3 family)"
+        elif self.lx == 2:
+            # the frozen 2x2 family's manifests (scripts/quantinuum_build_circuits.py: Model(2).reference(4, 2B).dt),
+            # read from EVERY one of its 28 manifests and cross-checked against the package call (2x2 families, notes/011)
+            cdir = os.path.join(ROOT, "data", "quantinuum", "circuits_2x2")
+            self.dt = {}
+            for twoB in (0, 2):
+                vals = set()
+                for r in self.refs[twoB]:
+                    for k in range(1, 5):
+                        with open(os.path.join(cdir, f"{self.tag(twoB, r, k)}.manifest.json")) as fh:
+                            vals.add(float(json.load(fh)["dt"]))
+                if len(vals) != 1:
+                    raise ValueError(f"2x2 frozen manifests disagree on dt for 2B={twoB}: {sorted(vals)}")
+                self.dt[twoB] = vals.pop()
+                pkg = float(self.M.reference(G2, twoB).dt)
+                if self.dt[twoB] != pkg:
+                    raise ValueError(f"2x2 dt for 2B={twoB}: manifests {self.dt[twoB]!r} != package {pkg!r}")
+            self.dt_source = ("data/quantinuum/circuits_2x2/<id>.manifest.json (all 28 frozen 2x2 manifests; equal to "
+                              "Model(2).reference(4, 2B).dt bit for bit)")
         else:
             self.dt = {twoB: float(self.M.reference(G2, twoB).dt) for twoB in (0, 2)}
             self.dt_source = f"Model({self.lx}).reference({G2}, 2B).dt"
@@ -77,7 +97,9 @@ class Problem:
 
     @staticmethod
     def tag(twoB: int, ref: int, k: int) -> str:
-        return f"B{twoB // 2}_ref{ref}_k{k}"
+        """Circuit id in the package's convention (scripts/quantinuum_build_circuits.circuit_id: reference zero-padded
+        to two digits, e.g. B0_ref06_k1).  Identical to the earlier unpadded form for every 2x3/2x4 reference (all >= 10)."""
+        return f"B{twoB // 2}_ref{int(ref):02d}_k{int(k)}"
 
     def theta(self, twoB: int, k: int) -> float:
         return k * self.dt[twoB]

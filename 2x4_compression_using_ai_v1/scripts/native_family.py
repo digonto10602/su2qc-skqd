@@ -86,7 +86,7 @@ def main():
                                    "max": max(r["clean_shot_fraction_gate_only"][d] for r in rows)} for d in devs},
                "truncated": truncated}
     print(json.dumps(summary, indent=1))
-    sub = "c2x3/" if hdr["lattice"] == "2x3" else ""
+    sub = "" if hdr["lattice"] == "2x4" else f"c{hdr['lattice']}/"
     lab = f"_{args.label}" if args.label else ""
     write_json(f"data/{sub}native_{args.family}{lab}.json", {"rows": rows, "summary": summary, "versions": versions()},
                produced_by="2x4_compression_using_ai_v1/scripts/native_family.py",
