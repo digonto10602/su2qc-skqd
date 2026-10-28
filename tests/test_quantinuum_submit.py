@@ -89,7 +89,19 @@ def test_job_records_carry_the_required_config_fields():
         bc = j["backend_config"]
         assert bc["no_opt"] is True and bc["allow_implicit_swaps"] is False
         assert bc["max_cost"] is not None and j["max_cost"] >= j["hqc_estimate"]
+        assert isinstance(bc["max_cost"], int) and bc["max_cost"] >= j["max_cost"]
         assert j["job_id"] is None and j["n_shots"] <= 10000
+
+
+@pytest.mark.skipif(not (HAVE_FROZEN and importlib.util.find_spec("qnexus") is not None),
+                    reason="needs qnexus (isolated venv) and the frozen circuits of prompts/26 A3")
+def test_backend_config_builds_a_quantinuum_config():
+    """QuantinuumConfig.max_cost is an int field: the default cap (formula x 1.10, a decimal) must build."""
+    from qnexus import QuantinuumConfig
+    args = qs.build_parser().parse_args(["--syntax-check"])
+    for j in qs.plan_jobs(args, CIRC, qs.load_index(CIRC), "H2-2SC"):
+        cfg = QuantinuumConfig(**{k: v for k, v in j["backend_config"].items() if k != "type" and v is not None})
+        assert cfg.device_name == "H2-2SC" and cfg.max_cost >= j["hqc_estimate"]
 
 
 @pytest.mark.skipif(not (HAVE_PYTKET and HAVE_FROZEN),

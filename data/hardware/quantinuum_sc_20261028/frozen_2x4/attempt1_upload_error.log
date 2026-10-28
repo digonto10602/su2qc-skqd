@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "/home/digimonk/Projects/su2qc-skqd/scripts/quantinuum_submit.py", line 576, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/digimonk/Projects/su2qc-skqd/scripts/quantinuum_submit.py", line 563, in main
+    return phase_remote(args, "syntax-check")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/digimonk/Projects/su2qc-skqd/scripts/quantinuum_submit.py", line 410, in phase_remote
+    ref = qnx.circuits.upload(circuit=circ, name=f"{j['circuit_id']}", project=project)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/digimonk/.local/share/su2qc-quantinuum/venv/lib/python3.12/site-packages/qnexus/context.py", line 292, in _merge_properties_from_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/digimonk/.local/share/su2qc-quantinuum/venv/lib/python3.12/site-packages/qnexus/client/circuits.py", line 230, in upload
+    raise qnx_exc.ResourceCreateFailed(
+qnexus.exceptions.ResourceCreateFailed: Failed to create resource with status code: 500, message: {"message":"Internal Server Error - Cancelled"}
+exit 1

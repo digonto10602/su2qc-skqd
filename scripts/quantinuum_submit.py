@@ -145,7 +145,8 @@ def backend_config_fields(device, args, max_cost):
             "noisy_simulation": (True if device.endswith("E") else None),
             "no_opt": True, "allow_implicit_swaps": False,
             "attempt_batching": bool(args.attempt_batching), "user_group": args.user_group,
-            "max_cost": max_cost}
+            # QuantinuumConfig.max_cost is an int field (quantinuum-schemas 7.8.2): round the cap UP
+            "max_cost": (None if max_cost is None else int(math.ceil(max_cost)))}
 
 
 def plan_jobs(args, cdir, index, device):
