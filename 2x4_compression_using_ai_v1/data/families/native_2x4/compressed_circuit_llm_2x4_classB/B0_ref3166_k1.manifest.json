@@ -1,0 +1,226 @@
+{
+ "id": "B0_ref3166_k1",
+ "kind": "compressed_2x4_coarse_step_classB",
+ "lattice": "2x4",
+ "sector": "B=0",
+ "twoB": 0,
+ "reference": 3166,
+ "k": 1,
+ "repetitions": 1,
+ "dt": 0.11469820342078263,
+ "g2": 4.0,
+ "n_qubits": 28,
+ "family": "compressed_circuit_llm_2x4_classB_v1",
+ "class": "B",
+ "family_version": "v1",
+ "family_file": "2x4_compression_using_ai_v1/data/families/compressed_circuit_llm_2x4_classB_v1.json.gz",
+ "family_file_sha256": "cd902c9a7f295236b1f3f1b5a94fe65de41c70ca536a12c2df5d374fd345d27b",
+ "content_sha256_ir": "00b56ba44da076ea5dd2a818441956e5581d99c91e48560e62c0b182d673cc35",
+ "contract": "input-specific: equals exp(i phi) prod_gamma exp(-i k dt H_gamma)|ref> on its OWN reference basis state only (structural reachable set, no amplitude used); the diagonal group is dropped (pure global phase phi)",
+ "valid_use": "ONLY 'prepare own reference with X gates, one coarse step, measure in the computational basis'. NOT valid for another input, for r > 1 repetitions, Hadamard tests or controlled versions (reviews/001 note 1)",
+ "global_phase_vs_target_ir": -0.3440946102623479,
+ "frozen_counterpart": {
+  "dir": "data/quantinuum/circuits_2x4",
+  "id": "B0_ref3166_k1.structured",
+  "n_zz": 71548,
+  "n_phasedx": 210995,
+  "depth_2q": 70300
+ },
+ "original_ir_counts": {
+  "x": 13,
+  "cx": 630,
+  "unitary": 110,
+  "ry": 387,
+  "p": 8,
+  "cp": 16
+ },
+ "ir_n_2q": 646,
+ "ir_depth_2q": 332,
+ "ir_rewrite": "cz -> cp(pi) (identical matrix diag(1,1,1,-1)) before ir_to_pytket",
+ "transpile": null,
+ "state_check": "q1l-only",
+ "levels": {
+  "0": {
+   "level": 0,
+   "counts": {
+    "n_phasedx": 1728,
+    "n_rz": 1316,
+    "n_zz": 646,
+    "n_zzphase": 646,
+    "n_zzmax": 0,
+    "n_meas": 28,
+    "n_qubits": 28,
+    "depth": 1424,
+    "depth_2q": 332,
+    "ops": {
+     "Measure": 28,
+     "PhasedX": 1728,
+     "Rz": 1316,
+     "ZZPhase": 646
+    }
+   },
+   "state_vs_exact_target": null,
+   "state_vs_original_ir": null,
+   "measure_map_identity": true,
+   "implicit_permutation_identity": true,
+   "passes_Q1": null
+  }
+ },
+ "frozen_level": 0,
+ "selection_rule": "single level: pytket optimisation level 0 on the structured compressed IR (cz -> cp(pi)); the circuit is kept only if it passes Q1 against the package's exact coarse state and Q1L",
+ "Q1L": {
+  "ok": true,
+  "rounding_state_bound_B": 1.5346621391237988e-14,
+  "detail": {
+   "ok": true,
+   "rule": "prompts/35b R2: (i) + (ii) + maps",
+   "source": "structured",
+   "ok_35a": true,
+   "i_skeleton": {
+    "ok": true,
+    "max_abs_delta_2q_half_turns": 0.0,
+    "tol_half_turns": 1e-11,
+    "tol_source": "pytket's own canonicalisation tolerance (prompts/35a R2)",
+    "first_difference": null
+   },
+   "ii_segments_vs_readback": {
+    "ok": true,
+    "segments_max_residual": 7.561140470401686e-15,
+    "segments_compared": 1320,
+    "tol": 1e-12,
+    "skeleton_identical": true,
+    "worst": {
+     "qubit": 7,
+     "segment": 100,
+     "kind": "frame at an rzz not diagonal / anti-diagonal (D)"
+    },
+    "frame_info": {
+     "step_max_residual": 7.561140470401686e-15,
+     "final_drift_max": 1.5987428393566226e-14,
+     "final_drift_per_segment_max": 1.5829137023332896e-16,
+     "n_sign_flips": 632,
+     "rule": "per-segment residual = max(frame off the rzz commutant at any rzz, final drift / n_segments of the qubit); the final drift is the triangle-inequality sum of the per-segment differences"
+    }
+   },
+   "iii_rounding": {
+    "structure_identical": true,
+    "n_gates_compared": 411,
+    "n_unitaries_compared": 110,
+    "n_rounded_gates": 21,
+    "max_abs_delta": 8.881784197001252e-16,
+    "sum_abs_delta": 9.769962616701378e-15,
+    "unit": "half-turns",
+    "max_unitary_opnorm_delta": 0.0,
+    "state_bound_B": 1.5346621391237988e-14,
+    "incoherent_estimate_not_a_bound": 3.417399244019485e-15,
+    "bound": "B = sum_g c_g |Delta a_g| + sum_u ||Delta U||_op >= ||U_pytket - U_IR||_op >= max_s |Delta psi_s| (prompts/35a R2, 35b R4)",
+    "bar": 1e-10,
+    "ok": true,
+    "status": "recorded (prompts/35b R2: GPU consistency criterion, not a Q1L criterion)"
+   },
+   "rounding": {
+    "n_rounded_gates": 21,
+    "max_abs_delta": 8.881784197001252e-16,
+    "sum_abs_delta": 9.769962616701378e-15,
+    "state_bound_B": 1.5346621391237988e-14,
+    "incoherent_estimate_not_a_bound": 3.417399244019485e-15,
+    "max_unitary_opnorm_delta": 0.0
+   },
+   "segment_residual_raw": 7.647655886031457e-15,
+   "raw_check_of_prompts_35": true,
+   "measure_map_identity": true,
+   "implicit_permutation_identity": true,
+   "n_rzz_ir": 646,
+   "n_rzz_native": 646
+  }
+ },
+ "device_name_compiled_for": "H2-2",
+ "compile_route": "QuantinuumBackend(device, api_handler=QuantinuumAPIOffline(), compilation_config=QuantinuumBackendCompilationConfig(allow_implicit_swaps=False, target_2qb_gate=ZZPhase, preserve_qubit_names=True)).get_compiled_circuit(circ, 0)  [skqd.quantinuum_native.compile_native]",
+ "counts": {
+  "n_phasedx": 1728,
+  "n_rz": 1316,
+  "n_zz": 646,
+  "n_zzphase": 646,
+  "n_zzmax": 0,
+  "n_meas": 28,
+  "n_qubits": 28,
+  "depth": 1424,
+  "depth_2q": 332,
+  "ops": {
+   "Measure": 28,
+   "PhasedX": 1728,
+   "Rz": 1316,
+   "ZZPhase": 646
+  }
+ },
+ "hqc_per_shot": 1.6936,
+ "clean_shot_fraction_gate_only": {
+  "H2-2": 0.5428188837688256,
+  "Helios-1": 0.5622404381001724,
+  "H1-1": 0.48553565166350143,
+  "H2-1": 0.4621630915906126
+ },
+ "clean_shot_fraction_formula": "skqd.device_req.clean_shot_fraction(n_zz, n_phasedx, n_qubits, eps2, eps1, (eps_ro_0 + eps_ro_1)/2), data/quantinuum/devices_20261002.json",
+ "files": {
+  "qasm": "B0_ref3166_k1.qasm.gz",
+  "json": "B0_ref3166_k1.json.gz"
+ },
+ "qasm_sha256": "c8ca11ada35a9285fcf6968229df77cebb337d8ca1bdc5d29f3c9bf0c3a64816",
+ "json_sha256": "cf57ad3adf0ff21d178aaf6f1de7844a15e709b861fd973e76b8c30a7c5b6714",
+ "round_trips": {
+  "method": "Q1L (local_equivalence_35a, structured) of the IR against each re-read circuit, counts equal",
+  "json_Q1L_ok": true,
+  "json_rounding_state_bound_B": 1.5346621391237988e-14,
+  "qasm_Q1L_ok": true,
+  "qasm_rounding_state_bound_B": 1.5346621391237988e-14,
+  "qasm_drops_global_phase": true,
+  "qasm_counts_equal": true,
+  "json_counts_equal": true
+ },
+ "reference_bits": [
+  0,
+  0,
+  0,
+  0,
+  0,
+  1,
+  0,
+  1,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  1,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  1,
+  0,
+  0,
+  1,
+  0,
+  0,
+  0
+ ],
+ "reference_int": 18890912,
+ "p_reference": 0.9407244502743678,
+ "p_reference_source": "exact coarse state (krylov.coarse_states), basis index r (as the frozen 2x4 manifests)",
+ "most_probable_basis_index": 3166,
+ "p_most_probable": 0.9407244502743678,
+ "versions": {
+  "pytket": "2.18.4",
+  "pytket-quantinuum": "0.59.3",
+  "pytket-qiskit": "0.78.0",
+  "qnexus": "0.51.0",
+  "quantinuum-schemas": "7.8.2"
+ },
+ "git_commit": "5e52dbe+dirty(study folders)",
+ "built": "2026-10-28 19:37:01 UTC",
+ "build_s": 8.083699464797974,
+ "sha256_of": "the uncompressed text"
+}

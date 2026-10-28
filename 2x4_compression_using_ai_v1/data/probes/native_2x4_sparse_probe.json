@@ -1,0 +1,20 @@
+{
+ "produced_by": "2x4_compression_using_ai_v1/data/probes/native_2x4_sparse_probe.py (copied from the job tmp dir) under timeout 1700",
+ "git_commit": "5e52dbe+dirty(study folders)",
+ "machine": {
+  "node": "pichkaCommander",
+  "python": "/home/digimonk/.local/share/su2qc-quantinuum/venv/bin/python"
+ },
+ "written_utc": "2026-10-28 19:46:07 UTC",
+ "seed": null,
+ "command": "timeout 1700 taskset -c 0-9 nice -n 10 ~/.local/share/su2qc-quantinuum/venv/bin/python -u native_2x4_sparse_probe.py compressed_circuit_llm_2x4_classB_v1 B0_ref102_k1",
+ "purpose": "can the native (pytket level 0) form of a 28-qubit compressed circuit be checked against the exact state on the certified pruned sparse simulator (c2x4.evaluate.certified_state_check), as 2x2/2x3 are with a dense statevector?",
+ "exit_code": 124,
+ "meaning_of_exit_code": "124 = killed by `timeout` after 1700 s",
+ "stdout": [
+  "B0_ref102_k1 660 1760 compile 3.5 q1l True 0.7 json MB 0.287713 gz 0.009049 qasm MB 0.090671",
+  "qasm readback Q1L True 1.3951473992034533e-14 1.3"
+ ],
+ "result": "the sparse native-form simulation of the SMALLEST class (class B v1, 660 ZZ) did not finish within the 1700 s limit (after ~60 s of compile + Q1L + setup). 300 circuits at >= 27 min each is out of the 30-minute rule; the 2x4 exports therefore use --state-check q1l-only (as the frozen 2x4 set: statevector_engine null, Q1L only).",
+ "context": "noise/data/checks/native_compile_check.json records the same effect on the frozen 2x3 circuit: native-form sparse max support 442368 vs 998 in IR form"
+}

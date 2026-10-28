@@ -1,0 +1,22 @@
+{
+ "produced_by": "genie-opus session record (notes/013); facts from the process table and the job tmp dir",
+ "git_commit": "5e52dbe+dirty(study folders)",
+ "written_utc": "2026-10-28 20:47:49 UTC",
+ "seed": null,
+ "what": "local dry runs WITH Aer sampling of the 2x3 native exports (scripts/quantinuum_submit.py --dry-run --all, no --records-only)",
+ "why_slow": "the dry run samples with the A6 noise model (scripts/quantinuum_submit.py:run_aer, a6_noise_model: depolarizing rzz/rx/ry + readout), i.e. Aer noisy statevector trajectories, 200 shots x 46 circuits at 20 qubits",
+ "runs": [
+  {
+   "family": "compressed_circuit_llm_2x3_classA",
+   "cpus": "taskset -c 9 (1 core), --threads 1",
+   "outcome": "not finished; stopped by the 30-minute background limit of the session (1800 s)"
+  },
+  {
+   "family": "compressed_circuit_llm_2x3_classB",
+   "cpus": "taskset -c 0-7, --threads 8",
+   "outcome": "not finished after 16 min 16 s elapsed (ps etime); stopped by genie-opus (no progress output until the batch ends; 30-minute rule)"
+  }
+ ],
+ "replacement": "--records-only dry runs (job records, shots and formula HQC; no sampling), as for 2x4",
+ "for_comparison": "the 2x2 dry runs (12 qubits, 30 jobs) with Aer sampling took 72 s and 36 s (notes/012)"
+}

@@ -62,3 +62,10 @@ import results                                       # results.list_available() 
 - Owner request, plan and result `notes/011-2x2-families.md`; data in `../2x2_compression_using_ai_v1/` (README there).
 - Folder split into one folder per lattice: `notes/012-folder-split.md` (moves table, integrity checks
   `data/split_integrity_{before,after,compare}.json`, `data/split_dryrun_check.json`).
+
+## Native exports of the 2x3 and 2x4 compressed families — 2026-10-28
+
+- `notes/013-native-exports-2x3-2x4.md`: Quantinuum native exports for the H2-2SC syntax check, 2x4 in
+  `data/families/native_2x4/<family>/` (gzipped like the frozen 2x4 set), 2x3 in
+  `../2x3_compression_using_ai_v1/data/families/native_2x3/<family>/`; numbers `data/native_exports_2x3_2x4.json`,
+  load check `data/native_exports_load_check.json`, dry-run sessions `data/dryrun_native_2x4/`.

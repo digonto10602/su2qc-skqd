@@ -20,11 +20,13 @@ they are not substituted into any package gate or plan without the owner (`notes
 | path | what |
 |---|---|
 | `data/families/compressed_circuit_llm_2x3_classA.json.gz`, `..._classB.json.gz` | the frozen 2x3 families (44 circuits each; sha256 in `notes/009`) |
+| `data/families/native_2x3/<family>/` | Quantinuum native exports (2026-10-28, `notes/013`) in the on-disk format of the package's `data/quantinuum/circuits_2x3` (`index.json`, `<id>.json`, `<id>.qasm`, `<id>.manifest.json`, `CAL_zeros` / `CAL_x0` copied byte for byte); read by `scripts/quantinuum_submit.py` |
 | `data/c2x3/` | loop archives (`archive_L3_it1*.json`), certified verification (`eval_arch_L3_it1_*_pp2_all44_pruned.json`), MILP certificates (`cert_L3_it1_*.json`), Aer checks (`aer_*.json`), native counts (`native_*.json`), run logs |
 | `noise/data/results/2x3/<family>/<device>/<test>.json` | the noise study's 2x3 results (families `compressed_circuit_llm_2x3_class{A,B}` and the package's `frozen` 2x3 circuits; tests `accuracy`, `analytic_f`, `noise_behaviour`, `skqd_energy`, `engine_validation`); listed in `../2x4_compression_using_ai_v1/noise/data/results/index.json` |
 
-There are no separate 2x3 native exports (the native counts are `data/c2x3/native_*.json`).  Provenance fields inside
-the files still name the old location `2x4_compression_using_ai_v1/...`; they are left unchanged on purpose (the
+Native counts of the earlier C3 round are also in `data/c2x3/native_*.json`; the export logs and dry-run session records
+of `notes/013` are `data/c2x3/export_class{A,B}.log` and `data/c2x3/dryrun/`.  Provenance fields inside
+the moved files still name the old location `2x4_compression_using_ai_v1/...`; they are left unchanged on purpose (the
 sha256 of every moved file is unchanged).
 
 ## How to use (from the repository root)
