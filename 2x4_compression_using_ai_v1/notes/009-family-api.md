@@ -50,6 +50,10 @@ Other functions in the same module:
 | `compressed_circuit_llm_2x3_classB` | frozen at `390629e` (C3) | 44, 20 qubits | exact on own reference only | 309–465 |
 | `compressed_circuit_llm_2x2_classA` | frozen 2026-10-28 (owner request, `notes/011`) | 28 (5 references at $B=0$, 2 at $B=1$, $k=1..4$ — the frozen 2x2 list, ids identical incl. zero padding `B0_ref06_k1`), 12 qubits | operator-exact | 245–245 |
 | `compressed_circuit_llm_2x2_classB` | frozen 2026-10-28 (`notes/011`) | 28, 12 qubits | exact on own reference only | 55–162 |
+| `compressed_circuit_llm_2x2_classA_k5` | frozen 2026-10-28 (k = 5 add-on, `notes/014`) | 7 (one per reference of `_2x2_classA`, $k=5$ only: `B0_ref06_k5` ...), 12 qubits | operator-exact | 245–245 |
+| `compressed_circuit_llm_2x2_classB_k5` | frozen 2026-10-28 (`notes/014`) | 7, 12 qubits | exact on own reference only | 55–162 |
+| `compressed_circuit_llm_2x3_classA_k5` | frozen 2026-10-28 (`notes/014`) | 11 (one per reference of `_2x3_classA`, $k=5$ only), 20 qubits | operator-exact | 871–871 |
+| `compressed_circuit_llm_2x3_classB_k5` | frozen 2026-10-28 (`notes/014`) | 11, 20 qubits | exact on own reference only | 309–465 |
 
 The aliases without a version keep pointing to v1 (the reviewed it5 families); the owner decides when (if) they move.
 The 2x4 v2 and 2x3 counts come from `data/eval_arch_it6_*_pp2_all75_pruned.json` and
@@ -67,6 +71,10 @@ two-qubit depth equal the verification record.  File sha256 (the v1 files are un
 - `compressed_circuit_llm_2x3_classB.json.gz`: `0e75e43807b9086e41af77c778c0e5d32eecbdbfb953fbdb48fd17697e47ad62`
 - `compressed_circuit_llm_2x2_classA.json.gz`: `fbdd73b1ee35b0dbde838e7e8af37d678ca910d5f0fe5ef870cdaf3b6ea19e9c`
 - `compressed_circuit_llm_2x2_classB.json.gz`: `622f29d6829e0910565ec67d2c08308a40bff0d2703924a3b34a089476422367`
+- `compressed_circuit_llm_2x2_classA_k5.json.gz`: `1b1e8a7742e533f008c1906b3449ca6e9c8508312971d9ad9ef04384bfd085c4`
+- `compressed_circuit_llm_2x2_classB_k5.json.gz`: `5425dd4a52b792ef55f4d5798c81e00be4ece5fce36b8f71eac775f629775084`
+- `compressed_circuit_llm_2x3_classA_k5.json.gz`: `a89333b2c1458e09b728c1a14d6ad4899c8a9021f241634480c0eb647396efb3`
+- `compressed_circuit_llm_2x3_classB_k5.json.gz`: `6d1f880e608427f3c64c3ac0ccbfbdb4fd27dd53518dc5307e1a027dfbf4d8dc`
 
 **2x2 (added 2026-10-28, `notes/011`).**  Built by the production scripts with `--lx 2` (loop archive
 `../2x2_compression_using_ai_v1/data/c2x2/archive_L2_it1.json`, verification `../2x2_compression_using_ai_v1/data/c2x2/eval_arch_L2_it1_*_pp2_all28_pruned.json`, Aer
@@ -76,6 +84,15 @@ follow the package's `circuit_id` (`B{B}_ref{r:02d}_k{k}`); `Problem.tag` now ze
 2x3/2x4 id unchanged (all their references are $\ge 10$).  Quantinuum native exports in the exact on-disk format of
 `data/quantinuum/circuits_2x2` (read by `scripts/quantinuum_submit.py`): `../2x2_compression_using_ai_v1/data/families/native_2x2/<family>/`
 (`index.json`, `<id>.json`, `<id>.qasm`, `<id>.manifest.json`, plus byte-identical copies of `CAL_zeros` / `CAL_x0`).
+
+**k = 5 add-ons of 2x2 and 2x3 (added 2026-10-28, `notes/014`).**  The 2x2 and 2x3 families stop at $k=4$ (the
+frozen package lists do); their $k=5$ circuits are separate add-on families `<base>_k5`, one circuit per reference, built
+from the base family's own spec (same loop archive, same `pp2` pass) at $\theta=5\,dt$ with the base family's $dt$ (the
+frozen k = 1..4 manifests).  `freeze_family.py --kmin 5 --kmax 5 --addon-of <base>` refuses to write unless every
+circuit's gate skeleton and counts equal those of all four $k=1..4$ circuits of the same reference in the base file; the
+header carries `addon_of` (base file and its sha256) and each circuit's metadata an `addon` record.  The base files are
+not touched (their sha256 above is unchanged).  To get $k=1..5$ of a reference, load both families.  Native exports:
+`native_2x2/<name>/`, `native_2x3/<name>/`.
 
 Gate set of v2 and 2x3: as v1 plus `cz` (the JW conjugation) and `h` (the relative-phase ANDs of the flags); all are
 in the loader's converter.  The package's `ir_to_pytket` has no `cz`; `scripts/native_family.py` rewrites it as

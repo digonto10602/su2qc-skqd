@@ -5,6 +5,7 @@ Usage:
   python scripts/eval_family.py --family F2a --circuits all            # 60 circuits, k = 1..4
   python scripts/eval_family.py --family F2a --circuits 0:102:1,2:230:1 --kmax 5
   python scripts/eval_family.py --family F2a --circuits all --kmax 5 --label k5
+  python scripts/eval_family.py --lx 2 --family arch:L2_it1:operator:pp2 --kmin 5 --kmax 5 --prune-tau 1e-15 --label k5_pruned
 """
 from __future__ import annotations
 
@@ -52,6 +53,7 @@ def main():
     ap.add_argument("--family", required=True)
     ap.add_argument("--circuits", default="all", help="'all' or comma list twoB:ref:k")
     ap.add_argument("--kmax", type=int, default=4)
+    ap.add_argument("--kmin", type=int, default=1, help="with --circuits all: only k = kmin..kmax (k = 5 add-ons, notes/014)")
     ap.add_argument("--label", default="")
     ap.add_argument("--no-terms", action="store_true")
     ap.add_argument("--terms-only", action="store_true", help="A1 only (no full-circuit simulation)")
@@ -69,7 +71,7 @@ def main():
     else:
         fam = FAMILIES[args.family]
     if args.circuits == "all":
-        ids = P.circuit_ids(args.kmax)
+        ids = [x for x in P.circuit_ids(args.kmax) if x[2] >= args.kmin]
     else:
         ids = [tuple(int(v) for v in s.split(":")) for s in args.circuits.split(",")]
     out = {"family": args.family, "drop_diag": fam.get("drop_diag", False),
@@ -140,7 +142,7 @@ def main():
     label = f"_{args.label}" if args.label else ""
     p = write_json(os.path.join(lattice_data(args.lx), f"eval_{args.family.replace(':', '_')}{label}.json"), out,
                    produced_by="2x4_compression_using_ai_v1/scripts/eval_family.py",
-                   parameters={"family": args.family, "circuits": args.circuits, "kmax": args.kmax,
+                   parameters={"family": args.family, "circuits": args.circuits, "kmax": args.kmax, "kmin": args.kmin,
                                "g2": P.g2, "m": P.m, "dt": P.dt, "prune_tau": args.prune_tau, "lx": args.lx,
                                "lattice": P.lattice}, t_start=t_start)
     print("wrote", p)

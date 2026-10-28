@@ -49,6 +49,13 @@ behaviour is the default and unchanged):
   --ids a,b / --max-wall S      chunking: circuits whose manifest already exists are skipped (resume); index.json is
                                 written only once every circuit of the family has its manifest
 Calibration circuits are copied byte for byte also when gzipped (sha256 of the uncompressed text checked).
+
+Option added for the k = 5 add-on families of 2x2 / 2x3 (owner 2026-10-28, notes/014):
+  --addon                       the family holds ONLY circuits without a frozen counterpart (the k = 5 add-ons; the
+                                frozen 2x2 / 2x3 sets stop at k = 4).  Implies --extra-k and requires that no family id
+                                is in the frozen index.  dt of each circuit = the dt of the frozen manifest of the same
+                                (2B, reference) when the frozen index has no "dt" key (2x2 / 2x3), else the index dt
+                                (2x4, unchanged); reference_int checked against the same manifest.
 """
 from __future__ import annotations
 
@@ -182,6 +189,7 @@ def main():
     ap.add_argument("--device", default="H2-2")
     ap.add_argument("--frozen-suffix", default="")
     ap.add_argument("--extra-k", action="store_true")
+    ap.add_argument("--addon", action="store_true")
     ap.add_argument("--state-check", choices=("aer", "sparse", "q1l-only"), default="aer")
     ap.add_argument("--gzip", action="store_true")
     ap.add_argument("--ids", default="all")
@@ -211,7 +219,11 @@ def main():
         list(f_index["circuits"])
     ids = [cid for cid, _g, _md in fam]
     with_frozen = [cid for cid in ids if cid in set(frozen_ids)]
-    if with_frozen != frozen_ids:
+    if args.addon:
+        args.extra_k = True
+        if with_frozen:
+            raise SystemExit(f"--addon: {len(with_frozen)} family ids are in the frozen index ({with_frozen[:3]})")
+    elif with_frozen != frozen_ids:
         raise SystemExit(f"circuit ids/order differ from the frozen index: {with_frozen} vs {frozen_ids}")
     extra = [cid for cid in ids if cid not in set(frozen_ids)]
     if extra and not args.extra_k:
@@ -238,15 +250,21 @@ def main():
                            "n_zz": f_man["counts"]["n_zz"], "n_phasedx": f_man["counts"]["n_phasedx"],
                            "depth_2q": f_man["counts"]["depth_2q"]}
         else:
-            dt = float(f_index["dt"][str(md["twoB"])])
-            if dt != md["dt"]:
-                raise SystemExit(f"{cid}: dt {md['dt']!r} differs from the frozen index dt {dt!r}")
             sib = next(c for c in frozen_ids if c.startswith(f"B{md['twoB'] // 2}_ref") and
                        json.load(open(os.path.join(fdir, c + sfx + ".manifest.json")))["reference"] == md["reference"])
-            f_ref_int = int(json.load(open(os.path.join(fdir, sib + sfx + ".manifest.json")))["reference_int"])
+            sib_man = json.load(open(os.path.join(fdir, sib + sfx + ".manifest.json")))
+            if "dt" in f_index:
+                dt, dt_src = float(f_index["dt"][str(md["twoB"])]), f"frozen index dt[{md['twoB']}]"
+            else:
+                dt, dt_src = float(sib_man["dt"]), f"dt of the frozen manifest {sib + sfx}"
+            if dt != md["dt"]:
+                raise SystemExit(f"{cid}: dt {md['dt']!r} differs from the {dt_src} {dt!r}")
+            f_ref_int = int(sib_man["reference_int"])
+            k_frozen = max(f_index["built_k"]) if "built_k" in f_index else \
+                max(int(c.rsplit("_k", 1)[1]) for c in frozen_ids)
             counterpart = {"dir": os.path.relpath(fdir, ROOT), "id": None,
-                           "note": f"no frozen counterpart (the frozen set stops at k = {max(f_index.get('built_k', [0]))}); "
-                                   f"dt = frozen index dt[{md['twoB']}], reference_int checked against {sib + sfx}"}
+                           "note": f"no frozen counterpart (the frozen set stops at k = {k_frozen}); "
+                                   f"dt = {dt_src}, reference_int checked against {sib + sfx}"}
         g = [("cp", qs, math.pi) if nm == "cz" else (nm, qs, par) for nm, qs, par in g]
         pc = qn.ir_to_pytket(g, n, measure=True)
         cc = qn.compile_native(pc, args.device, 0)

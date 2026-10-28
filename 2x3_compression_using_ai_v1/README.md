@@ -20,6 +20,7 @@ they are not substituted into any package gate or plan without the owner (`notes
 | path | what |
 |---|---|
 | `data/families/compressed_circuit_llm_2x3_classA.json.gz`, `..._classB.json.gz` | the frozen 2x3 families (44 circuits each; sha256 in `notes/009`) |
+| `data/families/compressed_circuit_llm_2x3_classA_k5.json.gz`, `..._classB_k5.json.gz` | k = 5 add-on families (2026-10-28, `notes/014`): the k = 5 circuit of each of the 11 references, same archive choices and skeleton as the k = 1..4 families above (which are unchanged); native exports in `data/families/native_2x3/<family>_k5/` |
 | `data/families/native_2x3/<family>/` | Quantinuum native exports (2026-10-28, `notes/013`) in the on-disk format of the package's `data/quantinuum/circuits_2x3` (`index.json`, `<id>.json`, `<id>.qasm`, `<id>.manifest.json`, `CAL_zeros` / `CAL_x0` copied byte for byte); read by `scripts/quantinuum_submit.py` |
 | `data/c2x3/` | loop archives (`archive_L3_it1*.json`), certified verification (`eval_arch_L3_it1_*_pp2_all44_pruned.json`), MILP certificates (`cert_L3_it1_*.json`), Aer checks (`aer_*.json`), native counts (`native_*.json`), run logs |
 | `noise/data/results/2x3/<family>/<device>/<test>.json` | the noise study's 2x3 results (families `compressed_circuit_llm_2x3_class{A,B}` and the package's `frozen` 2x3 circuits; tests `accuracy`, `analytic_f`, `noise_behaviour`, `skqd_energy`, `engine_validation`); listed in `../2x4_compression_using_ai_v1/noise/data/results/index.json` |

@@ -19,6 +19,7 @@ any package gate or plan without the owner (`notes/008`).
 | path | what |
 |---|---|
 | `data/families/compressed_circuit_llm_2x2_classA.json.gz`, `..._classB.json.gz` | the frozen 2x2 families (28 circuits each; sha256 in `notes/009`) |
+| `data/families/compressed_circuit_llm_2x2_classA_k5.json.gz`, `..._classB_k5.json.gz` | k = 5 add-on families (2026-10-28, `notes/014`): the k = 5 circuit of each of the 7 references, same archive choices and skeleton as the k = 1..4 families above (which are unchanged); native exports in `data/families/native_2x2/<family>_k5/` |
 | `data/families/native_2x2/<family>/` | Quantinuum native exports in the on-disk format of the package's `data/quantinuum/circuits_2x2` (`index.json`, `<id>.json`, `<id>.qasm`, `<id>.manifest.json`, `CAL_*`); read by the package's `scripts/quantinuum_submit.py` |
 | `data/c2x2/` | loop archive (`archive_L2_it1.json`), certified verification (`eval_arch_L2_it1_*_pp2_all28_pruned.json`), MILP certificates (`cert_L2_it1_*.json`), Aer checks (`aer_*.json`), native counts (`native_*.json`), the summary of every number (`summary_2x2.json`), the dry-run session records (`dryrun/`), run logs |
 | `hardware/quantinuum_sc_20261028/compressed_circuit_llm_2x2_class{A,B}/` | the H2-2SC syntax-check runs of 2026-10-28 (`session.json`, `counts/`, `summary.json`, `account_before.json`, `account_after.json`); report `../reports/quantinuum_sc_20261028_2x2_frozen_vs_compressed.md` |

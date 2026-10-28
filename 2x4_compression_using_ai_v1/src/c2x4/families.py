@@ -20,6 +20,9 @@ Family names (owner rule, notes/008):
   compressed_circuit_llm_2x4_classA_v2 / _classB_v2                             C4 round (notes/010), when frozen
   compressed_circuit_llm_2x3_classA / _classB                                   C3 (2x3)
   compressed_circuit_llm_2x2_classA / _classB                                   2x2 (owner 2026-10-28, notes/011)
+  compressed_circuit_llm_2x2_classA_k5 / _classB_k5, compressed_circuit_llm_2x3_classA_k5 / _classB_k5
+      add-on families: the k = 5 circuit of every reference of the 2x2 / 2x3 family of the same class, same archive
+      choices, same skeleton, theta = 5 dt (owner 2026-10-28, notes/014); the k = 1..4 files are untouched
 
 Metadata keys per circuit (all plain Python types):
   circuit_id, lattice ("2x4" | "2x3" | "2x2"), family, class ("A" | "B"), version, twoB, reference (basis index),
@@ -54,6 +57,8 @@ FAMILY_NAMES = [
     "compressed_circuit_llm_2x4_classA_v2", "compressed_circuit_llm_2x4_classB_v2",
     "compressed_circuit_llm_2x3_classA", "compressed_circuit_llm_2x3_classB",
     "compressed_circuit_llm_2x2_classA", "compressed_circuit_llm_2x2_classB",
+    "compressed_circuit_llm_2x2_classA_k5", "compressed_circuit_llm_2x2_classB_k5",
+    "compressed_circuit_llm_2x3_classA_k5", "compressed_circuit_llm_2x3_classB_k5",
 ]
 
 CONTRACTS = {

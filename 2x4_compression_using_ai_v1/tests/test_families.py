@@ -40,7 +40,7 @@ def test_one_circuit_state(name):
     assert r["pass"], r
 
 
-@pytest.mark.parametrize("name", [n for n in available_families() if "2x2" in n])
+@pytest.mark.parametrize("name", [n for n in available_families() if "2x2" in n and not n.endswith("_k5")])
 def test_2x2_ids_match_frozen_and_state(name):
     """2x2 families (notes/011): circuit ids and order equal the frozen 2x2 index (zero-padded B0_ref06_k1 ...), dt
     equals the frozen manifests, and one circuit reproduces the package's exact coarse state."""
@@ -56,6 +56,33 @@ def test_2x2_ids_match_frozen_and_state(name):
         with open(os.path.join(fdir, cid + ".manifest.json")) as fh:
             assert json.load(fh)["dt"] == md["dt"], cid
     cid, g, md = [r for r in rows if r[0] == "B0_ref06_k2"][0]
+    ints, tgt = exact_target(md)
+    r = certified_state_check(g, md["n_qubits"], ints, tgt * np.exp(1j * md["global_phase_vs_target"]))
+    assert r["pass"], r
+
+
+@pytest.mark.parametrize("name", [n for n in available_families() if n.endswith("_k5")])
+def test_k5_addon_matches_base(name):
+    """k = 5 add-on families (notes/014): one circuit per reference of the base family, k = 5, same dt, theta = 5 dt,
+    counts and gate skeleton equal to every k = 1..4 circuit of the same reference, and one circuit reproduces the
+    package's exact coarse state."""
+    from c2x4.evaluate import certified_state_check
+    base = name[: -len("_k5")]
+    rows, brows = get_family_ir(name), get_family_ir(base)
+    refs = []
+    for _c, _g, md in brows:
+        if (md["twoB"], md["reference"]) not in refs:
+            refs.append((md["twoB"], md["reference"]))
+    assert [(md["twoB"], md["reference"]) for _c, _g, md in rows] == refs
+    for cid, g, md in rows:
+        assert md["k"] == 5 and cid.endswith("_k5") and md["theta"] == 5 * md["dt"]
+        sib = [(bg, bm) for _c, bg, bm in brows if (bm["twoB"], bm["reference"]) == (md["twoB"], md["reference"])]
+        assert sorted(bm["k"] for _bg, bm in sib) == [1, 2, 3, 4]
+        for bg, bm in sib:
+            assert bm["dt"] == md["dt"]
+            assert (bm["n_2q"], bm["n_1q"], bm["depth_2q"], bm["ops"]) == (md["n_2q"], md["n_1q"], md["depth_2q"], md["ops"])
+            assert [(a[0], [int(q) for q in a[1]]) for a in bg] == [(a[0], [int(q) for q in a[1]]) for a in g]
+    cid, g, md = rows[0]
     ints, tgt = exact_target(md)
     r = certified_state_check(g, md["n_qubits"], ints, tgt * np.exp(1j * md["global_phase_vs_target"]))
     assert r["pass"], r
