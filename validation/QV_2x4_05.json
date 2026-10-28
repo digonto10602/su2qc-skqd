@@ -1,0 +1,524 @@
+{
+ "gate": "QV_2x4_05",
+ "title": "QV_2x4_05: NAT: the 13 native structured k = 1 circuits slot 01 did not run (frozen source, R7) (prompts/36 section 4)",
+ "status": "FAIL",
+ "criteria": [
+  {
+   "name": "K1 every sampled circuit: max abs(dpsi) < 1e-10 (phase removed, on the codeword amplitudes) and leakage < 1e-9 against krylov.coarse_states (save_amplitudes route; a failure is a STOP)",
+   "value": {
+    "n": 0,
+    "max_dpsi": null,
+    "max_leakage": null
+   },
+   "threshold": "< 1e-10; < 1e-9",
+   "passed": true
+  },
+  {
+   "name": "K2 per-state test on the full sequence (|n/N - p| <= 5 sigma for p >= 1e-3), 0 failures; fraction outside the exact support 0; rejected 0",
+   "value": {
+    "failures": 0,
+    "max_z": null,
+    "outside": null,
+    "rejected": 0
+   },
+   "threshold": "0; 0; 0",
+   "passed": true
+  },
+  {
+   "name": "K3 decoder round trip: every accepted state re-encodes to its string (0 mismatches)",
+   "value": 0,
+   "threshold": "0",
+   "passed": true
+  },
+  {
+   "name": "K0 the prefix segments rebuild the counts of the first L outcomes at every prefix L (prompts/36a R15 (iii))",
+   "value": {},
+   "threshold": "all true",
+   "passed": true
+  },
+  {
+   "name": "M measure_sampling true on every sampled run (Aer metadata; false would re-simulate per shot: STOP the design)",
+   "value": {},
+   "threshold": "all true",
+   "passed": true
+  },
+  {
+   "name": "N1 every native run completed on the statevector route; the bar is recorded for Q0P_2x4 (R9)",
+   "value": {
+    "B0_ref16833_k1.structured:native": [
+     9.123668955701935e-13,
+     -1.2048140263232199e-12,
+     true
+    ],
+    "B0_ref11026_k1.structured:native": [
+     9.814236306145849e-13,
+     -1.3919976282750213e-12,
+     true
+    ],
+    "B0_ref6930_k1.structured:native": [
+     7.599565729048557e-13,
+     -1.546318628697918e-12,
+     true
+    ],
+    "B0_ref3166_k1.structured:native": [
+     6.022131558741733e-13,
+     -1.254774062431352e-12,
+     true
+    ],
+    "B0_ref2086_k1.structured:native": [
+     7.50422830570683e-13,
+     -1.525446435834965e-12,
+     true
+    ],
+    "B0_ref1338_k1.structured:native": [
+     6.616128178445102e-13,
+     -1.3293810496861624e-12,
+     true
+    ],
+    "B0_ref682_k1.structured:native": [
+     6.825971885477127e-13,
+     -1.3851142455223453e-12,
+     true
+    ],
+    "B0_ref474_k1.structured:native": [
+     6.912266829136586e-13,
+     -1.3802292642139946e-12,
+     true
+    ],
+    "B0_ref345_k1.structured:native": [
+     9.837701279125959e-13,
+     -1.404876215360673e-12,
+     true
+    ],
+    "B0_ref281_k1.structured:native": [
+     9.819989539962871e-13,
+     -1.3853362901272703e-12,
+     true
+    ],
+    "B1_ref118_k1.structured:native": [
+     6.809935827966293e-13,
+     -7.382983113757291e-13,
+     true
+    ],
+    "B1_ref110_k1.structured:native": [
+     5.761863898972171e-13,
+     -8.768541448489486e-13,
+     true
+    ],
+    "B1_ref103_k1.structured:native": [
+     9.813327257031485e-13,
+     -8.009148899645879e-13,
+     true
+    ]
+   },
+   "threshold": "completed",
+   "passed": true
+  },
+  {
+   "name": "S1 the run happened on the GPU",
+   "value": "GPU (available ['CPU', 'GPU'])",
+   "threshold": "GPU",
+   "passed": true
+  },
+  {
+   "name": "S2 wall <= min(walltime, 3600 s) and <= 1.1 x predicted + 120 s",
+   "value": "1283 s (predicted 2629.351849542787)",
+   "threshold": "inside",
+   "passed": true
+  },
+  {
+   "name": "S3 policy telemetry non-null (wall, phases, GPUs, s per circuit, s per shot, peak GPU MiB, mean utilisation)",
+   "value": {
+    "wall_s": 1283.16548037529,
+    "gpus": 1,
+    "seconds_per_circuit": 90.02480360177847,
+    "seconds_per_shot": null,
+    "peak_gpu_memory_mib": 4557.0,
+    "mean_gpu_utilization": 66.61538461538461
+   },
+   "threshold": "non-null",
+   "passed": false
+  },
+  {
+   "name": "S4 every seed recorded (chunk_seed(s0, circuit index, 0, shots))",
+   "value": true,
+   "threshold": "true",
+   "passed": true
+  },
+  {
+   "name": "S5 OOM retries recorded",
+   "value": "0 recorded",
+   "threshold": "each split recorded",
+   "passed": true
+  },
+  {
+   "name": "S6 shots >= the part's shots on every sampled run",
+   "value": {},
+   "threshold": ">= shots",
+   "passed": true
+  }
+ ],
+ "data": {
+  "prompt": "prompts/36_2x4_full_pipeline.md section 4",
+  "schema": "prompts/36",
+  "token": "QV_2x4_05",
+  "dry_run": false,
+  "lattice": "2x4",
+  "qpu_seconds": 0,
+  "hqc": 0,
+  "per_run": {
+   "B0_ref16833_k1.structured:native": {
+    "label": "B0_ref16833_k1.structured:native",
+    "base_id": "B0_ref16833_k1",
+    "kind": "native",
+    "twoB": 0,
+    "reference": 16833,
+    "k": 1,
+    "n_instructions": 847702,
+    "qpy_gz_sha256": "4645b406ec906bfe4d44aca499d9a034fe733fbcbba5aea6ec4b036633b13943",
+    "load_s": 8.11239242553711,
+    "source": "structured",
+    "max_abs_dpsi": 9.123668955701935e-13,
+    "leakage": -1.2048140263232199e-12,
+    "meets_bar": true,
+    "aer_success": true,
+    "seconds": 89.044766664505
+   },
+   "B0_ref11026_k1.structured:native": {
+    "label": "B0_ref11026_k1.structured:native",
+    "base_id": "B0_ref11026_k1",
+    "kind": "native",
+    "twoB": 0,
+    "reference": 11026,
+    "k": 1,
+    "n_instructions": 847702,
+    "qpy_gz_sha256": "b08b4e80e67d66a490a416ba16c4ed40b774395d5294a699c6c1597af8e6fca9",
+    "load_s": 8.047696590423584,
+    "source": "structured",
+    "max_abs_dpsi": 9.814236306145849e-13,
+    "leakage": -1.3919976282750213e-12,
+    "meets_bar": true,
+    "aer_success": true,
+    "seconds": 89.94723224639893
+   },
+   "B0_ref6930_k1.structured:native": {
+    "label": "B0_ref6930_k1.structured:native",
+    "base_id": "B0_ref6930_k1",
+    "kind": "native",
+    "twoB": 0,
+    "reference": 6930,
+    "k": 1,
+    "n_instructions": 847702,
+    "qpy_gz_sha256": "959522780e3fe5c2596b7b26023d144616b0d2c4b363af5a0247a0da4e7462ae",
+    "load_s": 8.059445858001709,
+    "source": "structured",
+    "max_abs_dpsi": 7.599565729048557e-13,
+    "leakage": -1.546318628697918e-12,
+    "meets_bar": true,
+    "aer_success": true,
+    "seconds": 89.60981678962708
+   },
+   "B0_ref3166_k1.structured:native": {
+    "label": "B0_ref3166_k1.structured:native",
+    "base_id": "B0_ref3166_k1",
+    "kind": "native",
+    "twoB": 0,
+    "reference": 3166,
+    "k": 1,
+    "n_instructions": 847702,
+    "qpy_gz_sha256": "a5d84f7318b84c76177b2f7dc6072c4692aa020424ba4c40d48a7694e961a777",
+    "load_s": 8.048406600952148,
+    "source": "structured",
+    "max_abs_dpsi": 6.022131558741733e-13,
+    "leakage": -1.254774062431352e-12,
+    "meets_bar": true,
+    "aer_success": true,
+    "seconds": 89.64443945884705
+   },
+   "B0_ref2086_k1.structured:native": {
+    "label": "B0_ref2086_k1.structured:native",
+    "base_id": "B0_ref2086_k1",
+    "kind": "native",
+    "twoB": 0,
+    "reference": 2086,
+    "k": 1,
+    "n_instructions": 847702,
+    "qpy_gz_sha256": "8d76b9445508f92aa4ce68041d8422bee9e7c990ec3bec89cd7c459ec1e84da4",
+    "load_s": 8.247453689575195,
+    "source": "structured",
+    "max_abs_dpsi": 7.50422830570683e-13,
+    "leakage": -1.525446435834965e-12,
+    "meets_bar": true,
+    "aer_success": true,
+    "seconds": 89.69043374061584
+   },
+   "B0_ref1338_k1.structured:native": {
+    "label": "B0_ref1338_k1.structured:native",
+    "base_id": "B0_ref1338_k1",
+    "kind": "native",
+    "twoB": 0,
+    "reference": 1338,
+    "k": 1,
+    "n_instructions": 847702,
+    "qpy_gz_sha256": "5dfd5e1f09a7c099f973f997932507e2a60554ea9974de0a34b4991dbb0b301a",
+    "load_s": 7.974598169326782,
+    "source": "structured",
+    "max_abs_dpsi": 6.616128178445102e-13,
+    "leakage": -1.3293810496861624e-12,
+    "meets_bar": true,
+    "aer_success": true,
+    "seconds": 89.7374358177185
+   },
+   "B0_ref682_k1.structured:native": {
+    "label": "B0_ref682_k1.structured:native",
+    "base_id": "B0_ref682_k1",
+    "kind": "native",
+    "twoB": 0,
+    "reference": 682,
+    "k": 1,
+    "n_instructions": 847702,
+    "qpy_gz_sha256": "13907baf23985b5e40a352fc0bbfbce22017c0e5b49ebdb7de8cc849cb5f545f",
+    "load_s": 8.012503147125244,
+    "source": "structured",
+    "max_abs_dpsi": 6.825971885477127e-13,
+    "leakage": -1.3851142455223453e-12,
+    "meets_bar": true,
+    "aer_success": true,
+    "seconds": 89.9147641658783
+   },
+   "B0_ref474_k1.structured:native": {
+    "label": "B0_ref474_k1.structured:native",
+    "base_id": "B0_ref474_k1",
+    "kind": "native",
+    "twoB": 0,
+    "reference": 474,
+    "k": 1,
+    "n_instructions": 847702,
+    "qpy_gz_sha256": "a40c2ded6a54392f7b4dfce29a14080e48919b32d99ca7473577e86d0b6ab6d3",
+    "load_s": 8.559565305709839,
+    "source": "structured",
+    "max_abs_dpsi": 6.912266829136586e-13,
+    "leakage": -1.3802292642139946e-12,
+    "meets_bar": true,
+    "aer_success": true,
+    "seconds": 91.55374550819397
+   },
+   "B0_ref345_k1.structured:native": {
+    "label": "B0_ref345_k1.structured:native",
+    "base_id": "B0_ref345_k1",
+    "kind": "native",
+    "twoB": 0,
+    "reference": 345,
+    "k": 1,
+    "n_instructions": 847702,
+    "qpy_gz_sha256": "ed3b1c490f969fa803155a5bdfe8ad911fde2853302ec80f119a269027e845f4",
+    "load_s": 8.492156028747559,
+    "source": "structured",
+    "max_abs_dpsi": 9.837701279125959e-13,
+    "leakage": -1.404876215360673e-12,
+    "meets_bar": true,
+    "aer_success": true,
+    "seconds": 90.19576597213745
+   },
+   "B0_ref281_k1.structured:native": {
+    "label": "B0_ref281_k1.structured:native",
+    "base_id": "B0_ref281_k1",
+    "kind": "native",
+    "twoB": 0,
+    "reference": 281,
+    "k": 1,
+    "n_instructions": 847702,
+    "qpy_gz_sha256": "be53b57e7426100d2c0b5019ee842a2b1cbb6fda1b3b27eb4265937a0474dec3",
+    "load_s": 8.244762420654297,
+    "source": "structured",
+    "max_abs_dpsi": 9.819989539962871e-13,
+    "leakage": -1.3853362901272703e-12,
+    "meets_bar": true,
+    "aer_success": true,
+    "seconds": 90.35264897346497
+   },
+   "B1_ref118_k1.structured:native": {
+    "label": "B1_ref118_k1.structured:native",
+    "base_id": "B1_ref118_k1",
+    "kind": "native",
+    "twoB": 2,
+    "reference": 118,
+    "k": 1,
+    "n_instructions": 847702,
+    "qpy_gz_sha256": "55ec151bb4e02fbbb98c3c62df707c3500f477bd051d1f48f85beafbc137cc8d",
+    "load_s": 8.31446886062622,
+    "source": "structured",
+    "max_abs_dpsi": 6.809935827966293e-13,
+    "leakage": -7.382983113757291e-13,
+    "meets_bar": true,
+    "aer_success": true,
+    "seconds": 90.24920535087585
+   },
+   "B1_ref110_k1.structured:native": {
+    "label": "B1_ref110_k1.structured:native",
+    "base_id": "B1_ref110_k1",
+    "kind": "native",
+    "twoB": 2,
+    "reference": 110,
+    "k": 1,
+    "n_instructions": 847702,
+    "qpy_gz_sha256": "f25e4f0386a93a6d5b8b53f79bc1aee9fa5699bfb1f34f60d6d9cec143944d6e",
+    "load_s": 8.353801965713501,
+    "source": "structured",
+    "max_abs_dpsi": 5.761863898972171e-13,
+    "leakage": -8.768541448489486e-13,
+    "meets_bar": true,
+    "aer_success": true,
+    "seconds": 90.2608585357666
+   },
+   "B1_ref103_k1.structured:native": {
+    "label": "B1_ref103_k1.structured:native",
+    "base_id": "B1_ref103_k1",
+    "kind": "native",
+    "twoB": 2,
+    "reference": 103,
+    "k": 1,
+    "n_instructions": 847702,
+    "qpy_gz_sha256": "2a87ee5b17438c6a4e03c80f78f1c209ea7ed24359d436820dbef2ec2a1eaa0a",
+    "load_s": 8.55952763557434,
+    "source": "structured",
+    "max_abs_dpsi": 9.813327257031485e-13,
+    "leakage": -8.009148899645879e-13,
+    "meets_bar": true,
+    "aer_success": true,
+    "seconds": 90.12133359909058
+   }
+  },
+  "run": {
+   "engine": "AerSimulator statevector double, device GPU, cuStateVec",
+   "device": "GPU",
+   "available_devices": [
+    "CPU",
+    "GPU"
+   ],
+   "gpus": 1,
+   "slurm": {
+    "gpus_per_task": null,
+    "gpus": 1,
+    "gpus_on_node": 1,
+    "cuda_visible_devices": "0",
+    "tasks": 1,
+    "rank": 0,
+    "cpus_per_task": 32,
+    "nodelist": "nid002592"
+   },
+   "wall_s": 1283.16548037529,
+   "phases": {
+    "load_s": 105.91357064247131,
+    "statevector_and_sampling_s": 1170.3224468231201,
+    "sampling_s_aer": 0.0,
+    "compare_s": 0.0
+   },
+   "seconds_per_circuit": 90.02480360177847,
+   "seconds_per_shot": null,
+   "s_per_instruction": 0.0001061986448088815,
+   "peak_gpu_memory_mib": 4557.0,
+   "mean_gpu_utilization": 66.61538461538461,
+   "gpu_telemetry": {
+    "source": "/pscratch/sd/d/digonto/skqd-ci-runs/261222ce498c-20261026190729-QV_2x4_05/gpu_telemetry.csv",
+    "samples": 130,
+    "peak_memory_mib": 4557.0,
+    "mean_utilization_pct": 66.61538461538461,
+    "max_utilization_pct": 100.0
+   },
+   "gpu_node_hours": 0.35643485565980276,
+   "E_p": null,
+   "E_p_note": "not measured: one task",
+   "oom_retries": [],
+   "prediction": {
+    "statevector_s": {
+     "ratio_of_totals": 1692.3910474155532,
+     "S2_2x4_rate": 2561.751849542787,
+     "fit": 1035.6499305243613
+    },
+    "statevector_max_model": "S2_2x4_rate",
+    "load_s": 53.3,
+    "compare_s": 14.3,
+    "shots": 0,
+    "sampling_s_assumed": 0.0,
+    "sampling_s_slow": 0.0,
+    "predicted_s": 2629.351849542787,
+    "predicted_s_slow_sampling": 2629.351849542787,
+    "budget_s": 2700.0,
+    "slow_budget_s": 3300.0,
+    "fits": true,
+    "rule": "prompts/36a R14"
+   },
+   "ci": {
+    "CI_GATE": "QV_2x4_05",
+    "SLURM_JOB_ID": "60327711",
+    "SLURM_JOB_NODELIST": "nid002592"
+   },
+   "versions": {
+    "python": "3.12.14",
+    "qiskit": "1.4.3",
+    "qiskit-aer": null,
+    "numpy": "2.5.3",
+    "scipy": "1.18.1"
+   }
+  },
+  "s0": 38800000,
+  "part": {
+   "slot": "QV_2x4_05",
+   "schema": "prompts/36",
+   "prompt": "prompts/36a_CV_2x4_plan_fix_20261019.md R13 / R14",
+   "lattice": "2x4",
+   "content": "NAT: the 13 native structured k = 1 circuits slot 01 did not run (frozen source, R7)",
+   "family": "native",
+   "plan_source": "validation/CV_2x4_plan.json data.plan.final",
+   "s_by_sector": {
+    "B=0": 1,
+    "B=1": 12
+   },
+   "status": "ready",
+   "native_status": "ready: frozen source structured (validation/QV_2x4_01.json, stop false)",
+   "pairs": [],
+   "prediction": {
+    "statevector_s": {
+     "ratio_of_totals": 1692.3910474155532,
+     "S2_2x4_rate": 2561.751849542787,
+     "fit": 1035.6499305243613
+    },
+    "statevector_max_model": "S2_2x4_rate",
+    "load_s": 53.3,
+    "compare_s": 14.3,
+    "shots": 0,
+    "sampling_s_assumed": 0.0,
+    "sampling_s_slow": 0.0,
+    "predicted_s": 2629.351849542787,
+    "predicted_s_slow_sampling": 2629.351849542787,
+    "budget_s": 2700.0,
+    "slow_budget_s": 3300.0,
+    "fits": true,
+    "rule": "prompts/36a R14"
+   },
+   "seed_rule": "aer seed of chunk i of circuit c = s0 * 1e4 + c * 1e6 + i * stride, stride = chunk size, s0 = 33 000 000 + 1e5 x token index (prompts/33 2.3 s0; the circuit/chunk offsets are widened from 1e3 c so that circuits, chunks, tokens and the a/b halves are disjoint for <= 1e6 shots per circuit: the literal s0 + 1e3 c + i stride overlaps above 1000 shots per circuit).  prompts/33b R4: every part of a split class-4 run (part 1 on the F token, parts >= 2 on any C4_PART slot) uses s0 of the run's OWN F token, i = the chunk's index in the UNSPLIT chunk plan and stride = the sizing's chunk, so the parts concatenate to the unsplit run seed for seed and a slot can be re-used; the run's CV3 equal-shots sample uses the same s0 with circuit offsets 100 (k <= 4) / 200 (k = 5); an f-cell slot uses the slot's own s0 with circuit offset 4 x the cell's global index",
+   "s0": 38800000,
+   "token_index": 58,
+   "created": "2026-10-21 14:16:14 UTC",
+   "git_commit": "230f574"
+  },
+  "stop": {
+   "K1": false,
+   "measure_sampling": false
+  },
+  "segments_cumulative_check": true,
+  "prefix_lengths_dropped": {},
+  "segments_rule": "per run, `segments` tile [0, shots) in shot order with boundaries at every prefix length, at shots - uniform_shots and at shots; counts at a prefix L = the sum of the segments that end at or before L; the last `uniform_shots` are the uniform 2e5-per-sector block"
+ },
+ "runtime_s": 1283.16548037529,
+ "environment": {
+  "python": "3.12.14",
+  "numpy": "2.5.3",
+  "scipy": "1.18.1",
+  "platform": "Linux-6.4.0-150600.23.135_15.0.44-cray_shasta_c-x86_64-with-glibc2.38",
+  "cpu_count": 128,
+  "git_commit": "n/a",
+  "timestamp": "2026-10-26 13:25:17 PDT"
+ }
+}
