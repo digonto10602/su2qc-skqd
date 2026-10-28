@@ -1,0 +1,613 @@
+{
+ "title": "H2-2SC syntax check of the frozen 2x3 k=5 set (first pass + one retry of the 3 INTEGRATION_TIMEOUT jobs)",
+ "created": "2026-10-28 23:29:34 UTC",
+ "git_commit": "14cc187",
+ "produced_by": "scripts/quantinuum_submit.py --syntax-check --device H2-2SC --circuits data/quantinuum/circuits_2x3_k5 --all --max-cost 1100 --project su2qc-skqd-2x3-frozen-k5 (shots: script default 200); then --retrieve; per-job fields from qnx.jobs.status / qnx.jobs.cost_confidence (qnexus 0.51.0)",
+ "device_name": "H2-2SC",
+ "circuits_dir": "data/quantinuum/circuits_2x3_k5",
+ "index_sha256": "bb942755df96eac922db60cce7c962678960edf2ff205fce3294039b72da681d",
+ "n_jobs": 13,
+ "n_completed": 13,
+ "n_error": 0,
+ "n_all_zero": 13,
+ "shots_per_job": [
+  200
+ ],
+ "total_sc_cost_hqc": 10974.24,
+ "total_formula_hqc": 10974.24,
+ "total_sc_cost_hqc_28_lattice": 10948.2,
+ "total_formula_hqc_28_lattice": 10948.2,
+ "max_abs_sc_minus_formula": 1.1368683772161603e-13,
+ "merged_from": [
+  "summary_first_pass.json",
+  "retry1/summary.json"
+ ],
+ "retry": {
+  "ids": [
+   "B0_ref117_k5",
+   "B0_ref795_k5",
+   "B1_ref29_k5"
+  ],
+  "reason": "first-pass jobs ERROR with error_detail 'Submission error: {\"error\":{\"code\":\"INTEGRATION_TIMEOUT\", \"text\": \"Endpoint request timed out\"}} (code: 1)'",
+  "produced_by": "scripts/quantinuum_submit.py --syntax-check --device H2-2SC --circuits data/quantinuum/circuits_2x3_k5 --all --max-cost 1100 --project su2qc-skqd-2x3-frozen-k5 (shots: script default 200); then --retrieve; per-job fields from qnx.jobs.status / qnx.jobs.cost_confidence (qnexus 0.51.0)",
+  "session": "retry1/session.json"
+ },
+ "n_error_first_pass": 3,
+ "jobs": [
+  {
+   "circuit_id": "B0_ref25_k5",
+   "job_id": "3802b9e0-4a78-49d8-b208-16b48899602f",
+   "device_name": "H2-2SC",
+   "status": "COMPLETED",
+   "message": "The job is completed.",
+   "error_detail": null,
+   "shots": 200,
+   "max_cost": 1100.0,
+   "sc_cost_hqc": 997.0,
+   "sc_cost_confidence": [
+    -1.0
+   ],
+   "formula_hqc_per_shot": 4.96,
+   "formula_hqc_job": 997.0,
+   "sc_minus_formula": 0.0,
+   "native_counts": {
+    "n_phasedx": 3020,
+    "n_rz": 4259,
+    "n_zz": 2158,
+    "n_zzphase": 2158,
+    "n_zzmax": 0,
+    "n_meas": 20,
+    "n_qubits": 20,
+    "depth": 5645,
+    "depth_2q": 1925,
+    "ops": {
+     "Measure": 20,
+     "PhasedX": 3020,
+     "Rz": 4259,
+     "ZZPhase": 2158
+    }
+   },
+   "counts": {
+    "00000000000000000000": 200
+   },
+   "all_zero_results": true,
+   "n_shots_returned": 200,
+   "completed_time": "2026-10-28 22:53:33.539479+00:00",
+   "submitted_time": "2026-10-28 22:52:44.721006+00:00",
+   "attempt": 1,
+   "counts_file": "counts/B0_ref25_k5.json"
+  },
+  {
+   "circuit_id": "B0_ref795_k5",
+   "job_id": "eb84df57-414e-4d26-b5bf-6d0781e7871f",
+   "device_name": "H2-2SC",
+   "status": "COMPLETED",
+   "message": "The job is completed.",
+   "error_detail": null,
+   "shots": 200,
+   "max_cost": 1100.0,
+   "sc_cost_hqc": 997.0,
+   "sc_cost_confidence": [
+    -1.0
+   ],
+   "formula_hqc_per_shot": 4.96,
+   "formula_hqc_job": 997.0,
+   "sc_minus_formula": 0.0,
+   "native_counts": {
+    "n_phasedx": 3020,
+    "n_rz": 4260,
+    "n_zz": 2158,
+    "n_zzphase": 2158,
+    "n_zzmax": 0,
+    "n_meas": 20,
+    "n_qubits": 20,
+    "depth": 5646,
+    "depth_2q": 1925,
+    "ops": {
+     "Measure": 20,
+     "PhasedX": 3020,
+     "Rz": 4260,
+     "ZZPhase": 2158
+    }
+   },
+   "counts": {
+    "00000000000000000000": 200
+   },
+   "all_zero_results": true,
+   "n_shots_returned": 200,
+   "completed_time": "2026-10-28 23:28:39.183549+00:00",
+   "submitted_time": "2026-10-28 23:27:58.139547+00:00",
+   "attempt": 2,
+   "first_attempt": {
+    "job_id": "9c4efc0e-8dcd-4906-a76a-11462b01dcb2",
+    "status": "ERROR",
+    "message": "Program has encountered an error",
+    "error_detail": "Submission error: {\"error\":{\"code\":\"INTEGRATION_TIMEOUT\", \"text\": \"Endpoint request timed out\"}} (code: 1)",
+    "submitted_time": "2026-10-28 22:52:47.452381+00:00"
+   },
+   "counts_file": "retry1/counts/B0_ref795_k5.json"
+  },
+  {
+   "circuit_id": "B0_ref525_k5",
+   "job_id": "566ea270-4a8d-47f2-89e7-04940c817f53",
+   "device_name": "H2-2SC",
+   "status": "COMPLETED",
+   "message": "The job is completed.",
+   "error_detail": null,
+   "shots": 200,
+   "max_cost": 1100.0,
+   "sc_cost_hqc": 997.16,
+   "sc_cost_confidence": [
+    -1.0
+   ],
+   "formula_hqc_per_shot": 4.9608,
+   "formula_hqc_job": 997.16,
+   "sc_minus_formula": 0.0,
+   "native_counts": {
+    "n_phasedx": 3024,
+    "n_rz": 4259,
+    "n_zz": 2158,
+    "n_zzphase": 2158,
+    "n_zzmax": 0,
+    "n_meas": 20,
+    "n_qubits": 20,
+    "depth": 5646,
+    "depth_2q": 1925,
+    "ops": {
+     "Measure": 20,
+     "PhasedX": 3024,
+     "Rz": 4259,
+     "ZZPhase": 2158
+    }
+   },
+   "counts": {
+    "00000000000000000000": 200
+   },
+   "all_zero_results": true,
+   "n_shots_returned": 200,
+   "completed_time": "2026-10-28 22:53:35.911996+00:00",
+   "submitted_time": "2026-10-28 22:52:50.364915+00:00",
+   "attempt": 1,
+   "counts_file": "counts/B0_ref525_k5.json"
+  },
+  {
+   "circuit_id": "B0_ref333_k5",
+   "job_id": "56f760be-5d42-42ef-833c-5380209dafcc",
+   "device_name": "H2-2SC",
+   "status": "COMPLETED",
+   "message": "The job is completed.",
+   "error_detail": null,
+   "shots": 200,
+   "max_cost": 1100.0,
+   "sc_cost_hqc": 997.12,
+   "sc_cost_confidence": [
+    -1.0
+   ],
+   "formula_hqc_per_shot": 4.9606,
+   "formula_hqc_job": 997.1200000000001,
+   "sc_minus_formula": -1.1368683772161603e-13,
+   "native_counts": {
+    "n_phasedx": 3023,
+    "n_rz": 4259,
+    "n_zz": 2158,
+    "n_zzphase": 2158,
+    "n_zzmax": 0,
+    "n_meas": 20,
+    "n_qubits": 20,
+    "depth": 5646,
+    "depth_2q": 1925,
+    "ops": {
+     "Measure": 20,
+     "PhasedX": 3023,
+     "Rz": 4259,
+     "ZZPhase": 2158
+    }
+   },
+   "counts": {
+    "00000000000000000000": 200
+   },
+   "all_zero_results": true,
+   "n_shots_returned": 200,
+   "completed_time": "2026-10-28 22:54:09.918745+00:00",
+   "submitted_time": "2026-10-28 22:52:53.138733+00:00",
+   "attempt": 1,
+   "counts_file": "counts/B0_ref333_k5.json"
+  },
+  {
+   "circuit_id": "B0_ref169_k5",
+   "job_id": "088cefab-7fe5-4bac-a3e0-ce5ea6c2f56a",
+   "device_name": "H2-2SC",
+   "status": "COMPLETED",
+   "message": "The job is completed.",
+   "error_detail": null,
+   "shots": 200,
+   "max_cost": 1100.0,
+   "sc_cost_hqc": 997.08,
+   "sc_cost_confidence": [
+    -1.0
+   ],
+   "formula_hqc_per_shot": 4.9604,
+   "formula_hqc_job": 997.0799999999999,
+   "sc_minus_formula": 1.1368683772161603e-13,
+   "native_counts": {
+    "n_phasedx": 3022,
+    "n_rz": 4260,
+    "n_zz": 2158,
+    "n_zzphase": 2158,
+    "n_zzmax": 0,
+    "n_meas": 20,
+    "n_qubits": 20,
+    "depth": 5646,
+    "depth_2q": 1925,
+    "ops": {
+     "Measure": 20,
+     "PhasedX": 3022,
+     "Rz": 4260,
+     "ZZPhase": 2158
+    }
+   },
+   "counts": {
+    "00000000000000000000": 200
+   },
+   "all_zero_results": true,
+   "n_shots_returned": 200,
+   "completed_time": "2026-10-28 22:54:21.067528+00:00",
+   "submitted_time": "2026-10-28 22:52:55.486792+00:00",
+   "attempt": 1,
+   "counts_file": "counts/B0_ref169_k5.json"
+  },
+  {
+   "circuit_id": "B0_ref117_k5",
+   "job_id": "c07de84e-d53b-4ed8-9d13-6954de1f7c92",
+   "device_name": "H2-2SC",
+   "status": "COMPLETED",
+   "message": "The job is completed.",
+   "error_detail": null,
+   "shots": 200,
+   "max_cost": 1100.0,
+   "sc_cost_hqc": 997.08,
+   "sc_cost_confidence": [
+    -1.0
+   ],
+   "formula_hqc_per_shot": 4.9604,
+   "formula_hqc_job": 997.0799999999999,
+   "sc_minus_formula": 1.1368683772161603e-13,
+   "native_counts": {
+    "n_phasedx": 3022,
+    "n_rz": 4259,
+    "n_zz": 2158,
+    "n_zzphase": 2158,
+    "n_zzmax": 0,
+    "n_meas": 20,
+    "n_qubits": 20,
+    "depth": 5645,
+    "depth_2q": 1925,
+    "ops": {
+     "Measure": 20,
+     "PhasedX": 3022,
+     "Rz": 4259,
+     "ZZPhase": 2158
+    }
+   },
+   "counts": {
+    "00000000000000000000": 200
+   },
+   "all_zero_results": true,
+   "n_shots_returned": 200,
+   "completed_time": "2026-10-28 23:28:40.900851+00:00",
+   "submitted_time": "2026-10-28 23:28:01.289942+00:00",
+   "attempt": 2,
+   "first_attempt": {
+    "job_id": "322240a3-dbae-48f9-b660-ea89f5bba363",
+    "status": "ERROR",
+    "message": "Program has encountered an error",
+    "error_detail": "Submission error: {\"error\":{\"code\":\"INTEGRATION_TIMEOUT\", \"text\": \"Endpoint request timed out\"}} (code: 1)",
+    "submitted_time": "2026-10-28 22:52:58.069966+00:00"
+   },
+   "counts_file": "retry1/counts/B0_ref117_k5.json"
+  },
+  {
+   "circuit_id": "B0_ref86_k5",
+   "job_id": "f3a668e4-7a82-4a94-8f30-549030c9efef",
+   "device_name": "H2-2SC",
+   "status": "COMPLETED",
+   "message": "The job is completed.",
+   "error_detail": null,
+   "shots": 200,
+   "max_cost": 1100.0,
+   "sc_cost_hqc": 997.2,
+   "sc_cost_confidence": [
+    -1.0
+   ],
+   "formula_hqc_per_shot": 4.961,
+   "formula_hqc_job": 997.2,
+   "sc_minus_formula": 0.0,
+   "native_counts": {
+    "n_phasedx": 3025,
+    "n_rz": 4258,
+    "n_zz": 2158,
+    "n_zzphase": 2158,
+    "n_zzmax": 0,
+    "n_meas": 20,
+    "n_qubits": 20,
+    "depth": 5645,
+    "depth_2q": 1925,
+    "ops": {
+     "Measure": 20,
+     "PhasedX": 3025,
+     "Rz": 4258,
+     "ZZPhase": 2158
+    }
+   },
+   "counts": {
+    "00000000000000000000": 200
+   },
+   "all_zero_results": true,
+   "n_shots_returned": 200,
+   "completed_time": "2026-10-28 22:54:12.449492+00:00",
+   "submitted_time": "2026-10-28 22:53:37.543568+00:00",
+   "attempt": 1,
+   "counts_file": "counts/B0_ref86_k5.json"
+  },
+  {
+   "circuit_id": "B0_ref70_k5",
+   "job_id": "e1ea215f-a6c0-4c78-819c-db06e3de5375",
+   "device_name": "H2-2SC",
+   "status": "COMPLETED",
+   "message": "The job is completed.",
+   "error_detail": null,
+   "shots": 200,
+   "max_cost": 1100.0,
+   "sc_cost_hqc": 997.12,
+   "sc_cost_confidence": [
+    -1.0
+   ],
+   "formula_hqc_per_shot": 4.9606,
+   "formula_hqc_job": 997.1200000000001,
+   "sc_minus_formula": -1.1368683772161603e-13,
+   "native_counts": {
+    "n_phasedx": 3023,
+    "n_rz": 4259,
+    "n_zz": 2158,
+    "n_zzphase": 2158,
+    "n_zzmax": 0,
+    "n_meas": 20,
+    "n_qubits": 20,
+    "depth": 5645,
+    "depth_2q": 1925,
+    "ops": {
+     "Measure": 20,
+     "PhasedX": 3023,
+     "Rz": 4259,
+     "ZZPhase": 2158
+    }
+   },
+   "counts": {
+    "00000000000000000000": 200
+   },
+   "all_zero_results": true,
+   "n_shots_returned": 200,
+   "completed_time": "2026-10-28 22:54:27.021578+00:00",
+   "submitted_time": "2026-10-28 22:53:03.045073+00:00",
+   "attempt": 1,
+   "counts_file": "counts/B0_ref70_k5.json"
+  },
+  {
+   "circuit_id": "B1_ref57_k5",
+   "job_id": "e5fc548a-203d-4b79-9c33-3d0c853afe98",
+   "device_name": "H2-2SC",
+   "status": "COMPLETED",
+   "message": "The job is completed.",
+   "error_detail": null,
+   "shots": 200,
+   "max_cost": 1100.0,
+   "sc_cost_hqc": 990.48,
+   "sc_cost_confidence": [
+    -1.0
+   ],
+   "formula_hqc_per_shot": 4.9274,
+   "formula_hqc_job": 990.4799999999999,
+   "sc_minus_formula": 1.1368683772161603e-13,
+   "native_counts": {
+    "n_phasedx": 2857,
+    "n_rz": 4256,
+    "n_zz": 2158,
+    "n_zzphase": 2158,
+    "n_zzmax": 0,
+    "n_meas": 20,
+    "n_qubits": 20,
+    "depth": 5621,
+    "depth_2q": 1925,
+    "ops": {
+     "Measure": 20,
+     "PhasedX": 2857,
+     "Rz": 4256,
+     "ZZPhase": 2158
+    }
+   },
+   "counts": {
+    "00000000000000000000": 200
+   },
+   "all_zero_results": true,
+   "n_shots_returned": 200,
+   "completed_time": "2026-10-28 22:54:19.224526+00:00",
+   "submitted_time": "2026-10-28 22:53:40.281891+00:00",
+   "attempt": 1,
+   "counts_file": "counts/B1_ref57_k5.json"
+  },
+  {
+   "circuit_id": "B1_ref29_k5",
+   "job_id": "832dde6f-5182-4cd7-a640-c3d44a184b24",
+   "device_name": "H2-2SC",
+   "status": "COMPLETED",
+   "message": "The job is completed.",
+   "error_detail": null,
+   "shots": 200,
+   "max_cost": 1100.0,
+   "sc_cost_hqc": 990.52,
+   "sc_cost_confidence": [
+    -1.0
+   ],
+   "formula_hqc_per_shot": 4.9276,
+   "formula_hqc_job": 990.52,
+   "sc_minus_formula": 0.0,
+   "native_counts": {
+    "n_phasedx": 2858,
+    "n_rz": 4256,
+    "n_zz": 2158,
+    "n_zzphase": 2158,
+    "n_zzmax": 0,
+    "n_meas": 20,
+    "n_qubits": 20,
+    "depth": 5621,
+    "depth_2q": 1925,
+    "ops": {
+     "Measure": 20,
+     "PhasedX": 2858,
+     "Rz": 4256,
+     "ZZPhase": 2158
+    }
+   },
+   "counts": {
+    "00000000000000000000": 200
+   },
+   "all_zero_results": true,
+   "n_shots_returned": 200,
+   "completed_time": "2026-10-28 23:28:44.343208+00:00",
+   "submitted_time": "2026-10-28 23:28:04.246822+00:00",
+   "attempt": 2,
+   "first_attempt": {
+    "job_id": "a733ada8-dcd1-4ada-bf2a-99cd3fcb1a62",
+    "status": "ERROR",
+    "message": "Program has encountered an error",
+    "error_detail": "Submission error: {\"error\":{\"code\":\"INTEGRATION_TIMEOUT\", \"text\": \"Endpoint request timed out\"}} (code: 1)",
+    "submitted_time": "2026-10-28 22:53:07.491795+00:00"
+   },
+   "counts_file": "retry1/counts/B1_ref29_k5.json"
+  },
+  {
+   "circuit_id": "B1_ref27_k5",
+   "job_id": "586dfd1e-9478-48e0-9c63-3066f2a9c2db",
+   "device_name": "H2-2SC",
+   "status": "COMPLETED",
+   "message": "The job is completed.",
+   "error_detail": null,
+   "shots": 200,
+   "max_cost": 1100.0,
+   "sc_cost_hqc": 990.44,
+   "sc_cost_confidence": [
+    -1.0
+   ],
+   "formula_hqc_per_shot": 4.9272,
+   "formula_hqc_job": 990.44,
+   "sc_minus_formula": 0.0,
+   "native_counts": {
+    "n_phasedx": 2856,
+    "n_rz": 4256,
+    "n_zz": 2158,
+    "n_zzphase": 2158,
+    "n_zzmax": 0,
+    "n_meas": 20,
+    "n_qubits": 20,
+    "depth": 5621,
+    "depth_2q": 1925,
+    "ops": {
+     "Measure": 20,
+     "PhasedX": 2856,
+     "Rz": 4256,
+     "ZZPhase": 2158
+    }
+   },
+   "counts": {
+    "00000000000000000000": 200
+   },
+   "all_zero_results": true,
+   "n_shots_returned": 200,
+   "completed_time": "2026-10-28 22:54:20.129922+00:00",
+   "submitted_time": "2026-10-28 22:53:10.086848+00:00",
+   "attempt": 1,
+   "counts_file": "counts/B1_ref27_k5.json"
+  },
+  {
+   "circuit_id": "CAL_zeros",
+   "job_id": "e198d097-ce3d-4c99-8a2e-22033bd4fd46",
+   "device_name": "H2-2SC",
+   "status": "COMPLETED",
+   "message": "The job is completed.",
+   "error_detail": null,
+   "shots": 200,
+   "max_cost": 1100.0,
+   "sc_cost_hqc": 13.0,
+   "sc_cost_confidence": [
+    -1.0
+   ],
+   "formula_hqc_per_shot": 0.04,
+   "formula_hqc_job": 13.0,
+   "sc_minus_formula": 0.0,
+   "native_counts": {
+    "n_phasedx": 0,
+    "n_rz": 0,
+    "n_zz": 0,
+    "n_zzphase": 0,
+    "n_zzmax": 0,
+    "n_meas": 20,
+    "n_qubits": 20,
+    "depth": 1,
+    "depth_2q": 0,
+    "ops": {
+     "Measure": 20
+    }
+   },
+   "counts": {
+    "00000000000000000000": 200
+   },
+   "all_zero_results": true,
+   "n_shots_returned": 200,
+   "completed_time": "2026-10-28 22:53:37.473722+00:00",
+   "submitted_time": "2026-10-28 22:53:10.769842+00:00",
+   "attempt": 1,
+   "counts_file": "counts/CAL_zeros.json"
+  },
+  {
+   "circuit_id": "CAL_x0",
+   "job_id": "dffa3655-7ce5-4910-8eff-931780ce1368",
+   "device_name": "H2-2SC",
+   "status": "COMPLETED",
+   "message": "The job is completed.",
+   "error_detail": null,
+   "shots": 200,
+   "max_cost": 1100.0,
+   "sc_cost_hqc": 13.04,
+   "sc_cost_confidence": [
+    -1.0
+   ],
+   "formula_hqc_per_shot": 0.0402,
+   "formula_hqc_job": 13.04,
+   "sc_minus_formula": 0.0,
+   "native_counts": {
+    "n_phasedx": 1,
+    "n_rz": 0,
+    "n_zz": 0,
+    "n_zzphase": 0,
+    "n_zzmax": 0,
+    "n_meas": 20,
+    "n_qubits": 20,
+    "depth": 2,
+    "depth_2q": 0,
+    "ops": {
+     "Measure": 20,
+     "PhasedX": 1
+    }
+   },
+   "counts": {
+    "00000000000000000000": 200
+   },
+   "all_zero_results": true,
+   "n_shots_returned": 200,
+   "completed_time": "2026-10-28 22:53:44.223287+00:00",
+   "submitted_time": "2026-10-28 22:53:11.310161+00:00",
+   "attempt": 1,
+   "counts_file": "counts/CAL_x0.json"
+  }
+ ]
+}
