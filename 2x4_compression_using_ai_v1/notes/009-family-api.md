@@ -28,7 +28,11 @@ Other functions in the same module:
 
 - The loader needs only numpy and the caller's qiskit (it uses `x, h, ry, rz, rx, p, cx, cz, cp, rzz, unitary(1q)`
   only, so qiskit 1.4.3 and 2.5.2 both work).  It imports nothing from the construction code.
-- Every family is a **frozen file** `data/families/<name>.json.gz`, written once by `scripts/freeze_family.py`.  The
+- Every family is a **frozen file** `<lattice folder>/data/families/<name>.json.gz`, written once by
+  `scripts/freeze_family.py`.  Lattice folders (one per lattice since 2026-10-28, `notes/012-folder-split.md`):
+  2x4 `2x4_compression_using_ai_v1/`, 2x3 `2x3_compression_using_ai_v1/`, 2x2 `2x2_compression_using_ai_v1/` (all at
+  the repository root; `families.FAMILY_DIRS`, `family_path(name)`).  The import above is unchanged: the code lives
+  only in `2x4_compression_using_ai_v1/` and finds every lattice's files itself.  The
   loader re-checks the sha256 of every circuit's gate list against the stored `content_sha256` and raises on a
   mismatch.  A family that is not frozen yet raises `FileNotFoundError`.
 - `measure=True` appends `measure(range(n), range(n))`; qiskit's counts keys then have qubit 0 at the right end
@@ -49,7 +53,7 @@ Other functions in the same module:
 
 The aliases without a version keep pointing to v1 (the reviewed it5 families); the owner decides when (if) they move.
 The 2x4 v2 and 2x3 counts come from `data/eval_arch_it6_*_pp2_all75_pruned.json` and
-`data/c2x3/eval_arch_L3_it1_*_pp2_all44_pruned.json` (summary `n_2q_range`).
+`../2x3_compression_using_ai_v1/data/c2x3/eval_arch_L3_it1_*_pp2_all44_pruned.json` (summary `n_2q_range`).
 
 v1 is exactly the it5 family the reviewer verified (`reviews/001`); its frozen file is built from the same builders
 (`arch:it5:<operator|input>:pp`), and `freeze_family.py` refuses to write unless every circuit's two-qubit count and
@@ -65,12 +69,12 @@ two-qubit depth equal the verification record.  File sha256 (the v1 files are un
 - `compressed_circuit_llm_2x2_classB.json.gz`: `622f29d6829e0910565ec67d2c08308a40bff0d2703924a3b34a089476422367`
 
 **2x2 (added 2026-10-28, `notes/011`).**  Built by the production scripts with `--lx 2` (loop archive
-`data/c2x2/archive_L2_it1.json`, verification `data/c2x2/eval_arch_L2_it1_*_pp2_all28_pruned.json`, Aer
-`data/c2x2/aer_compressed_circuit_llm_2x2_class*.json`).  $dt$ is read from all 28 frozen 2x2 manifests
+`../2x2_compression_using_ai_v1/data/c2x2/archive_L2_it1.json`, verification `../2x2_compression_using_ai_v1/data/c2x2/eval_arch_L2_it1_*_pp2_all28_pruned.json`, Aer
+`../2x2_compression_using_ai_v1/data/c2x2/aer_compressed_circuit_llm_2x2_class*.json`).  $dt$ is read from all 28 frozen 2x2 manifests
 (`data/quantinuum/circuits_2x2/<id>.manifest.json`, equal bit for bit to `Model(2).reference(4, 2B).dt`).  Circuit ids
 follow the package's `circuit_id` (`B{B}_ref{r:02d}_k{k}`); `Problem.tag` now zero-pads to two digits, which leaves every
 2x3/2x4 id unchanged (all their references are $\ge 10$).  Quantinuum native exports in the exact on-disk format of
-`data/quantinuum/circuits_2x2` (read by `scripts/quantinuum_submit.py`): `data/families/native_2x2/<family>/`
+`data/quantinuum/circuits_2x2` (read by `scripts/quantinuum_submit.py`): `../2x2_compression_using_ai_v1/data/families/native_2x2/<family>/`
 (`index.json`, `<id>.json`, `<id>.qasm`, `<id>.manifest.json`, plus byte-identical copies of `CAL_zeros` / `CAL_x0`).
 
 Gate set of v2 and 2x3: as v1 plus `cz` (the JW conjugation) and `h` (the relative-phase ANDs of the flags); all are

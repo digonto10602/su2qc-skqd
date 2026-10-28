@@ -1,4 +1,9 @@
-"""Loader for the C5 noise-study results (noise/data/results/<lattice>/<family>/<device>/<test>.json).
+"""Loader for the C5 noise-study results (<lattice folder>/noise/data/results/<lattice>/<family>/<device>/<test>.json).
+
+One folder per lattice since notes/012 (owner 2026-10-28): 2x4 results live under
+2x4_compression_using_ai_v1/noise/data/results/2x4/, 2x3 under 2x3_compression_using_ai_v1/noise/data/results/2x3/, 2x2
+under 2x2_compression_using_ai_v1/noise/data/results/2x2/ (RESULTS_DIRS).  The code and the study-wide index.json stay in
+2x4_compression_using_ai_v1/noise/; index paths are relative to the repository root.
 
     import sys; sys.path.insert(0, "2x4_compression_using_ai_v1/noise/src")
     import results
@@ -17,18 +22,34 @@ import glob
 import json
 import os
 
-RESULTS = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "results")
+NOISE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))          # 2x4_compression_using_ai_v1/noise
+ROOT = os.path.dirname(os.path.dirname(NOISE))                                 # the package repository
+RESULTS = os.path.join(NOISE, "data", "results")                               # 2x4 results + the study-wide index.json
+RESULTS_DIRS = {"2x4": RESULTS,
+                "2x3": os.path.join(ROOT, "2x3_compression_using_ai_v1", "noise", "data", "results"),
+                "2x2": os.path.join(ROOT, "2x2_compression_using_ai_v1", "noise", "data", "results")}
 TESTS = ("accuracy", "analytic_f", "noise_behaviour", "skqd_energy", "engine_validation")
 
 
+def lattice_results(lattice: str) -> str:
+    """<lattice folder>/noise/data/results/<lattice>: the folder holding <family>/<device>/... for this lattice."""
+    return os.path.join(RESULTS_DIRS[lattice], lattice)
+
+
 def _path(lattice, family, device, test):
-    return os.path.join(RESULTS, lattice, family, device, test + ".json")
+    return os.path.join(lattice_results(lattice), family, device, test + ".json")
 
 
 def list_available() -> list:
+    """[(lattice, family, device, test), ...] over all lattice folders, in the order of the relative path
+    <lattice>/<family>/<device>/<test>.json (the order of the single-folder layout before notes/012)."""
+    found = []
+    for lat, base in RESULTS_DIRS.items():
+        for p in glob.glob(os.path.join(base, lat, "*", "*", "*.json")):
+            found.append(os.path.relpath(p, base))
     out = []
-    for p in sorted(glob.glob(os.path.join(RESULTS, "*", "*", "*", "*.json"))):
-        rel = os.path.relpath(p, RESULTS).split(os.sep)
+    for rel in sorted(found):
+        rel = rel.split(os.sep)
         if len(rel) == 4 and rel[3][:-5] in TESTS:
             out.append((rel[0], rel[1], rel[2], rel[3][:-5]))
     return out

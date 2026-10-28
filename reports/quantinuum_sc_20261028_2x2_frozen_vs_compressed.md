@@ -5,9 +5,10 @@
 - Related report: `reports/quantinuum_sc_20261028_frozen_2x2.md` (the frozen run in detail, including the `max_cost` defect).
 - Data (each directory: `summary.json`, `session.json`, `counts/`, `account_before.json`, `account_after.json`):
   - frozen: `data/hardware/quantinuum_sc_20261028/frozen_2x2/` (circuits `data/quantinuum/circuits_2x2/`, Nexus project `su2qc-skqd-2x2`)
-  - classA: `2x4_compression_using_ai_v1/hardware/quantinuum_sc_20261028/compressed_circuit_llm_2x2_classA/` (circuits `2x4_compression_using_ai_v1/data/families/native_2x2/compressed_circuit_llm_2x2_classA/`, Nexus project `su2qc-skqd-2x2-classA`)
-  - classB: `2x4_compression_using_ai_v1/hardware/quantinuum_sc_20261028/compressed_circuit_llm_2x2_classB/` (circuits `2x4_compression_using_ai_v1/data/families/native_2x2/compressed_circuit_llm_2x2_classB/`, Nexus project `su2qc-skqd-2x2-classB`)
+  - classA: `2x2_compression_using_ai_v1/hardware/quantinuum_sc_20261028/compressed_circuit_llm_2x2_classA/` (circuits `2x2_compression_using_ai_v1/data/families/native_2x2/compressed_circuit_llm_2x2_classA/`, Nexus project `su2qc-skqd-2x2-classA`)
+  - classB: `2x2_compression_using_ai_v1/hardware/quantinuum_sc_20261028/compressed_circuit_llm_2x2_classB/` (circuits `2x2_compression_using_ai_v1/data/families/native_2x2/compressed_circuit_llm_2x2_classB/`, Nexus project `su2qc-skqd-2x2-classB`)
 - Every number below is read from those files by a generator script, not typed by hand.
+- Path note (2026-10-28, after this run): the compressed-study 2x2 data moved from `2x4_compression_using_ai_v1/` to `2x2_compression_using_ai_v1/` (same inside layout; `2x4_compression_using_ai_v1/notes/012-folder-split.md`, sha256 of every moved file unchanged).  The path strings in this report were updated by hand to the new location; the runs themselves read and wrote the old one, which is what the `session.json` files record.
 
 ## Words used here
 
@@ -31,8 +32,8 @@ Run the free syntax checker H2-2SC on the frozen 2x2 circuits and on the compres
 3. Per-job status, error text and cost read with `qnx.jobs.status` / `qnx.jobs.cost_confidence`; quotas read with `qnx.quotas.get_all()` before and after each run.
 
 - frozen: `scripts/quantinuum_submit.py --syntax-check --device H2-2SC --circuits data/quantinuum/circuits_2x2 --all --max-cost 141 --project su2qc-skqd-2x2 (shots: script default 200)`
-- classA: `scripts/quantinuum_submit.py --syntax-check --device H2-2SC --circuits 2x4_compression_using_ai_v1/data/families/native_2x2/compressed_circuit_llm_2x2_classA --all --max-cost 150 --project su2qc-skqd-2x2-classA (shots: script default 200)`
-- classB: `scripts/quantinuum_submit.py --syntax-check --device H2-2SC --circuits 2x4_compression_using_ai_v1/data/families/native_2x2/compressed_circuit_llm_2x2_classB --all --max-cost 150 --project su2qc-skqd-2x2-classB (shots: script default 200)`
+- classA: `scripts/quantinuum_submit.py --syntax-check --device H2-2SC --circuits 2x2_compression_using_ai_v1/data/families/native_2x2/compressed_circuit_llm_2x2_classA --all --max-cost 150 --project su2qc-skqd-2x2-classA (shots: script default 200)`
+- classB: `scripts/quantinuum_submit.py --syntax-check --device H2-2SC --circuits 2x2_compression_using_ai_v1/data/families/native_2x2/compressed_circuit_llm_2x2_classB --all --max-cost 150 --project su2qc-skqd-2x2-classB (shots: script default 200)`
 
 ## 3. Comparison
 

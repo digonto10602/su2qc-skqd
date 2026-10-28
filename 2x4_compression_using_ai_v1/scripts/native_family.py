@@ -5,7 +5,7 @@ Quantinuum row of data/quantinuum/devices_20261002.json -- the formula of valida
 
 Run with the isolated venv (never the coding env):
   ~/.local/share/su2qc-quantinuum/venv/bin/python scripts/native_family.py --family compressed_circuit_llm_2x3_classA
-Writes data/c2x3/native_<family>.json (2x3) or data/native_<family>.json (2x4).
+Writes data/native_<family>.json (2x4) or <lattice folder>/data/c2x<L>/native_<family>.json (2x3, 2x2; c2x4.env.lattice_data).
 """
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ ROOT = os.path.dirname(STUDY)
 sys.path.insert(0, os.path.join(STUDY, "src"))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 
-from c2x4.env import write_json                                # noqa: E402
+from c2x4.env import lattice_data, write_json                  # noqa: E402
 from c2x4.families import family_header, get_family_ir         # noqa: E402
 from skqd.device_req import clean_shot_fraction                # noqa: E402
 from skqd.quantinuum_native import (compile_native, ir_to_pytket, local_equivalence_35a,   # noqa: E402
@@ -86,9 +86,8 @@ def main():
                                    "max": max(r["clean_shot_fraction_gate_only"][d] for r in rows)} for d in devs},
                "truncated": truncated}
     print(json.dumps(summary, indent=1))
-    sub = "" if hdr["lattice"] == "2x4" else f"c{hdr['lattice']}/"
     lab = f"_{args.label}" if args.label else ""
-    write_json(f"data/{sub}native_{args.family}{lab}.json", {"rows": rows, "summary": summary, "versions": versions()},
+    write_json(os.path.join(lattice_data(hdr["lattice"]), f"native_{args.family}{lab}.json"), {"rows": rows, "summary": summary, "versions": versions()},
                produced_by="2x4_compression_using_ai_v1/scripts/native_family.py",
                parameters={"family": args.family, "device_compiled_for": "H2-2", "level": 0,
                            "n_1q_model": "PhasedX count (Rz virtual)", "n_meas": "n_qubits",

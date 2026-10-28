@@ -1,4 +1,5 @@
-"""Collect the numbers of the 2x2 compressed families (notes/011) into data/c2x2/summary_2x2.json: IR and native
+"""Collect the numbers of the 2x2 compressed families (notes/011) into
+2x2_compression_using_ai_v1/data/c2x2/summary_2x2.json (one folder per lattice, notes/012): IR and native
 counts, two-qubit depth, gate-only clean-shot fraction f (skqd.device_req.clean_shot_fraction, the formula of
 scripts/native_family.py) for both classes AND for the package's frozen 2x2 family (from its manifests, same formula,
 same device table), the verification numbers (certified pruned, Aer, random superposition, class-B phase, native
@@ -23,11 +24,11 @@ ROOT = os.path.dirname(STUDY)
 sys.path.insert(0, os.path.join(STUDY, "src"))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 
-from c2x4.env import write_json                       # noqa: E402
+from c2x4.env import lattice_data, lattice_study, write_json   # noqa: E402
 from skqd.device_req import clean_shot_fraction       # noqa: E402
 
-D = os.path.join(STUDY, "data", "c2x2")
-NAT = os.path.join(STUDY, "data", "families", "native_2x2")
+D = lattice_data("2x2")                                               # 2x2_compression_using_ai_v1/data/c2x2
+NAT = os.path.join(lattice_study("2x2"), "data", "families", "native_2x2")
 FROZEN = os.path.join(ROOT, "data", "quantinuum", "circuits_2x2")
 
 
@@ -112,12 +113,12 @@ def main():
                                                                for x in evc),
                                      "max_certified_leakage": ev["summary"]["max_certified_leakage"],
                                      "skeleton_k_independent": ev["summary"]["skeleton_k_independent"]["all"],
-                                     "file": f"data/c2x2/eval_arch_L2_it1_{lab}_pp2_all28_pruned.json"},
+                                     "file": f"2x2_compression_using_ai_v1/data/c2x2/eval_arch_L2_it1_{lab}_pp2_all28_pruned.json"},
                 "aer": {k: aer["summary"][k] for k in ("n", "n_pass", "max_abs_dpsi", "max_leakage_total",
                                                        "max_abs_phase_minus_predicted", "n_2q_consistent",
                                                        "dt_consistent")},
                 "random_superposition": aer["summary"].get("random_superposition"),
-                "aer_file": f"data/c2x2/aer_{name}.json",
+                "aer_file": f"2x2_compression_using_ai_v1/data/c2x2/aer_{name}.json",
                 "native": {"all_Q1": idx["summary"]["all_Q1"], "all_Q1L": idx["summary"]["all_Q1L"],
                            "max_abs_dpsi_vs_exact": idx["summary"]["max_abs_dpsi_vs_exact"],
                            "max_leakage": idx["summary"]["max_leakage"],

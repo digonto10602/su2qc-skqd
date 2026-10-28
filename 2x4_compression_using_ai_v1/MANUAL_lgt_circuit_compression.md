@@ -39,8 +39,8 @@ The master history of this repository was rewritten after 2026-10-21; commits fr
 hashes: family loader API `2c28e51` (was `f0b2363`), notes/009 `b676b5b` (was `a07ba6d`), C4 code + v2 and 2x3 families
 `30f84af` (was `390629e`), notes/009 update `7de890a` (was `040c95d`), report 004 and evidence `5984d69` (was
 `bf55f30`), first manual `ac886b2`, review 002 `6ca9520`, this revision: the commit that adds it.  Old hashes still
-appear inside some files written on 2026-10-21 (for example the `git_commit` field of `data/families/*.json.gz`
-headers and the text of `notes/009`); they refer to the same content.
+appear inside some files written on 2026-10-21 (for example the `git_commit` field of the `data/families/*.json.gz`
+headers of each lattice folder and the text of `notes/009`); they refer to the same content.
 
 ### 0.4 Symbol table
 
@@ -215,9 +215,9 @@ state against the exact coarse state `skqd.krylov.coarse_states` (complex128): $
 | lattice | family | circuits | ZZ (min–max, mean) | 2q depth | accuracy (max) | $f_{\rm pkg}$ H2-2 (mean) | independent checks | sources |
 |---|---|---|---|---|---|---|---|---|
 | 2x2 | frozen (package) | 28 | 252 | 201 | package Q1 | 0.793 | package | `<root>/data/quantinuum/circuits_2x2/index.json`, `…/B0_ref06_k1.manifest.json` (`levels.0.counts`), `<root>/validation/Q0P_2x2.json` (`data.Q5.devices.quantinuum_h2_2.f_gate_only_mean`) |
-| 2x2 | **worked example** (not a family) | 28 + 28 | A 245; B 55–162 (119.4) | A 188; B 45–137 | certified A $2.02\times10^{-13}$, B $1.37\times10^{-13}$; Aer A $1.10\times10^{-14}$, B $6.93\times10^{-15}$ | not computed | own Aer + random superposition, same script (§1.3) | `examples/2x2_sandbox/results.json` |
+| 2x2 | **worked example** (not a family) | 28 + 28 | A 245; B 55–162 (119.4) | A 188; B 45–137 | certified A $2.02\times10^{-13}$, B $1.37\times10^{-13}$; Aer A $1.10\times10^{-14}$, B $6.93\times10^{-15}$ | not computed | own Aer + random superposition, same script (§1.3) | `../2x2_compression_using_ai_v1/examples/2x2_sandbox/results.json` |
 | 2x3 | frozen (package) | 44 | 2 158 | 1 925 | package Q1 | 0.150 | package | `<root>/data/quantinuum/circuits_2x3/index.json`, `…/B0_ref25_k1.manifest.json`, `<root>/validation/Q0P_2x3.json` (`data.stage_A.predict.devices.quantinuum_h2_2`) |
-| 2x3 | `compressed_circuit_llm_2x3_classA` | 44 | **871** | 611 | certified $9.41\times10^{-13}$; Aer $3.05\times10^{-14}$ (44/44) | **0.445** | noise agent own-reference Aer 44/44; **no random-superposition test** | `data/c2x3/eval_arch_L3_it1_operator_pp2_all44_pruned.json`, `data/c2x3/aer_compressed_circuit_llm_2x3_classA.json`, `data/c2x3/native_compressed_circuit_llm_2x3_classA.json`, `noise/reports/003-noise-results.md` §3.1 |
+| 2x3 | `compressed_circuit_llm_2x3_classA` | 44 | **871** | 611 | certified $9.41\times10^{-13}$; Aer $3.05\times10^{-14}$ (44/44) | **0.445** | noise agent own-reference Aer 44/44; **no random-superposition test** | `../2x3_compression_using_ai_v1/data/c2x3/eval_arch_L3_it1_operator_pp2_all44_pruned.json`, `../2x3_compression_using_ai_v1/data/c2x3/aer_compressed_circuit_llm_2x3_classA.json`, `../2x3_compression_using_ai_v1/data/c2x3/native_compressed_circuit_llm_2x3_classA.json`, `noise/reports/003-noise-results.md` §3.1 |
 | 2x3 | `compressed_circuit_llm_2x3_classB` | 44 | **309–465 (387.6)** | 170–290 | certified $4.37\times10^{-13}$; Aer $2.10\times10^{-14}$ (44/44) | **0.692** | noise agent own-reference Aer 44/44 | same paths, `input` / `classB` |
 | 2x4 | frozen (structured source) | 75 | 71 548 | 70 300 | package Q1 | $4.18\times10^{-29}$ | package | `<root>/data/quantinuum/circuits_2x4/B0_ref102_k1.structured.manifest.json`, `<root>/validation/QN_2x4.json` (`data.analytic.devices.quantinuum_h2_2.f_gate_only_mean`) |
 | 2x4 | `…_2x4_classA_v1` | 75 | 1 736–1 740 (1 739.2) | 1 275–1 280 | certified incl. rounding $1.72\times10^{-12}$ | 0.2005–0.2009 (4 circ.) | reviews/001: 4 own-reference Aer + **8 random-superposition runs** | `data/eval_arch_it5_operator_pp_all75_pruned.json`, `data/rounding_v1.json`, `data/native_it5_operator.json`, `reviews/001-independent-verification.json` |
@@ -240,13 +240,13 @@ state against the exact coarse state `skqd.krylov.coarse_states` (complex128): $
 
 > **Update 2026-10-28:** the owner asked for 2x2 families; they now exist as `compressed_circuit_llm_2x2_classA` /
 > `_classB` (built with the production scripts, `--lx 2`; `notes/011-2x2-families.md`, numbers in
-> `data/c2x2/summary_2x2.json`).  The sandbox example below stays a teaching example; its circuits are not the families.
+> `../2x2_compression_using_ai_v1/data/c2x2/summary_2x2.json`).  The sandbox example below stays a teaching example; its circuits are not the families.
 
 I did not make 2x2 *families*; the owner decides whether they are made.  The planner judged that 2x2 has little to gain:
 "Already 252 ZZ with $f=0.79$ on H2-2 … Apply the technique only for uniformity of the hardware story; no cost case"
 (`notes/007-planner-review-ultimate-compression.md` §8.3).  For this manual I ran the whole procedure on 2x2 as a
-**worked example** in a sandbox: `python 2x4_compression_using_ai_v1/examples/2x2_sandbox/run_2x2_example.py`, output
-`examples/2x2_sandbox/results.json` (commit `6ca9520`, parameters, seeds, machine recorded).  Its circuits are not named
+**worked example** in a sandbox: `python 2x2_compression_using_ai_v1/examples/2x2_sandbox/run_2x2_example.py`, output
+`../2x2_compression_using_ai_v1/examples/2x2_sandbox/results.json` (commit `6ca9520`, parameters, seeds, machine recorded).  Its circuits are not named
 `compressed_circuit_llm_2x2_*` and are not in `src/c2x4/families.py`; do not use them.
 
 Inputs it confirms (same file): 12 qubits, 82 basis states, terms `diag, hop0..hop3, plaq0`; references
@@ -315,8 +315,8 @@ make the bookkeeping edits of §2.5 and use the production scripts.
 
 **Warning 1 — evidence files are overwritten.**  The production scripts write to fixed paths inside the study:
 `scripts/loop_select.py` writes `data/archive_<label>.json` through `src/c2x4/env.py:archive_path`,
-`scripts/eval_family.py` writes `data/{,c2x3/}eval_*.json`, `scripts/certify_family.py` `data/cert_*.json`,
-`scripts/native_family.py` `data/native_*.json`.  Re-running §12.4 *as run here* overwrites the files behind §1.2.
+`scripts/eval_family.py` writes `data/eval_*.json` (2x4) or `<lattice folder>/data/c2x<L>/eval_*.json` (2x3, 2x2; `env.lattice_data`,
+notes/012), `scripts/certify_family.py` `data/cert_*.json`, `scripts/native_family.py` `data/native_*.json` (same rule).  Re-running §12.4 *as run here* overwrites the files behind §1.2.
 **Never run them in this repository with the cited labels.**
 
 **Warning 2 — the disk cache does not know the code version.**  `src/c2x4/family.py:_cached` keys a gate list only by
@@ -324,7 +324,7 @@ make the bookkeeping edits of §2.5 and use the production scripts.
 the table.  **If you change a proposal, delete the cache** (`data/cache/` here, `cache/` in a sandbox), or you will
 silently get the old circuits.
 
-**Sandbox, in-process** (exactly what `examples/2x2_sandbox/run_2x2_example.py` lines 37–46 do; do it before importing
+**Sandbox, in-process** (exactly what `../2x2_compression_using_ai_v1/examples/2x2_sandbox/run_2x2_example.py` lines 38–47 do; do it before importing
 any builder):
 
 ```python
@@ -365,7 +365,7 @@ re-implementing.
 | $dt$ sources ($L_x\in\{3,4\}$ special-cased) | `Problem.__init__` | your $dt$ rule |
 | ladder geometry | `plaqfactor.corners_of` (keys `c00..c01`, one "third" link), `hopframe.vertex_parity_frame`, `vertex_bright_frame_clean` (two ends of a link, `Ladder.ends`) | your lattice description; vertices with more links need the frames of §4 |
 | 2x4 term names | `src/c2x4/proposals.py:69-90` (`pkg`, `rpkg`, `cf2`, `*_sw` list `hop0..hop9`, `plaq0/plaq2`, `plaq1`) | use the lattice-generic classes (`"hop"`, `"plaq"`, `"hop+plaq_small"`, `"plaq_interior"`) as the C4 proposals do |
-| output folders and baselines only for $L_x\in\{3,4\}$ | `env.archive_path` (only `L3_` → `data/c2x3/`); `scripts/eval_family.py` (`baseline` block and `sub` folder — any other $L_x$ would be labelled with the 2x3 baseline 2 158); `certify_family.py`, `verify_aer_family.py`, `native_family.py` | add your lattice; add names to `families.FAMILY_NAMES` |
+| output folders for $L_x\in\{2,3,4\}$, baselines only for $L_x\in\{3,4\}$ | `env.STUDY_DIRS` / `env.lattice_data` (one folder per lattice, notes/012: `L3_` → `../2x3_compression_using_ai_v1/data/c2x3/`, `L2_` → `../2x2_compression_using_ai_v1/data/c2x2/`), `families.FAMILY_DIRS`, `noise/src/results.py:RESULTS_DIRS`; `scripts/eval_family.py` (`baseline` block — any other $L_x$ would be labelled with the 2x3 baseline 2 158); `certify_family.py`, `verify_aer_family.py`, `native_family.py` write through `env.lattice_data` | add your lattice folder to the three maps; add names to `families.FAMILY_NAMES` |
 | circuit ids | `Problem.tag` writes `B0_ref6_k1`; the package's 2x2 files write `B0_ref06_k1` | keep one, record the mapping |
 | block sizes | `plaqfactor.corner_frame`, `hopframe._bright_rotations` raise for blocks other than size 2 and 3 | rewrite (§4.2) |
 | encoding assumptions | `hopframe` folds parity into the hop-link qubit; `codec.decode_vertex` reads $n$ | your encoding's $n$ and parity |
@@ -563,7 +563,7 @@ re-solve; `certified_optimal` := support used = lower bound.  Meaning: minimal f
 frame, HiGHS trusted **[num]**.
 
 **Results:** 2x4 class A v2 64/65 support-optimal (support 643 vs lower bound 632, walk 750 vs 697); class B v2 813/852;
-2x3 class A 43/43; class B 388/396 (`data/cert_it6_{operator,input}.json`, `data/c2x3/cert_L3_it1_{operator,input}.json`).
+2x3 class A 43/43; class B 388/396 (`data/cert_it6_{operator,input}.json`, `../2x3_compression_using_ai_v1/data/c2x3/cert_L3_it1_{operator,input}.json`).
 Open: plaq1 (85 used, lower bound 78 after 1 500 s, `data/cert_it6_operator_plaq1_long.json`).  As a synthesis option the
 MILP rarely beat the LP and sometimes lost on walk length (`data/loop_it6a.log`): use it mainly to certify.
 
@@ -596,7 +596,7 @@ MILP rarely beat the LP and sometimes lost on walk length (`data/loop_it6a.log`)
 **Decision rule.**  Run all hop proposals (`full_lin`, `framed_lin`, `bframed_lin`, `jwc_*`, `cb*`, `*_milp`); keep the
 cheapest verified.  Winners: at 2x4 class A `cb1`/`cb1_jwc` on interior hops, `full_lin` on corner–corner y-hops,
 `bframed_lin` on hop2 (`data/report004_tables.json` `per_term_2x4`); at 2x2 `full_lin` everywhere
-(`examples/2x2_sandbox/results.json`).  JW conjugation alone gains little (a parity sign only shifts masks): hop3 256 → 264
+(`../2x2_compression_using_ai_v1/examples/2x2_sandbox/results.json`).  JW conjugation alone gains little (a parity sign only shifts masks): hop3 256 → 264
 with LP (`data/loop_it6a.log`).
 
 **Cost (2x4 class A, it5 → it6):** hop0 140→130, hop3 256→168, hop4 166→130, hop5 178→134, hop6 134→124, hop7 166→130,
@@ -635,7 +635,7 @@ in all four new families and in the 2x2 example **[num]**.  Unit tests: `tests/t
   **[Lean]** `diagonal_mulVec_single` (`Sanity.lean`).  **Sign convention:** the class-B output equals
   $e^{+i\theta(H_{\rm diag})_{rr}}$ times the target, i.e. $\varphi=\arg\langle t\vert\psi\rangle=+\theta(H_{\rm diag})_{rr}$;
   recorded as `global_phase_vs_target` in the frozen metadata; measured to $\le6.0\times10^{-15}$ rad at 2x2
-  (`examples/2x2_sandbox/results.json` `aer.B`) and $2.8\times10^{-14}$ rad at 2x4 (reviews/001 §3.2).
+  (`../2x2_compression_using_ai_v1/examples/2x2_sandbox/results.json` `aer.B`) and $2.8\times10^{-14}$ rad at 2x4 (reviews/001 §3.2).
 - Effect: 2x4 class B v2 580–763 ZZ against class A 1 492; hops shrink a lot (hop0 mean 10.9 vs 130), plaquettes little
   (plaq1 154.7 vs 202) (`per_term_2x4`).  The input contract is binding — §9.
 
@@ -663,7 +663,7 @@ in all four new families and in the 2x2 example **[num]**.  Unit tests: `tests/t
 - Level 0 only; level 2 rewrites gates, so Q1L does not apply (§8.2).
 - Results: Q1L 75/75 (each 2x4 v2 class), 44/44 (each 2x3 class), native ZZ = IR two-qubit count,
   $\beta_{\rm Q1L}\le1.13\times10^{-13}$ (`data/native_compressed_circuit_llm_2x4_class{A,B}_v2.json`,
-  `data/c2x3/native_*.json`, `summary`).
+  `../2x3_compression_using_ai_v1/data/c2x3/native_*.json`, `summary`).
 
 ---
 
@@ -927,15 +927,15 @@ needs a new construction, or when the time budget ends.  Freeze; never let a pip
 
 | run | wall | file |
 |---|---|---|
-| 2x2 worked example, everything | 27.5 s (loop 17.5 s) | `examples/2x2_sandbox/results.json` |
+| 2x2 worked example, everything | 27.5 s (loop 17.5 s) | `../2x2_compression_using_ai_v1/examples/2x2_sandbox/results.json` |
 | class-A loop, 13 terms, 14 proposals | 916 s | `data/archive_it6a.json` `wall_s` |
 | class-B loop, 5 references, 16 proposals | 1 307–1 432 s | `data/archive_it6b{0,1,2}.json` |
-| 2x3 class-B loop, 5–6 references | 513–561 s | `data/c2x3/archive_L3_it1i{0,1}.json` |
+| 2x3 class-B loop, 5–6 references | 513–561 s | `../2x3_compression_using_ai_v1/data/c2x3/archive_L3_it1i{0,1}.json` |
 | verify 75 class-A circuits + terms | 528 s | `data/eval_arch_it6_operator_pp2_all75_pruned.json` |
 | class-B term checks, 15 refs × 13 terms × 5 θ | 1 298 s | `data/eval_arch_it6_input_pp2_terms.json` |
 | MILP certificates, class A / class B | 433 / 370 s | `data/cert_it6_{operator,input}.json` |
 | native + Q1L, 75 class-A v2 | 847 s | `data/native_compressed_circuit_llm_2x4_classA_v2.json` |
-| Aer, 44 2x3 class-A circuits | 518 s | `data/c2x3/aer_compressed_circuit_llm_2x3_classA.json` |
+| Aer, 44 2x3 class-A circuits | 518 s | `../2x3_compression_using_ai_v1/data/c2x3/aer_compressed_circuit_llm_2x3_classA.json` |
 
 ### 7.4 Process rules
 
@@ -986,7 +986,7 @@ needs a new construction, or when the time budget ends.  Freeze; never let a pip
 **Class B is valid only for: prepare its own reference with X gates, one coarse step, measure in the computational basis.**
 Not for another reference or any superposition, $r>1$ repetitions, controlled versions, Hadamard tests, or reuse inside a
 longer circuit.  On a random superposition class B is off by $2.3\times10^{-2}$ in max amplitude at 2x4 (reviews/001 note
-1) and by $\lVert\Delta\psi\rVert_2\approx1$ at 2x2 (`examples/2x2_sandbox/results.json`).  Any other use needs class A.
+1) and by $\lVert\Delta\psi\rVert_2\approx1$ at 2x2 (`../2x2_compression_using_ai_v1/examples/2x2_sandbox/results.json`).  Any other use needs class A.
 
 **Under noise**, near-clean statistics (in particular $r_{\rm nc}$) are properties of a circuit family and must be
 re-measured for each new family (notes/007 §7 item 4).  The noise agent's results (`noise/reports/003-noise-results.md` §4;
@@ -1026,11 +1026,11 @@ you what to test when …" and "like i said, keep them separate and I will tell 
 
 ```bash
 cd <root>
-python 2x4_compression_using_ai_v1/examples/2x2_sandbox/run_2x2_example.py            # ~30 s on this laptop
+python 2x2_compression_using_ai_v1/examples/2x2_sandbox/run_2x2_example.py            # ~30 s on this laptop
 python 2x4_compression_using_ai_v1/examples/structure_checks/run_structure_checks.py   # minutes (builds the 2x4 model)
 ```
 
-Expected (`examples/2x2_sandbox/results.json`): class A 245 ZZ on all 28 circuits, depth 188, 28/28 certified and 28/28
+Expected (`../2x2_compression_using_ai_v1/examples/2x2_sandbox/results.json`): class A 245 ZZ on all 28 circuits, depth 188, 28/28 certified and 28/28
 Aer; class B 55–162 ZZ, 28/28 and 28/28; skeletons $k$-independent; random superposition class A
 $\lVert\Delta\psi\rVert_2\sim10^{-14}$, class B $\sim1$.  Read the script: it is the whole procedure in about 300 lines
 (sandbox → structure → loop → assemble → certify → Aer).  A different commit or library version may change the counts
@@ -1087,24 +1087,29 @@ slightly; the passes must not change.
 `cert_long_plaq1.py`, `freeze_family.py`, `verify_aer_family.py`, `native_family.py` (pytket venv), `native_check.py` +
 `dump_finalists.py` (v1 native path), `rounding_v1.py`, `cxr_gain_v1.py`, `approx_tiers.py` (dead end), `summarise.py`,
 `report003_tables.py`, `report004_tables.py`.
-`examples/`: `2x2_sandbox/run_2x2_example.py` (worked example), `structure_checks/run_structure_checks.py`.
+`examples/`: `structure_checks/run_structure_checks.py`; the 2x2 worked example is `../2x2_compression_using_ai_v1/examples/2x2_sandbox/run_2x2_example.py`.
 Tests: `tests/test_evaluate.py`, `tests/test_families.py`, `tests/test_linsynth.py`.
 
 ### 12.3 Data files
 
+One folder per lattice since 2026-10-28 (`notes/012-folder-split.md`): 2x4 data in this folder, 2x3 data in
+`../2x3_compression_using_ai_v1/`, 2x2 data in `../2x2_compression_using_ai_v1/`, each with the same inside layout (`data/...`,
+`noise/data/results/...`, `hardware/...`).  The code, Lean, tests and notes stay here.
+
 | file | content |
 |---|---|
-| `data/families/*.json.gz` | frozen families (hashes in `notes/009`) |
-| `data/archive_it{1..6}*.json`, `data/c2x3/archive_L3_it1*.json` | loop archives |
-| `data/eval_arch_it{5,6}_*_all75_pruned.json`, `data/c2x3/eval_arch_L3_it1_*_all44_pruned.json` | full verification |
-| `data/cert_it6_*.json`, `data/c2x3/cert_L3_it1_*.json` | MILP certificates |
-| `data/native_*.json`, `data/c2x3/native_*.json` | native counts, Q1L, $f_{\rm pkg}$ |
-| `data/aer_*.json`, `data/c2x3/aer_*.json` | Aer checks |
+| `data/families/*.json.gz` (2x4), `../2x3_compression_using_ai_v1/data/families/*.json.gz`, `../2x2_compression_using_ai_v1/data/families/*.json.gz` | frozen families (hashes in `notes/009`) |
+| `data/archive_it{1..6}*.json`, `../2x3_compression_using_ai_v1/data/c2x3/archive_L3_it1*.json`, `../2x2_compression_using_ai_v1/data/c2x2/archive_L2_it1.json` | loop archives |
+| `data/eval_arch_it{5,6}_*_all75_pruned.json`, `../2x3_compression_using_ai_v1/data/c2x3/eval_arch_L3_it1_*_all44_pruned.json`, `../2x2_compression_using_ai_v1/data/c2x2/eval_arch_L2_it1_*_all28_pruned.json` | full verification |
+| `data/cert_it6_*.json`, `../2x3_compression_using_ai_v1/data/c2x3/cert_L3_it1_*.json`, `../2x2_compression_using_ai_v1/data/c2x2/cert_L2_it1_*.json` | MILP certificates |
+| `data/native_*.json`, `../2x3_compression_using_ai_v1/data/c2x3/native_*.json`, `../2x2_compression_using_ai_v1/data/c2x2/native_*.json` | native counts, Q1L, $f_{\rm pkg}$ |
+| `data/aer_*.json`, `../2x3_compression_using_ai_v1/data/c2x3/aer_*.json`, `../2x2_compression_using_ai_v1/data/c2x2/aer_*.json` | Aer checks |
+| `../2x2_compression_using_ai_v1/data/families/native_2x2/<family>/` | 2x2 Quantinuum native exports (read by `scripts/quantinuum_submit.py`) |
 | `data/rounding_v1.json`, `data/cxr_gain_v1.json`, `data/hop_coefficient_values.json` | evidence for §3 |
 | `data/p2_0_harness_baseline.json`, `data/p2_1_structure.json`, `data/p1_*.json`, `data/planner_bounds_007.json`, `data/approx_tiers.json` | baseline, structure (2x4), dead ends |
 | `data/report004_tables.json` | tables of report 004 and §1.2 |
 | `data/c4_lean_build.log` | last Lean build |
-| `examples/2x2_sandbox/results.json`, `archive_L2_example.json`, `circuits_L2_example.json.gz` | worked example (its `cache/` is not committed) |
+| `../2x2_compression_using_ai_v1/examples/2x2_sandbox/results.json`, `archive_L2_example.json`, `circuits_L2_example.json.gz` | worked example (its `cache/` is not committed) |
 | `examples/structure_checks/structure_checks.json` | structure tests on 2x2, 2x3, 2x4 |
 
 ### 12.4 Commands as run here (**do not re-run with these labels — they overwrite §1.2's evidence; sandbox first, §2.4**)
@@ -1163,7 +1168,7 @@ Public: `skqd.exact.Model`, `mass_default`; `skqd.krylov.apply_groups`, `coarse_
 |---|---|
 | B1 model never stated | §1.0 (Hamiltonian with file:lines, truncation, vertex encoding table, intertwiner, dark/bright, $2B$, references, $dt$, how to map a model) |
 | I1 overwrite / stale cache | §2.4 (two warnings + sandbox recipe), §12.4 header, §8.10, §5.6, §7.4 |
-| I2 no smallest example | §1.3, §11.0; `examples/2x2_sandbox/run_2x2_example.py` → `results.json` |
+| I2 no smallest example | §1.3, §11.0; `../2x2_compression_using_ai_v1/examples/2x2_sandbox/run_2x2_example.py` → `results.json` |
 | I3 wrong commit | §0.3 (current hashes, old → new map) |
 | I4 path rule | §0.1 (`<root>/` prefix used throughout) |
 | I5 hop check not a product check | §3b items 3–5 (real product check, equal steps, JW parity; `examples/structure_checks/`) |

@@ -15,7 +15,7 @@ import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"))
 
-from c2x4.env import write_json                                   # noqa: E402
+from c2x4.env import lattice_data, write_json                     # noqa: E402
 from c2x4.evaluate import (BAR_DEV, BAR_LEAK, counts, verify_circuit, verify_circuit_pruned,   # noqa: E402
                            verify_term_operator)
 from c2x4.family import (FAMILIES, archive_family, baseline_builder, circuit, get_reach,   # noqa: E402
@@ -138,8 +138,7 @@ def main():
             "baseline": _baseline(args.lx)}
         print("summary:", out["summary"], flush=True)
     label = f"_{args.label}" if args.label else ""
-    sub = "" if args.lx == 4 else f"c2x{args.lx}/"
-    p = write_json(f"data/{sub}eval_{args.family.replace(':', '_')}{label}.json", out,
+    p = write_json(os.path.join(lattice_data(args.lx), f"eval_{args.family.replace(':', '_')}{label}.json"), out,
                    produced_by="2x4_compression_using_ai_v1/scripts/eval_family.py",
                    parameters={"family": args.family, "circuits": args.circuits, "kmax": args.kmax,
                                "g2": P.g2, "m": P.m, "dt": P.dt, "prune_tau": args.prune_tau, "lx": args.lx,

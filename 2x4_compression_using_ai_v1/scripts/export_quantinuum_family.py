@@ -25,6 +25,9 @@ Run with the isolated venv (never the coding env):
   ~/.local/share/su2qc-quantinuum/venv/bin/python scripts/export_quantinuum_family.py \
       --family compressed_circuit_llm_2x2_classA --frozen-dir data/quantinuum/circuits_2x2 \
       --out data/families/native_2x2/compressed_circuit_llm_2x2_classA
+A relative --out is resolved against the family's LATTICE folder (notes/012): the command above writes
+2x2_compression_using_ai_v1/data/families/native_2x2/compressed_circuit_llm_2x2_classA/.  --frozen-dir is relative to
+the repository root.
 No login, no network, no submission.
 """
 from __future__ import annotations
@@ -46,7 +49,7 @@ ROOT = os.path.dirname(STUDY)
 sys.path.insert(0, os.path.join(STUDY, "src"))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 
-from c2x4.env import git_commit, write_json                                     # noqa: E402
+from c2x4.env import git_commit, lattice_study, write_json                      # noqa: E402
 from c2x4.families import family_header, family_path, get_family_ir            # noqa: E402
 from skqd import circuits_qiskit as cq                                          # noqa: E402
 from skqd import quantinuum_native as qn                                        # noqa: E402
@@ -85,11 +88,11 @@ def main():
     args = ap.parse_args()
     t0 = time.time()
     fdir = args.frozen_dir if os.path.isabs(args.frozen_dir) else os.path.join(ROOT, args.frozen_dir)
-    out = args.out if os.path.isabs(args.out) else os.path.join(STUDY, args.out)
+    hdr = family_header(args.family)
+    out = args.out if os.path.isabs(args.out) else os.path.join(lattice_study(hdr["lattice"]), args.out)
     if os.path.exists(os.path.join(out, "index.json")):
         raise SystemExit(f"{out} already holds an index.json: an export is written once (choose another --out)")
     os.makedirs(out, exist_ok=True)
-    hdr = family_header(args.family)
     lx = int(hdr["lattice"].split("x")[1])
     with open(os.path.join(fdir, "index.json")) as fh:
         f_index = json.load(fh)

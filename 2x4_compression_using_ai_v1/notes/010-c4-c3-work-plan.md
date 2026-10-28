@@ -35,4 +35,4 @@ manifests = `Model(3).reference(4, 2B).dt`).  Loop at 2x3, families `compressed_
 (a) by my harness (certified pruned sparse simulation) and (b) by an independent qiskit-aer statevector on all
 20-qubit circuits, both against `krylov.apply_groups` with the bar $\max|\Delta\psi|<10^{-10}$, leakage $<10^{-9}$.
 Counts against the frozen 2x3 family (2 158 ZZ), $f$ with the package formula for information.  Outputs under
-`data/c2x3/`.
+`../2x3_compression_using_ai_v1/data/c2x3/`.

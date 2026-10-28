@@ -12,7 +12,7 @@ the measured global phase against the metadata's global_phase_vs_target, and the
 
 Usage: python scripts/verify_aer_family.py --family compressed_circuit_llm_2x3_classA [--ids B0_ref25_k1,...]
        [--threads 6] [--fusion]
-Writes data/c2x3/aer_<family>.json (2x3) or data/aer_<family>[_<label>].json (2x4).
+Writes data/aer_<family>[_<label>].json (2x4) or <lattice folder>/data/c2x<L>/aer_<family>.json (2x3, 2x2; c2x4.env.lattice_data).
 """
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ sys.path.insert(0, os.path.join(STUDY, "src"))
 from skqd.exact import Model, mass_default                                       # noqa: E402
 from skqd.krylov import basis_vector, coarse_states, term_groups                 # noqa: E402
 from skqd.reference_sim import CodewordEmbedding                                 # noqa: E402
-from c2x4.env import write_json                                                  # noqa: E402
+from c2x4.env import lattice_data, write_json                                    # noqa: E402
 from c2x4.families import family_header, get_family                             # noqa: E402
 
 
@@ -188,9 +188,8 @@ def main():
             "max_leakage_noncodeword": max(r["leakage_noncodeword"] for r in sv),
             "max_abs_phase_minus_predicted": max(abs(r["global_phase_minus_predicted_rad"]) for r in sv)}
     print(summary)
-    sub = "" if lx == 4 else f"c2x{lx}/"
     lab = f"_{args.label}" if args.label else ""
-    p = write_json(f"data/{sub}aer_{args.family}{lab}.json",
+    p = write_json(os.path.join(lattice_data(lx), f"aer_{args.family}{lab}.json"),
                    {"family": args.family, "circuits": rows, "summary": summary, "random_superposition": sup_rows,
                     "engine": {"qiskit": qiskit.__version__, "qiskit_aer": qiskit_aer.__version__,
                                "method": "statevector", "precision": "double", "fusion": bool(args.fusion),

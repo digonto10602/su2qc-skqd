@@ -61,7 +61,7 @@ compute $f$ with the package formula for information; keep the 2x3 outputs separ
 
 `src/c2x4/families.py` (shim `families.py` in the study root): `get_family(name, measure=False)` →
 `[(circuit_id, qiskit.QuantumCircuit, metadata)]`, plus `get_family_ir`, `family_header`, `exact_target`,
-`available_families`.  Each family is a frozen file `data/families/<name>.json.gz` written once by
+`available_families`.  Each family is a frozen file `data/families/<name>.json.gz` (since `notes/012`: in its lattice folder, 2x3 in `../2x3_compression_using_ai_v1/`) written once by
 `scripts/freeze_family.py`, which refuses to write unless every circuit's two-qubit count and depth equal its
 verification record; the loader re-checks a sha256 per circuit.  Committed at `f0b2363` (v1), documented in
 `notes/009` (`a07ba6d`), extended with v2 and 2x3 at `390629e` / `040c95d` without changing the signature.
@@ -211,13 +211,13 @@ on {propext, Classical.choice, Quot.sound}, no `sorry`/`admit` (`data/c4_lean_bu
   identical to `Model(3).reference(4, 2B).dt` (checked by `verify_aer_family.py`: `dt_consistent = true`).
   References from `krylov.references`: 8 at $B=0$ (25, 795, 525, 333, 169, 117, 86, 70), 3 at $B=1$ (57, 29, 27),
   $k=1..4$ — the 44 circuits of `data/quantinuum/circuits_2x3/index.json`.  2x3 caches carry the prefix `L3_`,
-  archives and results live in `data/c2x3/`.
+  archives and results live in `../2x3_compression_using_ai_v1/data/c2x3/`.
 - Every proposal ran unchanged at 2x3 (the 2x3 terms are the same types as 2x4's: corner/interior hops, plaquettes
-  with two corner and two interior vertices).  Loop `data/c2x3/archive_L3_it1.json` (class A in one run, class B in
-  two reference batches, merged), verification `data/c2x3/eval_arch_L3_it1_{operator,input}_pp2_all44_pruned.json`,
-  certificates `data/c2x3/cert_L3_it1_{operator,input}.json`, freeze `compressed_circuit_llm_2x3_class{A,B}`,
-  independent Aer statevector on **all 44** circuits of each class `data/c2x3/aer_compressed_circuit_llm_2x3_class{A,B}.json`,
-  native `data/c2x3/native_compressed_circuit_llm_2x3_class{A,B}.json`.
+  with two corner and two interior vertices).  Loop `../2x3_compression_using_ai_v1/data/c2x3/archive_L3_it1.json` (class A in one run, class B in
+  two reference batches, merged), verification `../2x3_compression_using_ai_v1/data/c2x3/eval_arch_L3_it1_{operator,input}_pp2_all44_pruned.json`,
+  certificates `../2x3_compression_using_ai_v1/data/c2x3/cert_L3_it1_{operator,input}.json`, freeze `compressed_circuit_llm_2x3_class{A,B}`,
+  independent Aer statevector on **all 44** circuits of each class `../2x3_compression_using_ai_v1/data/c2x3/aer_compressed_circuit_llm_2x3_class{A,B}.json`,
+  native `../2x3_compression_using_ai_v1/data/c2x3/native_compressed_circuit_llm_2x3_class{A,B}.json`.
 
 ## 3. What the result means
 
@@ -308,7 +308,7 @@ v1 values from `data/native_it5_{operator,input}.json`.  $f$ is the package's ga
 | 2x3 class A | 43 | 43 | 30 | 397 / 397 | 464 / 440 |
 | 2x3 class B | 396 | 388 | 283 | 1 857 / 1 847 | 2 390 / 2 240 |
 
-Sources `data/cert_it6_{operator,input}.json`, `data/c2x3/cert_L3_it1_{operator,input}.json` (summaries copied into
+Sources `data/cert_it6_{operator,input}.json`, `../2x3_compression_using_ai_v1/data/c2x3/cert_L3_it1_{operator,input}.json` (summaries copied into
 `data/report004_tables.json`).  Meaning: in all but one class-A multiplexor the support is provably minimal for its
 control set and target (the class of the certificate; free angles in $[-8\pi,8\pi]$); the one open case is plaq1's
 7-control table (support 85, MILP lower bound 74 after 300 s, 78 after 1 500 s, §4 item 7).  In class B, 39
@@ -335,8 +335,8 @@ freeze and are recorded, not adopted (they would be a v3).  The walk column is t
 
 Sources: frozen family `data/quantinuum/circuits_2x3/index.json` (`summary.n_zz`, `n_phasedx`) and
 `validation/Q0P_2x3.json` (`data.stage_A.predict.devices.*.f_gate_only_mean`); mine
-`data/c2x3/eval_arch_L3_it1_*_pp2_all44_pruned.json`, `data/c2x3/aer_compressed_circuit_llm_2x3_class*.json`,
-`data/c2x3/native_compressed_circuit_llm_2x3_class*.json`; all collected in `data/report004_tables.json`.
+`../2x3_compression_using_ai_v1/data/c2x3/eval_arch_L3_it1_*_pp2_all44_pruned.json`, `../2x3_compression_using_ai_v1/data/c2x3/aer_compressed_circuit_llm_2x3_class*.json`,
+`../2x3_compression_using_ai_v1/data/c2x3/native_compressed_circuit_llm_2x3_class*.json`; all collected in `data/report004_tables.json`.
 $f$ uses the package formula with $\varepsilon$ values of `data/quantinuum/devices_20261002.json`, $n_{1q}$ = PhasedX,
 $n_m=20$ — **for information only**; it is the package's gate-only model, not a hardware number.
 

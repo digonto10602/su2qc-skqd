@@ -5,7 +5,7 @@ For N_TRAJ trajectories with at least one fault (faults sampled with numpy defau
 the IR circuit with the same Pauli gates inserted at the same positions is run (a) by traj_sparse.Engine and
 (b) by AerSimulator(method="statevector", precision="double"); the two final states are compared after removing
 the global phase: max |psi_sparse - psi_aer e^{-i phi}| over all 2^n strings (sparse entries outside its support = 0).
-Also the noiseless state.  Writes noise/data/results/<LATTICE>/<FAMILY>/<DEVICE>/engine_validation.json (appends).
+Also the noiseless state.  Writes <lattice folder>/noise/data/results/<LATTICE>/<FAMILY>/<DEVICE>/engine_validation.json (appends).
 """
 import json
 import os
@@ -19,7 +19,7 @@ import circuits  # noqa: E402
 import traj_sparse as ts  # noqa: E402
 from provenance import provenance, dump  # noqa: E402
 
-RES = os.path.join(circuits.NOISE, "data", "results")
+from results import lattice_results  # noqa: E402  (one folder per lattice, notes/012)
 
 
 def aer_state(gates, n, threads=10):
@@ -79,7 +79,7 @@ def main():
                      "max_abs_diff": d, "abs_overlap": ov, "prune_bound": b, "aer_s": time.time() - t1})
         print(tag, done, "faults", k, "max|diff|", d, "prune", b, flush=True)
         done += 1
-    out = os.path.join(RES, lat, fam, dev, "engine_validation.json")
+    out = os.path.join(lattice_results(lat), fam, dev, "engine_validation.json")
     old = json.load(open(out)) if os.path.exists(out) else {"test": "engine_validation", "lattice": lat,
                                                              "family": fam, "device": dev, "rows": {}}
     old["rows"][f"{tag}|seed{seed}"] = {"circuit": tag, "seed": seed, "trajectories": rows,

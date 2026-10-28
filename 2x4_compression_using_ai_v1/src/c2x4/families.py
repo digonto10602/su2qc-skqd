@@ -2,13 +2,17 @@
 
     get_family(name, measure=False) -> list of (circuit_id, qiskit.QuantumCircuit, metadata)
 
-Every family is a FROZEN file `data/families/<name>.json.gz` written once by `scripts/freeze_family.py` from the
-construction code, with a content hash (sha256 over the canonical gate lists) that the loader re-checks.  The loader
+Every family is a FROZEN file `<lattice folder>/data/families/<name>.json.gz` written once by
+`scripts/freeze_family.py` from the construction code, with a content hash (sha256 over the canonical gate lists) that the loader re-checks.  The loader
 imports nothing from the construction code and nothing from `skqd`: it only needs numpy and the caller's qiskit
 (any qiskit >= 1.0; the conversion uses QuantumCircuit.x/ry/rz/rx/p/h/cx/cz/cp/rzz/unitary only).
 
 Conventions (fixed by the package, not redefined here): IR qubit k = qiskit qubit k = bit k of the basis integer
 (little-endian, `skqd.reference_sim`); the codec layout of `skqd.codec`; the term order of `krylov.apply_groups`.
+
+Lattice folders (one per lattice since notes/012; the code stays in 2x4_compression_using_ai_v1/):
+  2x4 -> 2x4_compression_using_ai_v1/data/families/   2x3 -> 2x3_compression_using_ai_v1/data/families/
+  2x2 -> 2x2_compression_using_ai_v1/data/families/   (FAMILY_DIRS, family_dir(name))
 
 Family names (owner rule, notes/008):
   compressed_circuit_llm_2x4_classA_v1  (= compressed_circuit_llm_2x4_classA) operator-exact, it5, reviewed (reviews/001)
@@ -33,8 +37,12 @@ import os
 
 import numpy as np
 
-_STUDY = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-FAMILY_DIR = os.path.join(_STUDY, "data", "families")
+_STUDY = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))   # 2x4_compression_using_ai_v1
+_ROOT = os.path.dirname(_STUDY)                                                           # the package repository
+FAMILY_DIR = os.path.join(_STUDY, "data", "families")          # the 2x4 families (kept for existing imports)
+FAMILY_DIRS = {"2x4": FAMILY_DIR,
+               "2x3": os.path.join(_ROOT, "2x3_compression_using_ai_v1", "data", "families"),
+               "2x2": os.path.join(_ROOT, "2x2_compression_using_ai_v1", "data", "families")}
 
 ALIASES = {
     "compressed_circuit_llm_2x4_classA": "compressed_circuit_llm_2x4_classA_v1",
@@ -68,13 +76,23 @@ def canonical_name(name: str) -> str:
     return name
 
 
+def family_lattice(name: str) -> str:
+    """'2x4' | '2x3' | '2x2', read from the canonical name compressed_circuit_llm_<lattice>_class..."""
+    return canonical_name(name).split("_")[3]
+
+
+def family_dir(name: str) -> str:
+    """The data/families/ folder of the family's lattice folder (notes/012)."""
+    return FAMILY_DIRS[family_lattice(name)]
+
+
 def family_path(name: str) -> str:
-    return os.path.join(FAMILY_DIR, canonical_name(name) + ".json.gz")
+    return os.path.join(family_dir(name), canonical_name(name) + ".json.gz")
 
 
 def available_families() -> list:
     """Names whose frozen file exists (aliases not repeated)."""
-    return [n for n in FAMILY_NAMES if os.path.exists(os.path.join(FAMILY_DIR, n + ".json.gz"))]
+    return [n for n in FAMILY_NAMES if os.path.exists(family_path(n))]
 
 
 # ------------------------------------------------------------------ gate encoding (JSON-safe, exact floats)
@@ -211,4 +229,5 @@ def exact_target(md: dict):
 
 
 __all__ = ["get_family", "exact_target", "get_family_ir", "family_header", "available_families", "FAMILY_NAMES", "ALIASES",
-           "ir_to_qiskit", "encode_gates", "decode_gates", "gates_sha256", "canonical_name", "family_path"]
+           "ir_to_qiskit", "encode_gates", "decode_gates", "gates_sha256", "canonical_name", "family_path",
+           "family_dir", "family_lattice", "FAMILY_DIRS"]

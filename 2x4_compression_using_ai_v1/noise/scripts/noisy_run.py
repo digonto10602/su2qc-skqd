@@ -1,7 +1,7 @@
 """C5 test 2: behaviour of one circuit under one device noise model (Pauli trajectories).
 
 Usage: python noisy_run.py LATTICE FAMILY DEVICE TAG [--shots N] [--seed S] [--engine sparse|aer] [--outdir D]
-Writes noise/data/results/<LATTICE>/<FAMILY>/<DEVICE>/<outdir default noisy_runs>/<TAG>.json (skips if present).
+Writes <lattice folder>/noise/data/results/<LATTICE>/<FAMILY>/<DEVICE>/<outdir default noisy_runs>/<TAG>.json (skips if present).
 
 Engine 'sparse' (default): src/traj_sparse.py -- the package's exact sparse simulator (skqd.sparse_sim) on the IR
 gate list, faults sampled from the device model and inserted as Pauli gates, |a| < 1e-12 pruned every 32 gates
@@ -43,7 +43,7 @@ import noise_models as nm  # noqa: E402
 import traj_sparse as ts  # noqa: E402
 from provenance import provenance, dump  # noqa: E402
 
-RES = os.path.join(circuits.NOISE, "data", "results")
+from results import lattice_results  # noqa: E402  (one folder per lattice, notes/012)
 DELTAS = (1e-3, 1e-2, 0.03)
 
 
@@ -135,7 +135,7 @@ def main():
     ap.add_argument("--threads", type=int, default=int(os.environ.get("AER_THREADS", "4")))
     ap.add_argument("--outdir", default="noisy_runs")
     a = ap.parse_args()
-    out = os.path.join(RES, a.lattice, a.family, a.device, a.outdir, a.tag + ".json")
+    out = os.path.join(lattice_results(a.lattice), a.family, a.device, a.outdir, a.tag + ".json")
     if os.path.exists(out):
         print("exists", out)
         return

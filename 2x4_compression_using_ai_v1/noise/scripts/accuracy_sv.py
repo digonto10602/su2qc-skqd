@@ -1,7 +1,7 @@
 """C5 test 1: noiseless accuracy of one circuit, Qiskit Aer statevector, complex128.
 
 Usage: python accuracy_sv.py LATTICE FAMILY TAG      (LATTICE 2x4 | 2x3; TAG like B0_ref102_k1)
-Writes noise/data/results/<LATTICE>/<FAMILY>/noiseless/accuracy_runs/<TAG>.json (skips if present).
+Writes <lattice folder>/noise/data/results/<LATTICE>/<FAMILY>/noiseless/accuracy_runs/<TAG>.json (skips if present).
 
 Target: the package's krylov.coarse_states(...)[k] (src/targets.py), dt from validation/E3.json, embedded on
 CodewordEmbedding codewords (qubit k = bit k). Deviation after removing the global phase phi = arg<t|g>:
@@ -20,7 +20,7 @@ import circuits  # noqa: E402
 import targets  # noqa: E402
 from provenance import provenance, dump  # noqa: E402
 
-RES = os.path.join(circuits.NOISE, "data", "results")
+from results import lattice_results  # noqa: E402  (one folder per lattice, notes/012)
 
 
 def counts(qc):
@@ -36,7 +36,7 @@ def counts(qc):
 
 def main():
     lattice, family, tag = sys.argv[1], sys.argv[2], sys.argv[3]
-    out = os.path.join(RES, lattice, family, "noiseless", "accuracy_runs", tag + ".json")
+    out = os.path.join(lattice_results(lattice), family, "noiseless", "accuracy_runs", tag + ".json")
     if os.path.exists(out):
         print("exists", out)
         return

@@ -1,7 +1,7 @@
 """C5: analytic clean-shot fraction f of every circuit under every device model (no sampling).
 
 Usage: python analytic_f.py LATTICE FAMILY [DEVICE ...]   (FAMILY 'frozen' at 2x4 uses the committed native files)
-Writes noise/data/results/<LATTICE>/<FAMILY>/<DEVICE>/analytic_f.json (rows per circuit + summary).
+Writes <lattice folder>/noise/data/results/<LATTICE>/<FAMILY>/<DEVICE>/analytic_f.json (rows per circuit + summary).
 
 f       = P(no gate, idle or memory fault in the model) * (1 - mean readout error)^n      (the model's clean fraction)
 f_gate  = P(no gate fault) only (1q and 2q gate channels; no idle/memory, no readout)
@@ -25,7 +25,7 @@ import circuits  # noqa: E402
 import noise_models as nm  # noqa: E402
 from provenance import provenance, dump  # noqa: E402
 
-RES = os.path.join(circuits.NOISE, "data", "results")
+from results import lattice_results  # noqa: E402  (one folder per lattice, notes/012)
 ALL_DEVICES = list(nm.DEVICES)
 
 
@@ -127,7 +127,7 @@ def main():
                "definitions": __doc__, "noise_spec_file": os.path.relpath(nm.spec_path(d), circuits.NOISE),
                "noise_spec_sha256": nm.spec_sha256(d), "noise_model_params": nm.params(d),
                "runtime_s": time.time() - t0, "provenance": provenance()}
-        dump(rec, os.path.join(RES, lattice, family, d, "analytic_f.json"))
+        dump(rec, os.path.join(lattice_results(lattice), family, d, "analytic_f.json"))
     print("DONE", lattice, family, f"{time.time() - t0:.0f}s")
 
 

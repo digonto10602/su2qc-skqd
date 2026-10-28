@@ -7,13 +7,21 @@ import sys
 import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"))
-from c2x4.env import STUDY, write_json        # noqa: E402
+from c2x4.env import STUDY, lattice_data, write_json        # noqa: E402
 
 D = os.path.join(STUDY, "data")
 
 
+def _abs(rel):
+    """'c2x3/<file>' -> the 2x3 folder's data/c2x3/<file> (notes/012); anything else -> this folder's data/<rel>.
+    The relative name stays the table key, as before the split."""
+    if rel.startswith("c2x3/"):
+        return os.path.join(lattice_data("2x3"), rel[len("c2x3/"):])
+    return os.path.join(D, rel)
+
+
 def load(rel):
-    with open(os.path.join(D, rel)) as fh:
+    with open(_abs(rel)) as fh:
         return json.load(fh)
 
 
@@ -87,7 +95,7 @@ for rel in ("c2x3/aer_compressed_circuit_llm_2x3_classA.json", "c2x3/aer_compres
             *sorted(os.path.relpath(x, D) for x in __import__("glob").glob(os.path.join(D, "aer_compressed_circuit_llm_2x4_*_v2_sample_*.json"))),
             "c2x3/native_compressed_circuit_llm_2x3_classA.json", "c2x3/native_compressed_circuit_llm_2x3_classB.json",
             "native_compressed_circuit_llm_2x4_classA_v2.json", "native_compressed_circuit_llm_2x4_classB_v2.json"):
-    if os.path.exists(os.path.join(D, rel)):
+    if os.path.exists(_abs(rel)):
         out[rel] = load(rel)["summary"]
 for rel in sorted(os.path.relpath(x, D) for x in __import__("glob").glob(os.path.join(D, "aer_compressed_circuit_llm_2x4_*_v2_sample_*.json"))):
     out[rel + ":circuits"] = load(rel)["circuits"]

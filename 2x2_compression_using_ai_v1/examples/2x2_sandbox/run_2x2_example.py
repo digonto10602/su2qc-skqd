@@ -4,7 +4,8 @@ This is the smallest end-to-end run of MANUAL_lgt_circuit_compression.md §11.0.
 are NOT a `compressed_circuit_llm_2x2_*` family, are not registered in src/c2x4/families.py, and must not be used
 anywhere; the owner decides whether 2x2 families are made.
 
-Everything it writes goes to this folder (examples/2x2_sandbox/): the disk cache (cache/), the loop archive
+Everything it writes goes to this folder (2x2_compression_using_ai_v1/examples/2x2_sandbox/; the code it imports stays
+in 2x4_compression_using_ai_v1/src/, notes/012): the disk cache (cache/), the loop archive
 (archive_L2_example.json), the circuits (circuits_L2_example.json.gz) and the results (results.json).  No file under
 data/ is read for writing or overwritten.
 
@@ -15,7 +16,7 @@ check against the package's own coarse states, own reference input for all circu
 (class A must pass, class B is expected to fail).
 
 Run (coding env, from the repository root or anywhere):
-    python 2x4_compression_using_ai_v1/examples/2x2_sandbox/run_2x2_example.py
+    python 2x2_compression_using_ai_v1/examples/2x2_sandbox/run_2x2_example.py
 """
 from __future__ import annotations
 
@@ -29,8 +30,8 @@ import time
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-STUDY = os.path.dirname(os.path.dirname(HERE))
-ROOT = os.path.dirname(STUDY)
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))              # the package repository
+STUDY = os.path.join(ROOT, "2x4_compression_using_ai_v1")                   # the shared study code (notes/012)
 sys.path.insert(0, os.path.join(STUDY, "src"))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 
@@ -208,7 +209,7 @@ def main():
                         if applicable(lb, nm, P)]
                 row[nm] = {"candidates": rows, "best": best(rows), "n_contract_states": len(con)}
             arch["input"][str(ref)] = row
-    env.write_json(env.archive_path(LABEL), arch, produced_by="examples/2x2_sandbox/run_2x2_example.py",
+    env.write_json(env.archive_path(LABEL), arch, produced_by="2x2_compression_using_ai_v1/examples/2x2_sandbox/run_2x2_example.py",
                    parameters={"label": LABEL, "proposals_A": PROPS_A, "proposals_B": PROPS_B,
                                "A1": {"max_dev": A1_DEV, "max_leak": A1_LEAK}}, t_start=t_loop)
     results["loop_wall_s"] = time.time() - t_loop
@@ -259,7 +260,7 @@ def main():
     results["frozen_2x2_for_comparison"] = {"n_zz": frozen["n_zz"],
                                             "source": "data/quantinuum/circuits_2x2/index.json summary.n_zz"}
     p = env.write_json(os.path.join(HERE, "results.json"), results,
-                       produced_by="2x4_compression_using_ai_v1/examples/2x2_sandbox/run_2x2_example.py",
+                       produced_by="2x2_compression_using_ai_v1/examples/2x2_sandbox/run_2x2_example.py",
                        parameters={"lx": LX, "label": LABEL, "kmax": KMAX, "g2": 4.0, "m": P.m,
                                    "prune_tau": 1e-15, "selection_theta": "1 * dt of the sector",
                                    "proposals_A": PROPS_A, "proposals_B": PROPS_B},

@@ -16,6 +16,26 @@ compress the 2x4 SKQD circuits beyond the package's traditional compilation?
 Layout: `notes/` plans, `reports/` reports, `src/` code, `scripts/` drivers, `tests/` tests,
 `lean/` Lean 4 project, `data/` computed numbers.
 
+## Three folders, one per lattice (owner 2026-10-28, `notes/012-folder-split.md`)
+
+| folder (repository root) | holds |
+|---|---|
+| `2x4_compression_using_ai_v1/` (this one) | everything 2x4-specific **and all shared machinery**: `src/c2x4/`, `scripts/`, `lean/`, `tests/`, `families.py` (loader shim), `noise/src/` + `noise/scripts/` (+ `noise/data/device_specs_*`, `noise/reports/`), `MANUAL_lgt_circuit_compression.md`, `notes/`, `reviews/`, the study-wide `reports/`, the 2x4 families `data/families/compressed_circuit_llm_2x4_*`, the 2x4 noise results `noise/data/results/2x4/` and the study-wide results index `noise/data/results/index.json` |
+| [`../2x3_compression_using_ai_v1/`](../2x3_compression_using_ai_v1/README.md) | 2x3 data only: `data/c2x3/`, `data/families/compressed_circuit_llm_2x3_*`, `noise/data/results/2x3/` |
+| [`../2x2_compression_using_ai_v1/`](../2x2_compression_using_ai_v1/README.md) | 2x2 data only: `data/c2x2/`, `data/families/compressed_circuit_llm_2x2_*`, `data/families/native_2x2/`, `hardware/quantinuum_sc_20261028/compressed_circuit_llm_2x2_*`, `examples/2x2_sandbox/` |
+
+No code is copied into the 2x3 and 2x2 folders; the code here finds them by itself:
+`src/c2x4/env.py` (`STUDY_DIRS`, `lattice_study`, `lattice_data`, `archive_path`), `src/c2x4/families.py`
+(`FAMILY_DIRS`, `family_path`) and `noise/src/results.py` (`RESULTS_DIRS`, `lattice_results`).  Inside each folder the
+layout is the same (`data/...`, `noise/data/results/...`, `hardware/...`).  Loading is unchanged:
+
+```python
+import sys; sys.path.insert(0, "2x4_compression_using_ai_v1")
+from families import get_family                     # every family by name: 2x4 v1/v2, 2x3, 2x2
+sys.path.insert(0, "2x4_compression_using_ai_v1/noise/src")
+import results                                       # results.list_available() spans all three folders
+```
+
 ## Phase 2 (approved 2026-10-21) — where things are
 
 - Plans: `notes/003` (steps), `notes/004` (approximate-class tolerance), `notes/006` (certified pruned verification);
@@ -35,4 +55,10 @@ Layout: `notes/` plans, `reports/` reports, `src/` code, `scripts/` drivers, `te
 - Families: `compressed_circuit_llm_2x4_class{A,B}_v1` (it5, reviewed), `..._v2` (it6), `compressed_circuit_llm_2x3_class{A,B}`.
 - New code: `src/c2x4/linsynth.py` (angle-linear synthesis, flags), `certify.py` (MILP certificates), `families.py`;
   scripts `freeze_family.py`, `certify_family.py`, `verify_aer_family.py`, `native_family.py`, `merge_archives.py`.
-- 2x3 outputs: `data/c2x3/`.  Lean: `lean/Compress2x4/{Glue,Rounding,Conj}.lean`.
+- 2x3 outputs: `../2x3_compression_using_ai_v1/data/c2x3/` (in `data/c2x3/` of this folder until `notes/012`).  Lean: `lean/Compress2x4/{Glue,Rounding,Conj}.lean`.
+
+## 2x2 families — 2026-10-28
+
+- Owner request, plan and result `notes/011-2x2-families.md`; data in `../2x2_compression_using_ai_v1/` (README there).
+- Folder split into one folder per lattice: `notes/012-folder-split.md` (moves table, integrity checks
+  `data/split_integrity_{before,after,compare}.json`, `data/split_dryrun_check.json`).

@@ -10,12 +10,14 @@ while true; do
   next=$($PY - "$SKIP" <<'PYEOF'
 import os, sys
 sys.path.insert(0, "scripts")
+sys.path.insert(0, "src")
 import queue_plan
+from results import lattice_results   # one folder per lattice (notes/012)
 skip = set(sys.argv[1].split(",")) if sys.argv[1] else set()
 for lat, fam, tag in queue_plan.accuracy_jobs():
     if f"{lat}/{fam}/{tag}" in skip:
         continue
-    if not os.path.exists(f"data/results/{lat}/{fam}/noiseless/accuracy_runs/{tag}.json"):
+    if not os.path.exists(os.path.join(lattice_results(lat), fam, "noiseless", "accuracy_runs", f"{tag}.json")):
         print(lat, fam, tag); break
 PYEOF
 )

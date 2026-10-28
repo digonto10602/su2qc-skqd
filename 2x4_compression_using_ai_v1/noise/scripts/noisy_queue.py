@@ -23,7 +23,9 @@ RUNNING, FAILED = set(), set()
 
 def out_path(job):
     lat, fam, dev, tag, _ = job
-    return os.path.join(NOISE, "data", "results", lat, fam, dev, "noisy_runs", tag + ".json")
+    sys.path.insert(0, os.path.join(NOISE, "src"))
+    from results import lattice_results                     # one folder per lattice (notes/012)
+    return os.path.join(lattice_results(lat), fam, dev, "noisy_runs", tag + ".json")
 
 
 def running_elsewhere():

@@ -1,4 +1,5 @@
-"""Assemble per-run JSONs into the per-(lattice, family, device) test files and write data/results/index.json.
+"""Assemble per-run JSONs into the per-(lattice, family, device) test files and write data/results/index.json
+(results of every lattice folder, notes/012; index paths relative to the repository root).
 
   accuracy        <- data/results/<lat>/<fam>/noiseless/accuracy_runs/*.json
   noise_behaviour <- data/results/<lat>/<fam>/<dev>/noisy_runs/*.json   (accepted_counts stay in the run files)
@@ -19,7 +20,17 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
 import circuits  # noqa: E402
 from provenance import provenance, dump  # noqa: E402
 
-RES = os.path.join(circuits.NOISE, "data", "results")
+from results import RESULTS as RES, lattice_results  # noqa: E402  (one folder per lattice, notes/012)
+from results import RESULTS_DIRS  # noqa: E402
+
+
+def _glob_lattices(*pattern):
+    """glob <lattice folder>/noise/data/results/<lat>/<pattern> over all lattice folders, sorted by the path below the
+    results root (the order of the single-folder layout)."""
+    found = []
+    for lat, base in RESULTS_DIRS.items():
+        found += [(os.path.relpath(d, base), d) for d in glob.glob(os.path.join(base, lat, *pattern))]
+    return [d for _, d in sorted(found)]
 REVIEW = os.path.join(circuits.STUDY, "reviews", "001_runs")
 
 
@@ -31,7 +42,7 @@ def expected(lat, fam):
 
 
 def accuracy():
-    for d in sorted(glob.glob(os.path.join(RES, "*", "*", "noiseless", "accuracy_runs"))):
+    for d in sorted(_glob_lattices("*", "noiseless", "accuracy_runs")):
         lat, fam = d.split(os.sep)[-4], d.split(os.sep)[-3]
         rows = {}
         for p in sorted(glob.glob(os.path.join(d, "*.json"))):
@@ -71,7 +82,7 @@ def accuracy():
                "target": "skqd.krylov.coarse_states(term_groups(Model(Lx).terms, 4.0, mass_default(4.0)), "
                          "basis_vector(ref), dt[E3.json], k)[k] on CodewordEmbedding codewords",
                "rows": rows, "summary": summ, "reviewer_001_cross_check": cross, "provenance": provenance()}
-        dump(rec, os.path.join(RES, lat, fam, "noiseless", "accuracy.json"))
+        dump(rec, os.path.join(lattice_results(lat), fam, "noiseless", "accuracy.json"))
         print("accuracy", lat, fam, summ.get("n_done"), "/", summ.get("n_expected"), "pass", summ.get("n_pass"))
 
 
@@ -83,7 +94,7 @@ KEEP = ("shots", "acceptance", "acceptance_ci95", "acceptance_random_level", "f_
 
 
 def noise_behaviour():
-    for d in sorted(glob.glob(os.path.join(RES, "*", "*", "*", "noisy_runs"))):
+    for d in sorted(_glob_lattices("*", "*", "noisy_runs")):
         parts = d.split(os.sep)
         lat, fam, dev = parts[-4], parts[-3], parts[-2]
         runs = [json.load(open(p)) for p in sorted(glob.glob(os.path.join(d, "*.json")))]
@@ -119,7 +130,7 @@ def noise_behaviour():
                "run_commits": sorted({r["provenance"]["git_commit"] for r in runs}),
                "definitions": open(os.path.join(circuits.NOISE, "scripts", "noisy_run.py")).read().split('"""')[1],
                "provenance": provenance()}
-        dump(rec, os.path.join(RES, lat, fam, dev, "noise_behaviour.json"))
+        dump(rec, os.path.join(lattice_results(lat), fam, dev, "noise_behaviour.json"))
         print("noise_behaviour", lat, fam, dev, len(runs))
         skqd_energy(lat, fam, dev, runs)
 
@@ -163,7 +174,7 @@ def skqd_energy(lat, fam, dev, runs):
                      "circuit, as many samples from the exact coarse-state distribution as the noisy run accepted "
                      "(numpy default_rng(4242 + twoB)); E0 from Model(Lx).reference(4.0, twoB)",
            "provenance": provenance()}
-    dump(rec, os.path.join(RES, lat, fam, dev, "skqd_energy.json"))
+    dump(rec, os.path.join(lattice_results(lat), fam, dev, "skqd_energy.json"))
 
 
 def index():
@@ -172,12 +183,13 @@ def index():
     for lat, fam, dev, test in results.list_available():
         d = results.load(lat, fam, dev, test)
         items.append({"lattice": lat, "family": fam, "device": dev, "test": test,
-                      "path": os.path.relpath(os.path.join(RES, lat, fam, dev, test + ".json"), circuits.NOISE),
+                      "path": os.path.relpath(os.path.join(lattice_results(lat), fam, dev, test + ".json"), results.ROOT),
                       "n_rows": len(d.get("rows", {})), "created_utc": d.get("provenance", {}).get("created_utc"),
                       "git_commit": d.get("provenance", {}).get("git_commit"),
                       "noise_spec_sha256": d.get("noise_spec_sha256")})
     dump({"generated_utc": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()), "items": items,
-          "loader": "noise/src/results.py: load(lattice, family, device, test), table(test, lattice), list_available()"},
+          "loader": "noise/src/results.py: load(lattice, family, device, test), table(test, lattice), list_available()",
+          "path_base": "repository root (one folder per lattice, notes/012)"},
          os.path.join(RES, "index.json"))
     print("index", len(items))
 

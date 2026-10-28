@@ -17,7 +17,7 @@ Nothing here is used by the package or its gates.  The compressed families are n
 | `src/targets.py` | exact targets from the package (`krylov.coarse_states`, `CodewordEmbedding`, `validation/E3.json` dt) |
 | `src/results.py` | **the loader** (below) |
 | `scripts/` | `accuracy_sv.py` + `accuracy_queue.sh` (test 1), `noisy_run.py` + `noisy_queue.py` (test 2), `analytic_f.py`, `validate_engine.py`, `aggregate.py`, report generators |
-| `data/results/<lattice>/<family>/<device>/<test>.json` | results; `data/results/index.json` lists them |
+| `data/results/<lattice>/<family>/<device>/<test>.json` | results, **in the lattice's own folder** since 2026-10-28 (`../notes/012-folder-split.md`): 2x4 here (`data/results/2x4/`), 2x3 in `../../2x3_compression_using_ai_v1/noise/data/results/2x3/`, 2x2 (none yet) in `../../2x2_compression_using_ai_v1/noise/data/results/2x2/`; `data/results/index.json` (here) lists all of them, paths relative to the repository root.  The scripts write through `results.lattice_results(lattice)` |
 | `data/checks/` | supporting checks (native compilation exact, v1 build = genie's frozen files) |
 | `reports/001-quantinuum-device-info.md`, `002-noise-models.md`, `003-noise-results.md` | the reports |
 
@@ -40,7 +40,8 @@ results.list_available()                                   # [(lattice, family, 
 d  = results.load("2x4", "compressed_circuit_llm_2x4_classB", "quantinuum_h2_2", "noise_behaviour")  # dict
 df = results.table("noise_behaviour", "2x4")               # pandas DataFrame, one row per (family, device, circuit)
 sm = results.summary("analytic_f", "2x3")                  # one row per (family, device): the JSON summary blocks
-results.index()                                            # data/results/index.json
+results.index()                                            # data/results/index.json (all lattices)
+results.RESULTS_DIRS                                       # {lattice: <lattice folder>/noise/data/results}
 ```
 
 Every result JSON carries `provenance` (git commit, machine, command, UTC time); noisy and analytic ones also carry

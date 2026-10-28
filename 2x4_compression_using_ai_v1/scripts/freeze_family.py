@@ -1,4 +1,5 @@
-"""Freeze a compressed family into data/families/<name>.json.gz (the file `c2x4.families.get_family` loads).
+"""Freeze a compressed family into <lattice folder>/data/families/<name>.json.gz (the file `c2x4.families.get_family`
+loads; lattice folder = 2x4_/2x3_/2x2_compression_using_ai_v1, notes/012).
 
 Builds every circuit from the construction code (cache allowed: the content hash recorded here is what the loader
 re-checks), records per-circuit counts and metadata, and the family-level provenance.  It does NOT verify: the
@@ -10,6 +11,8 @@ Usage:
   python scripts/freeze_family.py --name compressed_circuit_llm_2x4_classB_v1 --spec arch:it5:input:pp --lx 4 \
       --kmax 5 --verification data/eval_arch_it5_input_pp_all75_pruned.json --version v1 \
       --source "loop iteration 5 (data/archive_it5.json), peephole pass; reviewed in reviews/001"
+--verification paths are relative to 2x4_compression_using_ai_v1/, or to the repository root when they start with a
+study folder name (e.g. 2x3_compression_using_ai_v1/data/c2x3/eval_....json).
 """
 from __future__ import annotations
 
@@ -24,7 +27,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
 
 from c2x4.env import STUDY, git_commit, machine                       # noqa: E402
 from c2x4.evaluate import counts                                      # noqa: E402
-from c2x4.families import CONTRACTS, FAMILY_DIR, canonical_name, encode_gates, gates_sha256   # noqa: E402
+from c2x4.env import ROOT                                                                        # noqa: E402
+from c2x4.families import CONTRACTS, canonical_name, encode_gates, family_dir, family_path, gates_sha256   # noqa: E402
 from c2x4.family import archive_family, circuit                      # noqa: E402
 from c2x4.problem import get_problem                                  # noqa: E402
 
@@ -55,7 +59,8 @@ def main():
     # verification records (all must pass and cover every circuit)
     ver = {}
     for vp in args.verification:
-        with open(os.path.join(STUDY, vp)) as fh:
+        base = ROOT if vp.split("/")[0].endswith("_compression_using_ai_v1") else STUDY
+        with open(vp if os.path.isabs(vp) else os.path.join(base, vp)) as fh:
             vd = json.load(fh)
         for cid, row in vd["circuits"].items():
             ver[cid] = (vp, row)
@@ -105,8 +110,8 @@ def main():
            "produced_by": "2x4_compression_using_ai_v1/scripts/freeze_family.py", "git_commit": git_commit(),
            "machine": machine(), "written_utc": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
            "wall_s": time.time() - t0, "circuits": circuits}
-    os.makedirs(FAMILY_DIR, exist_ok=True)
-    p = os.path.join(FAMILY_DIR, name + ".json.gz")
+    os.makedirs(family_dir(name), exist_ok=True)
+    p = family_path(name)
     with gzip.open(p, "wt", compresslevel=9) as fh:
         json.dump(out, fh, separators=(",", ":"))
     print("wrote", p, os.path.getsize(p), "bytes")

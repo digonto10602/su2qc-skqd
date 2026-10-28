@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
 
 from c2x4 import linsynth, sparsemux                                   # noqa: E402
 from c2x4.certify import cached_min_walsh_support                      # noqa: E402
-from c2x4.env import STUDY, write_json                                 # noqa: E402
+from c2x4.env import STUDY, lattice_data, write_json                   # noqa: E402
 from c2x4.family import get_reach                                      # noqa: E402
 from c2x4.problem import get_problem                                   # noqa: E402
 from c2x4.proposals import PROPOSALS                                   # noqa: E402
@@ -115,8 +115,7 @@ def main():
                "gap_support": [r for r in cert if not r["certified_optimal"]][:50],
                "truncated": truncated}
     lab = f"_{args.label}" if args.label else ""
-    sub = "" if args.lx == 4 else f"c2x{args.lx}/"
-    p = write_json(f"data/{sub}cert_{args.archive}_{args.cls}{lab}.json", {"rows": rows, "summary": summary},
+    p = write_json(os.path.join(lattice_data(args.lx), f"cert_{args.archive}_{args.cls}{lab}.json"), {"rows": rows, "summary": summary},
                    produced_by="2x4_compression_using_ai_v1/scripts/certify_family.py",
                    parameters=vars(args), t_start=t0)
     print({k: v for k, v in summary.items() if k != "gap_support"})
