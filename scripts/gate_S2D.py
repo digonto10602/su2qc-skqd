@@ -97,15 +97,19 @@ def garbage_acceptance_from_E2(lattice="2x3"):
     raise SystemExit(f"no criterion '{name}' in validation/E2.json")
 
 
-def circuit_set(Lx: int):
-    """The production circuit set of manual Step 9.2: references x coarse steps k = 1..4."""
+def circuit_set(Lx: int, ks=(1, 2, 3, 4), dts=None):
+    """The production circuit set of manual Step 9.2: references x coarse steps k = 1..4.
+
+    ks: the coarse steps (default 1..4, the frozen sets).  dts: {twoB: dt} pins the step to a recorded value (the
+    k = 5 extension of a frozen Quantinuum set must use the frozen dt bit for bit; Model(3).reference(...).dt moves
+    in the last digit between runs).  Default None = the model's dt, unchanged."""
     M = Model(Lx)
     F = CircuitFactory(M, G2)                      # exact structured circuits (the S2 default)
     out = []
     for twoB in (0, 2):
-        dt = M.reference(G2, twoB).dt
+        dt = M.reference(G2, twoB).dt if dts is None else float(dts[twoB])
         for r in references(M.basis, twoB):
-            for k in (1, 2, 3, 4):
+            for k in ks:
                 out.append((twoB, r, k, F.coarse_step(r, k, dt)))
     return M, F, out
 

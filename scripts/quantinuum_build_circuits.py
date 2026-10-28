@@ -721,6 +721,34 @@ def calibration_circuits(n):
     return out
 
 
+def frozen_dts(src):
+    """{twoB: dt} recorded in the manifests of a frozen set (src/index.json `circuits`); one value per sector or STOP.
+    The k = 5 extension of a frozen 2x2/2x3 set pins its dt to these (owner request 2026-10-28)."""
+    idx = json.load(open(os.path.join(src, "index.json")))
+    seen = {}
+    for c in idx["circuits"]:
+        m = json.load(open(os.path.join(src, c + ".manifest.json")))
+        seen.setdefault(int(m["twoB"]), set()).add(float(m["dt"]))
+    if sorted(seen) != [0, 2] or any(len(v) != 1 for v in seen.values()):
+        raise SystemExit(f"{src}: expected one dt per sector twoB = 0, 2, found {seen}")
+    return {tb: v.pop() for tb, v in seen.items()}
+
+
+def copy_calibration(src):
+    """The calibration circuits of a frozen set copied byte for byte into OUT (no recompilation); returns their
+    manifests in the frozen index order."""
+    import shutil
+
+    idx = json.load(open(os.path.join(src, "index.json")))
+    out = []
+    for cid in idx["calibration"]:
+        m = json.load(open(os.path.join(src, cid + ".manifest.json")))
+        for name in (cid + ".manifest.json", m["files"]["qasm"], m["files"]["json"]):
+            shutil.copyfile(os.path.join(src, name), os.path.join(OUT, name))
+        out.append(m)
+    return out
+
+
 def main():
     global OUT
     ap = argparse.ArgumentParser()
@@ -733,7 +761,15 @@ def main():
     ap.add_argument("--sector", choices=("B0", "B1"), default=None,
                     help="build one sector only (each half fits the 30-minute rule)")
     ap.add_argument("--k", type=int, nargs="*", default=None,
-                    help="--lattice 4: the k values to build (prompts/35 3.3 build order k = 1, then 2, 3, 4)")
+                    help="the k values to build (--lattice 4: prompts/35 3.3 build order k = 1, then 2, 3, 4; "
+                         "--lattice 2/3: default 1 2 3 4, the frozen sets)")
+    ap.add_argument("--dt-from", default=None, metavar="DIR",
+                    help="--lattice 2/3: pin dt per sector to the manifests of this frozen set (k = 5 extension)")
+    ap.add_argument("--calibration-from", default=None, metavar="DIR",
+                    help="--lattice 2/3: copy the calibration circuits of this frozen set byte for byte instead of "
+                         "compiling them")
+    ap.add_argument("--prompt", default=None, help="--lattice 2/3: the index.json `prompt` field (default: the "
+                                                    "frozen sets' prompt)")
     ap.add_argument("--levels", type=int, nargs="*", default=None,
                     help="--lattice 4: the pytket optimisation levels to try (default LEVELS_4)")
     ap.add_argument("--out", default=None, help="output directory (default data/quantinuum/circuits_2x<L>); "
@@ -754,11 +790,13 @@ def main():
 
     if lat == 4:
         return main_4(args, t0)
-    M, _F, cset = circuit_set(lat)
+    ks = tuple(sorted(set(args.k))) if args.k else (1, 2, 3, 4)
+    dts = frozen_dts(os.path.abspath(args.dt_from)) if args.dt_from else None
+    M, _F, cset = circuit_set(lat, ks=ks, dts=dts)
     emb = CodewordEmbedding(M)
     _G.update({"set": cset, "model": M, "emb": emb, "n": int(emb.n), "force": args.force,
                "threads": args.threads, "commit": git_commit(), "diagnose_index": 0,  # the first circuit carries the one-off diagnostics
-               "dt": {tb: float(M.reference(G2, tb).dt) for tb in (0, 2)}, "lattice": lat})
+               "dt": dts or {tb: float(M.reference(G2, tb).dt) for tb in (0, 2)}, "lattice": lat})
     print(f"circuit set: {len(cset)} circuits, {emb.n} qubits ({time.time() - t0:.0f} s)", flush=True)
     idx = list(range(len(cset)))
     if args.sector:
@@ -773,8 +811,11 @@ def main():
     with mp.get_context("fork").Pool(args.workers) as pool:
         for cid, msg in pool.imap_unordered(build_one, idx):
             print(f"  {cid}: {msg} [{time.time() - t0:.0f} s]", flush=True)
-    cals = calibration_circuits(int(emb.n))
-    if lat == 3:
+    if args.calibration_from:
+        cals = copy_calibration(os.path.abspath(args.calibration_from))
+    else:
+        cals = calibration_circuits(int(emb.n))
+    if lat == 3 and OUT == OUT_BY_LATTICE[3]:
         # the offline machine list the compiler used (a second, dated source for the device table)
         from pytket.extensions.quantinuum import QuantinuumAPIOffline
 
@@ -796,7 +837,7 @@ def main():
     hq = [m["hqc_per_shot"] for m in mans]
     index = {
         "produced_by": "scripts/quantinuum_build_circuits.py",
-        "prompt": "prompts/26 A3" if lat == 3 else "prompts/35 3.1(a) / 3.2",
+        "prompt": args.prompt or ("prompts/26 A3" if lat == 3 else "prompts/35 3.1(a) / 3.2"),
         "circuits": ids, "calibration": [c["id"] for c in cals],
         "files": {m["id"]: {"qasm_sha256": m["qasm_sha256"], "json_sha256": m["json_sha256"],
                             "frozen_level": m.get("frozen_level")} for m in mans + cals},
@@ -810,6 +851,11 @@ def main():
         "git_commit": git_commit(), "runtime_s_this_invocation": time.time() - t0,
         "built": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
     }
+    if ks != (1, 2, 3, 4) or dts or args.calibration_from:      # the k-extension provenance (absent in the frozen sets)
+        index.update({"k_values": list(ks), "dt": {str(tb): v for tb, v in _G["dt"].items()},
+                      "dt_from": os.path.relpath(os.path.abspath(args.dt_from), ROOT) if args.dt_from else None,
+                      "calibration_copied_from": (os.path.relpath(os.path.abspath(args.calibration_from), ROOT)
+                                                  if args.calibration_from else None)})
     if lat != 3:
         index["lattice"] = f"2x{lat}"
         index["summary"]["rzz_before"] = sorted({m["counts"]["rzz_before"] for m in mans})
