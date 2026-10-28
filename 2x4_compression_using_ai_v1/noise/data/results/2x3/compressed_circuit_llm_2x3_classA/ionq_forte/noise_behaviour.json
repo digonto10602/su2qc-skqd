@@ -603,7 +603,7 @@
  ],
  "definitions": "C5 test 2: behaviour of one circuit under one device noise model (Pauli trajectories).\n\nUsage: python noisy_run.py LATTICE FAMILY DEVICE TAG [--shots N] [--seed S] [--engine sparse|aer] [--outdir D]\nWrites noise/data/results/<LATTICE>/<FAMILY>/<DEVICE>/<outdir default noisy_runs>/<TAG>.json (skips if present).\n\nEngine 'sparse' (default): src/traj_sparse.py -- the package's exact sparse simulator (skqd.sparse_sim) on the IR\ngate list, faults sampled from the device model and inserted as Pauli gates, |a| < 1e-12 pruned every 32 gates\n(the pruned norm is recorded).  Engine 'aer': the same IR circuit with the same channels inserted as Aer\nQuantumError instructions, Aer statevector sampling (independent cross-check; slow).\nOne shot = one trajectory: the final pre-readout state gives p_tau on the sector codewords; one string is sampled\nfrom |amp|^2 and passed through the readout flips.\n\nQuantities (CF_traj sense, reports/CF_traj.md; the labels are the planner's, not manual terms):\n  acceptance     fraction of post-readout shots the package codec decodes into the circuit's sector\n                 (skqd.codec.Codec.decode_counts(counts, target_twoB))\n  f_model        clean-shot fraction of the model = P(no gate / idle / memory fault) * (1 - mean readout error)^n\n  f0_prime       P(no gate / idle / memory fault) * readout survival of the reference string (CF_traj f0')\n  f_hit          (reference-string hits / shots) / p_ref, p_ref = ideal probability of the reference string\n  TV_pre(tau)    1/2 sum_s |p_tau(s)/w_tau - p_c(s)| over the sector codewords, w_tau = sector weight of tau\n  b_all(delta)   fraction of ALL trajectories with TV_pre < delta (fault-free ones have TV_pre ~ 1e-12)\n  f_ideal(delta) = readout survival of the reference string * b_all(delta)  (= CF_traj f0' + (1 - f0') b(delta))\n  r_nc           = f_hit / f_ideal(1e-3)\n  TV_acc         TV of the empirical accepted distribution from p_c; TV_acc_floor = same statistic for the same\n                 number of ideal samples (finite-shot floor; mean of 20 seeded draws)\n  TV_pop_pre     TV of the trajectory-averaged, sector-normalised pre-readout distribution from p_c\n",
  "provenance": {
-  "git_commit": "a7d07e4+dirty(noise/)",
+  "git_commit": "bd2b8e5+dirty(noise/)",
   "machine": {
    "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
    "node": "pichkaCommander",
@@ -615,7 +615,7 @@
    "qiskit": "2.5.2",
    "qiskit_aer": "0.17.2"
   },
-  "created_utc": "2026-10-22 16:10:29 UTC",
+  "created_utc": "2026-10-28 18:38:17 UTC",
   "command": "python scripts/aggregate.py"
  }
 }
