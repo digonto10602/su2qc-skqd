@@ -28,7 +28,7 @@ RESULTS = os.path.join(NOISE, "data", "results")                               #
 RESULTS_DIRS = {"2x4": RESULTS,
                 "2x3": os.path.join(ROOT, "2x3_compression_using_ai_v1", "noise", "data", "results"),
                 "2x2": os.path.join(ROOT, "2x2_compression_using_ai_v1", "noise", "data", "results")}
-TESTS = ("accuracy", "analytic_f", "noise_behaviour", "skqd_energy", "engine_validation")
+TESTS = ("accuracy", "analytic_f", "noise_behaviour", "skqd_energy", "engine_validation", "noisy_skqd")
 
 
 def lattice_results(lattice: str) -> str:

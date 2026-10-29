@@ -222,13 +222,16 @@ def ir_gates(lattice: str, family: str, t: str):
     if lattice == "2x4" and family in FAMILY_V1:
         return v1_gates(family, t), 28
     twoB, ref, k = parse_tag(t)
-    if lattice == "2x3" and family == "frozen":
-        cp = os.path.join(CACHE, "ir", f"2x3_frozen_{t}.pkl")
+    if lattice in ("2x2", "2x3") and family == "frozen":
+        # 2x2 (noisy SKQD campaign, notes/campaign_budget.md): the same route, gate_S2D.circuit_set(2) (manifest
+        # 'family' field of data/quantinuum/circuits_2x2); k = 5 is the same coarse_step at k = 5 (circuits_2x*_k5)
+        Lx = int(lattice.split("x")[1])
+        cp = os.path.join(CACHE, "ir", f"{lattice}_frozen_{t}.pkl")
         if os.path.exists(cp):
             return pickle.load(open(cp, "rb"))
         from skqd.exact import Model
         from skqd.circuits_ir import CircuitFactory
-        M = Model(3)
+        M = Model(Lx)
         F = CircuitFactory(M, 4.0)
         res = (F.coarse_step(ref, k, M.reference(4.0, twoB).dt), int(F.codec.n_qubits))
         os.makedirs(os.path.dirname(cp), exist_ok=True)
