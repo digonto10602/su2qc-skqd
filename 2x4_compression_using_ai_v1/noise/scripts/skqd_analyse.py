@@ -239,66 +239,96 @@ def ideal_sequence(lat, fam, dev, cid, N):
     return sector[rng.choice(len(sector), size=int(N), p=p / p.sum())].astype(np.int64), seed
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("lattice"); ap.add_argument("family"); ap.add_argument("device")
-    ap.add_argument("--bootstrap", type=int, default=200)
-    ap.add_argument("--no-random", action="store_true", help="skip the 200 random bases of CV4 (quick checks)")
-    ap.add_argument("--out", default=None)
-    a = ap.parse_args()
+def part_path(lat, fam, dev, sec, sample):
+    return os.path.join(lattice_results(lat), fam, dev, "noisy_skqd_parts", f"{sec.replace('=', '')}_{sample}.json")
+
+
+def compute_part(P, lat, fam, dev, sec, tb, entry, sample, bootstrap, with_random):
+    """One (sector, sample) part: sample 'noisy' (with the noise quantities) or 'ideal' (same per-circuit shots)."""
     t0 = time.time()
-    lat, fam, dev = a.lattice, a.family, a.device
-    Lx = int(lat.split("x")[1])
-    bud = C.load_budget()
-    entry = bud["plans"][lat][fam][dev]
-    P = A.Physics(lat=Lx)
-    out = {"lattice": lat, "family": fam, "device": dev, "budget_entry": entry, "sectors": {}, "ideal": {},
-           "noise": {}, "noise_pooled": {}}
-    for sec, tb in SECTORS:
-        e = entry[sec]
-        plan, N_eq = {c: int(v) for c, v in e["plan"].items()}, int(e["N_eq"])
-        cids = sorted(e["sampled"])
-        ks = {c: C.parse(c)[2] for c in cids}
-        seqs, rows, seq_ideal, ideal_seeds = {}, [], {}, {}
-        rt_bad = 0
-        for c in cids:
-            seq, metas = load_sequence(lat, fam, dev, c)
-            if len(seq["post"]) < int(e["sampled"][c]):
-                raise ValueError(f"{c}: {len(seq['post'])} shots on disk < {e['sampled'][c]} planned")
-            seq = {k: v[:int(e["sampled"][c])] for k, v in seq.items()}
+    e = entry[sec]
+    plan, N_eq = {c: int(v) for c, v in e["plan"].items()}, int(e["N_eq"])
+    cids = sorted(e["sampled"])
+    ks = {c: C.parse(c)[2] for c in cids}
+    seqs, rows, seeds = {}, [], {}
+    rt_bad = 0
+    for c in cids:
+        seq, metas = load_sequence(lat, fam, dev, c)
+        if len(seq["post"]) < int(e["sampled"][c]):
+            raise ValueError(f"{c}: {len(seq['post'])} shots on disk < {e['sampled'][c]} planned")
+        seq = {k: v[:int(e["sampled"][c])] for k, v in seq.items()}
+        if sample == "noisy":
             dec = decode_seq(P, seq["post"], tb)
             seqs[c] = dec
             r = noise_block(P, tb, seq, metas, dec)
             r["k"] = ks[c]
             rows.append(dict(r, circuit=c))
-            rt = A.roundtrip_check(P, {int(i): 1 for i in np.unique(dec[dec >= 0])})
-            rt_bad += rt["mismatches"]
-            seq_ideal[c], ideal_seeds[c] = ideal_sequence(lat, fam, dev, c, len(dec))
-        et = A.e_tol(P, sec)
-        res = skqd_sector(P, sec, tb, seqs, ks, plan, N_eq, et["value"], bootstrap=a.bootstrap,
-                          with_random=not a.no_random)
-        res["E_tol"] = et
+            rt_bad += A.roundtrip_check(P, {int(i): 1 for i in np.unique(dec[dec >= 0])})["mismatches"]
+        else:
+            seqs[c], seeds[c] = ideal_sequence(lat, fam, dev, c, len(seq["post"]))
+    et = A.e_tol(P, sec)
+    res = skqd_sector(P, sec, tb, seqs, ks, plan, N_eq, et["value"], bootstrap=bootstrap, with_random=with_random)
+    res["E_tol"] = et
+    res["bootstrap_B"] = bootstrap
+    if sample == "noisy":
         res["decoder_roundtrip_mismatches"] = rt_bad
         res["support_check"] = outside_ideal_support(P, sec, tb, seqs, ks, plan, lat)
-        out["sectors"][sec] = res
-        ri = skqd_sector(P, sec, tb, seq_ideal, ks, plan, N_eq, et["value"], bootstrap=a.bootstrap,
-                         with_random=not a.no_random)
-        ri["seeds"] = ideal_seeds
-        out["ideal"][sec] = ri
-        out["noise"][sec] = {r["circuit"]: r for r in rows}
-        out["noise_pooled"][sec] = {"all": pooled(rows), "k1": pooled(rows, 1)}
-        print(sec, "noisy", {k: res["plan_point"][k] for k in ("E_R_minus_E0", "width", "E0_inside", "recall_S999", "W",
-                                                               "B_all_size")},
-              "ideal", {k: ri["plan_point"][k] for k in ("E_R_minus_E0", "width", "E0_inside", "recall_S999")},
-              f"{time.time() - t0:.0f}s", flush=True)
+        res["noise"] = {r["circuit"]: r for r in rows}
+        res["noise_pooled"] = {"all": pooled(rows), "k1": pooled(rows, 1)}
+    else:
+        res["seeds"] = seeds
+    res["runtime_s"] = time.time() - t0
+    res["provenance"] = provenance()
+    print(lat, fam, dev, sec, sample, {k: res["plan_point"][k] for k in (
+        "E_R_minus_E0", "width", "E0_inside", "recall_S999", "W", "B_all_size")}, f"{time.time() - t0:.0f}s", flush=True)
+    return res
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("lattice"); ap.add_argument("family"); ap.add_argument("device")
+    ap.add_argument("--bootstrap", type=int, default=200)
+    ap.add_argument("--no-random", action="store_true", help="skip the 200 random bases of CV4 (quick checks)")
+    ap.add_argument("--sector", choices=["B=0", "B=1"], default=None, help="compute only this sector's part(s)")
+    ap.add_argument("--sample", choices=["noisy", "ideal"], default=None, help="compute only this sample's part(s)")
+    ap.add_argument("--merge-only", action="store_true", help="only assemble noisy_skqd.json from existing parts")
+    ap.add_argument("--out", default=None)
+    a = ap.parse_args()
+    t0 = time.time()
+    lat, fam, dev = a.lattice, a.family, a.device
+    Lx = int(lat.split("x")[1])
+    entry = C.load_budget()["plans"][lat][fam][dev]
+    P = None
+    for sec, tb in SECTORS:
+        for sample in ("noisy", "ideal"):
+            if a.merge_only or (a.sector and a.sector != sec) or (a.sample and a.sample != sample):
+                continue
+            pp = part_path(lat, fam, dev, sec, sample)
+            if os.path.exists(pp):
+                print("part exists", pp)
+                continue
+            if P is None:
+                P = A.Physics(lat=Lx)
+            dump(compute_part(P, lat, fam, dev, sec, tb, entry, sample, a.bootstrap, not a.no_random), pp)
+    parts = {(sec, s): part_path(lat, fam, dev, sec, s) for sec, _ in SECTORS for s in ("noisy", "ideal")}
+    if not all(os.path.exists(p) for p in parts.values()):
+        print("parts missing:", [k for k, p in parts.items() if not os.path.exists(p)])
+        return
+    out = {"lattice": lat, "family": fam, "device": dev, "budget_entry": entry, "sectors": {}, "ideal": {},
+           "noise": {}, "noise_pooled": {}, "parts": {f"{k[0]}|{k[1]}": os.path.relpath(p, ROOT) for k, p in parts.items()}}
+    for sec, _ in SECTORS:
+        r = json.load(open(parts[(sec, "noisy")]))
+        out["noise"][sec] = r.pop("noise")
+        out["noise_pooled"][sec] = r.pop("noise_pooled")
+        out["sectors"][sec] = r
+        out["ideal"][sec] = json.load(open(parts[(sec, "ideal")]))
     out["summary"] = summary_rows(out)
-    out["runtime_s"] = time.time() - t0
+    out["runtime_s_parts"] = {f"{k[0]}|{k[1]}": json.load(open(p))["runtime_s"] for k, p in parts.items()}
     out["provenance"] = provenance(engine="noise/src/traj_sparse.py (sparse Pauli trajectories)",
-                                   noise_spec_sha256=next(iter(next(iter(out["noise"].values())).values()))[
-                                       "noise_spec_sha256"])
+                                   noise_spec_sha256=next(iter(out["noise"]["B=0"].values()))["noise_spec_sha256"])
     path = a.out or os.path.join(lattice_results(lat), fam, dev, "noisy_skqd.json")
     dump(out, path)
-    print("wrote", path)
+    print("wrote", path, f"{time.time() - t0:.0f}s")
 
 
 def summary_rows(out):
@@ -320,7 +350,21 @@ def summary_rows(out):
                   "ideal_E0_inside": i["plan_point"]["E0_inside"], "ideal_recall_S999": i["plan_point"]["recall_S999"],
                   "ideal_W": i["plan_point"]["W"], "ideal_B_all_size": i["plan_point"]["B_all_size"],
                   "ideal_CV": {k: (i["cv"]["criteria"].get(k) or {}).get("ok") for k in ("CV1", "CV2", "CV3", "CV4", "CV5")},
-                  "outside_ideal_support": r["support_check"]["outside_ideal_support"]}
+                  "outside_ideal_support": r["support_check"]["outside_ideal_support"],
+                  "bootstrap_E_R_minus_E0_ci95": (r.get("bootstrap_plan_point") or {}).get("err", {}).get("ci95"),
+                  "bootstrap_recall_S999_ci95": (r.get("bootstrap_plan_point") or {}).get("recall_S999", {}).get("ci95"),
+                  "ideal_bootstrap_E_R_minus_E0_ci95": (i.get("bootstrap_plan_point") or {}).get("err", {}).get("ci95"),
+                  "bootstrap_B": r.get("bootstrap_B"),
+                  "all_shots_point": {k: r["all_shots_point"][k] for k in ("E_R_minus_E0", "width", "E0_inside",
+                                                                           "recall_S999", "W", "B_all_size")},
+                  "ideal_all_shots_point": {k: i["all_shots_point"][k] for k in ("E_R_minus_E0", "width", "E0_inside",
+                                                                                 "recall_S999", "W", "B_all_size")},
+                  "shots_curve_E_R_minus_E0": [p_["all"]["err"] for p_ in r["cv"]["shots_curve"]],
+                  "ideal_shots_curve_E_R_minus_E0": [p_["all"]["err"] for p_ in i["cv"]["shots_curve"]],
+                  "shots_curve_shots": [p_["shots"] for p_ in r["cv"]["shots_curve"]],
+                  "CV3_dE": (crit.get("CV3") or {}).get("dE_k4_k5"), "E_tol": r["E_tol"]["value"],
+                  "CV1_dE": crit["CV1"]["dE"], "ideal_CV1_dE": i["cv"]["criteria"]["CV1"]["dE"],
+                  "ideal_CV3_dE": (i["cv"]["criteria"].get("CV3") or {}).get("dE_k4_k5")}
     return S
 
 
