@@ -1,0 +1,108 @@
+{
+ "lattice": "2x4",
+ "family": "compressed_circuit_llm_2x4_classB_v1",
+ "source_family": "compressed_circuit_llm_2x4_classB_v1",
+ "device": "quantinuum_h2_2",
+ "circuit": "B1_ref230_k3",
+ "twoB": 2,
+ "reference": 230,
+ "k": 3,
+ "chunk": 1,
+ "start": 2688,
+ "shots": 1212,
+ "shots_requested": 1212,
+ "truncated_by_time_limit": false,
+ "seed_simulator": 1754152231,
+ "seed_readout": 1754152232,
+ "n_qubits": 28,
+ "sector_size": 8934,
+ "reference_int": 18874916,
+ "p_ref": 0.5252053291312002,
+ "readout_p10_p01": [
+  0.00067,
+  0.0012
+ ],
+ "budget": {
+  "n_2q": 582,
+  "n_1q_native": 747,
+  "n_1q_pulses": 747,
+  "log_clean": {
+   "gate_1q": -0.031374658872479665,
+   "gate_2q": -0.5994097008300284,
+   "idle": 0.0,
+   "memory": -0.13776826626130653
+  },
+  "n_events": {
+   "gate_1q": 747,
+   "gate_2q": 582,
+   "idle": 0,
+   "memory": 1148
+  },
+  "depth1_equivalent_layers": 41.57142857142857,
+  "n_active_qubits": 28,
+  "f_gate": 0.4636837066198779,
+  "f_parts": {
+   "gate_1q": 0.9691124184847135,
+   "gate_2q": 0.5491356947836613,
+   "idle": 1.0,
+   "memory": 0.8713005780934432
+  }
+ },
+ "f_gate": 0.4636837066198779,
+ "clean_state_max_abs_dpsi": 1.3374415150982945e-14,
+ "clean_state_leakage": 4.4853010194856324e-14,
+ "clean_prune_bound": 1.601385098842779e-15,
+ "prune_bound_max": 3.877409386434067e-11,
+ "fault_free_fraction": 0.4504950495049505,
+ "engine": "skqd.sparse_sim (package) via noise/src/traj_sparse.py, prune |a|<1e-12 every 32 gates",
+ "noise_placement": "IR level (traj_sparse.ir_events)",
+ "noise_spec_file": "data/device_specs_quantinuum.json",
+ "noise_spec_sha256": "90dd6204acdafe5d71ebd4b6d2ef9b692f20c734aa9b3fa8dba3d087484d4886",
+ "noise_model_params": {
+  "p1": 2.8e-05,
+  "p2": 0.00083,
+  "spam0": 0.00067,
+  "spam1": 0.0012,
+  "mem_depth1": 0.00012,
+  "rzz_angle_scaling": {
+   "a": 1.518,
+   "b": 0.241,
+   "power": 1.0
+  },
+  "parallel_2q": 4,
+  "kind": "quantinuum",
+  "device": "quantinuum_h2_2"
+ },
+ "timing_s": {
+  "init": 13.976578950881958,
+  "simulate": 67.23198223114014,
+  "per_shot": 0.05547193253394401,
+  "total": 81.21048021316528
+ },
+ "threads": {
+  "OMP_NUM_THREADS": "1",
+  "affinity": [
+   5,
+   6,
+   7,
+   8,
+   9
+  ]
+ },
+ "provenance": {
+  "git_commit": "f106a53",
+  "machine": {
+   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+   "node": "pichkaCommander",
+   "python": "3.12.14",
+   "executable": "/home/digimonk/anaconda3/envs/coding/bin/python",
+   "numpy": "2.5.2",
+   "scipy": "1.18.0",
+   "cpu_count": 12,
+   "qiskit": "2.5.2",
+   "qiskit_aer": "0.17.2"
+  },
+  "created_utc": "2026-10-30 17:41:12 UTC",
+  "command": "python /home/digimonk/Projects/su2qc-skqd/2x4_compression_using_ai_v1/noise/scripts/skqd_sample.py 2x4 compressed_circuit_llm_2x4_classB_v1 quantinuum_h2_2 B1_ref230_k3 --chunk 1 --start 2688 --shots 1212"
+ }
+}

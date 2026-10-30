@@ -1,0 +1,114 @@
+{
+ "lattice": "2x2",
+ "family": "frozen",
+ "source_family": "frozen",
+ "device": "quantinuum_helios_1",
+ "circuit": "B1_ref07_k3",
+ "twoB": 2,
+ "reference": 7,
+ "k": 3,
+ "chunk": 0,
+ "start": 0,
+ "shots": 600,
+ "shots_requested": 600,
+ "truncated_by_time_limit": false,
+ "seed_simulator": 179085464,
+ "seed_readout": 179085465,
+ "n_qubits": 12,
+ "sector_size": 20,
+ "reference_int": 2336,
+ "p_ref": 0.3334662978492059,
+ "readout_p10_p01": [
+  0.0008,
+  0.00016
+ ],
+ "budget": {
+  "n_2q": 294,
+  "n_1q_native": 398,
+  "n_1q_pulses": 398,
+  "log_clean": {
+   "gate_1q": -0.01791040298707434,
+   "gate_2q": -0.29046844240944586,
+   "idle": 0.0,
+   "memory": -0.33525555691335107
+  },
+  "n_events": {
+   "gate_1q": 398,
+   "gate_2q": 294,
+   "idle": 0,
+   "memory": 588
+  },
+  "depth1_equivalent_layers": 49.0,
+  "n_active_qubits": 12,
+  "f_gate": 0.5253795094952756,
+  "f_parts": {
+   "gate_1q": 0.9822490349953399,
+   "gate_2q": 0.7479131312760894,
+   "idle": 1.0,
+   "memory": 0.7151553001163472
+  }
+ },
+ "f_gate": 0.5253795094952756,
+ "clean_state_max_abs_dpsi": 5.67406808705996e-15,
+ "clean_state_leakage": 2.3203661214665772e-14,
+ "clean_prune_bound": 7.837104862599309e-16,
+ "prune_bound_max": 2.1301057124972987e-15,
+ "fault_free_fraction": 0.5166666666666667,
+ "engine": "skqd.sparse_sim (package) via noise/src/traj_sparse.py, prune |a|<1e-12 every 32 gates",
+ "noise_placement": "IR level (traj_sparse.ir_events)",
+ "noise_spec_file": "data/device_specs_quantinuum.json",
+ "noise_spec_sha256": "90dd6204acdafe5d71ebd4b6d2ef9b692f20c734aa9b3fa8dba3d087484d4886",
+ "noise_model_params": {
+  "p1": 3e-05,
+  "p2": 0.00079,
+  "spam0": 0.0008,
+  "spam1": 0.00016,
+  "mem_depth1": 0.00057,
+  "mem_depth1_note": "linear 5.0e-4 + quadratic 0.7e-4 at l = 1 depth-1 transport per layer",
+  "rzz_angle_scaling": {
+   "a": 1.518,
+   "b": 0.241,
+   "power": 1.0
+  },
+  "parallel_2q": 4,
+  "kind": "quantinuum",
+  "device": "quantinuum_helios_1"
+ },
+ "timing_s": {
+  "init": 0.7725629806518555,
+  "simulate": 4.8879454135894775,
+  "per_shot": 0.008146575689315795,
+  "total": 5.661409616470337
+ },
+ "threads": {
+  "OMP_NUM_THREADS": "1",
+  "affinity": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9
+  ]
+ },
+ "provenance": {
+  "git_commit": "1c95aaf",
+  "machine": {
+   "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+   "node": "pichkaCommander",
+   "python": "3.12.14",
+   "executable": "/home/digimonk/anaconda3/envs/coding/bin/python",
+   "numpy": "2.5.2",
+   "scipy": "1.18.0",
+   "cpu_count": 12,
+   "qiskit": "2.5.2",
+   "qiskit_aer": "0.17.2"
+  },
+  "created_utc": "2026-10-30 14:40:11 UTC",
+  "command": "python /home/digimonk/Projects/su2qc-skqd/2x4_compression_using_ai_v1/noise/scripts/skqd_sample.py 2x2 frozen quantinuum_helios_1 B1_ref07_k3 --chunk 0 --start 0 --shots 600"
+ }
+}
